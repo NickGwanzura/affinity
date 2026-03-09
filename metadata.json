@@ -1,0 +1,7 @@
+{
+  "name": "Affinity Logistics Management",
+  "description": "A comprehensive logistics and vehicle tracking platform for managing international vehicle transit, multi-currency expenses, and landed cost analysis.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
