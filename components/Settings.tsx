@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CompanyDetails, AppUser, UserRole, SupabaseConfig, UserInvite, RegistrationRequest, Client } from '../types';
 import { supabase } from '../services/supabaseService';
+import { authService } from '../services/authService';
 
 export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'company' | 'users' | 'clients' | 'requests' | 'invites' | 'supabase'>('company');
