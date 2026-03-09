@@ -222,46 +222,68 @@ class NeonAuthService {
     console.log('[NeonAuth] Requesting password reset for:', email);
     console.log('[NeonAuth] Redirect URL:', `${window.location.origin}/`);
     
-    try {
-      // Try /forgot-password first (standard endpoint for requesting reset)
-      const response = await neonAuthRequest('/forgot-password', {
-        method: 'POST',
-        body: JSON.stringify({ 
-          email,
-          redirectUrl: `${window.location.origin}/`,
-        }),
-      });
-      console.log('[NeonAuth] Forgot password response:', response);
-    } catch (error: any) {
-      // If /forgot-password doesn't exist, try /reset-password with different params
-      if (error.message?.includes('Not Found') || error.message?.includes('404')) {
-        console.log('[NeonAuth] /forgot-password not found, trying /reset-password');
-        const response = await neonAuthRequest('/reset-password', {
+    // Try different endpoint formats that Neon Auth might use
+    const endpoints = [
+      { path: '/password-reset', body: { email, redirect_url: `${window.location.origin}/` } },
+      { path: '/password-reset', body: { email, redirectUrl: `${window.location.origin}/` } },
+      { path: '/auth/password-reset', body: { email, redirect_url: `${window.location.origin}/` } },
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`[NeonAuth] Trying endpoint: ${endpoint.path}`);
+        const response = await neonAuthRequest(endpoint.path, {
           method: 'POST',
-          body: JSON.stringify({ 
-            email,
-            redirectUrl: `${window.location.origin}/`,
-          }),
+          body: JSON.stringify(endpoint.body),
         });
-        console.log('[NeonAuth] Reset password response:', response);
-      } else {
-        console.error('[NeonAuth] Reset password error:', error);
-        throw error;
+        console.log('[NeonAuth] Password reset response:', response);
+        return; // Success, exit function
+      } catch (error: any) {
+        console.log(`[NeonAuth] ${endpoint.path} failed:`, error.message);
+        lastError = error;
+        // Continue to next endpoint
       }
     }
+    
+    // All endpoints failed
+    console.error('[NeonAuth] All password reset endpoints failed');
+    throw lastError || new Error('Password reset service unavailable');
   }
 
   async updatePassword(token: string, newPassword: string): Promise<void> {
     console.log('[NeonAuth] Updating password with token:', token.substring(0, 10) + '...');
     
-    // Neon Auth reset-password endpoint uses the token to verify and update in one call
-    await neonAuthRequest('/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({
-        token,
-        newPassword: newPassword,
-      }),
-    });
+    // Try different endpoint formats
+    const endpoints = [
+      { path: '/password-reset', body: { token, newPassword } },
+      { path: '/password-reset', body: { token, password: newPassword } },
+      { path: '/auth/password-reset', body: { token, newPassword } },
+      { path: '/auth/password-reset', body: { token, password: newPassword } },
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`[NeonAuth] Trying update endpoint: ${endpoint.path}`);
+        await neonAuthRequest(endpoint.path, {
+          method: 'POST',
+          body: JSON.stringify(endpoint.body),
+        });
+        console.log('[NeonAuth] Password update successful');
+        return; // Success
+      } catch (error: any) {
+        console.log(`[NeonAuth] ${endpoint.path} failed:`, error.message);
+        lastError = error;
+        // Continue to next endpoint
+      }
+    }
+    
+    // All endpoints failed
+    console.error('[NeonAuth] All password update endpoints failed');
+    throw lastError || new Error('Password update service unavailable');
   }
 
   // ============================================
