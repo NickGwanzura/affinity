@@ -11,7 +11,7 @@ import { AcceptInvite } from './components/AcceptInvite';
 import { ResetPassword } from './components/ResetPassword';
 import { Layout, AppView } from './components/Layout';
 import { AuthSession } from './types';
-import { neonAuthService } from './services/neonAuthService';
+import { authService } from './services/authService';
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -44,7 +44,7 @@ export default function App() {
 
     const checkSession = async () => {
       try {
-        const s = await neonAuthService.getSession();
+        const s = await authService.getSession();
         setSession(s);
 
         // Default view based on role
@@ -73,7 +73,7 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    await neonAuthService.logout();
+    await authService.logout();
     setSession(null);
   };
 
