@@ -238,11 +238,13 @@ class NeonAuthService {
   }
 
   async updatePassword(token: string, newPassword: string): Promise<void> {
+    console.log('[NeonAuth] Updating password with token:', token.substring(0, 10) + '...');
+    
     await neonAuthRequest('/update-password', {
       method: 'POST',
       body: JSON.stringify({
         token,
-        password: newPassword,
+        newPassword: newPassword,
       }),
     });
   }
