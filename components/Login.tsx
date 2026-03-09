@@ -8,7 +8,7 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -66,6 +66,26 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      await supabase.resetPassword(email);
+      setSuccess('Password reset email sent! Check your inbox for instructions.');
+      setTimeout(() => {
+        setMode('login');
+        setSuccess('');
+      }, 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-sans">
       {/* Left Column: Visual/Marketing */}
@@ -118,16 +138,18 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="max-w-md w-full">
           <div className="mb-10">
             <h3 className="text-3xl font-black text-zinc-900 mb-2">
-              {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+              {mode === 'login' ? 'Welcome Back' : mode === 'forgot' ? 'Reset Password' : 'Create Account'}
             </h3>
             <p className="text-zinc-500 font-medium">
               {mode === 'login' 
                 ? 'Please sign in to access your dashboard.' 
+                : mode === 'forgot'
+                ? 'Enter your email to receive a password reset link.'
                 : 'Request access and admin will approve your account.'}
             </p>
           </div>
 
-          <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="space-y-6">
+          <form onSubmit={mode === 'login' ? handleLogin : mode === 'forgot' ? handleForgotPassword : handleRegister} className="space-y-6">
             {error && (
               <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm font-bold flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="2.5" /></svg>
@@ -171,6 +193,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
             )}
 
+            {mode === 'forgot' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                <p className="text-sm text-blue-800 flex items-start gap-2">
+                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>We'll send you an email with a link to reset your password.</span>
+                </p>
+              </div>
+            )}
+
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Work Email</label>
               <input 
@@ -183,22 +216,34 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               />
             </div>
 
-            <div className="space-y-1">
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Secure Password</label>
-                {mode === 'login' && (
-                  <a href="#" className="text-[10px] font-black uppercase text-blue-600 tracking-widest hover:underline">Forgot?</a>
-                )}
+            {mode !== 'forgot' && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Secure Password</label>
+                  {mode === 'login' && (
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setMode('forgot');
+                        setError('');
+                        setSuccess('');
+                      }}
+                      className="text-[10px] font-black uppercase text-blue-600 tracking-widest hover:underline"
+                    >
+                      Forgot?
+                    </button>
+                  )}
+                </div>
+                <input 
+                  type="password" 
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required={mode !== 'forgot'}
+                  placeholder="••••••••"
+                  className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
+                />
               </div>
-              <input 
-                type="password" 
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
-              />
-            </div>
+            )}
 
             <button 
               type="submit" 
@@ -212,11 +257,13 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {mode === 'login' ? (
                       <path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" strokeWidth="2.5" />
+                    ) : mode === 'forgot' ? (
+                      <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeWidth="2.5" />
                     ) : (
                       <path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" strokeWidth="2.5" />
                     )}
                   </svg>
-                  {mode === 'login' ? 'Sign In to Platform' : 'Submit Request'}
+                  {mode === 'login' ? 'Sign In to Platform' : mode === 'forgot' ? 'Send Reset Email' : 'Submit Request'}
                 </>
               )}
             </button>
@@ -225,7 +272,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <button
                 type="button"
                 onClick={() => {
-                  setMode(mode === 'login' ? 'register' : 'login');
+                  if (mode === 'forgot') {
+                    setMode('login');
+                  } else {
+                    setMode(mode === 'login' ? 'register' : 'login');
+                  }
                   setError('');
                   setSuccess('');
                 }}
@@ -233,6 +284,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               >
                 {mode === 'login' 
                   ? "Don't have an account? Request Access" 
+                  : mode === 'forgot'
+                  ? 'Remember your password? Sign In'
                   : 'Already have an account? Sign In'}
               </button>
             </div>

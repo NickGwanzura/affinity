@@ -8,6 +8,7 @@ import { Financials } from './components/Financials';
 import { Documents } from './components/Documents';
 import { Login } from './components/Login';
 import { AcceptInvite } from './components/AcceptInvite';
+import { ResetPassword } from './components/ResetPassword';
 import { Layout, AppView } from './components/Layout';
 import { AuthSession } from './types';
 import { supabase } from './services/supabaseService';
@@ -17,12 +18,19 @@ export default function App() {
   const [currentView, setCurrentView] = useState<AppView>('admin');
   const [loading, setLoading] = useState(true);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [isResetPassword, setIsResetPassword] = useState(false);
 
   useEffect(() => {
     // Check for invite token in URL
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
     if (token) setInviteToken(token);
+
+    // Check for password reset hash
+    const hash = window.location.hash;
+    if (hash.includes('access_token') && hash.includes('type=recovery')) {
+      setIsResetPassword(true);
+    }
 
     const checkSession = async () => {
       try {
@@ -67,6 +75,19 @@ export default function App() {
   }
 
   if (!session) {
+    // Show password reset page
+    if (isResetPassword) {
+      return (
+        <ResetPassword 
+          onComplete={() => {
+            setIsResetPassword(false);
+            // Clear the hash from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }} 
+        />
+      );
+    }
+
     if (inviteToken) {
       return (
         <AcceptInvite
