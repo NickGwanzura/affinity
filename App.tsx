@@ -11,7 +11,7 @@ import { AcceptInvite } from './components/AcceptInvite';
 import { ResetPassword } from './components/ResetPassword';
 import { Layout, AppView } from './components/Layout';
 import { AuthSession } from './types';
-import { supabase } from './services/supabaseService';
+import { authService } from './services/authService';
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -34,7 +34,7 @@ export default function App() {
 
     const checkSession = async () => {
       try {
-        const s = await supabase.getSession();
+        const s = await authService.getSession();
         setSession(s);
 
         // Default view based on role
@@ -62,7 +62,8 @@ export default function App() {
     window.history.replaceState({}, document.title, window.location.pathname);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authService.logout();
     setSession(null);
   };
 

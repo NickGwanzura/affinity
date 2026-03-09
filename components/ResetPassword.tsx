@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../services/supabaseService';
+import { authService } from '../services/authService';
 
 interface ResetPasswordProps {
   onComplete: () => void;
@@ -45,8 +45,19 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
       return;
     }
 
+    // Get token from URL hash
+    const hash = window.location.hash;
+    const tokenMatch = hash.match(/token=([^&]+)/);
+    const token = tokenMatch ? tokenMatch[1] : null;
+    
+    if (!token) {
+      setError('Invalid or missing reset token');
+      setLoading(false);
+      return;
+    }
+    
     try {
-      await supabase.updatePassword(newPassword);
+      await authService.updatePassword(token, newPassword);
       setSuccess(true);
       setTimeout(() => {
         onComplete();

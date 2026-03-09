@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { supabase } from '../services/supabaseService';
+import { authService } from '../services/authService';
 import { AuthSession, UserRole } from '../types';
 
 interface LoginProps {
@@ -22,10 +22,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
     setError('');
     try {
-      const session = await supabase.login(email, password);
+      const session = await authService.login(email, password);
       onLogin(session);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -44,13 +45,13 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
     
     try {
-      await supabase.createRegistrationRequest({
+      await authService.createUser({
         name,
         email,
         role,
         password
       });
-      setSuccess('Registration request submitted! An admin will review your account.');
+      setSuccess('Account created successfully! You can now sign in.');
       setName('');
       setEmail('');
       setPassword('');
@@ -59,8 +60,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setMode('login');
         setSuccess('');
       }, 3000);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -73,8 +75,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setSuccess('');
     
     try {
-      await supabase.resetPassword(email);
-      setSuccess('Password reset email sent! Check your inbox for instructions.');
+      await authService.resetPassword(email);
+      setSuccess('Password reset initiated! If an account exists with this email, you will receive instructions.');
       setTimeout(() => {
         setMode('login');
         setSuccess('');
@@ -82,18 +84,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send reset email';
       console.error('[Forgot Password] Error:', err);
-      
-      // Provide helpful guidance for common errors
-      if (errorMessage.includes('redirect URL not authorized')) {
-        setError(
-          'Server configuration error: Redirect URL not authorized. ' +
-          'Please contact support or try again later.'
-        );
-      } else if (errorMessage.includes('No account found')) {
-        setError('No account found with this email address. Please check your email or request access.');
-      } else {
-        setError(errorMessage);
-      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
