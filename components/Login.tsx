@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { authService } from '../services/authService';
+import { neonAuthService } from '../services/neonAuthService';
 import { AuthSession, UserRole } from '../types';
 
 interface LoginProps {
@@ -22,7 +22,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
     setError('');
     try {
-      const session = await authService.login(email, password);
+      const session = await neonAuthService.login(email, password);
       onLogin(session);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Login failed';
@@ -45,7 +45,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
     
     try {
-      await authService.createUser({
+      await neonAuthService.register({
         name,
         email,
         role,
@@ -75,7 +75,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setSuccess('');
     
     try {
-      await authService.resetPassword(email);
+      await neonAuthService.resetPassword(email);
       setSuccess('Password reset initiated! If an account exists with this email, you will receive instructions.');
       setTimeout(() => {
         setMode('login');

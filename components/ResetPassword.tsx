@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { authService } from '../services/authService';
+import { neonAuthService } from '../services/neonAuthService';
 
 interface ResetPasswordProps {
   onComplete: () => void;
@@ -57,7 +57,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
     }
     
     try {
-      await authService.updatePassword(token, newPassword);
+      await neonAuthService.updatePassword(token, newPassword);
       setSuccess(true);
       setTimeout(() => {
         onComplete();
