@@ -340,7 +340,7 @@ TOP 10 VEHICLES BY TOTAL COST
 ═══════════════════════════════════════════════════════════════════
 Rank  VIN            Make & Model              Status      Total Cost
 ────  ─────────────  ────────────────────────  ──────────  ──────────
-${filteredSummaries
+${[...filteredSummaries]
           .sort((a, b) => (b.total_landed_cost_usd || 0) - (a.total_landed_cost_usd || 0))
           .slice(0, 10)
           .map((s, i) =>
@@ -540,11 +540,11 @@ KEY PERFORMANCE INDICATORS
 RECOMMENDATIONS
 ═══════════════════════════════════════════════════════════════════════════════
 ${auditData.expenses.byCategory.length > 0 ? `
-• Highest expense category: ${auditData.expenses.byCategory.sort((a, b) => b.total - a.total)[0]?.category}
+• Highest expense category: ${[...auditData.expenses.byCategory].sort((a, b) => b.total - a.total)[0]?.category}
   Consider strategies to optimize ${auditData.expenses.byCategory[0]?.category.toLowerCase()} costs.
 ` : ''}
 ${auditData.expenses.byLocation.length > 0 ? `
-• Highest expense location: ${auditData.expenses.byLocation.sort((a, b) => b.total - a.total)[0]?.location}
+• Highest expense location: ${[...auditData.expenses.byLocation].sort((a, b) => b.total - a.total)[0]?.location}
   Review operational efficiency in ${auditData.expenses.byLocation[0]?.location}.
 ` : ''}
 • Monitor vehicles with expense ratios >30% for potential cost optimization
@@ -1379,7 +1379,7 @@ END OF REPORT
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
-                  {getFilteredSummaries().sort((a, b) => (b.total_landed_cost_usd || 0) - (a.total_landed_cost_usd || 0)).slice(0, 10).map((summary, index) => (
+                  {[...getFilteredSummaries()].sort((a, b) => (b.total_landed_cost_usd || 0) - (a.total_landed_cost_usd || 0)).slice(0, 10).map((summary, index) => (
                     <tr key={summary.vehicle_id} className="hover:bg-zinc-50">
                       <td className="px-4 py-3">
                         <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-lg flex items-center justify-center font-bold text-xs">

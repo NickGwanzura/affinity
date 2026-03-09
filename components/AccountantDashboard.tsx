@@ -737,7 +737,7 @@ export const AccountantDashboard: React.FC = () => {
                     Top Vehicles by Total Cost
                   </h3>
                   <div className="space-y-2">
-                    {summaries
+                    {[...summaries]
                       .sort((a, b) => b.total_landed_cost_usd - a.total_landed_cost_usd)
                       .slice(0, 5)
                       .map((summary, index) => (
