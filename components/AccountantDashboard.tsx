@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails } from '../types';
 import { supabase } from '../services/supabaseService';
 import { generatePayslipPDF } from '../services/pdfService';
+import { Button, StatCard, EmptyState, StatusBadge, SkeletonStatCards, SkeletonChart, SkeletonTable } from './ui';
+import { TrendLineChart, DonutPieChart, SimpleBarChart, CHART_COLORS } from './ui/Charts';
+import { defaultIcons } from './ui/EmptyState';
 
 export const AccountantDashboard: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -121,6 +124,68 @@ export const AccountantDashboard: React.FC = () => {
     .reduce((sum, exp) => sum + ((exp.amount || 0) * (exp.exchange_rate_to_usd || 1)), 0);
 
   const monthlyProfit = monthlyRevenue - monthlyExpenses;
+
+  // Chart data preparation - Monthly trends (last 12 months)
+  const monthlyTrendData = useMemo(() => {
+    const months: { month: string; revenue: number; expenses: number }[] = [];
+    const today = new Date();
+    
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const monthLabel = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      
+      const monthRevenue = invoices
+        .filter(inv => inv.status === 'Paid' && inv.created_at.startsWith(monthKey))
+        .reduce((sum, inv) => sum + inv.amount_usd, 0);
+      
+      const monthExpenses = (expenses || [])
+        .filter(exp => exp.created_at.startsWith(monthKey))
+        .reduce((sum, exp) => sum + ((exp.amount || 0) * (exp.exchange_rate_to_usd || 1)), 0);
+      
+      months.push({ month: monthLabel, revenue: monthRevenue, expenses: monthExpenses });
+    }
+    return months;
+  }, [invoices, expenses]);
+
+  // Expense by category data
+  const expenseCategoryData = useMemo(() => {
+    const categoryTotals: Record<string, number> = {};
+    (expenses || []).forEach(exp => {
+      const amount = (exp.amount || 0) * (exp.exchange_rate_to_usd || 1);
+      categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + amount;
+    });
+    return Object.entries(categoryTotals)
+      .map(([name, value]) => ({ name, value }))
+      .filter(item => item.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }, [expenses]);
+
+  // Invoice status breakdown
+  const invoiceStatusData = useMemo(() => {
+    const statusCounts: Record<string, number> = { Paid: 0, Sent: 0, Draft: 0, Overdue: 0 };
+    invoices.forEach(inv => {
+      if (statusCounts[inv.status] !== undefined) {
+        statusCounts[inv.status] += inv.amount_usd;
+      }
+    });
+    return Object.entries(statusCounts)
+      .map(([name, value]) => ({ name, value }))
+      .filter(item => item.value > 0);
+  }, [invoices]);
+
+  // Revenue by client (top 10)
+  const revenueByClientData = useMemo(() => {
+    const clientTotals: Record<string, number> = {};
+    invoices.filter(inv => inv.status === 'Paid').forEach(inv => {
+      clientTotals[inv.client_name] = (clientTotals[inv.client_name] || 0) + inv.amount_usd;
+    });
+    return Object.entries(clientTotals)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+  }, [invoices]);
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -306,7 +371,7 @@ export const AccountantDashboard: React.FC = () => {
     }
   };
 
-  const handleUpdatePayslipStatus = async (id: string, status: string) => {
+  const handleUpdatePayslipStatus = async (id: string, status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled') => {
     try {
       console.log('[AccountantDashboard] handleUpdatePayslipStatus: Updating status:', { id, status });
       await supabase.updatePayslipStatus(id, status);
@@ -527,6 +592,36 @@ export const AccountantDashboard: React.FC = () => {
         <div className="p-6">
           {activeTab === 'overview' && (
             <div className="space-y-6">
+              {/* Overview Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard 
+                  title="Total Revenue" 
+                  value={formatCurrency(totalRevenue)} 
+                  trend="neutral"
+                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+                <StatCard 
+                  title="Total Expenses" 
+                  value={formatCurrency(totalExpenses)} 
+                  trend="neutral"
+                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+                <StatCard 
+                  title="Net Profit" 
+                  value={formatCurrency(netProfit)} 
+                  trend={netProfit >= 0 ? 'up' : 'down'}
+                  trendValue={netProfit >= 0 ? 'Profitable' : 'Loss'}
+                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
+                />
+                <StatCard 
+                  title="Pending Amount" 
+                  value={formatCurrency(totalPending)} 
+                  trend="neutral"
+                  trendValue={`${pendingInvoices.length} invoices`}
+                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Invoices */}
                 <div>
@@ -540,9 +635,7 @@ export const AccountantDashboard: React.FC = () => {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-zinc-900">{formatCurrency(invoice.amount_usd)}</p>
-                          <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md ${getStatusColor(invoice.status)}`}>
-                            {invoice.status}
-                          </span>
+                          <StatusBadge status={invoice.status} />
                         </div>
                       </div>
                     ))}
@@ -628,9 +721,7 @@ export const AccountantDashboard: React.FC = () => {
                       <td className="px-4 py-3 font-mono text-xs">{invoice.vehicle_id.slice(0, 8)}</td>
                       <td className="px-4 py-3 text-right font-bold">{formatCurrency(invoice.amount_usd)}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md ${getStatusColor(invoice.status)}`}>
-                          {invoice.status}
-                        </span>
+                        <StatusBadge status={invoice.status} />
                       </td>
                       <td className="px-4 py-3">{formatDate(invoice.due_date)}</td>
                       <td className="px-4 py-3">{formatDate(invoice.created_at)}</td>
@@ -727,62 +818,126 @@ export const AccountantDashboard: React.FC = () => {
 
           {activeTab === 'reports' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Expense by Category */}
-                <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-100">
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4">Expenses by Category</h3>
-                  <div className="space-y-3">
-                    {['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Other'].map(category => {
-                      const categoryExpenses = (expenses || []).filter(e => e.category === category);
-                      const total = categoryExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-                      return total > 0 ? (
-                        <div key={category} className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-zinc-700">{category}</span>
-                          <span className="text-sm font-bold text-blue-600">{formatCurrency(total)}</span>
-                        </div>
-                      ) : null;
-                    })}
-                  </div>
+              {/* Stats Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard 
+                  title="This Month Revenue" 
+                  value={formatCurrency(monthlyRevenue)} 
+                  trend={monthlyRevenue > (monthlyTrendData[10]?.revenue || 0) ? 'up' : 'down'}
+                  trendValue={`${monthlyTrendData[10]?.revenue ? Math.abs(Math.round(((monthlyRevenue - monthlyTrendData[10].revenue) / monthlyTrendData[10].revenue) * 100)) : 0}% vs last month`}
+                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+                <StatCard 
+                  title="This Month Expenses" 
+                  value={formatCurrency(monthlyExpenses)} 
+                  trend={monthlyExpenses < (monthlyTrendData[10]?.expenses || 0) ? 'up' : 'down'}
+                  trendValue={`${monthlyTrendData[10]?.expenses ? Math.abs(Math.round(((monthlyExpenses - monthlyTrendData[10].expenses) / monthlyTrendData[10].expenses) * 100)) : 0}% vs last month`}
+                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+                <StatCard 
+                  title="Net Profit" 
+                  value={formatCurrency(monthlyProfit)} 
+                  trend={monthlyProfit >= 0 ? 'up' : 'down'}
+                  trendValue={monthlyProfit >= 0 ? 'Positive' : 'Negative'}
+                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
+                />
+                <StatCard 
+                  title="Pending Invoices" 
+                  value={formatCurrency(totalPending)} 
+                  trend="neutral"
+                  trendValue={`${pendingInvoices.length} invoices`}
+                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                />
+              </div>
+
+              {/* Charts Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Revenue vs Expenses Trend */}
+                <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
+                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                    </svg>
+                    Revenue vs Expenses Trend (12 Months)
+                  </h3>
+                  {loading ? (
+                    <SkeletonChart />
+                  ) : monthlyTrendData.some(d => d.revenue > 0 || d.expenses > 0) ? (
+                    <TrendLineChart data={monthlyTrendData} />
+                  ) : (
+                    <EmptyState 
+                      title="No trend data available" 
+                      description="Financial data will appear here once you have invoices and expenses."
+                      icon={defaultIcons.chart}
+                    />
+                  )}
                 </div>
 
-                {/* Expense by Location */}
-                <div className="bg-gradient-to-br from-green-50 to-white p-6 rounded-2xl border border-green-100">
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4">Expenses by Location</h3>
-                  <div className="space-y-3">
-                    {['UK', 'Namibia', 'Zimbabwe', 'Botswana'].map(location => {
-                      const locationExpenses = (expenses || []).filter(e => e.location === location);
-                      const total = locationExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-                      return total > 0 ? (
-                        <div key={location} className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-zinc-700">{location}</span>
-                          <span className="text-sm font-bold text-green-600">{formatCurrency(total)}</span>
-                        </div>
-                      ) : null;
-                    })}
-                  </div>
+                {/* Expense by Category Pie Chart */}
+                <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
+                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                    </svg>
+                    Expenses by Category
+                  </h3>
+                  {loading ? (
+                    <SkeletonChart />
+                  ) : expenseCategoryData.length > 0 ? (
+                    <DonutPieChart data={expenseCategoryData} />
+                  ) : (
+                    <EmptyState 
+                      title="No expense data" 
+                      description="Expense categories will appear here once you add expenses."
+                      icon={defaultIcons.document}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Secondary Charts Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Invoice Status Breakdown */}
+                <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
+                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Invoice Status Breakdown
+                  </h3>
+                  {loading ? (
+                    <SkeletonChart />
+                  ) : invoiceStatusData.length > 0 ? (
+                    <DonutPieChart data={invoiceStatusData} colors={[CHART_COLORS.success, CHART_COLORS.warning, CHART_COLORS.info, CHART_COLORS.danger]} />
+                  ) : (
+                    <EmptyState 
+                      title="No invoice data" 
+                      description="Invoice status breakdown will appear here once you create invoices."
+                      icon={defaultIcons.document}
+                    />
+                  )}
                 </div>
 
-                {/* Monthly Summary */}
-                <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-2xl border border-purple-100">
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4">This Month</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-zinc-700">Revenue</span>
-                      <span className="text-sm font-bold text-green-600">{formatCurrency(monthlyRevenue)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-zinc-700">Expenses</span>
-                      <span className="text-sm font-bold text-red-600">{formatCurrency(monthlyExpenses)}</span>
-                    </div>
-                    <div className="pt-2 border-t border-purple-200">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-zinc-900">Net Profit</span>
-                        <span className={`text-lg font-bold ${monthlyProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(monthlyProfit)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                {/* Revenue by Client Bar Chart */}
+                <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
+                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Top Clients by Revenue
+                  </h3>
+                  {loading ? (
+                    <SkeletonChart />
+                  ) : revenueByClientData.length > 0 ? (
+                    <SimpleBarChart data={revenueByClientData} />
+                  ) : (
+                    <EmptyState 
+                      title="No client revenue data" 
+                      description="Client revenue data will appear here once you have paid invoices."
+                      icon={defaultIcons.users}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -833,9 +988,7 @@ export const AccountantDashboard: React.FC = () => {
                       return statusInvoices.length > 0 ? (
                         <div key={status} className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
                           <div className="flex items-center gap-2">
-                            <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md ${getStatusColor(status)}`}>
-                              {status}
-                            </span>
+                            <StatusBadge status={status} />
                             <span className="text-sm text-zinc-600">({statusInvoices.length})</span>
                           </div>
                           <span className="text-sm font-bold text-zinc-900">{formatCurrency(total)}</span>
