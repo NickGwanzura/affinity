@@ -79,8 +79,21 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setMode('login');
         setSuccess('');
       }, 3000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to send reset email');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send reset email';
+      console.error('[Forgot Password] Error:', err);
+      
+      // Provide helpful guidance for common errors
+      if (errorMessage.includes('redirect URL not authorized')) {
+        setError(
+          'Server configuration error: Redirect URL not authorized. ' +
+          'Please contact support or try again later.'
+        );
+      } else if (errorMessage.includes('No account found')) {
+        setError('No account found with this email address. Please check your email or request access.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

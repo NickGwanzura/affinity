@@ -285,11 +285,26 @@ class SupabaseService {
 
     try {
       // Supabase Auth - RETAINED
+      // Note: The redirect URL must be whitelisted in Supabase Auth settings
+      // Go to: Authentication > URL Configuration > Redirect URLs
+      // Add: http://localhost:3000/* and https://yourdomain.com/*
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { error } = await supabaseClient.auth.resetPasswordForEmail(sanitizeString(email), {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: redirectUrl,
       });
 
-      if (error) throw new APIError(400, 'Failed to send reset email', error);
+      if (error) {
+        // Provide more specific error messages
+        if (error.message?.includes('Email not found') || error.message?.includes('User not found')) {
+          throw new APIError(404, 'No account found with this email address', error);
+        }
+        if (error.message?.includes('redirect')) {
+          throw new APIError(400, 'Redirect URL not authorized. Please contact support.', error);
+        }
+        throw new APIError(400, error.message || 'Failed to send reset email', error);
+      }
+      
       logAPICall('POST', '/auth/reset-password', { success: true });
     } catch (error: unknown) {
       logAPICall('POST', '/auth/reset-password', { success: false, error: getErrorMessage(error) });
