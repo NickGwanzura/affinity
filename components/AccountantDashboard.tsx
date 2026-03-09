@@ -15,6 +15,8 @@ export const AccountantDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'expenses' | 'payments' | 'reports' | 'clients' | 'payslips'>('overview');
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showClientModal, setShowClientModal] = useState(false);
   const [showPayslipModal, setShowPayslipModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -38,6 +40,14 @@ export const AccountantDashboard: React.FC = () => {
   const [expenseLocation, setExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
   const [expenseDriver, setExpenseDriver] = useState<string>('');
   const [company, setCompany] = useState<CompanyDetails | null>(null);
+
+  // Edit Expense State
+  const [editExpenseVehicle, setEditExpenseVehicle] = useState('');
+  const [editExpenseDesc, setEditExpenseDesc] = useState('');
+  const [editExpenseAmount, setEditExpenseAmount] = useState('');
+  const [editExpenseCurrency, setEditExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD'>('NAD');
+  const [editExpenseCategory, setEditExpenseCategory] = useState<'Fuel' | 'Tolls' | 'Food' | 'Repairs' | 'Duty' | 'Shipping' | 'Other'>('Fuel');
+  const [editExpenseLocation, setEditExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
 
   // FIX: Centralized data loading function with error handling
   const loadData = async (throwOnError = false) => {
@@ -160,6 +170,46 @@ export const AccountantDashboard: React.FC = () => {
     } catch (error: any) {
       console.error('[AccountantDashboard] handleAddExpense: Error adding expense:', error);
       alert(error?.message || 'Failed to add expense. Please try again.');
+    }
+  };
+
+  // Edit Expense Handler
+  const openEditExpenseModal = (expense: Expense) => {
+    setEditingExpense(expense);
+    setEditExpenseVehicle(expense.vehicle_id || '');
+    setEditExpenseDesc(expense.description || '');
+    setEditExpenseAmount(expense.amount.toString());
+    setEditExpenseCurrency(expense.currency);
+    setEditExpenseCategory(expense.category as any);
+    setEditExpenseLocation(expense.location as any);
+    setShowEditExpenseModal(true);
+  };
+
+  const handleUpdateExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingExpense || !editExpenseAmount) return;
+
+    try {
+      console.log('[AccountantDashboard] handleUpdateExpense: Updating expense...');
+      await supabase.updateExpense(editingExpense.id, {
+        vehicle_id: editExpenseVehicle || undefined,
+        description: editExpenseDesc,
+        amount: parseFloat(editExpenseAmount),
+        currency: editExpenseCurrency,
+        category: editExpenseCategory,
+        location: editExpenseLocation
+      });
+      console.log('[AccountantDashboard] handleUpdateExpense: Expense updated successfully');
+      
+      setShowEditExpenseModal(false);
+      setEditingExpense(null);
+      
+      // Refresh data
+      await loadData(true);
+      alert('Expense updated successfully!');
+    } catch (error: any) {
+      console.error('[AccountantDashboard] handleUpdateExpense: Error updating expense:', error);
+      alert(error?.message || 'Failed to update expense. Please try again.');
     }
   };
 
@@ -602,6 +652,7 @@ export const AccountantDashboard: React.FC = () => {
                     <th className="px-4 py-3 text-right font-semibold text-zinc-700">Amount</th>
                     <th className="px-4 py-3 text-right font-semibold text-zinc-700">USD Value</th>
                     <th className="px-4 py-3 text-left font-semibold text-zinc-700">Date</th>
+                    <th className="px-4 py-3 text-center font-semibold text-zinc-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -621,6 +672,15 @@ export const AccountantDashboard: React.FC = () => {
                         {formatCurrency(expense.amount * expense.exchange_rate_to_usd)}
                       </td>
                       <td className="px-4 py-3">{formatDate(expense.created_at)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => openEditExpenseModal(expense)}
+                          className="text-blue-600 hover:text-blue-800 font-semibold text-xs px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                          title="Edit expense"
+                        >
+                          Edit
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1067,6 +1127,129 @@ export const AccountantDashboard: React.FC = () => {
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200 transition-all"
                 >
                   Add Expense
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Expense Modal */}
+      {showEditExpenseModal && editingExpense && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowEditExpenseModal(false)}></div>
+          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-zinc-900">Edit Expense</h3>
+              <button 
+                onClick={() => setShowEditExpenseModal(false)}
+                className="text-zinc-400 hover:text-zinc-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateExpense} className="space-y-5">
+              <div>
+                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Vehicle Selection <span className="text-zinc-400 text-xs">(Optional)</span></label>
+                <select
+                  value={editExpenseVehicle}
+                  onChange={(e) => setEditExpenseVehicle(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                >
+                  <option value="">None (General expense)</option>
+                  {vehicles.map((v) => (
+                    <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editExpenseAmount}
+                    onChange={(e) => setEditExpenseAmount(e.target.value)}
+                    required
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency <span className="text-blue-600">*</span></label>
+                  <select
+                    value={editExpenseCurrency}
+                    onChange={(e) => setEditExpenseCurrency(e.target.value as any)}
+                    className="w-full px-4 py-3 rounded-xl border border-blue-300 bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-semibold"
+                  >
+                    <option value="NAD">NAD (Namibia)</option>
+                    <option value="GBP">GBP (UK)</option>
+                    <option value="USD">USD (General)</option>
+                  </select>
+                  <p className="text-xs text-blue-600 mt-1">Change the currency for this expense</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Category</label>
+                  <select
+                    value={editExpenseCategory}
+                    onChange={(e) => setEditExpenseCategory(e.target.value as any)}
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  >
+                    <option value="Fuel">Fuel</option>
+                    <option value="Tolls">Tolls</option>
+                    <option value="Food">Food</option>
+                    <option value="Repairs">Repairs</option>
+                    <option value="Duty">Duty</option>
+                    <option value="Shipping">Shipping</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Location</label>
+                  <select
+                    value={editExpenseLocation}
+                    onChange={(e) => setEditExpenseLocation(e.target.value as any)}
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  >
+                    <option value="UK">UK</option>
+                    <option value="Namibia">Namibia</option>
+                    <option value="Zimbabwe">Zimbabwe</option>
+                    <option value="Botswana">Botswana</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Description</label>
+                <textarea
+                  value={editExpenseDesc}
+                  onChange={(e) => setEditExpenseDesc(e.target.value)}
+                  placeholder="E.g. Full tank at Engen Windhoek"
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditExpenseModal(false)}
+                  className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all"
+                >
+                  Update Expense
                 </button>
               </div>
             </form>
