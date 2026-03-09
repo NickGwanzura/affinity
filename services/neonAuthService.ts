@@ -8,7 +8,7 @@
 import { AppUser, UserRole, AuthSession } from '../types';
 
 // Neon Auth configuration
-const NEON_AUTH_URL = 'https://ep-shiny-glitter-ah22khor.neonauth.c-3.us-east-1.aws.neon.tech/neondb/auth';
+const NEON_AUTH_URL = import.meta.env.VITE_NEON_AUTH_URL || 'https://ep-shiny-glitter-ah22khor.neonauth.c-3.us-east-1.aws.neon.tech/neondb/auth';
 const JWKS_URL = `${NEON_AUTH_URL}/.well-known/jwks.json`;
 
 // Token storage
