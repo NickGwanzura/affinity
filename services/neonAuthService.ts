@@ -223,24 +223,39 @@ class NeonAuthService {
     console.log('[NeonAuth] Redirect URL:', `${window.location.origin}/`);
     
     try {
-      const response = await neonAuthRequest('/reset-password', {
+      // Try /forgot-password first (standard endpoint for requesting reset)
+      const response = await neonAuthRequest('/forgot-password', {
         method: 'POST',
         body: JSON.stringify({ 
           email,
-          redirect_url: `${window.location.origin}/`,
+          redirectUrl: `${window.location.origin}/`,
         }),
       });
-      console.log('[NeonAuth] Reset password response:', response);
-    } catch (error) {
-      console.error('[NeonAuth] Reset password error:', error);
-      throw error;
+      console.log('[NeonAuth] Forgot password response:', response);
+    } catch (error: any) {
+      // If /forgot-password doesn't exist, try /reset-password with different params
+      if (error.message?.includes('Not Found') || error.message?.includes('404')) {
+        console.log('[NeonAuth] /forgot-password not found, trying /reset-password');
+        const response = await neonAuthRequest('/reset-password', {
+          method: 'POST',
+          body: JSON.stringify({ 
+            email,
+            redirectUrl: `${window.location.origin}/`,
+          }),
+        });
+        console.log('[NeonAuth] Reset password response:', response);
+      } else {
+        console.error('[NeonAuth] Reset password error:', error);
+        throw error;
+      }
     }
   }
 
   async updatePassword(token: string, newPassword: string): Promise<void> {
     console.log('[NeonAuth] Updating password with token:', token.substring(0, 10) + '...');
     
-    await neonAuthRequest('/update-password', {
+    // Neon Auth reset-password endpoint uses the token to verify and update in one call
+    await neonAuthRequest('/reset-password', {
       method: 'POST',
       body: JSON.stringify({
         token,
