@@ -48,6 +48,7 @@ export const CURRENCIES = {
   GBP: 'GBP',
   NAD: 'NAD',
   USD: 'USD',
+  BWP: 'BWP', // Botswana Pula
 } as const;
 
 export type CurrencyValue = typeof CURRENCIES[keyof typeof CURRENCIES];
@@ -123,8 +124,9 @@ export const PAYMENT_TYPES = {
 // Exchange Rates
 export const EXCHANGE_RATES = {
   GBP: 1.27, // 1 GBP = 1.27 USD
-  NAD: 0.055, // 1 NAD = 0.055 USD
+  NAD: 0.055, // 1 NAD = 0.055 USD (approx)
   USD: 1.0,
+  BWP: 0.074, // 1 BWP = 0.074 USD (Botswana Pula)
 } as const;
 
 // App Views

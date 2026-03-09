@@ -1,5 +1,5 @@
 
-export type Currency = 'GBP' | 'NAD' | 'USD';
+export type Currency = 'GBP' | 'NAD' | 'USD' | 'BWP';
 export type VehicleStatus = 'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana' | 'Sold';
 export type ExpenseCategory = 'Shipping' | 'Fuel' | 'Tolls' | 'Duty' | 'Food' | 'Repairs' | 'Driver Disbursement' | 'Other';
 export type UserRole = 'Admin' | 'Driver' | 'Manager' | 'Accountant';
@@ -178,7 +178,7 @@ export interface Employee {
   department?: string;
   position: string;
   base_pay_usd: number;
-  currency: 'USD' | 'NAD' | 'GBP';
+  currency: 'USD' | 'NAD' | 'GBP' | 'BWP';
   employment_type: 'Full-time' | 'Part-time' | 'Contract' | 'Intern';
   date_hired: string;
   status: 'Active' | 'On Leave' | 'Terminated';
@@ -233,7 +233,7 @@ export interface Payslip {
   total_deductions: number;
   net_pay: number;
   
-  currency: 'USD' | 'NAD' | 'GBP';
+  currency: 'USD' | 'NAD' | 'GBP' | 'BWP';
   payment_date?: string;
   payment_method?: 'Bank Transfer' | 'Cash' | 'Cheque' | 'Mobile Money';
   status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled';

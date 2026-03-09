@@ -35,7 +35,7 @@ export const AccountantDashboard: React.FC = () => {
   const [expenseVehicle, setExpenseVehicle] = useState('');
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseCurrency, setExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD'>('NAD');
+  const [expenseCurrency, setExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD' | 'BWP'>('NAD');
   const [expenseCategory, setExpenseCategory] = useState<'Fuel' | 'Tolls' | 'Food' | 'Repairs' | 'Duty' | 'Shipping' | 'Other'>('Fuel');
   const [expenseLocation, setExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
   const [expenseDriver, setExpenseDriver] = useState<string>('');
@@ -45,7 +45,7 @@ export const AccountantDashboard: React.FC = () => {
   const [editExpenseVehicle, setEditExpenseVehicle] = useState('');
   const [editExpenseDesc, setEditExpenseDesc] = useState('');
   const [editExpenseAmount, setEditExpenseAmount] = useState('');
-  const [editExpenseCurrency, setEditExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD'>('NAD');
+  const [editExpenseCurrency, setEditExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD' | 'BWP'>('NAD');
   const [editExpenseCategory, setEditExpenseCategory] = useState<'Fuel' | 'Tolls' | 'Food' | 'Repairs' | 'Duty' | 'Shipping' | 'Other'>('Fuel');
   const [editExpenseLocation, setEditExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
 
@@ -1025,6 +1025,7 @@ export const AccountantDashboard: React.FC = () => {
                     <option value="NAD">NAD (Namibia)</option>
                     <option value="GBP">GBP (UK)</option>
                     <option value="USD">USD (General)</option>
+                    <option value="BWP">BWP (Botswana)</option>
                   </select>
                 </div>
               </div>
@@ -1189,6 +1190,7 @@ export const AccountantDashboard: React.FC = () => {
                     <option value="NAD">NAD (Namibia)</option>
                     <option value="GBP">GBP (UK)</option>
                     <option value="USD">USD (General)</option>
+                    <option value="BWP">BWP (Botswana)</option>
                   </select>
                   <p className="text-xs text-blue-600 mt-1">Change the currency for this expense</p>
                 </div>

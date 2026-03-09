@@ -38,7 +38,7 @@ export const AdminDashboard: React.FC = () => {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [employeeForm, setEmployeeForm] = useState({
     name: '', email: '', phone: '', department: '', position: '',
-    base_pay_usd: '', currency: 'USD' as 'USD' | 'NAD' | 'GBP',
+    base_pay_usd: '', currency: 'USD' as 'USD' | 'NAD' | 'GBP' | 'BWP',
     employment_type: 'Full-time' as 'Full-time' | 'Part-time' | 'Contract' | 'Intern',
     date_hired: '', national_id: '', bank_account: '', bank_name: '', tax_number: ''
   });
@@ -60,7 +60,7 @@ export const AdminDashboard: React.FC = () => {
   const [fundsForm, setFundsForm] = useState({
     type: 'Received' as 'Received' | 'Disbursed',
     amount: '',
-    currency: 'USD' as 'USD' | 'NAD' | 'GBP',
+    currency: 'USD' as 'USD' | 'NAD' | 'GBP' | 'BWP',
     description: '',
     reference: '',
     recipient: '',
@@ -80,7 +80,7 @@ export const AdminDashboard: React.FC = () => {
   const [expenseVehicle, setExpenseVehicle] = useState('');
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseCurrency, setExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD'>('NAD');
+  const [expenseCurrency, setExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD' | 'BWP'>('NAD');
   const [expenseCategory, setExpenseCategory] = useState<'Fuel' | 'Tolls' | 'Food' | 'Repairs' | 'Duty' | 'Shipping' | 'Other'>('Fuel');
   const [expenseLocation, setExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
   const [expenseDriver, setExpenseDriver] = useState<string>('');
@@ -1904,6 +1904,7 @@ END OF REPORT
                     <option value="USD">USD</option>
                     <option value="NAD">NAD</option>
                     <option value="GBP">GBP</option>
+                    <option value="BWP">BWP</option>
                   </select>
                 </div>
               </div>
@@ -2129,6 +2130,7 @@ END OF REPORT
                     <option value="NAD">NAD (Namibia)</option>
                     <option value="GBP">GBP (UK)</option>
                     <option value="USD">USD (General)</option>
+                    <option value="BWP">BWP (Botswana)</option>
                   </select>
                 </div>
               </div>
@@ -2354,6 +2356,7 @@ END OF REPORT
                     <option value="USD">USD</option>
                     <option value="NAD">NAD</option>
                     <option value="GBP">GBP</option>
+                    <option value="BWP">BWP</option>
                   </select>
                 </div>
               </div>

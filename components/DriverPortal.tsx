@@ -235,6 +235,7 @@ export const DriverPortal: React.FC = () => {
               <option value="NAD">NAD (Namibia)</option>
               <option value="GBP">GBP (UK)</option>
               <option value="USD">USD (General)</option>
+              <option value="BWP">BWP (Botswana)</option>
             </select>
           </div>
         </div>
