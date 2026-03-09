@@ -14,6 +14,8 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [manualToken, setManualToken] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
 
   // Validate password on change
   useEffect(() => {
@@ -45,13 +47,28 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
       return;
     }
 
-    // Get token from URL hash
-    const hash = window.location.hash;
-    const tokenMatch = hash.match(/token=([^&]+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
+    // Get token from URL or manual input
+    let token = manualToken.trim();
     
     if (!token) {
-      setError('Invalid or missing reset token');
+      // Try to extract from URL (hash or query params)
+      const hash = window.location.hash;
+      const search = window.location.search;
+      const fullUrl = hash + search;
+      
+      // Try multiple token formats
+      const tokenMatch = fullUrl.match(/[?&]token=([^&]+)/) || 
+                         fullUrl.match(/[?&]access_token=([^&]+)/) ||
+                         fullUrl.match(/token[:=]([^&]+)/i);
+      token = tokenMatch ? tokenMatch[1] : '';
+      
+      console.log('[ResetPassword] Full URL:', fullUrl);
+      console.log('[ResetPassword] Token from URL:', token ? 'Found' : 'Not found');
+    }
+    
+    if (!token) {
+      setError('Invalid or missing reset token. Please check your email link or enter the token manually below.');
+      setShowManualInput(true);
       setLoading(false);
       return;
     }
@@ -132,11 +149,42 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm font-bold flex items-center gap-2" role="alert">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {error}
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm font-bold" role="alert">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {error}
+                </div>
+                {!showManualInput && (
+                  <button
+                    type="button"
+                    onClick={() => setShowManualInput(true)}
+                    className="text-xs underline hover:text-red-800"
+                  >
+                    Enter token manually
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Manual Token Input */}
+            {showManualInput && (
+              <div className="space-y-1">
+                <label htmlFor="reset-token" className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">
+                  Reset Token (from email)
+                </label>
+                <input
+                  id="reset-token"
+                  type="text"
+                  value={manualToken}
+                  onChange={(e) => setManualToken(e.target.value)}
+                  placeholder="Paste your reset token here"
+                  className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium font-mono text-sm"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  Copy the token from your reset email and paste it here.
+                </p>
               </div>
             )}
 

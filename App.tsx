@@ -26,9 +26,19 @@ export default function App() {
     const token = params.get('token');
     if (token) setInviteToken(token);
 
-    // Check for password reset hash
+    // Check for password reset hash (multiple formats)
     const hash = window.location.hash;
-    if (hash.includes('access_token') && hash.includes('type=recovery')) {
+    const search = window.location.search;
+    const fullUrl = hash + search;
+    
+    // Neon Auth can send different formats:
+    // #type=recovery&token=xxx
+    // #access_token=xxx&type=recovery
+    // ?type=recovery&token=xxx
+    if (
+      fullUrl.includes('type=recovery') ||
+      fullUrl.includes('token=') && (fullUrl.includes('reset') || fullUrl.includes('recovery'))
+    ) {
       setIsResetPassword(true);
     }
 

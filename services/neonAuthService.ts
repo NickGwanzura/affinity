@@ -219,13 +219,22 @@ class NeonAuthService {
   // ============================================
   
   async resetPassword(email: string): Promise<void> {
-    await neonAuthRequest('/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({ 
-        email,
-        redirect_url: `${window.location.origin}/`,
-      }),
-    });
+    console.log('[NeonAuth] Requesting password reset for:', email);
+    console.log('[NeonAuth] Redirect URL:', `${window.location.origin}/`);
+    
+    try {
+      const response = await neonAuthRequest('/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          email,
+          redirect_url: `${window.location.origin}/`,
+        }),
+      });
+      console.log('[NeonAuth] Reset password response:', response);
+    } catch (error) {
+      console.error('[NeonAuth] Reset password error:', error);
+      throw error;
+    }
   }
 
   async updatePassword(token: string, newPassword: string): Promise<void> {
