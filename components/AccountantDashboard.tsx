@@ -136,11 +136,11 @@ export const AccountantDashboard: React.FC = () => {
       const monthLabel = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
       
       const monthRevenue = invoices
-        .filter(inv => inv.status === 'Paid' && inv.created_at.startsWith(monthKey))
+        .filter(inv => inv.status === 'Paid' && String(inv.created_at).startsWith(monthKey))
         .reduce((sum, inv) => sum + inv.amount_usd, 0);
       
       const monthExpenses = (expenses || [])
-        .filter(exp => exp.created_at.startsWith(monthKey))
+        .filter(exp => String(exp.created_at).startsWith(monthKey))
         .reduce((sum, exp) => sum + ((exp.amount || 0) * (exp.exchange_rate_to_usd || 1)), 0);
       
       months.push({ month: monthLabel, revenue: monthRevenue, expenses: monthExpenses });

@@ -4,6 +4,7 @@ import { CompanyDetails, AppUser, UserRole, SupabaseConfig, UserInvite, Registra
 import { supabase } from '../services/supabaseService';
 import { authService } from '../services/authService';
 
+
 export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'company' | 'users' | 'clients' | 'requests' | 'invites' | 'supabase'>('company');
   const [company, setCompany] = useState<CompanyDetails | null>(null);
@@ -21,13 +22,20 @@ export const Settings: React.FC = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showSetPasswordModal, setShowSetPasswordModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<AppUser | null>(null);
   const [userToEdit, setUserToEdit] = useState<AppUser | null>(null);
+  const [userToSetPassword, setUserToSetPassword] = useState<AppUser | null>(null);
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
+    password: '',
     role: 'Driver' as UserRole,
     status: 'Active' as const
+  });
+  const [passwordForm, setPasswordForm] = useState({
+    newPassword: '',
+    confirmPassword: ''
   });
   const [editForm, setEditForm] = useState({
     name: '',
@@ -124,20 +132,64 @@ export const Settings: React.FC = () => {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate password
+    if (!userForm.password || userForm.password.length < 8) {
+      alert('Password must be at least 8 characters');
+      return;
+    }
+    
     try {
-      const newUser = await supabase.createUser(userForm);
+      // Use authService to create user with password
+      const newUser = await authService.createUser({
+        name: userForm.name,
+        email: userForm.email,
+        password: userForm.password,
+        role: userForm.role
+      });
       setUsers([...users, newUser]);
       setShowUserModal(false);
-      setUserForm({ name: '', email: '', role: 'Driver', status: 'Active' });
+      setUserForm({ name: '', email: '', password: '', role: 'Driver', status: 'Active' });
       setSaveStatus('User created successfully!');
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error: any) {
       console.error('Error creating user:', error);
-      if (error.name === 'ValidationError') {
-        alert(`${error.field}: ${error.message}`);
-      } else {
-        alert('Failed to create user. Please try again.');
-      }
+      alert(error.message || 'Failed to create user. Please try again.');
+    }
+  };
+
+  const openSetPasswordModal = (user: AppUser) => {
+    setUserToSetPassword(user);
+    setPasswordForm({ newPassword: '', confirmPassword: '' });
+    setShowSetPasswordModal(true);
+  };
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userToSetPassword) return;
+
+    // Validate passwords match
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    // Validate password length
+    if (passwordForm.newPassword.length < 8) {
+      alert('Password must be at least 8 characters');
+      return;
+    }
+
+    try {
+      await authService.adminSetUserPassword(userToSetPassword.id, passwordForm.newPassword);
+      setShowSetPasswordModal(false);
+      setUserToSetPassword(null);
+      setPasswordForm({ newPassword: '', confirmPassword: '' });
+      setSaveStatus(`Password updated for ${userToSetPassword.name}`);
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (error: any) {
+      console.error('Error setting password:', error);
+      alert(error.message || 'Failed to set password. Please try again.');
     }
   };
 
@@ -830,12 +882,12 @@ export const Settings: React.FC = () => {
                               <td className="px-4 lg:px-6 py-4 text-right">
                                 <div className="flex items-center justify-end gap-1 lg:gap-2">
                                   <button
-                                    onClick={() => handleResetPassword(user.email)}
-                                    className="text-zinc-400 hover:text-green-600 p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
-                                    title="Reset password"
+                                    onClick={() => openSetPasswordModal(user)}
+                                    className="text-zinc-400 hover:text-blue-600 p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+                                    title="Set password"
                                   >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
                                   </button>
                                   <button
@@ -924,6 +976,15 @@ export const Settings: React.FC = () => {
                               {/* Actions Dropdown Area */}
                               <div className="flex items-center gap-1 flex-shrink-0">
                                 <button
+                                  onClick={() => openSetPasswordModal(user)}
+                                  className="text-zinc-400 hover:text-blue-600 p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                  title="Set password"
+                                >
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                  </svg>
+                                </button>
+                                <button
                                   onClick={() => openEditModal(user)}
                                   className="text-blue-600 hover:text-blue-800 p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                   title="Edit user role"
@@ -964,12 +1025,12 @@ export const Settings: React.FC = () => {
                               </div>
                               <div className="flex items-center gap-1">
                                 <button
-                                  onClick={() => handleResetPassword(user.email)}
-                                  className="text-zinc-400 hover:text-green-600 p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                                  title="Reset password"
+                                  onClick={() => openSetPasswordModal(user)}
+                                  className="text-zinc-400 hover:text-blue-600 p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                  title="Set password"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                   </svg>
                                 </button>
                                 <button
@@ -1318,6 +1379,19 @@ export const Settings: React.FC = () => {
                 />
               </div>
               <div className="space-y-1">
+                <label className="text-sm font-semibold text-zinc-700">Password</label>
+                <input
+                  required
+                  type="password"
+                  value={userForm.password}
+                  onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                  placeholder="Min 8 characters"
+                  minLength={8}
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+                <p className="text-xs text-zinc-500">Must be at least 8 characters</p>
+              </div>
+              <div className="space-y-1">
                 <label className="text-sm font-semibold text-zinc-700">Role</label>
                 <div className="space-y-2">
                   <div
@@ -1408,7 +1482,10 @@ export const Settings: React.FC = () => {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowUserModal(false)}
+                  onClick={() => {
+                    setShowUserModal(false);
+                    setUserForm({ name: '', email: '', password: '', role: 'Driver', status: 'Active' });
+                  }}
                   className="flex-1 px-4 py-3 rounded-xl font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
                 >
                   Cancel
@@ -1418,6 +1495,76 @@ export const Settings: React.FC = () => {
                   className="flex-1 px-4 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-700"
                 >
                   Create User
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Set Password Modal */}
+      {showSetPasswordModal && userToSetPassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowSetPasswordModal(false)}></div>
+          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-zinc-900">Set Password</h3>
+                <p className="text-sm text-zinc-500">Set a new password for {userToSetPassword.name}</p>
+              </div>
+            </div>
+            <form onSubmit={handleSetPassword} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-zinc-700">New Password</label>
+                <input
+                  required
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  placeholder="Min 8 characters"
+                  minLength={8}
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-zinc-700">Confirm Password</label>
+                <input
+                  required
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  placeholder="Re-enter password"
+                  minLength={8}
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <p className="text-xs text-amber-700 font-medium">
+                  ⚠️ This will immediately change the user's password. They will need to use the new password on their next login.
+                </p>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSetPasswordModal(false);
+                    setUserToSetPassword(null);
+                    setPasswordForm({ newPassword: '', confirmPassword: '' });
+                  }}
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Set Password
                 </button>
               </div>
             </form>

@@ -386,6 +386,45 @@ class AuthService {
   }
 
   // ============================================
+  // ADMIN SET USER PASSWORD (Admin only)
+  // ============================================
+
+  async adminSetUserPassword(userId: string, newPassword: string): Promise<void> {
+    if (!sql) throw new Error('Database not connected');
+
+    // Validate password
+    if (newPassword.length < 8) {
+      throw new Error('Password must be at least 8 characters');
+    }
+
+    // Check if user exists
+    const rows = await sql`
+      SELECT id FROM user_profiles
+      WHERE id = ${userId}
+      LIMIT 1
+    `;
+
+    if (rows.length === 0) {
+      throw new Error('User not found');
+    }
+
+    // Hash new password
+    const salt = await generateSalt();
+    const hash = await hashPassword(newPassword, salt);
+
+    // Update password
+    await sql`
+      UPDATE user_profiles
+      SET password_hash = ${hash},
+          password_salt = ${salt},
+          updated_at = NOW()
+      WHERE id = ${userId}
+    `;
+
+    console.log(`[Auth] Admin changed password for user: ${userId}`);
+  }
+
+  // ============================================
   // CHANGE PASSWORD (Logged in user)
   // ============================================
 
