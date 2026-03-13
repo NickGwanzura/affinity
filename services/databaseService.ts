@@ -562,7 +562,7 @@ export async function getInvoices(pagination?: PaginationParams): Promise<Invoic
       const rows = await sql`
         SELECT i.*,
           COALESCE(
-            (SELECT json_agg(ii.* ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
+            (SELECT jsonb_agg(to_jsonb(ii) ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
             i.items
           ) as items
         FROM invoices i
@@ -581,7 +581,7 @@ export async function getInvoices(pagination?: PaginationParams): Promise<Invoic
       const rows = await sql`
         SELECT i.*,
           COALESCE(
-            (SELECT json_agg(ii.* ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
+            (SELECT jsonb_agg(to_jsonb(ii) ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
             i.items
           ) as items
         FROM invoices i
