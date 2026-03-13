@@ -7,6 +7,9 @@ import { TrendLineChart, DonutPieChart, SimpleBarChart, CHART_COLORS } from './u
 import { defaultIcons } from './ui/EmptyState';
 
 export const AccountantDashboard: React.FC = () => {
+  const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
+    value ? value.slice(0, length) : fallback;
+
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -718,7 +721,7 @@ export const AccountantDashboard: React.FC = () => {
                   {invoices.map((invoice) => (
                     <tr key={invoice.id} className="hover:bg-zinc-50">
                       <td className="px-4 py-3 font-mono text-xs">{invoice.invoice_number}</td>
-                      <td className="px-4 py-3 font-mono text-xs">{invoice.vehicle_id.slice(0, 8)}</td>
+                      <td className="px-4 py-3 font-mono text-xs">{truncateValue(invoice.vehicle_id, 8)}</td>
                       <td className="px-4 py-3 text-right font-bold">{formatCurrency(invoice.amount_usd)}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={invoice.status} />
@@ -794,7 +797,7 @@ export const AccountantDashboard: React.FC = () => {
                 <tbody className="divide-y divide-zinc-100">
                   {payments.map((payment) => (
                     <tr key={payment.id} className="hover:bg-zinc-50">
-                      <td className="px-4 py-3 font-mono text-xs">{payment.reference_id.slice(0, 12)}</td>
+                      <td className="px-4 py-3 font-mono text-xs">{truncateValue(payment.reference_id, 12)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md ${
                           payment.type === 'Inbound' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'

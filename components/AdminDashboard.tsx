@@ -9,6 +9,9 @@ import {
 } from 'recharts';
 
 export const AdminDashboard: React.FC = () => {
+  const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
+    value ? value.slice(0, length) : fallback;
+
   const [summaries, setSummaries] = useState<LandedCostSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -344,7 +347,7 @@ ${[...filteredSummaries]
           .sort((a, b) => (b.total_landed_cost_usd || 0) - (a.total_landed_cost_usd || 0))
           .slice(0, 10)
           .map((s, i) =>
-            `${(i + 1).toString().padStart(3)}   ${s.vin_number.slice(0, 13).padEnd(13)}  ${s.make_model.slice(0, 24).padEnd(24)}  ${s.status.padEnd(10)}  $${(s.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+            `${(i + 1).toString().padStart(3)}   ${truncateValue(s.vin_number, 13).padEnd(13)}  ${truncateValue(s.make_model, 24).padEnd(24)}  ${(s.status || '-').padEnd(10)}  $${(s.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
           ).join('\n')}
 
 ═══════════════════════════════════════════════════════════════════
@@ -1387,7 +1390,9 @@ END OF REPORT
                         </div>
                       </td>
                       <td className="px-4 py-3 font-semibold text-zinc-900">{summary.make_model}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-zinc-500">{summary.vin_number.slice(0, 12)}...</td>
+                      <td className="px-4 py-3 font-mono text-xs text-zinc-500">
+                        {summary.vin_number ? `${truncateValue(summary.vin_number, 12)}...` : '-'}
+                      </td>
                       <td className="px-4 py-3">
                         <span className="inline-block px-2 py-1 text-xs font-semibold rounded-md bg-blue-50 text-blue-700">
                           {summary.status}
