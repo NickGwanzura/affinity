@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Quote, Invoice, Payment, Vehicle, CompanyDetails, LineItem } from '../types';
 import { supabase } from '../services/supabaseService';
-import { generateQuotePDF, generateInvoicePDF } from '../services/pdfService';
+import { generateQuotePDF, generateInvoicePDF, generateQuotePDFAndDownload, generateInvoicePDFAndDownload } from '../services/pdfService';
 import { useToast } from './Toast';
 
 // Default empty line item
@@ -28,6 +28,8 @@ export const Financials: React.FC = () => {
   // Modal states
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState('');
   
   // Form states for Quote
   const [quoteForm, setQuoteForm] = useState({
@@ -135,6 +137,14 @@ export const Financials: React.FC = () => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const handleCreateQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -229,7 +239,7 @@ export const Financials: React.FC = () => {
       return;
     }
     try {
-      await generateQuotePDF(quote, company);
+      await generateQuotePDFAndDownload(quote, company);
     } catch (error) {
       console.error('Error generating quote PDF:', error);
       showToast('Failed to generate quote PDF', 'error');
@@ -242,10 +252,55 @@ export const Financials: React.FC = () => {
       return;
     }
     try {
-      await generateInvoicePDF(invoice, company);
+      await generateInvoicePDFAndDownload(invoice, company);
     } catch (error) {
       console.error('Error generating invoice PDF:', error);
       showToast('Failed to generate invoice PDF', 'error');
+    }
+  };
+
+  const openPreview = (blob: Blob, title: string) => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    const url = URL.createObjectURL(blob);
+    setPreviewUrl(url);
+    setPreviewTitle(title);
+  };
+
+  const closePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setPreviewTitle('');
+  };
+
+  const handlePreviewQuote = async (quote: Quote) => {
+    if (!company) {
+      showToast('Company details are not loaded yet', 'warning');
+      return;
+    }
+    try {
+      const blob = await generateQuotePDF(quote, company);
+      openPreview(blob, `Quote ${quote.quote_number}`);
+    } catch (error) {
+      console.error('Error previewing quote PDF:', error);
+      showToast('Failed to preview quote PDF', 'error');
+    }
+  };
+
+  const handlePreviewInvoice = async (invoice: Invoice) => {
+    if (!company) {
+      showToast('Company details are not loaded yet', 'warning');
+      return;
+    }
+    try {
+      const blob = await generateInvoicePDF(invoice, company);
+      openPreview(blob, `Invoice ${invoice.invoice_number}`);
+    } catch (error) {
+      console.error('Error previewing invoice PDF:', error);
+      showToast('Failed to preview invoice PDF', 'error');
     }
   };
 
@@ -640,6 +695,42 @@ export const Financials: React.FC = () => {
         </div>
       )}
 
+      {previewUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-950/60 backdrop-blur-sm" onClick={closePreview}></div>
+          <div className="relative w-full max-w-6xl h-[88vh] bg-white rounded-3xl shadow-2xl overflow-hidden border border-zinc-200">
+            <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-zinc-200 bg-zinc-50">
+              <div>
+                <h3 className="text-lg font-black text-zinc-900">{previewTitle} Preview</h3>
+                <p className="text-sm text-zinc-500">Review the PDF before downloading or sharing it.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 rounded-xl text-sm font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                >
+                  Open in New Tab
+                </a>
+                <button
+                  type="button"
+                  onClick={closePreview}
+                  className="px-4 py-2 rounded-xl text-sm font-bold text-zinc-600 border border-zinc-200 hover:bg-zinc-100 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <iframe
+              src={previewUrl}
+              title={previewTitle}
+              className="w-full h-[calc(88vh-73px)] bg-zinc-100"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden">
         <div className="flex border-b border-zinc-100 bg-zinc-50/50 p-2">
           {['quotes', 'invoices', 'payments'].map((tab) => (
@@ -681,13 +772,22 @@ export const Financials: React.FC = () => {
                     </td>
                     <td className="px-8 py-4 text-zinc-400 text-xs">{new Date(q.created_at).toLocaleDateString()}</td>
                     <td className="px-8 py-4">
-                      <button 
-                        onClick={() => handleDownloadQuote(q)}
-                        className="text-blue-600 hover:text-blue-700 font-bold text-xs flex items-center gap-1"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        PDF
-                      </button>
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => handlePreviewQuote(q)}
+                          className="text-zinc-600 hover:text-zinc-900 font-bold text-xs flex items-center gap-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                          Preview
+                        </button>
+                        <button 
+                          onClick={() => handleDownloadQuote(q)}
+                          className="text-blue-600 hover:text-blue-700 font-bold text-xs flex items-center gap-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          Download
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -718,13 +818,22 @@ export const Financials: React.FC = () => {
                     </td>
                     <td className="px-8 py-4 text-zinc-400 text-xs">{new Date(i.due_date).toLocaleDateString()}</td>
                     <td className="px-8 py-4">
-                      <button 
-                        onClick={() => handleDownloadInvoice(i)}
-                        className="text-green-600 hover:text-green-700 font-bold text-xs flex items-center gap-1"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        PDF
-                      </button>
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => handlePreviewInvoice(i)}
+                          className="text-zinc-600 hover:text-zinc-900 font-bold text-xs flex items-center gap-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                          Preview
+                        </button>
+                        <button 
+                          onClick={() => handleDownloadInvoice(i)}
+                          className="text-green-600 hover:text-green-700 font-bold text-xs flex items-center gap-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          Download
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
