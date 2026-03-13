@@ -3,9 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { CompanyDetails, AppUser, UserRole, SupabaseConfig, UserInvite, RegistrationRequest, Client } from '../types';
 import { supabase } from '../services/supabaseService';
 import { authService } from '../services/authService';
+import { useToast } from './Toast';
+import { useConfirm } from './ConfirmModal';
 
 
 export const Settings: React.FC = () => {
+  const { showToast, ToastContainer } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [activeTab, setActiveTab] = useState<'company' | 'users' | 'clients' | 'requests' | 'invites' | 'supabase'>('company');
   const [company, setCompany] = useState<CompanyDetails | null>(null);
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -135,7 +139,7 @@ export const Settings: React.FC = () => {
     
     // Validate password
     if (!userForm.password || userForm.password.length < 8) {
-      alert('Password must be at least 8 characters');
+      showToast('Password must be at least 8 characters', 'warning');
       return;
     }
     
@@ -154,7 +158,7 @@ export const Settings: React.FC = () => {
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error: any) {
       console.error('Error creating user:', error);
-      alert(error.message || 'Failed to create user. Please try again.');
+      showToast(error.message || 'Failed to create user. Please try again.', 'error');
     }
   };
 
@@ -170,13 +174,13 @@ export const Settings: React.FC = () => {
 
     // Validate passwords match
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert('Passwords do not match');
+      showToast('Passwords do not match', 'warning');
       return;
     }
 
     // Validate password length
     if (passwordForm.newPassword.length < 8) {
-      alert('Password must be at least 8 characters');
+      showToast('Password must be at least 8 characters', 'warning');
       return;
     }
 
@@ -189,7 +193,7 @@ export const Settings: React.FC = () => {
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error: any) {
       console.error('Error setting password:', error);
-      alert(error.message || 'Failed to set password. Please try again.');
+      showToast(error.message || 'Failed to set password. Please try again.', 'error');
     }
   };
 
@@ -205,9 +209,9 @@ export const Settings: React.FC = () => {
     } catch (error: any) {
       console.error('Error deleting user:', error);
       if (error.name === 'ValidationError') {
-        alert(error.message);
+        showToast(error.message, 'warning');
       } else {
-        alert('Failed to delete user. Please try again.');
+        showToast('Failed to delete user. Please try again.', 'error');
       }
       setShowDeleteDialog(false);
       setUserToDelete(null);
@@ -257,9 +261,9 @@ export const Settings: React.FC = () => {
     } catch (error: any) {
       console.error('[Settings] Error updating user:', error);
       if (error.name === 'ValidationError') {
-        alert(`${error.field}: ${error.message}`);
+        showToast(`${error.field}: ${error.message}`, 'warning');
       } else {
-        alert(error.message || 'Failed to update user. Please try again.');
+        showToast(error.message || 'Failed to update user. Please try again.', 'error');
       }
     }
   };
@@ -282,9 +286,9 @@ export const Settings: React.FC = () => {
     } catch (error: any) {
       console.error('Error sending invite:', error);
       if (error.name === 'ValidationError') {
-        alert(`${error.field}: ${error.message}`);
+        showToast(`${error.field}: ${error.message}`, 'warning');
       } else {
-        alert('Failed to send invite. Please try again.');
+        showToast('Failed to send invite. Please try again.', 'error');
       }
     }
   };
@@ -297,7 +301,7 @@ export const Settings: React.FC = () => {
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error: any) {
       console.error('Error deleting invite:', error);
-      alert('Failed to cancel invite. Please try again.');
+      showToast('Failed to cancel invite. Please try again.', 'error');
     }
   };
 
@@ -309,7 +313,7 @@ export const Settings: React.FC = () => {
       setTimeout(() => setSaveStatus(''), 5000);
     } catch (error: any) {
       console.error('Error resending invite:', error);
-      alert('Failed to resend invite. Please try again.');
+      showToast('Failed to resend invite. Please try again.', 'error');
     }
   };
 
@@ -321,7 +325,8 @@ export const Settings: React.FC = () => {
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error) {
       console.error('Error copying invite link:', error);
-      alert(`Copy this invite link manually:\n\n${inviteUrl}`);
+      showToast('Copy failed. The invite link has been logged to the console.', 'warning');
+      console.log('[Invite Link]', inviteUrl);
     }
   };
 
@@ -343,7 +348,7 @@ export const Settings: React.FC = () => {
     } catch (error: any) {
       console.error('Error approving request:', error);
       const errorMessage = error.message || 'Unknown error';
-      alert(`Failed to approve registration: ${errorMessage}\n\nPlease check the browser console for details.`);
+      showToast(`Failed to approve registration: ${errorMessage}`, 'error');
     }
   };
 
@@ -359,12 +364,19 @@ export const Settings: React.FC = () => {
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error: any) {
       console.error('Error rejecting request:', error);
-      alert('Failed to reject registration. Please try again.');
+      showToast('Failed to reject registration. Please try again.', 'error');
     }
   };
 
   const handleResetPassword = async (userEmail: string) => {
-    if (!confirm(`Send password reset email to ${userEmail}?`)) return;
+    const confirmed = await confirm({
+      title: 'Send Password Reset',
+      message: `Send a password reset email to ${userEmail}?`,
+      confirmLabel: 'Send Email',
+      cancelLabel: 'Cancel',
+      confirmVariant: 'primary'
+    });
+    if (!confirmed) return;
 
     try {
       await supabase.resetUserPassword(userEmail);
@@ -372,7 +384,7 @@ export const Settings: React.FC = () => {
       setTimeout(() => setSaveStatus(''), 5000);
     } catch (error: any) {
       console.error('Error sending password reset:', error);
-      alert('Failed to send password reset email. Please try again.');
+      showToast('Failed to send password reset email. Please try again.', 'error');
     }
   };
 
@@ -389,7 +401,7 @@ export const Settings: React.FC = () => {
       console.error('Error toggling user status:', error);
       // Revert optimistic update on failure
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: user.status } : u));
-      alert('Failed to update status. Please try again.');
+      showToast('Failed to update status. Please try again.', 'error');
     }
   };
 
@@ -430,7 +442,7 @@ export const Settings: React.FC = () => {
       // Revert failures
       if (failedIds.length) {
         setUsers(prev => prev.map(u => failedIds.includes(u.id) ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' } : u));
-        alert(`Failed to update ${failedIds.length} user(s). Changes reverted for those.`);
+        showToast(`Failed to update ${failedIds.length} user(s). Changes were reverted for them.`, 'warning');
       }
       setSaveStatus(`Updated ${successfulUsers.length} user(s) to ${status}.`);
       setTimeout(() => setSaveStatus(''), 3000);
@@ -448,6 +460,8 @@ export const Settings: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto font-sans">
+      <ToastContainer />
+      <ConfirmDialog />
       <div className="flex items-center gap-4 mb-8">
         <div className="p-3 bg-blue-100 rounded-xl">
           <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

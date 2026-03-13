@@ -125,6 +125,8 @@ export interface Invoice {
   amount_usd: number;
   status: FinancialStatus;
   description?: string;
+  notes?: string;
+  terms_and_conditions?: string;
   due_date: string;
   items?: InvoiceItem[]; // Line items from invoice_items table
   created_at: string;

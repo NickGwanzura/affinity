@@ -9,7 +9,7 @@
  * User ID from Supabase Auth is passed explicitly to Neon queries where needed.
  */
 
-import { Vehicle, Expense, LandedCostSummary, CompanyDetails, AppUser, Quote, Invoice, Payment, AuthSession, SupabaseConfig, UserInvite, UserRole, Client, LineItem, RegistrationRequest, Employee, Payslip, OperatingFund, QuoteItem, InvoiceItem } from '../types';
+import { Vehicle, Expense, LandedCostSummary, CompanyDetails, AppUser, Quote, Invoice, Payment, AuthSession, SupabaseConfig, UserInvite, UserRole, Client, LineItem, RegistrationRequest, Employee, Payslip, OperatingFund, QuoteItem, InvoiceItem, FinancialStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
 import { supabaseClient } from './supabaseClient';
 import * as db from './databaseService';
@@ -77,6 +77,8 @@ const validateRequired = (value: unknown, fieldName: string): void => {
     throw new ValidationError(`${fieldName} is required`, fieldName);
   }
 };
+
+const FINANCIAL_STATUSES: FinancialStatus[] = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
 
 class SupabaseService {
   // Configuration - tracks Neon connection status now
@@ -771,6 +773,9 @@ class SupabaseService {
     if (invoiceData.amount_usd <= 0) {
       throw new ValidationError('Amount must be greater than 0', 'amount_usd');
     }
+    if (invoiceData.status && !FINANCIAL_STATUSES.includes(invoiceData.status)) {
+      throw new ValidationError('Invalid invoice status', 'status');
+    }
 
     try {
       const invoice = await db.createInvoice(invoiceData);
@@ -792,6 +797,9 @@ class SupabaseService {
     }
     if (updates.amount_usd !== undefined && updates.amount_usd <= 0) {
       throw new ValidationError('Amount must be greater than 0', 'amount_usd');
+    }
+    if (updates.status && !FINANCIAL_STATUSES.includes(updates.status)) {
+      throw new ValidationError('Invalid invoice status', 'status');
     }
 
     try {
@@ -817,10 +825,13 @@ class SupabaseService {
     }
   }
 
-  async updateInvoiceStatus(invoiceId: string, status: string): Promise<Invoice> {
+  async updateInvoiceStatus(invoiceId: string, status: FinancialStatus): Promise<Invoice> {
     logAPICall('PATCH', `/invoices/${invoiceId}/status`, { status });
     validateRequired(invoiceId, 'invoiceId');
     validateRequired(status, 'status');
+    if (!FINANCIAL_STATUSES.includes(status)) {
+      throw new ValidationError('Invalid invoice status', 'status');
+    }
 
     try {
       const invoice = await db.updateInvoiceStatus(invoiceId, status);

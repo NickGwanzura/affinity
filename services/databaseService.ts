@@ -26,6 +26,7 @@ import {
   Payslip,
   UserInvite,
   UserRole,
+  FinancialStatus,
   OperatingFund
 } from '../types';
 import { EXCHANGE_RATES } from '../constants';
@@ -74,6 +75,47 @@ const INVOICE_COLUMNS = ['id', 'invoice_number', 'quote_id', 'vehicle_id', 'clie
 const CLIENT_COLUMNS = ['id', 'name', 'email', 'phone', 'address', 'company', 'notes', 'created_at'];
 const EMPLOYEE_COLUMNS = ['id', 'employee_number', 'name', 'email', 'phone', 'department', 'position', 'base_pay_usd', 'currency', 'employment_type', 'date_hired', 'status', 'created_at', 'updated_at'];
 const PAYSLIP_COLUMNS = ['id', 'payslip_number', 'employee_id', 'month', 'year', 'base_pay', 'gross_pay', 'net_pay', 'status', 'payment_date', 'created_at'];
+const FINANCIAL_STATUSES: FinancialStatus[] = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
+
+function normalizeLineItem(item: InvoiceItem, index: number): Omit<InvoiceItem, 'id' | 'invoice_id' | 'created_at' | 'updated_at'> {
+  const quantity = Number(item.quantity ?? 0);
+  const unitPrice = Number(item.unit_price ?? 0);
+  const taxRate = Number(item.tax_rate ?? 0);
+
+  return {
+    line_number: item.line_number ?? index + 1,
+    description: item.description,
+    quantity,
+    unit_price: unitPrice,
+    amount: quantity * unitPrice,
+    tax_rate: taxRate,
+    tax_amount: (taxRate * quantity * unitPrice) / 100,
+    notes: item.notes
+  };
+}
+
+async function generateUniqueInvoiceNumber(): Promise<string> {
+  if (!sql) throw new Error('Database not connected');
+
+  const year = new Date().getFullYear();
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase();
+    const candidate = `INV-${year}-${suffix}`;
+    const existing = await sql`
+      SELECT id
+      FROM invoices
+      WHERE invoice_number = ${candidate}
+      LIMIT 1
+    `;
+
+    if (!existing || existing.length === 0) {
+      return candidate;
+    }
+  }
+
+  throw new Error('Failed to generate a unique invoice number');
+}
 
 // ============================================
 // VEHICLES
@@ -518,8 +560,11 @@ export async function getInvoices(pagination?: PaginationParams): Promise<Invoic
       const orderColumn = validateColumnName(sortBy, INVOICE_COLUMNS);
       const orderByClause = sql([`i.${orderColumn} ${orderDirection}`] as unknown as TemplateStringsArray);
       const rows = await sql`
-        SELECT i.*, 
-          (SELECT json_agg(ii.*) FROM invoice_items ii WHERE ii.invoice_id = i.id) as items
+        SELECT i.*,
+          COALESCE(
+            (SELECT json_agg(ii.* ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
+            i.items
+          ) as items
         FROM invoices i
         ORDER BY ${orderByClause}
         LIMIT ${limit} OFFSET ${offset}
@@ -534,8 +579,11 @@ export async function getInvoices(pagination?: PaginationParams): Promise<Invoic
       };
     } else {
       const rows = await sql`
-        SELECT i.*, 
-          (SELECT json_agg(ii.*) FROM invoice_items ii WHERE ii.invoice_id = i.id) as items
+        SELECT i.*,
+          COALESCE(
+            (SELECT json_agg(ii.* ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
+            i.items
+          ) as items
         FROM invoices i
         ORDER BY i.created_at DESC
       `;
@@ -548,15 +596,15 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_a
   if (!sql) throw new Error('Database not connected');
   
   return executeQuery(async () => {
-    // Get count for invoice number generation
-    const countResult = await sql`SELECT COUNT(*) as count FROM invoices`;
-    const count = parseInt(countResult[0]?.count || '0');
-    const invoice_number = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+    const invoice_number = await generateUniqueInvoiceNumber();
+    const normalizedItems = (invoiceData.items || []).map((item, index) =>
+      normalizeLineItem(item as InvoiceItem, index)
+    );
     
     const rows = await sql`
       INSERT INTO invoices (
         invoice_number, quote_id, vehicle_id, client_name, client_email, client_address, 
-        amount_usd, status, description, due_date, items
+        amount_usd, status, description, notes, terms_and_conditions, due_date, items
       )
       VALUES (
         ${invoice_number},
@@ -568,8 +616,10 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_a
         ${invoiceData.amount_usd},
         ${invoiceData.status || 'Draft'},
         ${invoiceData.description || null},
+        ${invoiceData.notes || null},
+        ${invoiceData.terms_and_conditions || null},
         ${invoiceData.due_date},
-        ${invoiceData.items ? JSON.stringify(invoiceData.items) : null}::jsonb
+        ${normalizedItems.length > 0 ? JSON.stringify(normalizedItems) : null}::jsonb
       )
       RETURNING *
     `;
@@ -577,8 +627,30 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_a
     if (!rows || rows.length === 0) {
       throw new Error('Invoice insert succeeded but no data returned');
     }
+
+    const invoice = rows[0] as Invoice;
+
+    for (const item of normalizedItems) {
+      await sql`
+        INSERT INTO invoice_items (invoice_id, line_number, description, quantity, unit_price, amount, tax_rate, tax_amount, notes)
+        VALUES (
+          ${invoice.id}::uuid,
+          ${item.line_number || 1},
+          ${item.description},
+          ${item.quantity},
+          ${item.unit_price},
+          ${item.amount},
+          ${item.tax_rate || 0},
+          ${item.tax_amount || 0},
+          ${item.notes || null}
+        )
+      `;
+    }
     
-    return rows[0] as Invoice;
+    return {
+      ...invoice,
+      items: normalizedItems as InvoiceItem[]
+    };
   }, 'createInvoice');
 }
 
@@ -586,6 +658,10 @@ export async function updateInvoice(invoiceId: string, updates: Partial<Omit<Inv
   if (!sql) throw new Error('Database not connected');
   
   return executeQuery(async () => {
+    const normalizedItems = updates.items
+      ? updates.items.map((item, index) => normalizeLineItem(item as InvoiceItem, index))
+      : null;
+
     const rows = await sql`
       UPDATE invoices
       SET 
@@ -597,8 +673,10 @@ export async function updateInvoice(invoiceId: string, updates: Partial<Omit<Inv
         amount_usd = COALESCE(${updates.amount_usd || null}, amount_usd),
         status = COALESCE(${updates.status || null}, status),
         description = COALESCE(${updates.description}, description),
+        notes = COALESCE(${updates.notes}, notes),
+        terms_and_conditions = COALESCE(${updates.terms_and_conditions}, terms_and_conditions),
         due_date = COALESCE(${updates.due_date || null}, due_date),
-        items = COALESCE(${updates.items ? JSON.stringify(updates.items) : null}::jsonb, items)
+        items = COALESCE(${normalizedItems ? JSON.stringify(normalizedItems) : null}::jsonb, items)
       WHERE id = ${invoiceId}::uuid
       RETURNING *
     `;
@@ -606,8 +684,32 @@ export async function updateInvoice(invoiceId: string, updates: Partial<Omit<Inv
     if (!rows || rows.length === 0) {
       throw new Error('Invoice not found');
     }
+
+    if (normalizedItems) {
+      await sql`DELETE FROM invoice_items WHERE invoice_id = ${invoiceId}::uuid`;
+
+      for (const item of normalizedItems) {
+        await sql`
+          INSERT INTO invoice_items (invoice_id, line_number, description, quantity, unit_price, amount, tax_rate, tax_amount, notes)
+          VALUES (
+            ${invoiceId}::uuid,
+            ${item.line_number || 1},
+            ${item.description},
+            ${item.quantity},
+            ${item.unit_price},
+            ${item.amount},
+            ${item.tax_rate || 0},
+            ${item.tax_amount || 0},
+            ${item.notes || null}
+          )
+        `;
+      }
+    }
     
-    return rows[0] as Invoice;
+    return {
+      ...(rows[0] as Invoice),
+      ...(normalizedItems ? { items: normalizedItems as InvoiceItem[] } : {})
+    };
   }, 'updateInvoice');
 }
 
@@ -622,10 +724,14 @@ export async function deleteInvoice(invoiceId: string): Promise<void> {
   }, 'deleteInvoice');
 }
 
-export async function updateInvoiceStatus(invoiceId: string, status: string): Promise<Invoice> {
+export async function updateInvoiceStatus(invoiceId: string, status: FinancialStatus): Promise<Invoice> {
   if (!sql) throw new Error('Database not connected');
   
   return executeQuery(async () => {
+    if (!FINANCIAL_STATUSES.includes(status)) {
+      throw new Error('Invalid invoice status');
+    }
+
     const rows = await sql`
       UPDATE invoices
       SET status = ${status}

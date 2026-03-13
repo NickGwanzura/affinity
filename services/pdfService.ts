@@ -147,6 +147,8 @@ function sanitizeInvoice(invoice: Invoice): Invoice {
     client_email: sanitizeEmail(invoice.client_email),
     client_address: sanitizeText(invoice.client_address),
     description: sanitizeText(invoice.description),
+    notes: sanitizeText(invoice.notes)?.slice(0, MAX_NOTES_LENGTH),
+    terms_and_conditions: sanitizeText(invoice.terms_and_conditions)?.slice(0, MAX_NOTES_LENGTH),
     status: (sanitizeText(invoice.status) || 'draft') as Invoice['status'],
     amount_usd: sanitizeNumber(invoice.amount_usd),
     items: invoice.items?.map(item => ({
@@ -300,6 +302,35 @@ class PDFBuilder {
     doc.setDrawColor(...COLORS.BORDER_GRAY);
     doc.setLineWidth(LAYOUT.LINE_WIDTH_REGULAR);
     doc.line(LAYOUT.MARGIN_LEFT, LAYOUT.SEPARATOR_Y, LAYOUT.MARGIN_RIGHT, LAYOUT.SEPARATOR_Y);
+
+    return this;
+  }
+
+  addInvoiceBanner(invoice: Invoice): this {
+    const { doc } = this;
+    const statusColor =
+      invoice.status === 'Paid' ? [22, 163, 74] as [number, number, number] :
+      invoice.status === 'Overdue' ? [220, 38, 38] as [number, number, number] :
+      invoice.status === 'Sent' ? [37, 99, 235] as [number, number, number] :
+      COLORS.PRIMARY_DARK;
+
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(125, 33, 70, 16, 3, 3, 'F');
+
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.text('STATUS', 132, 39);
+    doc.text('TOTAL DUE', 132, 46);
+
+    doc.setFontSize(FONT_SIZES.SMALL);
+    doc.setTextColor(...statusColor);
+    doc.text(invoice.status.toUpperCase(), 192, 39, { align: 'right' });
+
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text(`$${invoice.amount_usd.toLocaleString()}`, 192, 46, { align: 'right' });
 
     return this;
   }
@@ -611,6 +642,11 @@ class PDFBuilder {
     if (!notes) return this;
 
     const { doc } = this;
+    const noteLines = doc.splitTextToSize(notes, 170);
+    const boxHeight = Math.max(18, 10 + noteLines.length * 5);
+
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(LAYOUT.MARGIN_LEFT, yPos - 5, 180, boxHeight, 3, 3, 'F');
 
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
@@ -619,7 +655,6 @@ class PDFBuilder {
 
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
-    const noteLines = doc.splitTextToSize(notes, 180);
     doc.text(noteLines, LAYOUT.MARGIN_LEFT, yPos + 6);
 
     return this;
@@ -629,7 +664,7 @@ class PDFBuilder {
   // Terms Section
   // -------------------------------------------------------------------------
 
-  addTerms(type: 'quote' | 'invoice', finalY: number, showPaymentTerms: boolean = true): this {
+  addTerms(type: 'quote' | 'invoice', finalY: number, showPaymentTerms: boolean = true, customTerms?: string): this {
     const { doc } = this;
 
     doc.setFontSize(FONT_SIZES.SMALL);
@@ -645,6 +680,9 @@ class PDFBuilder {
       doc.text('1. Quote is valid for the period specified above', LAYOUT.MARGIN_LEFT, finalY + 46);
       doc.text('2. Prices are in USD and exclude applicable taxes unless stated', LAYOUT.MARGIN_LEFT, finalY + 52);
       doc.text('3. Payment terms as agreed upon acceptance', LAYOUT.MARGIN_LEFT, finalY + 58);
+    } else if (customTerms) {
+      const termLines = doc.splitTextToSize(customTerms, 180);
+      doc.text(termLines, LAYOUT.MARGIN_LEFT, finalY + 46);
     } else if (showPaymentTerms) {
       doc.text('1. Payment is due by the date specified above', LAYOUT.MARGIN_LEFT, finalY + 46);
       doc.text('2. Please include invoice number with your payment', LAYOUT.MARGIN_LEFT, finalY + 52);
@@ -817,6 +855,7 @@ export const generateInvoicePDF = async (
     builder
       .addHeader()
       .addTitle('INVOICE')
+      .addInvoiceBanner(sanitizedInvoice)
       .addMetadataSection(
         ['Invoice Number:', 'Issue Date:', 'Due Date:', 'Status:'],
         [
@@ -863,12 +902,15 @@ export const generateInvoicePDF = async (
 
     builder.addItemsTable(tableData);
     builder.addInvoiceTotalSection(sanitizedInvoice);
+    const notesY = ((builder.getDocument() as any).lastAutoTable?.finalY || 140) + 42;
+    builder.addNotes(sanitizedInvoice.notes, notesY);
 
     const showPaymentTerms = sanitizedInvoice.status !== 'Paid';
     builder.addTerms(
       'invoice',
-      (builder.getDocument() as any).lastAutoTable?.finalY || 140,
-      showPaymentTerms
+      sanitizedInvoice.notes ? notesY + 18 : ((builder.getDocument() as any).lastAutoTable?.finalY || 140),
+      showPaymentTerms,
+      sanitizedInvoice.terms_and_conditions
     );
     builder.addFooter();
 

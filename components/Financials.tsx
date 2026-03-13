@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Quote, Invoice, Payment, Vehicle, CompanyDetails, LineItem } from '../types';
 import { supabase } from '../services/supabaseService';
 import { generateQuotePDF, generateInvoicePDF } from '../services/pdfService';
+import { useToast } from './Toast';
 
 // Default empty line item
 const createEmptyLineItem = (): LineItem => ({
@@ -15,6 +16,7 @@ const createEmptyLineItem = (): LineItem => ({
 });
 
 export const Financials: React.FC = () => {
+  const { showToast, ToastContainer } = useToast();
   const [activeTab, setActiveTab] = useState<'quotes' | 'invoices' | 'payments'>('quotes');
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -48,6 +50,8 @@ export const Financials: React.FC = () => {
     client_email: '',
     client_address: '',
     description: '',
+    notes: '',
+    terms_and_conditions: 'Payment is due by the date specified above. Please include the invoice number with your payment.',
     due_date: '',
     status: 'Draft' as const
   });
@@ -137,7 +141,7 @@ export const Financials: React.FC = () => {
       // Validate line items
       const validItems = quoteLineItems.filter(item => item.description.trim() && item.quantity > 0);
       if (validItems.length === 0) {
-        alert('Please add at least one line item with a description');
+        showToast('Please add at least one line item with a description', 'warning');
         return;
       }
       
@@ -163,14 +167,14 @@ export const Financials: React.FC = () => {
       // FIX: Refetch from database instead of local state update to ensure data consistency
       try {
         await loadData(true);
-        alert('Quote created successfully!');
+        showToast('Quote created successfully!', 'success');
       } catch (refreshError) {
         console.error('[Financials] handleCreateQuote: Quote saved but refresh failed:', refreshError);
-        alert('Quote created but failed to refresh list. Please refresh the page.');
+        showToast('Quote created, but the list did not refresh. Please refresh the page.', 'warning');
       }
     } catch (error: any) {
       console.error('[Financials] handleCreateQuote: Error creating quote:', error);
-      alert(error?.message || 'Failed to create quote');
+      showToast(error?.message || 'Failed to create quote', 'error');
     }
   };
 
@@ -180,7 +184,7 @@ export const Financials: React.FC = () => {
       // Validate line items
       const validItems = invoiceLineItems.filter(item => item.description.trim() && item.quantity > 0);
       if (validItems.length === 0) {
-        alert('Please add at least one line item with a description');
+        showToast('Please add at least one line item with a description', 'warning');
         return;
       }
       
@@ -194,6 +198,8 @@ export const Financials: React.FC = () => {
         client_address: invoiceForm.client_address,
         amount_usd: totalAmount,
         description: invoiceForm.description,
+        notes: invoiceForm.notes,
+        terms_and_conditions: invoiceForm.terms_and_conditions,
         due_date: invoiceForm.due_date,
         status: invoiceForm.status,
         items: validItems.map((item, idx) => ({ ...item, line_number: idx + 1 }))
@@ -206,40 +212,40 @@ export const Financials: React.FC = () => {
       // FIX: Refetch from database instead of local state update to ensure data consistency
       try {
         await loadData(true);
-        alert('Invoice created successfully!');
+        showToast('Invoice created successfully!', 'success');
       } catch (refreshError) {
         console.error('[Financials] handleCreateInvoice: Invoice saved but refresh failed:', refreshError);
-        alert('Invoice created but failed to refresh list. Please refresh the page.');
+        showToast('Invoice created, but the list did not refresh. Please refresh the page.', 'warning');
       }
     } catch (error: any) {
       console.error('[Financials] handleCreateInvoice: Error creating invoice:', error);
-      alert(error?.message || 'Failed to create invoice');
+      showToast(error?.message || 'Failed to create invoice', 'error');
     }
   };
 
   const handleDownloadQuote = async (quote: Quote) => {
     if (!company) {
-      alert('Company details not loaded');
+      showToast('Company details are not loaded yet', 'warning');
       return;
     }
     try {
       await generateQuotePDF(quote, company);
     } catch (error) {
       console.error('Error generating quote PDF:', error);
-      alert('Failed to generate PDF');
+      showToast('Failed to generate quote PDF', 'error');
     }
   };
 
   const handleDownloadInvoice = async (invoice: Invoice) => {
     if (!company) {
-      alert('Company details not loaded');
+      showToast('Company details are not loaded yet', 'warning');
       return;
     }
     try {
       await generateInvoicePDF(invoice, company);
     } catch (error) {
       console.error('Error generating invoice PDF:', error);
-      alert('Failed to generate PDF');
+      showToast('Failed to generate invoice PDF', 'error');
     }
   };
 
@@ -263,6 +269,8 @@ export const Financials: React.FC = () => {
       client_email: '',
       client_address: '',
       description: '',
+      notes: '',
+      terms_and_conditions: 'Payment is due by the date specified above. Please include the invoice number with your payment.',
       due_date: '',
       status: 'Draft'
     });
@@ -273,6 +281,7 @@ export const Financials: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <ToastContainer />
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="text-3xl font-black text-zinc-900 tracking-tight">Finance Management</h2>
@@ -457,7 +466,8 @@ export const Financials: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowInvoiceModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-2xl font-black text-zinc-900 mb-6">Create New Invoice</h3>
+            <h3 className="text-2xl font-black text-zinc-900 mb-2">Create New Invoice</h3>
+            <p className="text-sm text-zinc-500 mb-6">Build a polished customer invoice with itemized charges, tailored notes, and clear payment terms.</p>
             <form onSubmit={handleCreateInvoice} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
@@ -511,13 +521,34 @@ export const Financials: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-zinc-700">Notes</label>
+                  <label className="text-sm font-semibold text-zinc-700">Summary</label>
                   <input
                     value={invoiceForm.description}
                     onChange={(e) => setInvoiceForm({...invoiceForm, description: e.target.value})}
-                    placeholder="Additional notes..."
+                    placeholder="Short invoice summary..."
                     className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
                   />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-sm font-semibold text-zinc-700">Notes</label>
+                  <textarea
+                    value={invoiceForm.notes}
+                    onChange={(e) => setInvoiceForm({...invoiceForm, notes: e.target.value})}
+                    rows={3}
+                    placeholder="Optional notes to appear on the invoice..."
+                    className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50/70 focus:bg-white focus:ring-2 focus:ring-green-500 outline-none resize-none"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-sm font-semibold text-zinc-700">Terms & Conditions</label>
+                  <textarea
+                    value={invoiceForm.terms_and_conditions}
+                    onChange={(e) => setInvoiceForm({...invoiceForm, terms_and_conditions: e.target.value})}
+                    rows={4}
+                    placeholder="Payment terms, late fees, banking instructions, delivery terms..."
+                    className="w-full px-4 py-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 focus:bg-white focus:ring-2 focus:ring-green-500 outline-none resize-none"
+                  />
+                  <p className="mt-2 text-xs text-zinc-500">These terms will be printed in the invoice PDF.</p>
                 </div>
                 
                 {/* Line Items Section */}
