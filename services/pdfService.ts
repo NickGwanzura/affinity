@@ -389,24 +389,39 @@ class PDFBuilder {
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
 
     let yPos = 80;
+    const contentWidth = 78;
+    const lineHeight = 4.5;
+
+    const writeWrappedLine = (value?: string) => {
+      const trimmedValue = value?.trim();
+
+      if (!trimmedValue) {
+        return;
+      }
+
+      const wrappedLines = doc.splitTextToSize(trimmedValue, contentWidth);
+      doc.text(wrappedLines, LAYOUT.MARGIN_LEFT, yPos);
+      yPos += wrappedLines.length * lineHeight + 1;
+    };
 
     if (email) {
-      doc.text(email, LAYOUT.MARGIN_LEFT, yPos);
-      yPos += 5;
+      writeWrappedLine(email);
     }
 
     if (address) {
-      const addressLines = address.split(',').map(line => line.trim());
+      const addressLines = address
+        .split(',')
+        .map(line => line.trim())
+        .filter(Boolean);
+
       addressLines.forEach(line => {
-        doc.text(line, LAYOUT.MARGIN_LEFT, yPos);
-        yPos += 5;
+        writeWrappedLine(line);
       });
     }
 
     if (additionalInfo) {
       additionalInfo.forEach(info => {
-        doc.text(`${info.label}: ${info.value}`, LAYOUT.MARGIN_LEFT, yPos);
-        yPos += 5;
+        writeWrappedLine(`${info.label}: ${info.value}`);
       });
     }
 
