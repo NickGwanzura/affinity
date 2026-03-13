@@ -918,7 +918,7 @@ export async function getRegistrationRequests(): Promise<RegistrationRequest[]> 
   
   return executeQuery(async () => {
     const rows = await sql`
-      SELECT id, name, email, role, password_hash, status, requested_at, reviewed_at, reviewed_by
+      SELECT id, name, email, role, status, requested_at, reviewed_at, reviewed_by
       FROM registration_requests
       ORDER BY requested_at DESC
     `;
@@ -930,7 +930,6 @@ export async function createRegistrationRequest(data: {
   name: string;
   email: string;
   role: UserRole;
-  password_hash: string;
 }): Promise<RegistrationRequest> {
   if (!sql) throw new Error('Database not connected');
   
@@ -941,7 +940,7 @@ export async function createRegistrationRequest(data: {
         ${data.name},
         ${data.email.toLowerCase()},
         ${data.role},
-        ${data.password_hash},
+        '',
         'Pending',
         NOW()
       )
@@ -961,7 +960,7 @@ export async function getRegistrationRequestById(requestId: string): Promise<Reg
   
   return executeQuery(async () => {
     const rows = await sql`
-      SELECT id, name, email, role, password_hash, status, requested_at, reviewed_at, reviewed_by
+      SELECT id, name, email, role, status, requested_at, reviewed_at, reviewed_by
       FROM registration_requests
       WHERE id = ${requestId}::uuid
     `;

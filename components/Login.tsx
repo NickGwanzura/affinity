@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { authService } from '../services/authService';
+import { supabase } from '../services/supabaseService';
 import { AuthSession, UserRole } from '../types';
 
 interface LoginProps {
@@ -38,23 +39,15 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
     setSuccess('');
     
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      setLoading(false);
-      return;
-    }
-    
     try {
-      await authService.createUser({
+      await supabase.createRegistrationRequest({
         name,
         email,
-        role,
-        password
+        role
       });
-      setSuccess('Account created successfully! You can now sign in.');
+      setSuccess('Access request submitted. An administrator will approve it and send you an invite to set your password.');
       setName('');
       setEmail('');
-      setPassword('');
       setRole('Driver');
       setTimeout(() => {
         setMode('login');
@@ -222,7 +215,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               />
             </div>
 
-            {mode !== 'forgot' && (
+            {mode === 'login' && (
               <div className="space-y-1">
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Secure Password</label>
@@ -248,6 +241,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   placeholder="••••••••"
                   className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
                 />
+              </div>
+            )}
+
+            {mode === 'register' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-sm text-blue-800">
+                  Submit your details for approval. You will set your password after an administrator approves your request and shares your invite link.
+                </p>
               </div>
             )}
 

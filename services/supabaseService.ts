@@ -14,6 +14,7 @@ import { EXCHANGE_RATES } from '../constants';
 import { supabaseClient } from './supabaseClient';
 import * as db from './databaseService';
 import { isNeonConnected } from './neonClient';
+import { authService } from './authService';
 
 // Production-ready validation and error handling
 interface APIErrorDetails {
@@ -338,20 +339,15 @@ class SupabaseService {
   // REGISTRATION REQUESTS (Using Neon)
   // ============================================
 
-  async createRegistrationRequest(data: { name: string; email: string; role: UserRole; password: string }): Promise<void> {
+  async createRegistrationRequest(data: { name: string; email: string; role: UserRole }): Promise<void> {
     logAPICall('POST', '/auth/registration-request', { email: data.email, role: data.role });
 
     validateRequired(data.name, 'name');
     validateRequired(data.email, 'email');
     validateRequired(data.role, 'role');
-    validateRequired(data.password, 'password');
 
     if (!validateEmail(data.email)) {
       throw new ValidationError('Invalid email format', 'email');
-    }
-
-    if (data.password.length < 8) {
-      throw new ValidationError('Password must be at least 8 characters', 'password');
     }
 
     try {
@@ -359,8 +355,7 @@ class SupabaseService {
       await db.createRegistrationRequest({
         name: sanitizeString(data.name),
         email: sanitizeString(data.email.toLowerCase()),
-        role: data.role,
-        // Note: password_hash field should be removed entirely since Supabase Auth handles password hashing securely
+        role: data.role
       });
 
       logAPICall('POST', '/auth/registration-request', { success: true });
@@ -396,12 +391,17 @@ class SupabaseService {
         throw new ValidationError('Registration request not found', 'requestId');
       }
 
-      // Create user in Supabase Auth
-      const decodedPassword = atob(request.password_hash);
+      const inviteToken = crypto.randomUUID();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
 
-      await this.signUp(request.email, decodedPassword, {
+      await db.createInvite({
+        email: request.email,
+        role: request.role,
         name: request.name,
-        role: request.role
+        invitedBy: adminId,
+        inviteToken,
+        expiresAt: expiresAt.toISOString()
       });
 
       // Update request status in Neon
@@ -1301,47 +1301,6 @@ class SupabaseService {
         expiresAt: expiresAt.toISOString()
       });
 
-      // Send invitation email using Supabase's magic link / signup invite
-      // This creates a user and sends them an email to set their password
-      try {
-        const redirectUrl = typeof window !== 'undefined' 
-          ? `${window.location.origin}/login` 
-          : 'https://www.affinitylogistics.space/login';
-        
-        // First, try to create the user with a random password
-        const tempPassword = crypto.randomUUID();
-        const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
-          email: sanitizeString(email),
-          password: tempPassword,
-          options: {
-            data: { name, role },
-            emailRedirectTo: redirectUrl
-          }
-        });
-
-        if (!signUpError && signUpData.user) {
-          // User created - now send password reset so they can set their own password
-          await supabaseClient.auth.resetPasswordForEmail(email, {
-            redirectTo: redirectUrl
-          });
-          
-          // Also create their profile in Neon
-          await db.createUserProfile(signUpData.user.id, {
-            name: sanitizeString(name),
-            email: sanitizeString(email),
-            role,
-            status: 'Active'
-          });
-        } else if (signUpError?.message?.includes('already registered')) {
-          // User exists, just send password reset as a "reminder"
-          await supabaseClient.auth.resetPasswordForEmail(email, {
-            redirectTo: redirectUrl
-          });
-        }
-      } catch (emailError: unknown) {
-        // Log but don't fail the invite creation
-      }
-
       logAPICall('POST', '/invites', { success: true, inviteId: invite.id });
       return invite;
     } catch (error: unknown) {
@@ -1385,41 +1344,17 @@ class SupabaseService {
         throw new ValidationError('Invalid or expired invite token', 'token');
       }
 
-      // Create Auth User in Supabase
-      const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+      await authService.createUser({
         email: invite.email,
-        password: password,
-        options: {
-          data: {
-            name: invite.name,
-            role: invite.role
-          }
-        }
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user account');
-
-      // Create User Profile in Neon
-      await db.createUserProfile(authData.user.id, {
+        password,
         name: invite.name,
-        email: invite.email,
-        role: invite.role,
-        status: 'Active'
+        role: invite.role
       });
 
       // Update Invite Status in Neon
       await db.updateInviteStatus(invite.id, 'Accepted');
 
-      return {
-        user: {
-          id: authData.user.id,
-          name: invite.name,
-          email: invite.email,
-          role: invite.role,
-          status: 'Active'
-        }
-      };
+      return await authService.login(invite.email, password);
     } catch (error: unknown) {
       logAPICall('POST', '/invites/accept', { success: false, error: getErrorMessage(error) });
       throw error;

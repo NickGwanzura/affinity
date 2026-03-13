@@ -156,7 +156,6 @@ export interface RegistrationRequest {
   name: string;
   email: string;
   role: UserRole;
-  password_hash: string;
   status: 'Pending' | 'Approved' | 'Rejected';
   requested_at: string;
   reviewed_at?: string;

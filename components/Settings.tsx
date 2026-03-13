@@ -277,7 +277,7 @@ export const Settings: React.FC = () => {
       setInvites([...invites, invite]);
       setShowInviteModal(false);
       setInviteForm({ name: '', email: '', role: 'Driver' });
-      setSaveStatus('Invite sent! Check console for email preview.');
+      setSaveStatus('Invite created successfully. Share the invite link from the Invitations tab.');
       setTimeout(() => setSaveStatus(''), 5000);
     } catch (error: any) {
       console.error('Error sending invite:', error);
@@ -305,11 +305,23 @@ export const Settings: React.FC = () => {
     try {
       const updatedInvite = await supabase.resendInvite(inviteId);
       setInvites(invites.map(i => i.id === inviteId ? updatedInvite : i));
-      setSaveStatus('Invite resent! Check console for email preview.');
+      setSaveStatus('Invite refreshed successfully. Share the updated invite link from the Invitations tab.');
       setTimeout(() => setSaveStatus(''), 5000);
     } catch (error: any) {
       console.error('Error resending invite:', error);
       alert('Failed to resend invite. Please try again.');
+    }
+  };
+
+  const handleCopyInviteLink = async (inviteToken: string) => {
+    const inviteUrl = `${window.location.origin}?token=${inviteToken}`;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setSaveStatus('Invite link copied to clipboard.');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (error) {
+      console.error('Error copying invite link:', error);
+      alert(`Copy this invite link manually:\n\n${inviteUrl}`);
     }
   };
 
@@ -326,7 +338,7 @@ export const Settings: React.FC = () => {
       setRegistrationRequests(updatedRequests);
       setUsers(updatedUsers);
 
-      setSaveStatus('Registration approved! User can now sign in.');
+      setSaveStatus('Registration approved! An invite was created so the user can set their password.');
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error: any) {
       console.error('Error approving request:', error);
@@ -1236,6 +1248,15 @@ export const Settings: React.FC = () => {
                             <div className="flex items-center justify-end gap-2">
                               {invite.status === 'Pending' && (
                                 <>
+                                  <button
+                                    onClick={() => handleCopyInviteLink(invite.inviteToken)}
+                                    className="text-emerald-600 hover:text-emerald-800 p-1 transition-colors"
+                                    title="Copy invite link"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 10h6a2 2 0 002-2v-8a2 2 0 00-2-2h-6a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                  </button>
                                   <button
                                     onClick={() => handleResendInvite(invite.id)}
                                     className="text-blue-600 hover:text-blue-800 p-1 transition-colors"
