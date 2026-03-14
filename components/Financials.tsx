@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Quote, Invoice, Payment, Vehicle, CompanyDetails, LineItem } from '../types';
+import { Quote, Invoice, Payment, Vehicle, CompanyDetails, LineItem, Receipt } from '../types';
 import { supabase } from '../services/supabaseService';
 import { generateQuotePDF, generateInvoicePDF, generateQuotePDFAndDownload, generateInvoicePDFAndDownload } from '../services/pdfService';
 import { useToast } from './Toast';
@@ -25,10 +25,11 @@ const formatMoney = (amount: number, currency: 'USD' | 'GBP' = 'USD') =>
 
 export const Financials: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
-  const [activeTab, setActiveTab] = useState<'quotes' | 'invoices' | 'payments'>('quotes');
+  const [activeTab, setActiveTab] = useState<'quotes' | 'invoices' | 'payments' | 'receipts' | 'statements'>('quotes');
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [company, setCompany] = useState<CompanyDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ export const Financials: React.FC = () => {
   // Modal states
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState('');
   
@@ -769,7 +771,7 @@ export const Financials: React.FC = () => {
 
       <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden">
         <div className="flex border-b border-zinc-100 bg-zinc-50/50 p-2">
-          {['quotes', 'invoices', 'payments'].map((tab) => (
+          {['quotes', 'invoices', 'payments', 'receipts', 'statements'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
@@ -902,6 +904,49 @@ export const Financials: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          )}
+
+          {/* Receipts Tab */}
+          {activeTab === 'receipts' && (
+            <div className="p-8">
+              <div className="bg-green-50 rounded-2xl p-8 max-w-lg mx-auto text-center">
+                <svg className="w-16 h-16 mx-auto text-green-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="text-xl font-black text-zinc-900 mb-2">Receipts</h3>
+                <p className="text-zinc-500 mb-4">Record payments and generate receipts for clients.</p>
+                <button
+                  onClick={() => setShowPaymentModal(true)}
+                  className="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700"
+                >
+                  Record Payment
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Statements Tab */}
+          {activeTab === 'statements' && (
+            <div className="p-8">
+              <div className="bg-blue-50 rounded-2xl p-8 max-w-lg mx-auto text-center">
+                <svg className="w-16 h-16 mx-auto text-blue-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="text-xl font-black text-zinc-900 mb-2">Client Statements</h3>
+                <p className="text-zinc-500 mb-4">Generate account statements for clients.</p>
+                <div className="flex gap-3 justify-center">
+                  <select className="px-4 py-3 rounded-xl border border-zinc-200">
+                    <option value="">Select Client</option>
+                    {invoices.map(i => (
+                      <option key={i.id} value={i.client_name}>{i.client_name}</option>
+                    ))}
+                  </select>
+                  <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700">
+                    Generate
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
