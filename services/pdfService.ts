@@ -107,12 +107,28 @@ function sanitizeEmail(input: unknown): string {
   return email.replace(/[<>\"']/g, '').slice(0, 254);
 }
 
+function sanitizeUrl(input: unknown): string {
+  const value = sanitizeText(input);
+
+  if (!value) {
+    return '';
+  }
+
+  try {
+    const parsed = new URL(value);
+    return ['http:', 'https:', 'data:'].includes(parsed.protocol) ? parsed.toString() : '';
+  } catch {
+    return '';
+  }
+}
+
 function sanitizeCompany(company: CompanyDetails): CompanyDetails {
   return {
     ...company,
     name: sanitizeText(company.name) || 'Unknown Company',
     address: sanitizeText(company.address),
     contact_email: sanitizeEmail(company.contact_email),
+    logo_url: sanitizeUrl(company.logo_url),
     phone: sanitizeText(company.phone),
     website: sanitizeText(company.website),
     tax_id: sanitizeText(company.tax_id),
@@ -218,14 +234,57 @@ class PDFBuilder {
   // Header & Footer
   // -------------------------------------------------------------------------
 
-  addHeader(): this {
+  private async loadLogoData(logoUrl?: string): Promise<{ dataUrl: string; format: 'PNG' | 'JPEG' | 'WEBP' } | null> {
+    if (!logoUrl) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(logoUrl);
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const blob = await response.blob();
+
+      if (!blob.type.startsWith('image/')) {
+        return null;
+      }
+
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('Failed to read logo file'));
+        reader.readAsDataURL(blob);
+      });
+
+      const format =
+        blob.type === 'image/png' ? 'PNG' :
+        blob.type === 'image/webp' ? 'WEBP' :
+        'JPEG';
+
+      return { dataUrl, format };
+    } catch {
+      return null;
+    }
+  }
+
+  async addHeader(): Promise<this> {
     const { doc, company } = this;
+    const logo = await this.loadLogoData(company.logo_url);
+    const hasLogo = Boolean(logo);
+    const textStartX = hasLogo ? 52 : LAYOUT.MARGIN_LEFT;
+
+    if (logo) {
+      doc.addImage(logo.dataUrl, logo.format, LAYOUT.MARGIN_LEFT, 12, 28, 18);
+    }
 
     // Company Name
     doc.setFontSize(FONT_SIZES.XLARGE);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text(company.name.toUpperCase(), LAYOUT.MARGIN_LEFT, LAYOUT.HEADER_Y);
+    doc.text(company.name.toUpperCase(), textStartX, LAYOUT.HEADER_Y);
 
     // Company Address
     doc.setFontSize(FONT_SIZES.SMALL);
@@ -234,24 +293,24 @@ class PDFBuilder {
     const addressLines = company.address.split(',').map(line => line.trim());
     let yPos = 26;
     addressLines.forEach(line => {
-      doc.text(line, LAYOUT.MARGIN_LEFT, yPos);
+      doc.text(line, textStartX, yPos);
       yPos += 4;
     });
 
     // Contact details
     yPos += 1;
     if (company.phone) {
-      doc.text(`Tel: ${company.phone}`, LAYOUT.MARGIN_LEFT, yPos);
+      doc.text(`Tel: ${company.phone}`, textStartX, yPos);
       yPos += 4;
     }
-    doc.text(`Email: ${company.contact_email}`, LAYOUT.MARGIN_LEFT, yPos);
+    doc.text(`Email: ${company.contact_email}`, textStartX, yPos);
     yPos += 4;
     if (company.website) {
-      doc.text(company.website, LAYOUT.MARGIN_LEFT, yPos);
+      doc.text(company.website, textStartX, yPos);
       yPos += 4;
     }
     if (company.tax_id) {
-      doc.text(`Tax ID: ${company.tax_id}`, LAYOUT.MARGIN_LEFT, yPos);
+      doc.text(`Tax ID: ${company.tax_id}`, textStartX, yPos);
     }
 
     return this;
@@ -779,8 +838,7 @@ export const generateQuotePDF = async (
     const builder = new PDFBuilder(sanitizedCompany, filename);
 
     // Build PDF
-    builder
-      .addHeader()
+    (await builder.addHeader())
       .addTitle('QUOTATION')
       .addMetadataSection(
         ['Quote Number:', 'Issue Date:', 'Valid Until:', 'Status:'],
@@ -867,8 +925,7 @@ export const generateInvoicePDF = async (
     const builder = new PDFBuilder(sanitizedCompany, filename);
 
     // Build PDF
-    builder
-      .addHeader()
+    (await builder.addHeader())
       .addTitle('INVOICE')
       .addInvoiceBanner(sanitizedInvoice)
       .addMetadataSection(
@@ -963,7 +1020,7 @@ export const generatePayslipPDF = async (
     const builder = new PDFBuilder(sanitizedCompany, filename);
 
     // Build PDF
-    builder.addHeader().addTitle('PAYSLIP');
+    (await builder.addHeader()).addTitle('PAYSLIP');
 
     // Metadata section
     builder.addMetadataSection(
