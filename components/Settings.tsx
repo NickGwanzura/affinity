@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { CompanyDetails, AppUser, UserRole, SupabaseConfig, UserInvite, RegistrationRequest, Client } from '../types';
+import { CompanyDetails, AppUser, UserRole, UserInvite, RegistrationRequest, Client } from '../types';
 import { supabase } from '../services/supabaseService';
 import { authService } from '../services/authService';
 import { useToast } from './Toast';
@@ -10,16 +10,14 @@ import { useConfirm } from './ConfirmModal';
 export const Settings: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
-  const [activeTab, setActiveTab] = useState<'company' | 'users' | 'clients' | 'requests' | 'invites' | 'supabase'>('company');
+  const [activeTab, setActiveTab] = useState<'company' | 'users' | 'clients' | 'requests' | 'invites'>('company');
   const [company, setCompany] = useState<CompanyDetails | null>(null);
   const [users, setUsers] = useState<AppUser[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [invites, setInvites] = useState<UserInvite[]>([]);
   const [registrationRequests, setRegistrationRequests] = useState<RegistrationRequest[]>([]);
-  const [dbConfig, setDbConfig] = useState<SupabaseConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>('');
-  const [copied, setCopied] = useState(false);
 
   // User management state
   const [showUserModal, setShowUserModal] = useState(false);
@@ -73,9 +71,8 @@ export const Settings: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [c, d, i, r] = await Promise.all([
+        const [c, i, r] = await Promise.all([
           supabase.getCompanyDetails(),
-          supabase.getSupabaseConfig(),
           supabase.getInvites(),
           supabase.getRegistrationRequests()
         ]);
@@ -92,7 +89,6 @@ export const Settings: React.FC = () => {
         console.log('SETTINGS LOADED - Users from database:', u);
         console.log('User count:', u.length);
         setCompany(c);
-        setDbConfig(d);
         setInvites(i);
         setRegistrationRequests(r);
         setLoading(false);
@@ -115,21 +111,6 @@ export const Settings: React.FC = () => {
     } catch (error) {
       console.error('Error saving company details:', error);
       setSaveStatus('Error saving. Please try again.');
-      setTimeout(() => setSaveStatus(''), 3000);
-    }
-  };
-
-  const handleDbSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!dbConfig) return;
-    setSaveStatus('Connecting...');
-    try {
-      await supabase.updateSupabaseConfig(dbConfig);
-      setTimeout(() => setSaveStatus('Supabase Connected!'), 500);
-      setTimeout(() => setSaveStatus(''), 3000);
-    } catch (error) {
-      console.error('Error updating Supabase config:', error);
-      setSaveStatus('Connection failed. Check credentials.');
       setTimeout(() => setSaveStatus(''), 3000);
     }
   };
@@ -521,15 +502,6 @@ export const Settings: React.FC = () => {
               </span>
             )}
           </button>
-          <button
-            onClick={() => setActiveTab('supabase')}
-            className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'supabase'
-              ? 'border-blue-600 text-blue-600 bg-white'
-              : 'border-transparent text-zinc-500 hover:text-zinc-700'
-              }`}
-          >
-            Supabase Connection
-          </button>
         </div>
 
         <div className="p-8">
@@ -610,7 +582,7 @@ export const Settings: React.FC = () => {
                   placeholder="https://example.com/logo.png"
                   className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                 />
-                <p className="text-xs text-zinc-500 mt-1">This logo will appear on quotes and invoices. Recommended size: 200x100px</p>
+                <p className="text-xs text-zinc-500 mt-1">PDFs now use the built-in Affinity logo. This URL is optional for other branded surfaces.</p>
                 {company.logo_url && (
                   <div className="mt-2 p-4 border border-zinc-200 rounded-lg bg-zinc-50">
                     <p className="text-xs font-semibold text-zinc-600 mb-2">Logo Preview:</p>
@@ -1298,86 +1270,6 @@ export const Settings: React.FC = () => {
                     )}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'supabase' && dbConfig && (
-            <div className="space-y-10">
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-600 rounded-lg text-white">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-bold text-blue-900">Live Database Sync</h3>
-                </div>
-                <p className="text-blue-800 text-sm mb-6 leading-relaxed font-medium">
-                  Enter your Supabase project credentials to transition from the mock environment to a live PostgreSQL production database.
-                </p>
-                <form onSubmit={handleDbSubmit} className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest ml-1">Project URL</label>
-                    <input
-                      type="text"
-                      placeholder="https://xyz.supabase.co"
-                      value={dbConfig.url}
-                      onChange={(e) => setDbConfig({ ...dbConfig, url: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-blue-200 bg-transparent focus:ring-4 focus:ring-blue-100 outline-none font-mono text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-blue-900/60 tracking-widest ml-1">Anon API Key</label>
-                    <input
-                      type="password"
-                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                      value={dbConfig.anonKey}
-                      onChange={(e) => setDbConfig({ ...dbConfig, anonKey: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-blue-200 bg-transparent focus:ring-4 focus:ring-blue-100 outline-none font-mono text-sm"
-                    />
-                  </div>
-                  <div className="pt-2 flex items-center justify-between">
-                    <button
-                      type="submit"
-                      className="bg-blue-900 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-black transition-all font-sans"
-                    >
-                      Initialize Connection
-                    </button>
-                    {saveStatus && <span className="text-blue-600 font-black text-xs uppercase tracking-widest animate-pulse font-sans">{saveStatus}</span>}
-                  </div>
-                </form>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-end">
-                  <div>
-                    <h3 className="text-lg font-black text-zinc-900">Schema Generator</h3>
-                    <p className="text-zinc-500 text-xs">Run this SQL in your Supabase SQL Editor to prepare your tables.</p>
-                  </div>
-                  <button
-                    onClick={copyToClipboard}
-                    className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-zinc-800 transition-all font-sans"
-                  >
-                    {copied ? (
-                      <>
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeWidth="3" /></svg>
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" strokeWidth="2.5" /></svg>
-                        Copy SQL
-                      </>
-                    )}
-                  </button>
-                </div>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-5 blur-xl transition-opacity"></div>
-                  <pre className="bg-zinc-900 text-zinc-300 p-6 rounded-2xl overflow-x-auto text-xs font-mono leading-relaxed ring-1 ring-zinc-800 relative z-10 shadow-2xl">
-                    <code>{SQL_SCHEMA}</code>
-                  </pre>
-                </div>
               </div>
             </div>
           )}

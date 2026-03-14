@@ -15,6 +15,14 @@ const createEmptyLineItem = (): LineItem => ({
   tax_amount: 0
 });
 
+const formatMoney = (amount: number, currency: 'USD' | 'GBP' = 'USD') =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+
 export const Financials: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
   const [activeTab, setActiveTab] = useState<'quotes' | 'invoices' | 'payments'>('quotes');
@@ -37,6 +45,7 @@ export const Financials: React.FC = () => {
     client_name: '',
     client_email: '',
     client_address: '',
+    currency: 'USD' as 'USD' | 'GBP',
     description: '',
     valid_until: '',
     status: 'Draft' as const
@@ -163,6 +172,7 @@ export const Financials: React.FC = () => {
         client_name: quoteForm.client_name,
         client_email: quoteForm.client_email,
         client_address: quoteForm.client_address,
+        currency: quoteForm.currency,
         amount_usd: totalAmount,
         description: quoteForm.description,
         valid_until: quoteForm.valid_until,
@@ -310,6 +320,7 @@ export const Financials: React.FC = () => {
       client_name: '',
       client_email: '',
       client_address: '',
+      currency: 'USD',
       description: '',
       valid_until: '',
       status: 'Draft'
@@ -418,6 +429,17 @@ export const Financials: React.FC = () => {
                   />
                 </div>
                 <div>
+                  <label className="text-sm font-semibold text-zinc-700">Currency</label>
+                  <select
+                    value={quoteForm.currency}
+                    onChange={(e) => setQuoteForm({ ...quoteForm, currency: e.target.value as 'USD' | 'GBP' })}
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <option value="USD">US Dollar (USD)</option>
+                    <option value="GBP">British Pound (GBP)</option>
+                  </select>
+                </div>
+                <div>
                   <label className="text-sm font-semibold text-zinc-700">Notes</label>
                   <input
                     value={quoteForm.description}
@@ -465,7 +487,7 @@ export const Financials: React.FC = () => {
                             />
                           </div>
                           <div className="col-span-2">
-                            <label className="text-xs text-zinc-500">Unit Price</label>
+                            <label className="text-xs text-zinc-500">Unit Price ({quoteForm.currency})</label>
                             <input
                               type="number"
                               step="0.01"
@@ -477,7 +499,7 @@ export const Financials: React.FC = () => {
                           <div className="col-span-2">
                             <label className="text-xs text-zinc-500">Amount</label>
                             <div className="px-3 py-2 bg-zinc-100 rounded-lg text-sm font-semibold text-zinc-700">
-                              ${calculateLineAmount(item).toFixed(2)}
+                              {formatMoney(calculateLineAmount(item), quoteForm.currency)}
                             </div>
                           </div>
                           <div className="col-span-1">
@@ -502,7 +524,7 @@ export const Financials: React.FC = () => {
                   <div className="flex justify-end mt-4 pt-3 border-t">
                     <div className="text-right">
                       <span className="text-sm text-zinc-500">Total:</span>
-                      <span className="ml-3 text-2xl font-black text-zinc-900">${calculateTotal(quoteLineItems).toFixed(2)}</span>
+                      <span className="ml-3 text-2xl font-black text-zinc-900">{formatMoney(calculateTotal(quoteLineItems), quoteForm.currency)}</span>
                     </div>
                   </div>
                 </div>
@@ -766,7 +788,7 @@ export const Financials: React.FC = () => {
                   <tr key={q.id} className="hover:bg-zinc-50 transition-colors">
                     <td className="px-8 py-4 font-mono text-xs font-bold text-blue-600">{q.quote_number}</td>
                     <td className="px-8 py-4 font-bold text-zinc-900">{q.client_name}</td>
-                    <td className="px-8 py-4 font-black text-zinc-900">${q.amount_usd.toLocaleString()}</td>
+                    <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(q.amount_usd, q.currency || 'USD')}</td>
                     <td className="px-8 py-4">
                       <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md text-[10px] font-black uppercase tracking-tighter">{q.status}</span>
                     </td>

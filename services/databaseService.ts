@@ -70,7 +70,7 @@ function validateColumnName(columnName: string, allowedColumns: string[]): strin
 // Allowed column names for each table
 const VEHICLE_COLUMNS = ['id', 'vin_number', 'make_model', 'purchase_price_gbp', 'status', 'created_at'];
 const EXPENSE_COLUMNS = ['id', 'vehicle_id', 'description', 'amount', 'currency', 'category', 'location', 'receipt_url', 'driver_name', 'trip_reference', 'created_at'];
-const QUOTE_COLUMNS = ['id', 'quote_number', 'vehicle_id', 'client_name', 'client_email', 'client_address', 'amount_usd', 'status', 'description', 'valid_until', 'created_at'];
+const QUOTE_COLUMNS = ['id', 'quote_number', 'vehicle_id', 'client_name', 'client_email', 'client_address', 'amount_usd', 'currency', 'status', 'description', 'valid_until', 'created_at'];
 const INVOICE_COLUMNS = ['id', 'invoice_number', 'quote_id', 'vehicle_id', 'client_name', 'client_email', 'client_address', 'amount_usd', 'status', 'description', 'due_date', 'created_at'];
 const CLIENT_COLUMNS = ['id', 'name', 'email', 'phone', 'address', 'company', 'notes', 'created_at'];
 const EMPLOYEE_COLUMNS = ['id', 'employee_number', 'name', 'email', 'phone', 'department', 'position', 'base_pay_usd', 'currency', 'employment_type', 'date_hired', 'status', 'created_at', 'updated_at'];
@@ -454,7 +454,7 @@ export async function createQuote(quoteData: Omit<Quote, 'id' | 'created_at' | '
     const rows = await sql`
       INSERT INTO quotes (
         quote_number, vehicle_id, client_name, client_email, client_address, 
-        amount_usd, status, description, valid_until, items
+        amount_usd, currency, status, description, valid_until, items
       )
       VALUES (
         ${quote_number},
@@ -463,6 +463,7 @@ export async function createQuote(quoteData: Omit<Quote, 'id' | 'created_at' | '
         ${quoteData.client_email || null},
         ${quoteData.client_address || null},
         ${quoteData.amount_usd},
+        ${quoteData.currency || 'USD'},
         ${quoteData.status || 'Draft'},
         ${quoteData.description || null},
         ${quoteData.valid_until || null},
@@ -491,6 +492,7 @@ export async function updateQuote(quoteId: string, updates: Partial<Omit<Quote, 
         client_email = COALESCE(${updates.client_email}, client_email),
         client_address = COALESCE(${updates.client_address}, client_address),
         amount_usd = COALESCE(${updates.amount_usd || null}, amount_usd),
+        currency = COALESCE(${updates.currency || null}, currency),
         status = COALESCE(${updates.status || null}, status),
         description = COALESCE(${updates.description}, description),
         valid_until = COALESCE(${updates.valid_until}, valid_until),

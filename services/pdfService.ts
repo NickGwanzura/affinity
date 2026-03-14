@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Quote, Invoice, CompanyDetails, Payslip, Employee } from '../types';
+import affinityLogoUrl from '../assets/affinity-logo.svg';
 
 // ============================================================================
 // CONSTANTS
@@ -66,6 +67,15 @@ const COLUMN_WIDTHS = {
 
 const MAX_TEXT_LENGTH = 5000;
 const MAX_NOTES_LENGTH = 2000;
+const HARDCODED_PDF_LOGO_URL = affinityLogoUrl;
+
+const formatCurrencyAmount = (amount: number, currency: 'USD' | 'GBP' = 'USD'): string =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 
 // ============================================================================
 // ERROR CLASSES
@@ -142,6 +152,7 @@ function sanitizeQuote(quote: Quote): Quote {
     client_name: sanitizeText(quote.client_name) || 'Unknown Client',
     client_email: sanitizeEmail(quote.client_email),
     client_address: sanitizeText(quote.client_address),
+    currency: quote.currency === 'GBP' ? 'GBP' : 'USD',
     description: sanitizeText(quote.description),
     status: (sanitizeText(quote.status) || 'draft') as Quote['status'],
     amount_usd: sanitizeNumber(quote.amount_usd),
@@ -223,6 +234,7 @@ class PDFBuilder {
   private doc: jsPDF;
   private company: CompanyDetails;
   private filename: string;
+  private logoDataPromise?: Promise<{ dataUrl: string; width: number; height: number } | null>;
 
   constructor(company: CompanyDetails, filename: string) {
     this.doc = new jsPDF();
@@ -234,83 +246,138 @@ class PDFBuilder {
   // Header & Footer
   // -------------------------------------------------------------------------
 
-  private async loadLogoData(logoUrl?: string): Promise<{ dataUrl: string; format: 'PNG' | 'JPEG' | 'WEBP' } | null> {
+  private async loadLogoData(logoUrl?: string, opacity: number = 1): Promise<{ dataUrl: string; width: number; height: number } | null> {
     if (!logoUrl) {
       return null;
     }
 
     try {
-      const response = await fetch(logoUrl);
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
 
-      if (!response.ok) {
-        return null;
-      }
+        if (/^https?:/i.test(logoUrl)) {
+          img.crossOrigin = 'anonymous';
+        }
 
-      const blob = await response.blob();
-
-      if (!blob.type.startsWith('image/')) {
-        return null;
-      }
-
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error('Failed to read logo file'));
-        reader.readAsDataURL(blob);
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Failed to load logo image'));
+        img.src = logoUrl;
       });
 
-      const format =
-        blob.type === 'image/png' ? 'PNG' :
-        blob.type === 'image/webp' ? 'WEBP' :
-        'JPEG';
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth || image.width || 1;
+      canvas.height = image.naturalHeight || image.height || 1;
 
-      return { dataUrl, format };
+      const context = canvas.getContext('2d');
+      if (!context) {
+        return null;
+      }
+
+      context.globalAlpha = opacity;
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      return {
+        dataUrl: canvas.toDataURL('image/png'),
+        width: canvas.width,
+        height: canvas.height,
+      };
     } catch {
       return null;
     }
   }
 
+  private async getLogoData(): Promise<{ dataUrl: string; width: number; height: number } | null> {
+    if (!this.logoDataPromise) {
+      this.logoDataPromise = this.loadLogoData(HARDCODED_PDF_LOGO_URL);
+    }
+
+    return this.logoDataPromise;
+  }
+
+  async addLogoWatermark(): Promise<this> {
+    const watermarkLogo = await this.loadLogoData(HARDCODED_PDF_LOGO_URL, 0.07);
+
+    if (!watermarkLogo) {
+      return this;
+    }
+
+    const { doc } = this;
+    const maxWidth = 115;
+    const maxHeight = 115;
+    const widthScale = maxWidth / Math.max(watermarkLogo.width, 1);
+    const heightScale = maxHeight / Math.max(watermarkLogo.height, 1);
+    const scale = Math.min(widthScale, heightScale, 1);
+    const watermarkWidth = watermarkLogo.width * scale;
+    const watermarkHeight = watermarkLogo.height * scale;
+    const x = (LAYOUT.PAGE_WIDTH - watermarkWidth) / 2;
+    const y = (LAYOUT.PAGE_HEIGHT - watermarkHeight) / 2 - 8;
+
+    doc.addImage(watermarkLogo.dataUrl, 'PNG', x, y, watermarkWidth, watermarkHeight);
+
+    return this;
+  }
+
   async addHeader(): Promise<this> {
     const { doc, company } = this;
-    const logo = await this.loadLogoData(company.logo_url);
+    const logo = await this.getLogoData();
     const hasLogo = Boolean(logo);
-    const textStartX = hasLogo ? 52 : LAYOUT.MARGIN_LEFT;
+    const maxLogoWidth = 30;
+    const maxLogoHeight = 18;
+    const logoWidth = logo ? Math.min(maxLogoWidth, (logo.width / Math.max(logo.height, 1)) * maxLogoHeight) : 0;
+    const logoHeight = logo ? Math.min(maxLogoHeight, (logo.height / Math.max(logo.width, 1)) * maxLogoWidth) : 0;
+    const textStartX = hasLogo ? LAYOUT.MARGIN_LEFT + logoWidth + 8 : LAYOUT.MARGIN_LEFT;
+    const contentWidth = hasLogo ? 78 : 95;
+    const lineHeight = 4.5;
+    const nameLineHeight = 6.5;
 
     if (logo) {
-      doc.addImage(logo.dataUrl, logo.format, LAYOUT.MARGIN_LEFT, 12, 28, 18);
+      doc.addImage(logo.dataUrl, 'PNG', LAYOUT.MARGIN_LEFT, 12, logoWidth, logoHeight);
     }
 
     // Company Name
     doc.setFontSize(FONT_SIZES.XLARGE);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text(company.name.toUpperCase(), textStartX, LAYOUT.HEADER_Y);
+    const companyNameLines = doc.splitTextToSize(company.name.toUpperCase(), contentWidth);
+    doc.text(companyNameLines, textStartX, LAYOUT.HEADER_Y);
 
-    // Company Address
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
-    const addressLines = company.address.split(',').map(line => line.trim());
-    let yPos = 26;
-    addressLines.forEach(line => {
-      doc.text(line, textStartX, yPos);
-      yPos += 4;
-    });
+    const logoBottomY = hasLogo ? 12 + logoHeight : 0;
+    const nameBottomY = LAYOUT.HEADER_Y + companyNameLines.length * nameLineHeight;
+    let yPos = Math.max(logoBottomY, nameBottomY) + 3;
 
-    // Contact details
-    yPos += 1;
+    const writeWrappedLine = (value?: string) => {
+      const trimmedValue = value?.trim();
+
+      if (!trimmedValue) {
+        return;
+      }
+
+      const wrappedLines = doc.splitTextToSize(trimmedValue, contentWidth);
+      doc.text(wrappedLines, textStartX, yPos);
+      yPos += wrappedLines.length * lineHeight + 0.8;
+    };
+
+    company.address
+      .split(',')
+      .map(line => line.trim())
+      .filter(Boolean)
+      .forEach(writeWrappedLine);
+
     if (company.phone) {
-      doc.text(`Tel: ${company.phone}`, textStartX, yPos);
-      yPos += 4;
+      writeWrappedLine(`Tel: ${company.phone}`);
     }
-    doc.text(`Email: ${company.contact_email}`, textStartX, yPos);
-    yPos += 4;
+
+    writeWrappedLine(`Email: ${company.contact_email}`);
+
     if (company.website) {
-      doc.text(company.website, textStartX, yPos);
-      yPos += 4;
+      writeWrappedLine(company.website);
     }
+
     if (company.tax_id) {
-      doc.text(`Tax ID: ${company.tax_id}`, textStartX, yPos);
+      writeWrappedLine(`Tax ID: ${company.tax_id}`);
     }
 
     return this;
@@ -323,22 +390,29 @@ class PDFBuilder {
     doc.setLineWidth(LAYOUT.LINE_WIDTH_THIN);
     doc.line(LAYOUT.MARGIN_LEFT, LAYOUT.FOOTER_Y, LAYOUT.MARGIN_RIGHT, LAYOUT.FOOTER_Y);
 
+    const centerX = LAYOUT.PAGE_WIDTH / 2;
+    let yPos = 280;
+
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.text('Delivery is our DNA - Titumei Tinosvitsa', centerX, yPos, { align: 'center' });
+    yPos += 4.5;
+
     const fontSize = options?.fontSize || FONT_SIZES.XSMALL;
     doc.setFontSize(fontSize);
-    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
-    doc.setTextColor(...COLORS.LIGHT_GRAY);
-
-    const centerX = LAYOUT.PAGE_WIDTH / 2;
-    let yPos = 282;
-
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(company.name, centerX, yPos, { align: 'center' });
-    yPos += 6;
+    yPos += 4.5;
 
     const contactInfo = `${company.contact_email}${company.phone ? ` | ${company.phone}` : ''} | Generated: ${new Date().toLocaleDateString()}`;
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.text(contactInfo, centerX, yPos, { align: 'center' });
 
     if (options?.additionalText) {
-      yPos += 6;
+      yPos += 4.5;
       doc.text(options.additionalText, centerX, yPos, { align: 'center' });
     }
 
@@ -610,7 +684,7 @@ class PDFBuilder {
   // Total Sections
   // -------------------------------------------------------------------------
 
-  addTotalSection(amount: number, label: string = 'TOTAL'): this {
+  addTotalSection(amount: number, label: string = 'TOTAL', currency: 'USD' | 'GBP' = 'USD'): this {
     const { doc } = this;
     const finalY = (doc as any).lastAutoTable?.finalY || 140;
 
@@ -624,7 +698,7 @@ class PDFBuilder {
     doc.text(`${label}:`, 133, finalY + 18);
 
     doc.setFontSize(FONT_SIZES.LARGE);
-    doc.text(`$${amount.toLocaleString()}`, 192, finalY + 18, { align: 'right' });
+    doc.text(formatCurrencyAmount(amount, currency), 192, finalY + 18, { align: 'right' });
 
     doc.setLineWidth(LAYOUT.LINE_WIDTH_THICK);
     doc.line(130, finalY + 22, LAYOUT.MARGIN_RIGHT, finalY + 22);
@@ -838,10 +912,11 @@ export const generateQuotePDF = async (
     const builder = new PDFBuilder(sanitizedCompany, filename);
 
     // Build PDF
+    await builder.addLogoWatermark();
     (await builder.addHeader())
       .addTitle('QUOTATION')
       .addMetadataSection(
-        ['Quote Number:', 'Issue Date:', 'Valid Until:', 'Status:'],
+        ['Quote Number:', 'Issue Date:', 'Valid Until:', 'Currency:', 'Status:'],
         [
           sanitizedQuote.quote_number,
           new Date(sanitizedQuote.created_at).toLocaleDateString('en-US', {
@@ -856,6 +931,7 @@ export const generateQuotePDF = async (
                 year: 'numeric',
               })
             : 'N/A',
+          sanitizedQuote.currency || 'USD',
           sanitizedQuote.status.toUpperCase(),
         ],
         125,
@@ -874,20 +950,20 @@ export const generateQuotePDF = async (
         ? sanitizedQuote.items.map(item => [
             item.description,
             item.quantity.toString(),
-            `$${item.unit_price.toLocaleString()}`,
-            `$${item.amount.toLocaleString()}`,
+            formatCurrencyAmount(item.unit_price, sanitizedQuote.currency || 'USD'),
+            formatCurrencyAmount(item.amount, sanitizedQuote.currency || 'USD'),
           ])
         : [
             [
               sanitizedQuote.description || 'Professional Services',
               '1',
-              `$${sanitizedQuote.amount_usd.toLocaleString()}`,
-              `$${sanitizedQuote.amount_usd.toLocaleString()}`,
+              formatCurrencyAmount(sanitizedQuote.amount_usd, sanitizedQuote.currency || 'USD'),
+              formatCurrencyAmount(sanitizedQuote.amount_usd, sanitizedQuote.currency || 'USD'),
             ],
           ];
 
     builder.addItemsTable(tableData);
-    builder.addTotalSection(sanitizedQuote.amount_usd);
+    builder.addTotalSection(sanitizedQuote.amount_usd, 'TOTAL', sanitizedQuote.currency || 'USD');
     builder.addTerms('quote', (builder.getDocument() as any).lastAutoTable?.finalY || 140);
     builder.addFooter();
 
@@ -925,6 +1001,7 @@ export const generateInvoicePDF = async (
     const builder = new PDFBuilder(sanitizedCompany, filename);
 
     // Build PDF
+    await builder.addLogoWatermark();
     (await builder.addHeader())
       .addTitle('INVOICE')
       .addInvoiceBanner(sanitizedInvoice)
@@ -1020,6 +1097,7 @@ export const generatePayslipPDF = async (
     const builder = new PDFBuilder(sanitizedCompany, filename);
 
     // Build PDF
+    await builder.addLogoWatermark();
     (await builder.addHeader()).addTitle('PAYSLIP');
 
     // Metadata section

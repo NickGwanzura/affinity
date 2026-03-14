@@ -105,6 +105,7 @@ export interface Quote {
   client_email?: string;
   client_address?: string;
   amount_usd: number;
+  currency?: 'USD' | 'GBP';
   status: FinancialStatus;
   quote_number: string;
   description?: string;

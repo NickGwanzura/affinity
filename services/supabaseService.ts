@@ -72,6 +72,8 @@ const sanitizeString = (input: string): string => {
   return input.trim().replace(/[<>]/g, '');
 };
 
+const QUOTE_CURRENCIES = ['USD', 'GBP'] as const;
+
 const validateRequired = (value: unknown, fieldName: string): void => {
   if (value === null || value === undefined || value === '') {
     throw new ValidationError(`${fieldName} is required`, fieldName);
@@ -677,6 +679,9 @@ class SupabaseService {
     if (quoteData.amount_usd <= 0) {
       throw new ValidationError('Amount must be greater than 0', 'amount_usd');
     }
+    if (quoteData.currency && !QUOTE_CURRENCIES.includes(quoteData.currency)) {
+      throw new ValidationError('Quote currency must be USD or GBP', 'currency');
+    }
 
     try {
       const quote = await db.createQuote(quoteData);
@@ -698,6 +703,9 @@ class SupabaseService {
     }
     if (updates.amount_usd !== undefined && updates.amount_usd <= 0) {
       throw new ValidationError('Amount must be greater than 0', 'amount_usd');
+    }
+    if (updates.currency && !QUOTE_CURRENCIES.includes(updates.currency)) {
+      throw new ValidationError('Quote currency must be USD or GBP', 'currency');
     }
 
     try {
