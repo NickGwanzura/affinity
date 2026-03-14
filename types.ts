@@ -124,6 +124,7 @@ export interface Invoice {
   client_email?: string;
   client_address?: string;
   amount_usd: number;
+  currency?: 'USD' | 'GBP';
   status: FinancialStatus;
   description?: string;
   notes?: string;
@@ -140,6 +141,23 @@ export interface Payment {
   amount_usd: number;
   method: string;
   date: string;
+}
+
+export interface Receipt {
+  id: string;
+  receipt_number: string;
+  invoice_id?: string;
+  payment_id?: string;
+  client_name: string;
+  client_email?: string;
+  client_address?: string;
+  amount_received: number;
+  currency: 'USD' | 'GBP';
+  payment_method: string;
+  payment_date: string;
+  reference_number?: string;
+  notes?: string;
+  created_at: string;
 }
 
 export interface UserInvite {

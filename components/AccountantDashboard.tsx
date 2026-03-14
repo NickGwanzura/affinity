@@ -464,10 +464,10 @@ export const AccountantDashboard: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number, currency: 'USD' | 'GBP' = 'USD') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: currency
     }).format(amount);
   };
 
@@ -637,7 +637,7 @@ export const AccountantDashboard: React.FC = () => {
                           <p className="text-xs text-zinc-500">{formatDate(invoice.created_at)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-zinc-900">{formatCurrency(invoice.amount_usd)}</p>
+                          <p className="font-bold text-zinc-900">{formatCurrency(invoice.amount_usd, (invoice.currency as 'USD' | 'GBP') || 'USD')}</p>
                           <StatusBadge status={invoice.status} />
                         </div>
                       </div>
@@ -722,7 +722,7 @@ export const AccountantDashboard: React.FC = () => {
                     <tr key={invoice.id} className="hover:bg-zinc-50">
                       <td className="px-4 py-3 font-mono text-xs">{invoice.invoice_number}</td>
                       <td className="px-4 py-3 font-mono text-xs">{truncateValue(invoice.vehicle_id, 8)}</td>
-                      <td className="px-4 py-3 text-right font-bold">{formatCurrency(invoice.amount_usd)}</td>
+                      <td className="px-4 py-3 text-right font-bold">{formatCurrency(invoice.amount_usd, (invoice.currency as 'USD' | 'GBP') || 'USD')}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={invoice.status} />
                       </td>

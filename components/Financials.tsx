@@ -60,6 +60,7 @@ export const Financials: React.FC = () => {
     client_name: '',
     client_email: '',
     client_address: '',
+    currency: 'USD' as 'USD' | 'GBP',
     description: '',
     notes: '',
     terms_and_conditions: 'Payment is due by the date specified above. Please include the invoice number with your payment.',
@@ -217,6 +218,7 @@ export const Financials: React.FC = () => {
         client_email: invoiceForm.client_email,
         client_address: invoiceForm.client_address,
         amount_usd: totalAmount,
+        currency: invoiceForm.currency,
         description: invoiceForm.description,
         notes: invoiceForm.notes,
         terms_and_conditions: invoiceForm.terms_and_conditions,
@@ -334,6 +336,7 @@ export const Financials: React.FC = () => {
       client_name: '',
       client_email: '',
       client_address: '',
+      currency: 'USD',
       description: '',
       notes: '',
       terms_and_conditions: 'Payment is due by the date specified above. Please include the invoice number with your payment.',
@@ -588,6 +591,17 @@ export const Financials: React.FC = () => {
                   />
                 </div>
                 <div>
+                  <label className="text-sm font-semibold text-zinc-700">Currency</label>
+                  <select
+                    value={invoiceForm.currency}
+                    onChange={(e) => setInvoiceForm({...invoiceForm, currency: e.target.value as 'USD' | 'GBP'})}
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+                <div>
                   <label className="text-sm font-semibold text-zinc-700">Due Date</label>
                   <input
                     required
@@ -703,7 +717,7 @@ export const Financials: React.FC = () => {
                   <div className="flex justify-end mt-4 pt-3 border-t">
                     <div className="text-right">
                       <span className="text-sm text-zinc-500">Total:</span>
-                      <span className="ml-3 text-2xl font-black text-zinc-900">${calculateTotal(invoiceLineItems).toFixed(2)}</span>
+                      <span className="ml-3 text-2xl font-black text-zinc-900">{formatMoney(calculateTotal(invoiceLineItems), invoiceForm.currency)}</span>
                     </div>
                   </div>
                 </div>
