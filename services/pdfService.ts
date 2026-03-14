@@ -235,6 +235,10 @@ class PDFBuilder {
   private company: CompanyDetails;
   private filename: string;
   private logoDataPromise?: Promise<{ dataUrl: string; width: number; height: number } | null>;
+  private headerBottomY: number = LAYOUT.SEPARATOR_Y;
+  private sectionTopY: number = 65;
+  private metadataBottomY: number = 65;
+  private clientBottomY: number = 80;
 
   constructor(company: CompanyDetails, filename: string) {
     this.doc = new jsPDF();
@@ -380,6 +384,8 @@ class PDFBuilder {
       writeWrappedLine(`Tax ID: ${company.tax_id}`);
     }
 
+    this.headerBottomY = yPos;
+
     return this;
   }
 
@@ -425,6 +431,7 @@ class PDFBuilder {
 
   addTitle(text: string): this {
     const { doc } = this;
+    const separatorY = Math.max(this.headerBottomY + 4, LAYOUT.SEPARATOR_Y);
 
     doc.setFontSize(FONT_SIZES.XXLARGE);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
@@ -434,7 +441,11 @@ class PDFBuilder {
     // Separator line
     doc.setDrawColor(...COLORS.BORDER_GRAY);
     doc.setLineWidth(LAYOUT.LINE_WIDTH_REGULAR);
-    doc.line(LAYOUT.MARGIN_LEFT, LAYOUT.SEPARATOR_Y, LAYOUT.MARGIN_RIGHT, LAYOUT.SEPARATOR_Y);
+    doc.line(LAYOUT.MARGIN_LEFT, separatorY, LAYOUT.MARGIN_RIGHT, separatorY);
+
+    this.sectionTopY = separatorY + 12;
+    this.metadataBottomY = this.sectionTopY;
+    this.clientBottomY = this.sectionTopY + 15;
 
     return this;
   }
@@ -476,7 +487,7 @@ class PDFBuilder {
     labels: string[],
     values: string[],
     x: number,
-    startY: number
+    startY: number = this.sectionTopY
   ): this {
     const { doc } = this;
 
@@ -495,6 +506,8 @@ class PDFBuilder {
       doc.text(value, LAYOUT.MARGIN_RIGHT, startY + index * 7, { align: 'right' });
     });
 
+    this.metadataBottomY = startY + (Math.max(labels.length, values.length) - 1) * 7;
+
     return this;
   }
 
@@ -503,25 +516,26 @@ class PDFBuilder {
     name: string,
     email?: string,
     address?: string,
-    additionalInfo?: { label: string; value: string }[]
+    additionalInfo?: { label: string; value: string }[],
+    startY: number = this.sectionTopY
   ): this {
     const { doc } = this;
 
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
-    doc.text(title, LAYOUT.MARGIN_LEFT, 65);
+    doc.text(title, LAYOUT.MARGIN_LEFT, startY);
 
     doc.setFontSize(FONT_SIZES.REGULAR);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text(name, LAYOUT.MARGIN_LEFT, 73);
+    doc.text(name, LAYOUT.MARGIN_LEFT, startY + 8);
 
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
 
-    let yPos = 80;
+    let yPos = startY + 15;
     const contentWidth = 78;
     const lineHeight = 4.5;
 
@@ -558,6 +572,8 @@ class PDFBuilder {
       });
     }
 
+    this.clientBottomY = yPos;
+
     return this;
   }
 
@@ -567,7 +583,7 @@ class PDFBuilder {
 
   addItemsTable(
     data: (string | number)[][],
-    startY: number = 105
+    startY: number = Math.max(this.metadataBottomY, this.clientBottomY) + 10
   ): { finalY: number } {
     const { doc } = this;
 
