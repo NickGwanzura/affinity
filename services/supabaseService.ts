@@ -763,6 +763,24 @@ class SupabaseService {
     }
   }
 
+  async createPayment(paymentData: { reference_id: string; type: 'Inbound' | 'Outbound'; amount_usd: number; method: string; date: string }): Promise<Payment> {
+    logAPICall('POST', '/payments', paymentData);
+
+    if (!isNeonConnected()) {
+      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
+    }
+
+    try {
+      const payment = await db.createPayment(paymentData);
+      logAPICall('POST', '/payments', { success: true, paymentId: payment.id });
+      return payment;
+    } catch (error: unknown) {
+      const errorMsg = getErrorMessage(error);
+      logAPICall('POST', '/payments', { success: false, error: errorMsg });
+      throw new APIError(500, 'Failed to create payment: ' + errorMsg, error);
+    }
+  }
+
   async createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_at' | 'invoice_number'>): Promise<Invoice> {
     logAPICall('POST', '/invoices', invoiceData);
 

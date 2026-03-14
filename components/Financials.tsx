@@ -733,6 +733,94 @@ export const Financials: React.FC = () => {
         </div>
       )}
 
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowPaymentModal(false)}></div>
+          <div className="relative bg-white rounded-3xl p-8 max-w-xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-2xl font-black text-zinc-900 mb-2">Record Payment</h3>
+            <p className="text-sm text-zinc-500 mb-6">Record an inbound payment from a client.</p>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.target as HTMLFormElement;
+              const formData = new FormData(form);
+              const paymentData = {
+                reference_id: formData.get('invoice_number') as string || `PAY-${Date.now()}`,
+                type: 'Inbound' as const,
+                amount_usd: parseFloat(formData.get('amount') as string) || 0,
+                method: formData.get('method') as string,
+                date: new Date().toISOString()
+              };
+              try {
+                await supabase.createPayment(paymentData);
+                showToast('Payment recorded successfully!', 'success');
+                setShowPaymentModal(false);
+                loadData();
+              } catch (error: any) {
+                showToast(error?.message || 'Failed to record payment', 'error');
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-zinc-700">Invoice Number (Optional)</label>
+                <input
+                  name="invoice_number"
+                  placeholder="INV-001"
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-zinc-700">Client Name</label>
+                <input
+                  name="client_name"
+                  required
+                  placeholder="Client name"
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700">Amount</label>
+                  <input
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700">Payment Method</label>
+                  <select
+                    name="method"
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
+                  >
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="Check">Check</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-zinc-700">Notes</label>
+                <textarea
+                  name="notes"
+                  rows={2}
+                  placeholder="Optional notes..."
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setShowPaymentModal(false)} className="flex-1 px-4 py-3 rounded-xl font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-3 rounded-xl font-bold text-sm bg-green-600 text-white hover:bg-green-700">Record Payment</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {previewUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-zinc-950/60 backdrop-blur-sm" onClick={closePreview}></div>

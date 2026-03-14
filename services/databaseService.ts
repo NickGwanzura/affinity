@@ -594,6 +594,19 @@ export async function getInvoices(pagination?: PaginationParams): Promise<Invoic
   }, 'getInvoices');
 }
 
+export async function createPayment(paymentData: { reference_id: string; type: 'Inbound' | 'Outbound'; amount_usd: number; method: string; date: string }): Promise<Payment> {
+  if (!sql) throw new Error('Database not connected');
+
+  return executeQuery(async () => {
+    const [rows] = await sql`
+      INSERT INTO public.payments (reference_id, type, amount_usd, method, date)
+      VALUES (${paymentData.reference_id}, ${paymentData.type}, ${paymentData.amount_usd}, ${paymentData.method}, ${paymentData.date})
+      RETURNING *
+    `;
+    return rows[0] as Payment;
+  }, 'createPayment');
+}
+
 export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_at' | 'invoice_number'>): Promise<Invoice> {
   if (!sql) throw new Error('Database not connected');
   
