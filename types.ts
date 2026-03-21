@@ -80,6 +80,8 @@ export interface LineItem {
   quantity: number;
   unit_price: number;
   amount: number;
+  discount_percentage?: number;
+  discount_amount?: number;
   tax_rate?: number;
   tax_amount?: number;
   notes?: string;
@@ -93,6 +95,14 @@ export interface QuoteItem extends LineItem {
 
 export interface InvoiceItem extends LineItem {
   invoice_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ReceiptItem extends LineItem {
+  receipt_id?: string;
+  invoice_id?: string;
+  invoice_number?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -118,6 +128,7 @@ export interface Invoice {
   id: string;
   quote_id?: string;
   invoice_number: string;
+  invoice_kind?: 'Standard' | 'Deposit' | 'Final';
   vehicle_id?: string;
   client_id?: string;
   client_name: string;
@@ -131,16 +142,29 @@ export interface Invoice {
   terms_and_conditions?: string;
   due_date: string;
   items?: InvoiceItem[]; // Line items from invoice_items table
+  batch?: string;
   created_at: string;
 }
 
 export interface Payment {
   id: string;
   reference_id: string; // Linked to Invoice or Expense
+  client_name?: string;
   type: 'Inbound' | 'Outbound';
   amount_usd: number;
+  currency?: 'USD' | 'GBP';
   method: string;
   date: string;
+  allocations?: PaymentAllocation[];
+}
+
+export interface PaymentAllocation {
+  id: string;
+  payment_id: string;
+  invoice_id: string;
+  amount_allocated: number;
+  currency: 'USD' | 'GBP';
+  created_at: string;
 }
 
 export interface Receipt {
@@ -157,6 +181,8 @@ export interface Receipt {
   payment_date: string;
   reference_number?: string;
   notes?: string;
+  items?: ReceiptItem[];
+  batch?: string;
   created_at: string;
 }
 
@@ -224,6 +250,53 @@ export interface OperatingFund {
   approved_by?: string;
   date: string;
   created_at: string;
+}
+
+// Asset Register Types
+
+export type AssetStatus = 'Available' | 'Borrowed' | 'Under Maintenance' | 'Retired';
+export type AssetCondition = 'Excellent' | 'Good' | 'Fair' | 'Poor';
+
+export interface Asset {
+  id: string;
+  name: string;
+  description?: string;
+  category: string;
+  serial_number?: string;
+  status: AssetStatus;
+  location?: string;
+  purchase_date?: string;
+  purchase_value?: number;
+  condition: AssetCondition;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AssetRequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Taken' | 'Returned' | 'Overdue';
+
+export interface AssetRequest {
+  id: string;
+  asset_id: string;
+  requested_by: string;
+  requester_email?: string;
+  requester_department?: string;
+  request_date: string;
+  requested_take_date?: string;
+  approved_by?: string;
+  approval_date?: string;
+  actual_take_date?: string;
+  expected_return_date?: string;
+  actual_return_date?: string;
+  status: AssetRequestStatus;
+  rejection_reason?: string;
+  purpose?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  asset_name?: string;
+  asset_category?: string;
+  asset_serial?: string;
 }
 
 export interface Payslip {

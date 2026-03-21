@@ -2,10 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Expense, Vehicle, CompanyDetails } from '../types';
 import { supabase } from '../services/supabaseService';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { generateVehicleStatementPDFAndDownload } from '../services/pdfService';
 import { useToast } from '../components/Toast';
-import { useConfirm } from '../components/ConfirmModal';
 
 export const Documents: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'receipts' | 'statements'>('receipts');
@@ -17,7 +15,6 @@ export const Documents: React.FC = () => {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [modalImageError, setModalImageError] = useState(false);
   const { showToast, ToastContainer } = useToast();
-  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     const load = async () => {
@@ -63,154 +60,8 @@ export const Documents: React.FC = () => {
     }
 
     try {
-      const doc = new jsPDF();
-      
-      // Add company logo if exists
-      if (company.logo_url) {
-        try {
-          doc.addImage(company.logo_url, 'PNG', 15, 15, 40, 40);
-        } catch {
-          // Silently handle logo load failure
-        }
-      }
-      
-      // Company Header
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text(company.name, company.logo_url ? 60 : 15, 25);
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(company.address, company.logo_url ? 60 : 15, 32);
-      doc.text(`Email: ${company.contact_email}`, company.logo_url ? 60 : 15, 37);
-      if (company.phone) doc.text(`Phone: ${company.phone}`, company.logo_url ? 60 : 15, 42);
-      
-      // Statement Title
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(59, 130, 246);
-      doc.text('VEHICLE EXPENSE STATEMENT', 15, 70);
-      
-      // Vehicle Details Box
-      doc.setFillColor(249, 250, 251);
-      doc.rect(15, 80, 180, 30, 'F');
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text('Vehicle:', 20, 88);
-      doc.text('VIN:', 20, 95);
-      doc.text('Status:', 20, 102);
-      doc.text('Purchase Price:', 120, 88);
-      doc.text('Statement Date:', 120, 95);
-      
-      doc.setFont('helvetica', 'normal');
-      doc.text(vehicle.make_model, 45, 88);
-      doc.text(vehicle.vin_number, 45, 95);
-      doc.text(vehicle.status, 45, 102);
-      doc.text(`£${vehicle.purchase_price_gbp.toLocaleString()}`, 165, 88);
-      doc.text(new Date().toLocaleDateString(), 165, 95);
-      
-      // Get vehicle expenses
       const vehicleExpenses = expenses.filter(e => e.vehicle_id === vehicle.id);
-      
-      if (vehicleExpenses.length === 0) {
-        doc.setFontSize(12);
-        doc.setTextColor(100, 100, 100);
-        doc.text('No expenses recorded for this vehicle yet.', 15, 130);
-      } else {
-        // Expenses Table
-        const tableData = vehicleExpenses.map(exp => [
-          new Date(exp.created_at).toLocaleDateString(),
-          exp.category,
-          exp.description,
-          exp.location,
-          `${exp.currency} ${exp.amount.toLocaleString()}`,
-          `$${(exp.amount * (exp.exchange_rate_to_usd || 1)).toLocaleString()}`
-        ]);
-        
-        autoTable(doc, {
-          startY: 120,
-          head: [['Date', 'Category', 'Description', 'Location', 'Amount', 'USD Equiv.']],
-          body: tableData,
-          theme: 'striped',
-          headStyles: {
-            fillColor: [59, 130, 246],
-            fontStyle: 'bold',
-            fontSize: 9
-          },
-          styles: {
-            fontSize: 8,
-            cellPadding: 4
-          },
-          columnStyles: {
-            0: { cellWidth: 25 },
-            1: { cellWidth: 25 },
-            2: { cellWidth: 45 },
-            3: { cellWidth: 25 },
-            4: { cellWidth: 30, halign: 'right' },
-            5: { cellWidth: 30, halign: 'right' }
-          }
-        });
-        
-        // Totals
-        const finalY = (doc as any).lastAutoTable.finalY || 120;
-        const totalExpensesUSD = vehicleExpenses.reduce((sum, exp) => 
-          sum + (exp.amount * (exp.exchange_rate_to_usd || 1)), 0
-        );
-        const purchasePriceUSD = vehicle.purchase_price_gbp * 1.27; // GBP to USD
-        const totalLandedCost = purchasePriceUSD + totalExpensesUSD;
-        
-        doc.setFillColor(249, 250, 251);
-        doc.rect(120, finalY + 10, 75, 40, 'F');
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Purchase Price (USD):', 125, finalY + 18);
-        doc.text(`$${purchasePriceUSD.toLocaleString(undefined, {maximumFractionDigits: 2})}`, 190, finalY + 18, { align: 'right' });
-        
-        doc.text('Total Expenses (USD):', 125, finalY + 26);
-        doc.text(`$${totalExpensesUSD.toLocaleString(undefined, {maximumFractionDigits: 2})}`, 190, finalY + 26, { align: 'right' });
-        
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text('Total Landed Cost:', 125, finalY + 38);
-        doc.setTextColor(59, 130, 246);
-        doc.text(`$${totalLandedCost.toLocaleString(undefined, {maximumFractionDigits: 2})}`, 190, finalY + 38, { align: 'right' });
-        doc.setTextColor(0, 0, 0);
-        
-        // Expense breakdown by category
-        const categoryTotals: Record<string, number> = {};
-        vehicleExpenses.forEach(exp => {
-          const usdAmount = exp.amount * (exp.exchange_rate_to_usd || 1);
-          categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + usdAmount;
-        });
-        
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Expense Breakdown by Category', 15, finalY + 18);
-        
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        let yPos = finalY + 26;
-        Object.entries(categoryTotals).forEach(([category, total]) => {
-          doc.text(`${category}:`, 20, yPos);
-          doc.text(`$${total.toLocaleString(undefined, {maximumFractionDigits: 2})}`, 70, yPos);
-          yPos += 6;
-        });
-      }
-      
-      // Footer
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'italic');
-      doc.setTextColor(100, 100, 100);
-      doc.text('Generated by Affinity Logistics Management System', 105, 285, { align: 'center' });
-      doc.text(`${company.contact_email} | ${company.phone || 'N/A'}`, 105, 290, { align: 'center' });
-      
-      // Save PDF
-      const fileName = `Statement_${vehicle.make_model.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      doc.save(fileName);
-      
+      await generateVehicleStatementPDFAndDownload(vehicle, vehicleExpenses, company);
       showToast('Vehicle statement generated successfully!', 'success');
     } catch {
       showToast('Failed to generate statement', 'error');
@@ -406,9 +257,6 @@ export const Documents: React.FC = () => {
 
       {/* Toast Notifications */}
       <ToastContainer />
-
-      {/* Confirmation Dialog */}
-      <ConfirmDialog />
 
       {/* Receipt Details Modal */}
       {selectedReceipt && (

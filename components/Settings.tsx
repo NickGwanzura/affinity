@@ -57,9 +57,7 @@ export const Settings: React.FC = () => {
   // Dedicated function to load users - can be called for refresh
   const loadUsers = async () => {
     try {
-      console.log('[Settings] Loading users from database...');
       const u = await supabase.getUsers();
-      console.log('[Settings] Users loaded:', u.length, 'users');
       setUsers(u);
       return u;
     } catch (error: any) {
@@ -86,8 +84,6 @@ export const Settings: React.FC = () => {
           // Don't fail completely, just show empty users
         }
         
-        console.log('SETTINGS LOADED - Users from database:', u);
-        console.log('User count:', u.length);
         setCompany(c);
         setInvites(i);
         setRegistrationRequests(r);
@@ -220,9 +216,7 @@ export const Settings: React.FC = () => {
     if (!userToEdit) return;
 
     try {
-      console.log('[Settings] Updating user:', userToEdit.id, 'with:', editForm);
       const updatedUser = await supabase.updateUser(userToEdit.id, editForm);
-      console.log('[Settings] User updated successfully:', updatedUser);
       
       // Update local state with the returned user
       setUsers(users.map(u => u.id === userToEdit.id ? updatedUser : u));
@@ -306,8 +300,7 @@ export const Settings: React.FC = () => {
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error) {
       console.error('Error copying invite link:', error);
-      showToast('Copy failed. The invite link has been logged to the console.', 'warning');
-      console.log('[Invite Link]', inviteUrl);
+      showToast('Copy failed. Please try again.', 'warning');
     }
   };
 
@@ -686,14 +679,8 @@ export const Settings: React.FC = () => {
                         setLoading(true);
                         try {
                           // Sync the current user's profile to Neon
-                          console.log('[Settings] Syncing current user profile...');
                           const syncedUser = await supabase.syncCurrentUser();
-                          if (syncedUser) {
-                            console.log('[Settings] Current user synced:', syncedUser.email, 'Role:', syncedUser.role);
-                          }
-                          // Then refresh the users list
                           const u = await supabase.getUsers();
-                          console.log('[Settings] Refreshed users:', u.length);
                           setUsers(u);
                           setSelectedUserIds([]);
                           setBulkTargetStatus(null);
@@ -766,10 +753,8 @@ export const Settings: React.FC = () => {
                           onClick={async () => {
                             setLoading(true);
                             try {
-                              console.log('[Settings] Syncing current user...');
                               const synced = await supabase.syncCurrentUser();
                               if (synced) {
-                                console.log('[Settings] Synced:', synced.email);
                                 await loadUsers();
                                 setSaveStatus(`Your profile synced! You can now edit your role.`);
                                 setTimeout(() => setSaveStatus(''), 4000);

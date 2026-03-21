@@ -1,8 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
-import { LandedCostSummary, VehicleStatus, Currency, Client, Employee, Payslip, CompanyDetails, OperatingFund } from '../types';
+import { LandedCostSummary, VehicleStatus, Currency, Client, Employee, Payslip, CompanyDetails, OperatingFund, UserRole } from '../types';
 import { supabase } from '../services/supabaseService';
-import { generatePayslipPDF } from '../services/pdfService';
+import { AssetRegister } from './AssetRegister';
+import { generatePayslipPDFAndDownload } from '../services/pdfService';
+import { useToast } from './Toast';
+import { useConfirm } from './ConfirmModal';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -11,6 +14,8 @@ import {
 export const AdminDashboard: React.FC = () => {
   const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
     value ? value.slice(0, length) : fallback;
+  const { showToast, ToastContainer } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [summaries, setSummaries] = useState<LandedCostSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +23,8 @@ export const AdminDashboard: React.FC = () => {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showDeleteVehicleDialog, setShowDeleteVehicleDialog] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<{ id: string; make_model: string; vin_number: string } | null>(null);
-  const [activeView, setActiveView] = useState<'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'assets'>('dashboard');
+  const [userRole, setUserRole] = useState<UserRole>('Admin');
   const [expenses, setExpenses] = useState<any[]>([]);
 
   // Report filters
@@ -88,11 +94,14 @@ export const AdminDashboard: React.FC = () => {
   const [expenseLocation, setExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
   const [expenseDriver, setExpenseDriver] = useState<string>('');
 
+  const notifySuccess = (message: string) => showToast(message, 'success');
+  const notifyError = (message: string) => showToast(message, 'error');
+  const notifyWarning = (message: string) => showToast(message, 'warning');
+
   // FIX: fetchData now throws errors instead of swallowing them silently
   // This ensures callers can handle refresh failures appropriately
   const fetchData = async (throwOnError = false) => {
     try {
-      console.log('[AdminDashboard] fetchData: Starting data refresh...');
       const [data, vehicleData, expenseData, clientData, employeeData, payslipData, companyData, fundsData, balanceData] = await Promise.all([
         supabase.getLandedCostSummaries(),
         supabase.getVehicles(),
@@ -104,12 +113,6 @@ export const AdminDashboard: React.FC = () => {
         supabase.getOperatingFunds(),
         supabase.getOperatingFundsBalance()
       ]);
-      console.log('[AdminDashboard] fetchData: Successfully fetched', {
-        summaries: data?.length || 0,
-        vehicles: vehicleData?.length || 0,
-        expenses: expenseData?.length || 0,
-        operatingFunds: fundsData?.length || 0
-      });
       setSummaries(data);
       setVehicles(vehicleData);
       setExpenses(expenseData);
@@ -132,6 +135,12 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    // Get current user role
+    supabase.getSession().then(session => {
+      if (session?.user?.role) {
+        setUserRole(session.user.role);
+      }
+    }).catch(console.error);
   }, []);
 
   const handleSaveVehicle = async (e: React.FormEvent) => {
@@ -144,14 +153,10 @@ export const AdminDashboard: React.FC = () => {
         status: editingVehicle ? editingVehicle.status : 'UK'
       };
 
-      console.log('[AdminDashboard] handleSaveVehicle: Saving vehicle...', vehicleData);
-
       if (editingVehicle) {
         await supabase.updateVehicle(editingVehicle.vehicle_id || editingVehicle.id, vehicleData);
       } else {
-        const newVehicle = await supabase.addVehicle(vehicleData);
-        // FIX: Log the created vehicle to verify it was persisted
-        console.log('[AdminDashboard] handleSaveVehicle: Vehicle created successfully:', newVehicle);
+        await supabase.addVehicle(vehicleData);
       }
 
       // Reset form state
@@ -165,15 +170,15 @@ export const AdminDashboard: React.FC = () => {
       // This ensures user is notified if vehicle was saved but list refresh failed
       try {
         await fetchData(true);
-        alert(editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
+        notifySuccess(editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
       } catch (refreshError: any) {
         // Vehicle was saved but refresh failed - notify user to manually refresh
         console.error('[AdminDashboard] handleSaveVehicle: Vehicle saved but refresh failed:', refreshError);
-        alert('Vehicle saved but failed to refresh list. Please refresh the page to see the new vehicle.');
+        notifyWarning('Vehicle saved but failed to refresh list. Please refresh the page to see the new vehicle.');
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveVehicle: Error saving vehicle:', error);
-      alert(error.message || 'Failed to save vehicle. Please try again.');
+      notifyError(error.message || 'Failed to save vehicle. Please try again.');
     }
   };
 
@@ -210,12 +215,13 @@ export const AdminDashboard: React.FC = () => {
       setShowDeleteVehicleDialog(false);
       setVehicleToDelete(null);
       fetchData();
+      notifySuccess('Vehicle deleted successfully.');
     } catch (error: any) {
       console.error('Error deleting vehicle:', error);
       if (error.name === 'ValidationError') {
-        alert(error.message);
+        notifyWarning(error.message);
       } else {
-        alert('Failed to delete vehicle. Please try again.');
+        notifyError('Failed to delete vehicle. Please try again.');
       }
       setShowDeleteVehicleDialog(false);
       setVehicleToDelete(null);
@@ -252,7 +258,7 @@ export const AdminDashboard: React.FC = () => {
     
     // Validate driver selection for Driver Disbursement
     if (expenseCategory === 'Driver Disbursement' && !expenseDriver) {
-      alert('Please select a driver for the disbursement');
+      notifyWarning('Please select a driver for the disbursement');
       return;
     }
 
@@ -278,12 +284,12 @@ export const AdminDashboard: React.FC = () => {
       setExpenseLocation('Namibia');
       setExpenseDriver('');
       setShowExpenseModal(false);
-      alert(expenseDriver 
+      notifySuccess(expenseDriver 
         ? `Disbursement to ${expenseDriver} recorded successfully!` 
         : 'Expense added successfully!');
     } catch (error) {
       console.error('Error adding expense:', error);
-      alert('Failed to add expense. Please try again.');
+      notifyError('Failed to add expense. Please try again.');
     }
   };
 
@@ -373,10 +379,10 @@ For questions, contact: support@affinity-logistics.com
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      alert('Report exported successfully!');
+      notifySuccess('Report exported successfully!');
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      alert('Failed to export report. Please try again.');
+      notifyError('Failed to export report. Please try again.');
     } finally {
       setIsExporting(false);
     }
@@ -412,10 +418,10 @@ For questions, contact: support@affinity-logistics.com
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      alert('CSV exported successfully!');
+      notifySuccess('CSV exported successfully!');
     } catch (error) {
       console.error('Error exporting CSV:', error);
-      alert('Failed to export CSV. Please try again.');
+      notifyError('Failed to export CSV. Please try again.');
     } finally {
       setIsExporting(false);
     }
@@ -580,10 +586,10 @@ END OF REPORT
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      alert('Comprehensive audit report generated successfully!');
+      notifySuccess('Comprehensive audit report generated successfully!');
     } catch (error) {
       console.error('Error generating audit report:', error);
-      alert('Failed to generate audit report. Please try again.');
+      notifyError('Failed to generate audit report. Please try again.');
     } finally {
       setIsExporting(false);
     }
@@ -593,13 +599,10 @@ END OF REPORT
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('[AdminDashboard] handleSaveClient: Saving client...');
       if (editingClient) {
         await supabase.updateClient(editingClient.id, clientForm);
-        console.log('[AdminDashboard] handleSaveClient: Client updated successfully');
       } else {
         const newClient = await supabase.createClient(clientForm);
-        console.log('[AdminDashboard] handleSaveClient: Client created successfully:', newClient?.id);
       }
       setShowClientModal(false);
       setEditingClient(null);
@@ -608,28 +611,34 @@ END OF REPORT
       // FIX: Await fetchData and handle refresh errors
       try {
         await fetchData(true);
-        alert(editingClient ? 'Client updated successfully!' : 'Client created successfully!');
+        notifySuccess(editingClient ? 'Client updated successfully!' : 'Client created successfully!');
       } catch (refreshError) {
         console.error('[AdminDashboard] handleSaveClient: Client saved but refresh failed:', refreshError);
-        alert('Client saved but failed to refresh list. Please refresh the page.');
+        notifyWarning('Client saved but failed to refresh list. Please refresh the page.');
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveClient: Error saving client:', error);
-      alert(error?.message || 'Failed to save client. Please try again.');
+      notifyError(error?.message || 'Failed to save client. Please try again.');
     }
   };
 
   const handleDeleteClient = async (id: string) => {
-    if (confirm('Are you sure you want to delete this client?')) {
-      try {
-        console.log('[AdminDashboard] handleDeleteClient: Deleting client:', id);
-        await supabase.deleteClient(id);
-        console.log('[AdminDashboard] handleDeleteClient: Client deleted successfully');
-        await fetchData(true);
-      } catch (error: any) {
-        console.error('[AdminDashboard] handleDeleteClient: Error deleting client:', error);
-        alert(error?.message || 'Failed to delete client.');
-      }
+    const approved = await confirm({
+      title: 'Delete client?',
+      message: 'This will permanently remove the client from the system.',
+      confirmLabel: 'Delete Client',
+      confirmVariant: 'danger',
+    });
+
+    if (!approved) return;
+
+    try {
+      await supabase.deleteClient(id);
+      await fetchData(true);
+      notifySuccess('Client deleted successfully.');
+    } catch (error: any) {
+      console.error('[AdminDashboard] handleDeleteClient: Error deleting client:', error);
+      notifyError(error?.message || 'Failed to delete client.');
     }
   };
 
@@ -637,17 +646,14 @@ END OF REPORT
   const handleSaveEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('[AdminDashboard] handleSaveEmployee: Saving employee...');
       const payload = {
         ...employeeForm,
         base_pay_usd: parseFloat(employeeForm.base_pay_usd) || 0
       };
       if (editingEmployee) {
         await supabase.updateEmployee(editingEmployee.id, payload);
-        console.log('[AdminDashboard] handleSaveEmployee: Employee updated successfully');
       } else {
         const newEmployee = await supabase.createEmployee(payload);
-        console.log('[AdminDashboard] handleSaveEmployee: Employee created successfully:', newEmployee?.id);
       }
       setShowEmployeeModal(false);
       setEditingEmployee(null);
@@ -661,28 +667,34 @@ END OF REPORT
       // FIX: Await fetchData and handle refresh errors
       try {
         await fetchData(true);
-        alert(editingEmployee ? 'Employee updated successfully!' : 'Employee created successfully!');
+        notifySuccess(editingEmployee ? 'Employee updated successfully!' : 'Employee created successfully!');
       } catch (refreshError) {
         console.error('[AdminDashboard] handleSaveEmployee: Employee saved but refresh failed:', refreshError);
-        alert('Employee saved but failed to refresh list. Please refresh the page.');
+        notifyWarning('Employee saved but failed to refresh list. Please refresh the page.');
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveEmployee: Error saving employee:', error);
-      alert(error?.message || 'Failed to save employee. Please try again.');
+      notifyError(error?.message || 'Failed to save employee. Please try again.');
     }
   };
 
   const handleDeleteEmployee = async (id: string) => {
-    if (confirm('Are you sure you want to delete this employee? This will also delete all associated payslips.')) {
-      try {
-        console.log('[AdminDashboard] handleDeleteEmployee: Deleting employee:', id);
-        await supabase.deleteEmployee(id);
-        console.log('[AdminDashboard] handleDeleteEmployee: Employee deleted successfully');
-        await fetchData(true);
-      } catch (error: any) {
-        console.error('[AdminDashboard] handleDeleteEmployee: Error deleting employee:', error);
-        alert(error?.message || 'Failed to delete employee.');
-      }
+    const approved = await confirm({
+      title: 'Delete employee?',
+      message: 'This will also delete all associated payslips.',
+      confirmLabel: 'Delete Employee',
+      confirmVariant: 'danger',
+    });
+
+    if (!approved) return;
+
+    try {
+      await supabase.deleteEmployee(id);
+      await fetchData(true);
+      notifySuccess('Employee deleted successfully.');
+    } catch (error: any) {
+      console.error('[AdminDashboard] handleDeleteEmployee: Error deleting employee:', error);
+      notifyError(error?.message || 'Failed to delete employee.');
     }
   };
 
@@ -690,7 +702,6 @@ END OF REPORT
   const handleGeneratePayslip = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('[AdminDashboard] handleGeneratePayslip: Generating payslip...');
       const payload = {
         employee_id: payslipForm.employee_id,
         month: payslipForm.month,
@@ -710,7 +721,6 @@ END OF REPORT
         notes: payslipForm.notes
       };
       const newPayslip = await supabase.generatePayslip(payload);
-      console.log('[AdminDashboard] handleGeneratePayslip: Payslip generated successfully:', newPayslip?.id);
       
       setShowPayslipModal(false);
       setPayslipForm({
@@ -723,53 +733,57 @@ END OF REPORT
       // FIX: Await fetchData and handle refresh errors
       try {
         await fetchData(true);
-        alert('Payslip generated successfully!');
+        notifySuccess('Payslip generated successfully!');
       } catch (refreshError) {
         console.error('[AdminDashboard] handleGeneratePayslip: Payslip saved but refresh failed:', refreshError);
-        alert('Payslip generated but failed to refresh list. Please refresh the page.');
+        notifyWarning('Payslip generated but failed to refresh list. Please refresh the page.');
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleGeneratePayslip: Error generating payslip:', error);
-      alert(error?.message || 'Failed to generate payslip. Please try again.');
+      notifyError(error?.message || 'Failed to generate payslip. Please try again.');
     }
   };
 
   const handleUpdatePayslipStatus = async (id: string, status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled') => {
     try {
-      console.log('[AdminDashboard] handleUpdatePayslipStatus: Updating status:', { id, status });
       await supabase.updatePayslipStatus(id, status);
-      console.log('[AdminDashboard] handleUpdatePayslipStatus: Status updated successfully');
       await fetchData(true);
     } catch (error: any) {
       console.error('[AdminDashboard] handleUpdatePayslipStatus: Error updating payslip status:', error);
-      alert(error?.message || 'Failed to update payslip status.');
+      notifyError(error?.message || 'Failed to update payslip status.');
     }
   };
 
   const handleDeletePayslip = async (id: string) => {
-    if (confirm('Are you sure you want to delete this payslip?')) {
-      try {
-        console.log('[AdminDashboard] handleDeletePayslip: Deleting payslip:', id);
-        await supabase.deletePayslip(id);
-        console.log('[AdminDashboard] handleDeletePayslip: Payslip deleted successfully');
-        await fetchData(true);
-      } catch (error: any) {
-        console.error('[AdminDashboard] handleDeletePayslip: Error deleting payslip:', error);
-        alert(error?.message || 'Failed to delete payslip.');
-      }
+    const approved = await confirm({
+      title: 'Delete payslip?',
+      message: 'This removes the generated payslip record.',
+      confirmLabel: 'Delete Payslip',
+      confirmVariant: 'danger',
+    });
+
+    if (!approved) return;
+
+    try {
+      await supabase.deletePayslip(id);
+      await fetchData(true);
+      notifySuccess('Payslip deleted successfully.');
+    } catch (error: any) {
+      console.error('[AdminDashboard] handleDeletePayslip: Error deleting payslip:', error);
+      notifyError(error?.message || 'Failed to delete payslip.');
     }
   };
 
   const handleDownloadPayslip = async (payslip: Payslip) => {
     if (!company) {
-      alert('Company details not loaded. Please try again.');
+      notifyError('Company details not loaded. Please try again.');
       return;
     }
     try {
-      await generatePayslipPDF(payslip, company);
+      await generatePayslipPDFAndDownload(payslip, company);
     } catch (error) {
       console.error('Error generating payslip PDF:', error);
-      alert('Failed to generate PDF');
+      notifyError('Failed to generate PDF');
     }
   };
 
@@ -797,7 +811,6 @@ END OF REPORT
   const handleAddOperatingFund = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('[AdminDashboard] handleAddOperatingFund: Adding fund transaction...');
       const payload = {
         type: fundsForm.type as 'Received' | 'Disbursed',
         amount: parseFloat(fundsForm.amount) || 0,
@@ -809,7 +822,6 @@ END OF REPORT
       };
       
       const newFund = await supabase.addOperatingFund(payload);
-      console.log('[AdminDashboard] handleAddOperatingFund: Transaction recorded:', newFund?.id);
       
       setShowFundsModal(false);
       setFundsForm({
@@ -824,29 +836,36 @@ END OF REPORT
       
       try {
         await fetchData(true);
-        alert(fundsForm.type === 'Received' 
+        notifySuccess(fundsForm.type === 'Received' 
           ? 'Funds received recorded successfully!' 
           : 'Disbursement recorded successfully!');
       } catch (refreshError) {
         console.error('[AdminDashboard] handleAddOperatingFund: Saved but refresh failed:', refreshError);
-        alert('Transaction saved but failed to refresh. Please refresh the page.');
+        notifyWarning('Transaction saved but failed to refresh. Please refresh the page.');
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleAddOperatingFund: Error:', error);
-      alert(error?.message || 'Failed to record transaction. Please try again.');
+      notifyError(error?.message || 'Failed to record transaction. Please try again.');
     }
   };
 
   const handleDeleteOperatingFund = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this transaction?')) return;
-    
+    const approved = await confirm({
+      title: 'Delete transaction?',
+      message: 'This will remove the operating funds transaction from the ledger.',
+      confirmLabel: 'Delete Transaction',
+      confirmVariant: 'danger',
+    });
+
+    if (!approved) return;
+
     try {
       await supabase.deleteOperatingFund(id);
       await fetchData(true);
-      alert('Transaction deleted successfully!');
+      notifySuccess('Transaction deleted successfully!');
     } catch (error: any) {
       console.error('[AdminDashboard] handleDeleteOperatingFund: Error:', error);
-      alert(error?.message || 'Failed to delete transaction.');
+      notifyError(error?.message || 'Failed to delete transaction.');
     }
   };
 
@@ -917,6 +936,13 @@ END OF REPORT
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
             Operating Funds
+          </button>
+          <button
+            onClick={() => setActiveView('assets')}
+            className={`${activeView === 'assets' ? 'bg-purple-600 text-white' : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+            Asset Register
           </button>
         </div>
       </div>
@@ -1833,6 +1859,11 @@ END OF REPORT
         </div>
       )}
 
+      {/* Asset Register View */}
+      {activeView === 'assets' && (
+        <AssetRegister userRole={userRole} />
+      )}
+
       {/* Operating Funds Modal */}
       {showFundsModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -2600,6 +2631,8 @@ END OF REPORT
           </div>
         </div>
       )}
+      <ToastContainer />
+      <ConfirmDialog />
     </div>
   );
 };

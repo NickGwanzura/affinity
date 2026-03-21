@@ -1,33 +1,57 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 # Affinity Logistics Management System
 
-A comprehensive CRM and logistics management platform built with React, TypeScript, and Supabase.
+Affinity is an internal logistics and finance operations app for vehicle movement, landed-cost tracking, billing, receipts, statements, payroll, and document generation.
 
-## Features
+## Current Stack
 
-- User Management with role-based access control
-- Driver Portal with real-time updates
-- Financial tracking and reporting
-- Document management
-- PDF generation and export
-- Admin dashboard with analytics
+- React 19 + TypeScript + Vite
+- Neon PostgreSQL for operational data
+- Browser-side PDF generation with `jspdf`
+- A mixed auth layer that is being consolidated around the in-app auth service
+
+## Core Product Areas
+
+- Vehicle and fleet operations
+- Driver portal and expense capture
+- Quotes, invoices, receipts, payments, and client statements
+- Employee and payslip management
+- Company settings and branded document output
 
 ## Run Locally
 
-**Prerequisites:**  Node.js 18+
+Prerequisites:
 
+- Node.js 18+
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
-4. Build for production:
-   `npm run build`
+Install and start:
 
-## Deployment
+```bash
+npm install
+npm run dev
+```
 
-The app is configured for deployment on Vercel. Push to main branch to trigger automatic deployment.
+Production build:
+
+```bash
+npm run build
+```
+
+## Environment
+
+The app expects a Neon connection string in the client environment:
+
+- `VITE_NEON_DATABASE_URL`
+
+The current auth flow also uses:
+
+- `VITE_JWT_SECRET`
+
+Some legacy service paths still reference Supabase client configuration, so keep these available until the auth layer is fully unified:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+## Notes
+
+- PDF branding and finance flows depend on the SQL migrations in the repo being applied to the active Neon database.
+- There is currently no automated test suite wired into `package.json`, so `npm run build` is the main repo-level verification step.

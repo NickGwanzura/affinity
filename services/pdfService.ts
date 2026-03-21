@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Quote, Invoice, CompanyDetails, Payslip, Employee } from '../types';
+import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense } from '../types';
 import affinityLogoUrl from '../assets/affinity-logo.svg';
 
 // ============================================================================
@@ -45,6 +45,7 @@ const LAYOUT = {
   LINE_WIDTH_THIN: 0.3,
   LINE_WIDTH_REGULAR: 0.5,
   LINE_WIDTH_THICK: 0.8,
+  CONTENT_TOP_ON_NEW_PAGE: 24,
 };
 
 const TABLE_STYLES = {
@@ -55,10 +56,11 @@ const TABLE_STYLES = {
 };
 
 const COLUMN_WIDTHS = {
-  DESCRIPTION: 100,
-  QUANTITY: 20,
-  UNIT_PRICE: 35,
-  AMOUNT: 35,
+  DESCRIPTION: 82,
+  QUANTITY: 16,
+  UNIT_PRICE: 28,
+  DISCOUNT: 22,
+  AMOUNT: 32,
   EARNINGS_DESC: 70,
   EARNINGS_AMT: 25,
   DEDUCTIONS_DESC: 55,
@@ -67,7 +69,11 @@ const COLUMN_WIDTHS = {
 
 const MAX_TEXT_LENGTH = 5000;
 const MAX_NOTES_LENGTH = 2000;
+const FOOTER_BOTTOM_MARGIN = 12;
+const FOOTER_CONTENT_MAX_WIDTH = 176;
 const HARDCODED_PDF_LOGO_URL = affinityLogoUrl;
+const LIABILITY_DISCLAIMER =
+  'Liability Disclaimer: Affinity Logistics acts as a logistics and facilitation service provider for the transportation of vehicles, goods, and cargo. While we take all reasonable care in handling and coordinating shipments, Affinity Logistics shall not be held liable for any loss, damage, or deterioration of goods or vehicles during transit, shipping, handling, storage, or customs processes. Clients are strongly encouraged to obtain appropriate transit or marine insurance for their cargo or vehicles where possible. Any claims relating to damage, loss, or delays must be directed to the relevant shipping line or insurance provider where coverage exists.';
 
 const formatCurrencyAmount = (amount: number, currency: 'USD' | 'GBP' = 'USD'): string =>
   new Intl.NumberFormat('en-US', {
@@ -76,6 +82,13 @@ const formatCurrencyAmount = (amount: number, currency: 'USD' | 'GBP' = 'USD'): 
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+
+const normalizeDocumentCurrency = (currency?: unknown): 'USD' | 'GBP' =>
+  String(currency || '')
+    .trim()
+    .toUpperCase() === 'GBP'
+    ? 'GBP'
+    : 'USD';
 
 // ============================================================================
 // ERROR CLASSES
@@ -152,7 +165,7 @@ function sanitizeQuote(quote: Quote): Quote {
     client_name: sanitizeText(quote.client_name) || 'Unknown Client',
     client_email: sanitizeEmail(quote.client_email),
     client_address: sanitizeText(quote.client_address),
-    currency: quote.currency === 'GBP' ? 'GBP' : 'USD',
+    currency: normalizeDocumentCurrency(quote.currency),
     description: sanitizeText(quote.description),
     status: (sanitizeText(quote.status) || 'draft') as Quote['status'],
     amount_usd: sanitizeNumber(quote.amount_usd),
@@ -162,6 +175,10 @@ function sanitizeQuote(quote: Quote): Quote {
       quantity: Math.max(1, sanitizeNumber(item.quantity)),
       unit_price: sanitizeNumber(item.unit_price),
       amount: sanitizeNumber(item.amount),
+      discount_percentage: sanitizeNumber(item.discount_percentage),
+      discount_amount: sanitizeNumber(item.discount_amount),
+      tax_amount: sanitizeNumber(item.tax_amount),
+      notes: sanitizeText(item.notes),
     })),
   };
 }
@@ -173,9 +190,11 @@ function sanitizeInvoice(invoice: Invoice): Invoice {
     client_name: sanitizeText(invoice.client_name) || 'Unknown Client',
     client_email: sanitizeEmail(invoice.client_email),
     client_address: sanitizeText(invoice.client_address),
+    currency: normalizeDocumentCurrency(invoice.currency),
     description: sanitizeText(invoice.description),
     notes: sanitizeText(invoice.notes)?.slice(0, MAX_NOTES_LENGTH),
     terms_and_conditions: sanitizeText(invoice.terms_and_conditions)?.slice(0, MAX_NOTES_LENGTH),
+    invoice_kind: (sanitizeText(invoice.invoice_kind) || 'Standard') as Invoice['invoice_kind'],
     status: (sanitizeText(invoice.status) || 'draft') as Invoice['status'],
     amount_usd: sanitizeNumber(invoice.amount_usd),
     items: invoice.items?.map(item => ({
@@ -184,8 +203,45 @@ function sanitizeInvoice(invoice: Invoice): Invoice {
       quantity: Math.max(1, sanitizeNumber(item.quantity)),
       unit_price: sanitizeNumber(item.unit_price),
       amount: sanitizeNumber(item.amount),
+      discount_percentage: sanitizeNumber(item.discount_percentage),
+      discount_amount: sanitizeNumber(item.discount_amount),
+      tax_amount: sanitizeNumber(item.tax_amount),
+      notes: sanitizeText(item.notes),
     })),
   };
+}
+
+function sanitizeReceipt(receipt: Receipt): Receipt {
+  return {
+    ...receipt,
+    receipt_number: sanitizeText(receipt.receipt_number) || 'UNKNOWN',
+    client_name: sanitizeText(receipt.client_name) || 'Unknown Client',
+    client_email: sanitizeEmail(receipt.client_email),
+    client_address: sanitizeText(receipt.client_address),
+    currency: normalizeDocumentCurrency(receipt.currency),
+    payment_method: sanitizeText(receipt.payment_method) || 'Unspecified',
+    reference_number: sanitizeText(receipt.reference_number),
+    notes: sanitizeText(receipt.notes)?.slice(0, MAX_NOTES_LENGTH),
+    amount_received: sanitizeNumber(receipt.amount_received),
+    items: receipt.items?.map(item => ({
+      ...item,
+      description: sanitizeText(item.description) || 'Payment line',
+      quantity: Math.max(1, sanitizeNumber(item.quantity)),
+      unit_price: sanitizeNumber(item.unit_price),
+      amount: sanitizeNumber(item.amount),
+      discount_percentage: sanitizeNumber(item.discount_percentage),
+      discount_amount: sanitizeNumber(item.discount_amount),
+      tax_amount: sanitizeNumber(item.tax_amount),
+      notes: sanitizeText(item.notes),
+      invoice_number: sanitizeText(item.invoice_number),
+    })),
+  };
+}
+
+function formatLineDescription(description?: string, notes?: string, invoiceNumber?: string): string {
+  const parts = [sanitizeText(description), sanitizeText(notes), invoiceNumber ? `Ref: ${sanitizeText(invoiceNumber)}` : '']
+    .filter(Boolean);
+  return parts.join('\n');
 }
 
 function sanitizePayslip(payslip: Payslip): Payslip {
@@ -239,6 +295,45 @@ class PDFBuilder {
   private sectionTopY: number = 65;
   private metadataBottomY: number = 65;
   private clientBottomY: number = 80;
+
+  private getFooterLines(options?: { additionalText?: string }): string[][] {
+    const { doc, company } = this;
+    const disclaimerLines = doc.splitTextToSize(LIABILITY_DISCLAIMER, FOOTER_CONTENT_MAX_WIDTH);
+    const taglineLines = doc.splitTextToSize('Delivery is our DNA - Titumei Tinosvitsa', 150);
+    const companyNameLines = doc.splitTextToSize(company.name, 150);
+    const contactInfo = `${company.contact_email}${company.phone ? ` | ${company.phone}` : ''} | Generated: ${new Date().toLocaleDateString()}`;
+    const contactLines = doc.splitTextToSize(contactInfo, FOOTER_CONTENT_MAX_WIDTH);
+    const additionalLines = options?.additionalText
+      ? doc.splitTextToSize(options.additionalText, FOOTER_CONTENT_MAX_WIDTH)
+      : [];
+
+    return [disclaimerLines, taglineLines, companyNameLines, contactLines, additionalLines];
+  }
+
+  getFooterStartY(options?: { additionalText?: string }): number {
+    const [disclaimerLines, taglineLines, companyNameLines, contactLines, additionalLines] = this.getFooterLines(options);
+    const footerHeight =
+      4 +
+      disclaimerLines.length * 3.3 +
+      3 +
+      taglineLines.length * 4.5 +
+      companyNameLines.length * 4.5 +
+      contactLines.length * 3.8 +
+      (additionalLines.length > 0 ? additionalLines.length * 3.8 + 2 : 0);
+
+    return Math.max(220, LAYOUT.PAGE_HEIGHT - FOOTER_BOTTOM_MARGIN - footerHeight);
+  }
+
+  ensureContentSpace(requiredHeight: number, preferredY: number): number {
+    const footerStartY = this.getFooterStartY();
+
+    if (preferredY + requiredHeight <= footerStartY) {
+      return preferredY;
+    }
+
+    this.doc.addPage();
+    return LAYOUT.CONTENT_TOP_ON_NEW_PAGE;
+  }
 
   constructor(company: CompanyDetails, filename: string) {
     this.doc = new jsPDF();
@@ -391,35 +486,43 @@ class PDFBuilder {
 
   addFooter(options?: { additionalText?: string; fontSize?: number }): this {
     const { doc, company } = this;
+    const [disclaimerLines, taglineLines, companyNameLines, contactLines, additionalLines] = this.getFooterLines(options);
+    const disclaimerStartY = this.getFooterStartY(options);
+    const disclaimerLineHeight = 3.3;
 
     doc.setDrawColor(...COLORS.BORDER_GRAY);
     doc.setLineWidth(LAYOUT.LINE_WIDTH_THIN);
-    doc.line(LAYOUT.MARGIN_LEFT, LAYOUT.FOOTER_Y, LAYOUT.MARGIN_RIGHT, LAYOUT.FOOTER_Y);
+    doc.line(LAYOUT.MARGIN_LEFT, disclaimerStartY - 4, LAYOUT.MARGIN_RIGHT, disclaimerStartY - 4);
+
+    doc.setFontSize(FONT_SIZES.XXSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
+    doc.text(disclaimerLines, LAYOUT.MARGIN_LEFT, disclaimerStartY);
 
     const centerX = LAYOUT.PAGE_WIDTH / 2;
-    let yPos = 280;
+    let yPos = disclaimerStartY + disclaimerLines.length * disclaimerLineHeight + 3;
 
     doc.setFontSize(FONT_SIZES.XSMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
-    doc.text('Delivery is our DNA - Titumei Tinosvitsa', centerX, yPos, { align: 'center' });
-    yPos += 4.5;
+    doc.text(taglineLines, centerX, yPos, { align: 'center' });
+    yPos += taglineLines.length * 4.5;
 
     const fontSize = options?.fontSize || FONT_SIZES.XSMALL;
     doc.setFontSize(fontSize);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text(company.name, centerX, yPos, { align: 'center' });
-    yPos += 4.5;
+    doc.text(companyNameLines, centerX, yPos, { align: 'center' });
+    yPos += companyNameLines.length * 4.5;
 
-    const contactInfo = `${company.contact_email}${company.phone ? ` | ${company.phone}` : ''} | Generated: ${new Date().toLocaleDateString()}`;
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
-    doc.text(contactInfo, centerX, yPos, { align: 'center' });
+    doc.text(contactLines, centerX, yPos, { align: 'center' });
+    yPos += contactLines.length * 3.8;
 
-    if (options?.additionalText) {
-      yPos += 4.5;
-      doc.text(options.additionalText, centerX, yPos, { align: 'center' });
+    if (additionalLines.length > 0) {
+      yPos += 2;
+      doc.text(additionalLines, centerX, yPos, { align: 'center' });
     }
 
     return this;
@@ -474,7 +577,7 @@ class PDFBuilder {
     doc.setFontSize(FONT_SIZES.MEDIUM);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text(`$${invoice.amount_usd.toLocaleString()}`, 192, 46, { align: 'right' });
+    doc.text(formatCurrencyAmount(invoice.amount_usd, invoice.currency || 'USD'), 192, 46, { align: 'right' });
 
     return this;
   }
@@ -490,23 +593,25 @@ class PDFBuilder {
     startY: number = this.sectionTopY
   ): this {
     const { doc } = this;
-
-    doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
-    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    let currentY = startY;
+    const valueWidth = 52;
 
     labels.forEach((label, index) => {
-      doc.text(label, x, startY + index * 7);
+      const valueLines = doc.splitTextToSize(values[index] || '', valueWidth);
+
+      doc.setFontSize(FONT_SIZES.SMALL);
+      doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+      doc.setTextColor(...COLORS.SECONDARY_GRAY);
+      doc.text(label, x, currentY);
+
+      doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+      doc.setTextColor(...COLORS.PRIMARY_DARK);
+      doc.text(valueLines, LAYOUT.MARGIN_RIGHT, currentY, { align: 'right' });
+
+      currentY += Math.max(6.5, valueLines.length * 4.2 + 1.5);
     });
 
-    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
-    doc.setTextColor(...COLORS.PRIMARY_DARK);
-
-    values.forEach((value, index) => {
-      doc.text(value, LAYOUT.MARGIN_RIGHT, startY + index * 7, { align: 'right' });
-    });
-
-    this.metadataBottomY = startY + (Math.max(labels.length, values.length) - 1) * 7;
+    this.metadataBottomY = currentY - 1.5;
 
     return this;
   }
@@ -529,13 +634,14 @@ class PDFBuilder {
     doc.setFontSize(FONT_SIZES.REGULAR);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text(name, LAYOUT.MARGIN_LEFT, startY + 8);
+    const nameLines = doc.splitTextToSize(name, 78);
+    doc.text(nameLines, LAYOUT.MARGIN_LEFT, startY + 8);
 
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
 
-    let yPos = startY + 15;
+    let yPos = startY + 8 + nameLines.length * 4.8 + 2;
     const contentWidth = 78;
     const lineHeight = 4.5;
 
@@ -589,9 +695,10 @@ class PDFBuilder {
 
     autoTable(doc, {
       startY,
-      head: [['Description', 'Qty', 'Unit Price', 'Amount']],
+      head: [['Description', 'Qty', 'Unit Price', 'Disc %', 'Amount']],
       body: data.map(row => row.map(cell => String(cell))),
       theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - this.getFooterStartY() + 6 },
       headStyles: {
         fillColor: TABLE_STYLES.HEAD_FILL,
         textColor: COLORS.PRIMARY_DARK,
@@ -610,7 +717,8 @@ class PDFBuilder {
         0: { cellWidth: COLUMN_WIDTHS.DESCRIPTION },
         1: { cellWidth: COLUMN_WIDTHS.QUANTITY, halign: 'center' },
         2: { cellWidth: COLUMN_WIDTHS.UNIT_PRICE, halign: 'right' },
-        3: { cellWidth: COLUMN_WIDTHS.AMOUNT, halign: 'right', fontStyle: 'bold' },
+        3: { cellWidth: COLUMN_WIDTHS.DISCOUNT, halign: 'right' },
+        4: { cellWidth: COLUMN_WIDTHS.AMOUNT, halign: 'right', fontStyle: 'bold' },
       },
       alternateRowStyles: {
         fillColor: COLORS.FILL_ALTERNATE,
@@ -649,7 +757,7 @@ class PDFBuilder {
         0: { cellWidth: COLUMN_WIDTHS.EARNINGS_DESC },
         1: { cellWidth: COLUMN_WIDTHS.EARNINGS_AMT, halign: 'right', fontStyle: 'bold' },
       },
-      margin: { left: LAYOUT.MARGIN_LEFT, right: 115 },
+      margin: { left: LAYOUT.MARGIN_LEFT, right: 115, bottom: LAYOUT.PAGE_HEIGHT - this.getFooterStartY() + 6 },
       alternateRowStyles: {
         fillColor: COLORS.FILL_ALTERNATE,
       },
@@ -687,7 +795,7 @@ class PDFBuilder {
         0: { cellWidth: COLUMN_WIDTHS.DEDUCTIONS_DESC },
         1: { cellWidth: COLUMN_WIDTHS.DEDUCTIONS_AMT, halign: 'right', fontStyle: 'bold' },
       },
-      margin: { left: 115, right: LAYOUT.MARGIN_LEFT },
+      margin: { left: 115, right: LAYOUT.MARGIN_LEFT, bottom: LAYOUT.PAGE_HEIGHT - this.getFooterStartY() + 6 },
       alternateRowStyles: {
         fillColor: COLORS.FILL_ALTERNATE,
       },
@@ -702,7 +810,9 @@ class PDFBuilder {
 
   addTotalSection(amount: number, label: string = 'TOTAL', currency: 'USD' | 'GBP' = 'USD'): this {
     const { doc } = this;
-    const finalY = (doc as any).lastAutoTable?.finalY || 140;
+    const finalY = this.ensureContentSpace(36, (doc as any).lastAutoTable?.finalY || 140);
+    const labelText = `${label}:`;
+    const amountText = formatCurrencyAmount(amount, currency);
 
     doc.setDrawColor(...COLORS.BORDER_GRAY);
     doc.setLineWidth(LAYOUT.LINE_WIDTH_REGULAR);
@@ -711,10 +821,26 @@ class PDFBuilder {
     doc.setFontSize(FONT_SIZES.MEDIUM);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text(`${label}:`, 133, finalY + 18);
-
     doc.setFontSize(FONT_SIZES.LARGE);
-    doc.text(formatCurrencyAmount(amount, currency), 192, finalY + 18, { align: 'right' });
+    const amountWidth = doc.getTextWidth(amountText);
+
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    const labelWidth = doc.getTextWidth(labelText);
+    const availableLabelWidth = 192 - 133 - amountWidth - 8;
+    const shouldStack = labelWidth > availableLabelWidth;
+
+    if (shouldStack) {
+      doc.text(labelText, 133, finalY + 17);
+      doc.setFontSize(FONT_SIZES.LARGE);
+      doc.text(amountText, 192, finalY + 25, { align: 'right' });
+      doc.setLineWidth(LAYOUT.LINE_WIDTH_THICK);
+      doc.line(130, finalY + 29, LAYOUT.MARGIN_RIGHT, finalY + 29);
+      return this;
+    }
+
+    doc.text(labelText, 133, finalY + 18);
+    doc.setFontSize(FONT_SIZES.LARGE);
+    doc.text(amountText, 192, finalY + 18, { align: 'right' });
 
     doc.setLineWidth(LAYOUT.LINE_WIDTH_THICK);
     doc.line(130, finalY + 22, LAYOUT.MARGIN_RIGHT, finalY + 22);
@@ -724,7 +850,7 @@ class PDFBuilder {
 
   addInvoiceTotalSection(invoice: Invoice): this {
     const { doc } = this;
-    const finalY = (doc as any).lastAutoTable?.finalY || 140;
+    const finalY = this.ensureContentSpace(38, (doc as any).lastAutoTable?.finalY || 140);
 
     // Subtotal line
     doc.setDrawColor(...COLORS.BORDER_GRAY);
@@ -736,7 +862,7 @@ class PDFBuilder {
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text('Subtotal:', 133, finalY + 15);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text(`$${invoice.amount_usd.toLocaleString()}`, 192, finalY + 15, { align: 'right' });
+    doc.text(formatCurrencyAmount(invoice.amount_usd, invoice.currency || 'USD'), 192, finalY + 15, { align: 'right' });
 
     // Total Due
     doc.setDrawColor(100, 100, 100);
@@ -749,7 +875,7 @@ class PDFBuilder {
     doc.text('TOTAL DUE:', 133, finalY + 28);
 
     doc.setFontSize(FONT_SIZES.LARGE);
-    doc.text(`$${invoice.amount_usd.toLocaleString()}`, 192, finalY + 28, { align: 'right' });
+    doc.text(formatCurrencyAmount(invoice.amount_usd, invoice.currency || 'USD'), 192, finalY + 28, { align: 'right' });
 
     doc.setLineWidth(LAYOUT.LINE_WIDTH_THICK);
     doc.line(130, finalY + 32, LAYOUT.MARGIN_RIGHT, finalY + 32);
@@ -760,7 +886,7 @@ class PDFBuilder {
   addPayslipSummary(payslip: Payslip): this {
     const { doc } = this;
     const earningsEndY = (doc as any).lastAutoTable?.finalY || 165;
-    const summaryY = earningsEndY + 15;
+    const summaryY = this.ensureContentSpace(42, earningsEndY + 15);
 
     // Summary border box
     doc.setDrawColor(...COLORS.BORDER_GRAY);
@@ -808,18 +934,19 @@ class PDFBuilder {
     const { doc } = this;
     const noteLines = doc.splitTextToSize(notes, 170);
     const boxHeight = Math.max(18, 10 + noteLines.length * 5);
+    const safeY = this.ensureContentSpace(boxHeight + 6, yPos - 5) + 5;
 
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(LAYOUT.MARGIN_LEFT, yPos - 5, 180, boxHeight, 3, 3, 'F');
+    doc.roundedRect(LAYOUT.MARGIN_LEFT, safeY - 5, 180, boxHeight, 3, 3, 'F');
 
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text('Notes:', LAYOUT.MARGIN_LEFT, yPos);
+    doc.text('Notes:', LAYOUT.MARGIN_LEFT, safeY);
 
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
-    doc.text(noteLines, LAYOUT.MARGIN_LEFT, yPos + 6);
+    doc.text(noteLines, LAYOUT.MARGIN_LEFT, safeY + 6);
 
     return this;
   }
@@ -830,26 +957,37 @@ class PDFBuilder {
 
   addTerms(type: 'quote' | 'invoice', finalY: number, showPaymentTerms: boolean = true, customTerms?: string): this {
     const { doc } = this;
+    const baseY = finalY + 38;
+
+    const termBlocks =
+      type === 'quote'
+        ? [
+            '1. Quote is valid for the period specified above',
+            '2. Prices are shown in the selected currency and exclude applicable taxes unless stated',
+            '3. Payment terms apply as agreed upon acceptance',
+          ]
+        : customTerms
+          ? doc.splitTextToSize(customTerms, 180)
+          : showPaymentTerms
+            ? [
+                '1. Payment is due by the date specified above',
+                '2. Please include invoice number with your payment',
+              ]
+            : [];
+    const requiredHeight = 14 + termBlocks.length * 6;
+    const safeTitleY = this.ensureContentSpace(requiredHeight, baseY);
 
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.text(type === 'quote' ? 'Terms & Conditions' : 'Payment Terms', LAYOUT.MARGIN_LEFT, finalY + 38);
+    doc.text(type === 'quote' ? 'Terms & Conditions' : 'Payment Terms', LAYOUT.MARGIN_LEFT, safeTitleY);
 
     doc.setFontSize(FONT_SIZES.XSMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
 
-    if (type === 'quote') {
-      doc.text('1. Quote is valid for the period specified above', LAYOUT.MARGIN_LEFT, finalY + 46);
-      doc.text('2. Prices are in USD and exclude applicable taxes unless stated', LAYOUT.MARGIN_LEFT, finalY + 52);
-      doc.text('3. Payment terms as agreed upon acceptance', LAYOUT.MARGIN_LEFT, finalY + 58);
-    } else if (customTerms) {
-      const termLines = doc.splitTextToSize(customTerms, 180);
-      doc.text(termLines, LAYOUT.MARGIN_LEFT, finalY + 46);
-    } else if (showPaymentTerms) {
-      doc.text('1. Payment is due by the date specified above', LAYOUT.MARGIN_LEFT, finalY + 46);
-      doc.text('2. Please include invoice number with your payment', LAYOUT.MARGIN_LEFT, finalY + 52);
+    if (termBlocks.length > 0) {
+      doc.text(termBlocks, LAYOUT.MARGIN_LEFT, safeTitleY + 8);
     }
 
     return this;
@@ -964,16 +1102,18 @@ export const generateQuotePDF = async (
     const tableData =
       sanitizedQuote.items && sanitizedQuote.items.length > 0
         ? sanitizedQuote.items.map(item => [
-            item.description,
+            formatLineDescription(item.description, item.notes),
             item.quantity.toString(),
             formatCurrencyAmount(item.unit_price, sanitizedQuote.currency || 'USD'),
-            formatCurrencyAmount(item.amount, sanitizedQuote.currency || 'USD'),
+            `${(item.discount_percentage || 0).toFixed(2)}%`,
+            formatCurrencyAmount(item.amount + (item.tax_amount || 0), sanitizedQuote.currency || 'USD'),
           ])
         : [
             [
               sanitizedQuote.description || 'Professional Services',
               '1',
               formatCurrencyAmount(sanitizedQuote.amount_usd, sanitizedQuote.currency || 'USD'),
+              '0.00%',
               formatCurrencyAmount(sanitizedQuote.amount_usd, sanitizedQuote.currency || 'USD'),
             ],
           ];
@@ -1022,9 +1162,10 @@ export const generateInvoicePDF = async (
       .addTitle('INVOICE')
       .addInvoiceBanner(sanitizedInvoice)
       .addMetadataSection(
-        ['Invoice Number:', 'Issue Date:', 'Due Date:', 'Status:'],
+        ['Invoice Number:', 'Invoice Type:', 'Issue Date:', 'Due Date:', 'Currency:', 'Status:', ...(sanitizedInvoice.batch ? ['Batch:'] : [])],
         [
           sanitizedInvoice.invoice_number,
+          sanitizedInvoice.invoice_kind || 'Standard',
           new Date(sanitizedInvoice.created_at).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -1035,7 +1176,9 @@ export const generateInvoicePDF = async (
             day: 'numeric',
             year: 'numeric',
           }),
+          sanitizedInvoice.currency || 'USD',
           sanitizedInvoice.status.toUpperCase(),
+          ...(sanitizedInvoice.batch ? [sanitizedInvoice.batch] : []),
         ],
         125,
         65
@@ -1051,17 +1194,19 @@ export const generateInvoicePDF = async (
     const tableData =
       sanitizedInvoice.items && sanitizedInvoice.items.length > 0
         ? sanitizedInvoice.items.map(item => [
-            item.description,
+            formatLineDescription(item.description, item.notes),
             item.quantity.toString(),
-            `$${item.unit_price.toLocaleString()}`,
-            `$${item.amount.toLocaleString()}`,
+            formatCurrencyAmount(item.unit_price, sanitizedInvoice.currency || 'USD'),
+            `${(item.discount_percentage || 0).toFixed(2)}%`,
+            formatCurrencyAmount(item.amount + (item.tax_amount || 0), sanitizedInvoice.currency || 'USD'),
           ])
         : [
             [
               sanitizedInvoice.description || 'Professional Services',
               '1',
-              `$${sanitizedInvoice.amount_usd.toLocaleString()}`,
-              `$${sanitizedInvoice.amount_usd.toLocaleString()}`,
+              formatCurrencyAmount(sanitizedInvoice.amount_usd, sanitizedInvoice.currency || 'USD'),
+              '0.00%',
+              formatCurrencyAmount(sanitizedInvoice.amount_usd, sanitizedInvoice.currency || 'USD'),
             ],
           ];
 
@@ -1255,6 +1400,205 @@ export const generatePayslipPDFAndDownload = async (
   downloadBlob(blob, `Payslip_${payslip.payslip_number}.pdf`);
 };
 
+export const generateVehicleStatementPDF = async (
+  vehicle: Vehicle,
+  expenses: Expense[],
+  company: CompanyDetails
+): Promise<Blob> => {
+  const sanitizedCompany = sanitizeCompany(company);
+  const builder = new PDFBuilder(
+    sanitizedCompany,
+    `Statement_${sanitizeText(vehicle.make_model).replace(/\s+/g, '_') || 'Vehicle'}.pdf`
+  );
+  const doc = builder.getDocument();
+  const safeVehicleName = sanitizeText(vehicle.make_model) || 'Unknown Vehicle';
+  const safeVin = sanitizeText(vehicle.vin_number) || 'N/A';
+  const safeStatus = sanitizeText(vehicle.status) || 'Unknown';
+  const purchasePriceGbp = sanitizeNumber(vehicle.purchase_price_gbp);
+  const purchasePriceUsd = purchasePriceGbp * 1.27;
+  const sanitizedExpenses = [...expenses]
+    .map((expense) => ({
+      ...expense,
+      description: sanitizeText(expense.description) || 'Expense',
+      category: sanitizeText(expense.category) || 'Other',
+      location: sanitizeText(expense.location) || 'N/A',
+      currency: sanitizeText(expense.currency) || 'USD',
+      amount: sanitizeNumber(expense.amount),
+      exchange_rate_to_usd: sanitizeNumber(expense.exchange_rate_to_usd) || 1,
+      created_at: sanitizeText(expense.created_at) || new Date().toISOString(),
+    }))
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  const totalExpensesUsd = sanitizedExpenses.reduce(
+    (sum, expense) => sum + expense.amount * (expense.exchange_rate_to_usd || 1),
+    0
+  );
+  const totalLandedCostUsd = purchasePriceUsd + totalExpensesUsd;
+
+  await builder.addLogoWatermark();
+  (await builder.addHeader())
+    .addTitle('VEHICLE STATEMENT')
+    .addMetadataSection(
+      ['Statement Date:', 'Expense Count:', 'Purchase Price:', 'Total Expenses:', 'Total Landed Cost:'],
+      [
+        new Date().toLocaleDateString(),
+        String(sanitizedExpenses.length),
+        `GBP ${purchasePriceGbp.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+        formatCurrencyAmount(totalExpensesUsd, 'USD'),
+        formatCurrencyAmount(totalLandedCostUsd, 'USD'),
+      ],
+      125,
+      65
+    )
+    .addClientSection(
+      'VEHICLE:',
+      safeVehicleName,
+      undefined,
+      undefined,
+      [
+        { label: 'VIN', value: safeVin },
+        { label: 'Status', value: safeStatus },
+      ],
+      65
+    );
+
+  const tableStartY = Math.max(120, ((doc as any).lastAutoTable?.finalY || 0) + 10);
+
+  if (sanitizedExpenses.length > 0) {
+    autoTable(doc, {
+      startY: tableStartY,
+      head: [['Date', 'Category', 'Description', 'Location', 'Amount', 'USD Equiv.']],
+      body: sanitizedExpenses.map((expense) => [
+        new Date(expense.created_at).toLocaleDateString(),
+        expense.category,
+        expense.description,
+        expense.location,
+        `${expense.currency} ${expense.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+        formatCurrencyAmount(expense.amount * (expense.exchange_rate_to_usd || 1), 'USD'),
+      ]),
+      theme: 'plain',
+      margin: {
+        left: LAYOUT.MARGIN_LEFT,
+        right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT,
+        bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6,
+      },
+      headStyles: {
+        fillColor: TABLE_STYLES.HEAD_FILL,
+        textColor: COLORS.PRIMARY_DARK,
+        fontStyle: 'bold',
+        fontSize: FONT_SIZES.SMALL,
+      },
+      styles: {
+        fontSize: FONT_SIZES.SMALL,
+        lineColor: COLORS.BORDER_GRAY,
+        lineWidth: TABLE_STYLES.LINE_WIDTH,
+        textColor: COLORS.PRIMARY_DARK,
+      },
+      columnStyles: {
+        0: { cellWidth: 24 },
+        1: { cellWidth: 24 },
+        2: { cellWidth: 56 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 34, halign: 'right' },
+        5: { cellWidth: 32, halign: 'right', fontStyle: 'bold' },
+      },
+      alternateRowStyles: {
+        fillColor: COLORS.FILL_ALTERNATE,
+      },
+    });
+  } else {
+    const emptyStateY = builder.ensureContentSpace(16, tableStartY);
+    doc.setFontSize(FONT_SIZES.REGULAR);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.text('No expenses recorded for this vehicle yet.', LAYOUT.MARGIN_LEFT, emptyStateY);
+  }
+
+  let currentY = ((doc as any).lastAutoTable?.finalY || tableStartY) + 14;
+  currentY = builder.ensureContentSpace(34, currentY);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 28, 3, 3, 'F');
+  doc.setFontSize(FONT_SIZES.SMALL);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+  doc.setTextColor(...COLORS.SECONDARY_GRAY);
+  doc.text('PURCHASE PRICE (USD)', LAYOUT.MARGIN_LEFT + 5, currentY + 9);
+  doc.text('TOTAL EXPENSES (USD)', LAYOUT.MARGIN_LEFT + 65, currentY + 9);
+  doc.text('LANDED COST (USD)', LAYOUT.MARGIN_LEFT + 132, currentY + 9);
+
+  doc.setFontSize(FONT_SIZES.MEDIUM);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+  doc.setTextColor(...COLORS.PRIMARY_DARK);
+  doc.text(formatCurrencyAmount(purchasePriceUsd, 'USD'), LAYOUT.MARGIN_LEFT + 5, currentY + 20);
+  doc.text(formatCurrencyAmount(totalExpensesUsd, 'USD'), LAYOUT.MARGIN_LEFT + 65, currentY + 20);
+  doc.text(formatCurrencyAmount(totalLandedCostUsd, 'USD'), LAYOUT.MARGIN_LEFT + 132, currentY + 20);
+
+  const categoryTotals = sanitizedExpenses.reduce((acc, expense) => {
+    const usdAmount = expense.amount * (expense.exchange_rate_to_usd || 1);
+    acc[expense.category] = (acc[expense.category] || 0) + usdAmount;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const categoryRows = Object.entries(categoryTotals)
+    .sort(([, a], [, b]) => b - a)
+    .map(([category, total]) => [category, formatCurrencyAmount(total, 'USD')]);
+
+  if (categoryRows.length > 0) {
+    currentY = builder.ensureContentSpace(18, currentY + 40);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('EXPENSE BREAKDOWN', LAYOUT.MARGIN_LEFT, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['Category', 'USD Total']],
+      body: categoryRows,
+      theme: 'plain',
+      margin: {
+        left: LAYOUT.MARGIN_LEFT,
+        right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT,
+        bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6,
+      },
+      headStyles: {
+        fillColor: TABLE_STYLES.HEAD_FILL,
+        textColor: COLORS.PRIMARY_DARK,
+        fontStyle: 'bold',
+        fontSize: FONT_SIZES.SMALL,
+      },
+      styles: {
+        fontSize: FONT_SIZES.SMALL,
+        lineColor: COLORS.BORDER_GRAY,
+        lineWidth: TABLE_STYLES.LINE_WIDTH,
+        textColor: COLORS.PRIMARY_DARK,
+      },
+      columnStyles: {
+        1: { halign: 'right', fontStyle: 'bold' },
+      },
+      alternateRowStyles: {
+        fillColor: COLORS.FILL_ALTERNATE,
+      },
+    });
+  }
+
+  builder.addFooter({
+    additionalText: `Vehicle statement for ${safeVehicleName}`,
+    fontSize: FONT_SIZES.XXSMALL,
+  });
+
+  return builder.generate();
+};
+
+export const generateVehicleStatementPDFAndDownload = async (
+  vehicle: Vehicle,
+  expenses: Expense[],
+  company: CompanyDetails
+): Promise<void> => {
+  const blob = await generateVehicleStatementPDF(vehicle, expenses, company);
+  downloadBlob(
+    blob,
+    `Statement_${sanitizeText(vehicle.make_model).replace(/\s+/g, '_') || 'Vehicle'}_${new Date().toISOString().split('T')[0]}.pdf`
+  );
+};
+
 function downloadBlob(blob: Blob, filename: string): void {
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -1265,3 +1609,352 @@ function downloadBlob(blob: Blob, filename: string): void {
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 }
+
+// Receipt PDF Generation
+export const generateReceiptPDF = async (
+  receipt: Receipt,
+  company: CompanyDetails
+): Promise<Blob> => {
+  const sanitizedReceipt = sanitizeReceipt(receipt);
+  const sanitizedCompany = sanitizeCompany(company);
+  const builder = new PDFBuilder(sanitizedCompany, `Receipt_${sanitizedReceipt.receipt_number}.pdf`);
+
+  await builder.addLogoWatermark();
+  (await builder.addHeader())
+    .addTitle('RECEIPT')
+    .addMetadataSection(
+      ['Receipt #:', 'Payment Date:', 'Payment Method:', 'Reference:', 'Currency:', ...(sanitizedReceipt.batch ? ['Batch:'] : [])],
+      [
+        sanitizedReceipt.receipt_number,
+        new Date(sanitizedReceipt.payment_date).toLocaleDateString(),
+        sanitizedReceipt.payment_method,
+        sanitizedReceipt.reference_number || 'N/A',
+        sanitizedReceipt.currency,
+        ...(sanitizedReceipt.batch ? [sanitizedReceipt.batch] : []),
+      ],
+      125,
+      65
+    )
+    .addClientSection(
+      'RECEIVED FROM:',
+      sanitizedReceipt.client_name,
+      sanitizedReceipt.client_email,
+      sanitizedReceipt.client_address
+    );
+
+  const receiptItems =
+    sanitizedReceipt.items && sanitizedReceipt.items.length > 0
+      ? sanitizedReceipt.items.map(item => [
+          formatLineDescription(item.description, item.notes, item.invoice_number),
+          item.quantity.toString(),
+          formatCurrencyAmount(item.unit_price, sanitizedReceipt.currency),
+          `${(item.discount_percentage || 0).toFixed(2)}%`,
+          formatCurrencyAmount(item.amount + (item.tax_amount || 0), sanitizedReceipt.currency),
+        ])
+      : [
+          [
+            sanitizedReceipt.notes || 'Payment received',
+            '1',
+            formatCurrencyAmount(sanitizedReceipt.amount_received, sanitizedReceipt.currency),
+            '0.00%',
+            formatCurrencyAmount(sanitizedReceipt.amount_received, sanitizedReceipt.currency),
+          ],
+        ];
+
+  builder.addItemsTable(receiptItems);
+  builder.addTotalSection(sanitizedReceipt.amount_received, 'AMOUNT RECEIVED', sanitizedReceipt.currency);
+
+  if (sanitizedReceipt.notes) {
+    const notesY = ((builder.getDocument() as any).lastAutoTable?.finalY || 140) + 24;
+    builder.addNotes(sanitizedReceipt.notes, notesY);
+  }
+
+  builder.addFooter({
+    additionalText: 'Official receipt for recorded client payment.',
+    fontSize: FONT_SIZES.XXSMALL,
+  });
+
+  return builder.generate();
+};
+
+export const generateReceiptPDFAndDownload = async (
+  receipt: Receipt,
+  company: CompanyDetails
+): Promise<void> => {
+  const blob = await generateReceiptPDF(receipt, company);
+  downloadBlob(blob, `Receipt_${receipt.receipt_number}.pdf`);
+};
+
+// Statement PDF Generation
+export interface StatementData {
+  client_name: string;
+  client_email?: string;
+  client_address?: string;
+  invoices: Invoice[];
+  payments: Payment[];
+  paymentCurrencyMap?: Record<string, 'USD' | 'GBP'>;
+  startDate: string;
+  endDate: string;
+}
+
+const inferPaymentCurrency = (
+  payment: Payment,
+  invoiceCurrencyMap: Map<string, 'USD' | 'GBP'>,
+  paymentCurrencyMap: Record<string, 'USD' | 'GBP'> | undefined,
+  fallbackCurrency: 'USD' | 'GBP'
+): 'USD' | 'GBP' => {
+  return payment.currency || paymentCurrencyMap?.[payment.id] || invoiceCurrencyMap.get(payment.reference_id) || fallbackCurrency;
+};
+
+const getAllocatedAmountForInvoice = (
+  payment: Payment,
+  invoiceId: string,
+  invoiceCurrency: 'USD' | 'GBP',
+  fallbackCurrency: 'USD' | 'GBP'
+): number => {
+  return (payment.allocations || [])
+    .filter(allocation => allocation.invoice_id === invoiceId)
+    .reduce((sum, allocation) => {
+      const allocationCurrency = allocation.currency || payment.currency || fallbackCurrency;
+      if (allocationCurrency !== invoiceCurrency) {
+        return sum;
+      }
+
+      return sum + sanitizeNumber(allocation.amount_allocated);
+    }, 0);
+};
+
+export const generateStatementPDF = async (
+  statement: StatementData,
+  company: CompanyDetails
+): Promise<Blob> => {
+  const sanitizedCompany = sanitizeCompany(company);
+  const sanitizedInvoices = statement.invoices.map(sanitizeInvoice);
+  const clientName = sanitizeText(statement.client_name) || 'Unknown Client';
+  const clientEmail = sanitizeEmail(statement.client_email);
+  const clientAddress = sanitizeText(statement.client_address);
+  const builder = new PDFBuilder(sanitizedCompany, `Statement_${clientName.replace(/\s+/g, '_')}.pdf`);
+  const doc = builder.getDocument();
+
+  await builder.addLogoWatermark();
+  (await builder.addHeader())
+    .addTitle('STATEMENT')
+    .addMetadataSection(
+      ['Period From:', 'Period To:', 'Invoice Count:', 'Payment Count:'],
+      [
+        new Date(statement.startDate).toLocaleDateString(),
+        new Date(statement.endDate).toLocaleDateString(),
+        String(sanitizedInvoices.length),
+        String(statement.payments.length),
+      ],
+      125,
+      65
+    )
+    .addClientSection('CLIENT:', clientName, clientEmail, clientAddress);
+
+  const invoiceCurrencyMap = new Map<string, 'USD' | 'GBP'>();
+  sanitizedInvoices.forEach(invoice => {
+    invoiceCurrencyMap.set(invoice.invoice_number, invoice.currency || 'USD');
+    invoiceCurrencyMap.set(invoice.id, invoice.currency || 'USD');
+  });
+  const invoicePaymentMap = new Map<string, number>();
+  sanitizedInvoices.forEach(invoice => {
+    const paidAmount = statement.payments.reduce((sum, payment) => {
+      const paymentCurrency = inferPaymentCurrency(
+        payment,
+        invoiceCurrencyMap,
+        statement.paymentCurrencyMap,
+        sanitizedInvoices[0]?.currency || 'USD'
+      );
+      const hasAllocations = (payment.allocations?.length || 0) > 0;
+      if (hasAllocations) {
+        return sum + getAllocatedAmountForInvoice(payment, invoice.id, invoice.currency || 'USD', sanitizedInvoices[0]?.currency || 'USD');
+      }
+
+      const matchesInvoice =
+        payment.reference_id === invoice.invoice_number ||
+        payment.reference_id === invoice.id;
+
+      if (!matchesInvoice || paymentCurrency !== (invoice.currency || 'USD')) {
+        return sum;
+      }
+
+      return sum + sanitizeNumber(payment.amount_usd);
+    }, 0);
+
+    invoicePaymentMap.set(invoice.id, paidAmount);
+  });
+
+  let currentY = Math.max((doc as any).lastAutoTable?.finalY || 0, 120);
+
+  if (sanitizedInvoices.length > 0) {
+    currentY = builder.ensureContentSpace(18, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('INVOICES', LAYOUT.MARGIN_LEFT, currentY);
+    currentY += 6;
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Invoice #', 'Issue Date', 'Due Date', 'Status', 'Amount', 'Owing Balance']],
+      body: sanitizedInvoices.map(invoice => [
+        invoice.invoice_number,
+        new Date(invoice.created_at).toLocaleDateString(),
+        invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A',
+        invoice.status,
+        formatCurrencyAmount(invoice.amount_usd, invoice.currency || 'USD'),
+        formatCurrencyAmount(
+          Math.max(0, invoice.amount_usd - (invoicePaymentMap.get(invoice.id) || 0)),
+          invoice.currency || 'USD'
+        ),
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: {
+        fillColor: TABLE_STYLES.HEAD_FILL,
+        textColor: COLORS.PRIMARY_DARK,
+        fontStyle: 'bold',
+        fontSize: FONT_SIZES.SMALL,
+      },
+      styles: {
+        fontSize: FONT_SIZES.SMALL,
+        lineColor: COLORS.BORDER_GRAY,
+        lineWidth: TABLE_STYLES.LINE_WIDTH,
+        textColor: COLORS.PRIMARY_DARK,
+      },
+      columnStyles: {
+        4: { halign: 'right', fontStyle: 'bold' },
+        5: { halign: 'right', fontStyle: 'bold' },
+      },
+      alternateRowStyles: {
+        fillColor: COLORS.FILL_ALTERNATE,
+      },
+    });
+
+    currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 12;
+  }
+
+  if (statement.payments.length > 0) {
+    currentY = builder.ensureContentSpace(18, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('PAYMENTS', LAYOUT.MARGIN_LEFT, currentY);
+    currentY += 6;
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Reference', 'Date', 'Method', 'Amount']],
+      body: statement.payments.map(payment => {
+        const paymentCurrency = inferPaymentCurrency(
+          payment,
+          invoiceCurrencyMap,
+          statement.paymentCurrencyMap,
+          sanitizedInvoices[0]?.currency || 'USD'
+        );
+        return [
+          sanitizeText(payment.reference_id) || payment.id.slice(0, 8),
+          new Date(payment.date).toLocaleDateString(),
+          sanitizeText(payment.method) || 'Unspecified',
+          formatCurrencyAmount(sanitizeNumber(payment.amount_usd), paymentCurrency),
+        ];
+      }),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: {
+        fillColor: TABLE_STYLES.HEAD_FILL,
+        textColor: COLORS.PRIMARY_DARK,
+        fontStyle: 'bold',
+        fontSize: FONT_SIZES.SMALL,
+      },
+      styles: {
+        fontSize: FONT_SIZES.SMALL,
+        lineColor: COLORS.BORDER_GRAY,
+        lineWidth: TABLE_STYLES.LINE_WIDTH,
+        textColor: COLORS.PRIMARY_DARK,
+      },
+      columnStyles: {
+        3: { halign: 'right', fontStyle: 'bold' },
+      },
+      alternateRowStyles: {
+        fillColor: COLORS.FILL_ALTERNATE,
+      },
+    });
+
+    currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 14;
+  }
+
+  const supportedCurrencies: ('USD' | 'GBP')[] = ['USD', 'GBP'];
+  const summaryRows = supportedCurrencies
+    .map(currency => {
+      const totalInvoiced = sanitizedInvoices
+        .filter(invoice => (invoice.currency || 'USD') === currency)
+        .reduce((sum, invoice) => sum + invoice.amount_usd, 0);
+      const totalPaid = statement.payments.reduce((sum, payment) => {
+        const paymentCurrency = inferPaymentCurrency(
+          payment,
+          invoiceCurrencyMap,
+          statement.paymentCurrencyMap,
+          sanitizedInvoices[0]?.currency || 'USD'
+        );
+        return paymentCurrency === currency ? sum + sanitizeNumber(payment.amount_usd) : sum;
+      }, 0);
+
+      if (totalInvoiced === 0 && totalPaid === 0) {
+        return null;
+      }
+
+      return {
+        currency,
+        totalInvoiced,
+        totalPaid,
+        balanceDue: totalInvoiced - totalPaid,
+      };
+    })
+    .filter(Boolean) as Array<{ currency: 'USD' | 'GBP'; totalInvoiced: number; totalPaid: number; balanceDue: number }>;
+
+  const summaryHeight = Math.max(34, 12 + summaryRows.length * 16);
+  currentY = builder.ensureContentSpace(summaryHeight + 10, currentY);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, summaryHeight, 3, 3, 'F');
+  doc.setFontSize(FONT_SIZES.MEDIUM);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+  doc.setTextColor(...COLORS.PRIMARY_DARK);
+  doc.text('ACCOUNT SUMMARY', LAYOUT.MARGIN_LEFT + 5, currentY + 8);
+
+  let summaryY = currentY + 16;
+  summaryRows.forEach(row => {
+    doc.setFontSize(FONT_SIZES.SMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.text(row.currency, LAYOUT.MARGIN_LEFT + 5, summaryY);
+
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.text(`Invoiced ${formatCurrencyAmount(row.totalInvoiced, row.currency)}`, LAYOUT.MARGIN_LEFT + 25, summaryY);
+    doc.text(`Paid ${formatCurrencyAmount(row.totalPaid, row.currency)}`, 128, summaryY);
+
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...(row.balanceDue > 0 ? [220, 38, 38] : [16, 185, 129]));
+    doc.text(`Owing ${formatCurrencyAmount(row.balanceDue, row.currency)}`, LAYOUT.MARGIN_RIGHT - 5, summaryY, {
+      align: 'right',
+    });
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+
+    summaryY += 12;
+  });
+
+  builder.addFooter({
+    additionalText: `Statement dated ${new Date().toLocaleDateString()}`,
+    fontSize: FONT_SIZES.XXSMALL,
+  });
+
+  return builder.generate();
+};
+
+export const generateStatementPDFAndDownload = async (
+  statement: StatementData,
+  company: CompanyDetails
+): Promise<void> => {
+  const blob = await generateStatementPDF(statement, company);
+  downloadBlob(blob, `Statement_${statement.client_name.replace(/\s+/g, '_')}.pdf`);
+};

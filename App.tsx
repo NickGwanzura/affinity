@@ -1,17 +1,42 @@
 
-import React, { useState, useEffect } from 'react';
-import { AdminDashboard } from './components/AdminDashboard';
-import { AccountantDashboard } from './components/AccountantDashboard';
-import { DriverPortal } from './components/DriverPortal';
-import { Settings } from './components/Settings';
-import { Financials } from './components/Financials';
-import { Documents } from './components/Documents';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Login } from './components/Login';
 import { AcceptInvite } from './components/AcceptInvite';
 import { ResetPassword } from './components/ResetPassword';
 import { Layout, AppView } from './components/Layout';
 import { AuthSession } from './types';
 import { authService } from './services/authService';
+
+const AdminDashboard = lazy(() =>
+  import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard }))
+);
+const AccountantDashboard = lazy(() =>
+  import('./components/AccountantDashboard').then((module) => ({ default: module.AccountantDashboard }))
+);
+const DriverPortal = lazy(() =>
+  import('./components/DriverPortal').then((module) => ({ default: module.DriverPortal }))
+);
+const Settings = lazy(() =>
+  import('./components/Settings').then((module) => ({ default: module.Settings }))
+);
+const Financials = lazy(() =>
+  import('./components/Financials').then((module) => ({ default: module.Financials }))
+);
+const Documents = lazy(() =>
+  import('./components/Documents').then((module) => ({ default: module.Documents }))
+);
+const ClientDirectory = lazy(() =>
+  import('./components/ClientDirectory').then((module) => ({ default: module.ClientDirectory }))
+);
+
+const ScreenLoader = () => (
+  <div className="min-h-[40vh] flex items-center justify-center">
+    <div className="flex items-center gap-3 text-zinc-500">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span className="text-sm font-bold uppercase tracking-widest">Loading workspace</span>
+    </div>
+  </div>
+);
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -77,6 +102,27 @@ export default function App() {
     setSession(null);
   };
 
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'admin':
+        return <AdminDashboard />;
+      case 'accountant':
+        return <AccountantDashboard />;
+      case 'driver':
+        return <DriverPortal />;
+      case 'settings':
+        return <Settings />;
+      case 'financials':
+        return <Financials />;
+      case 'documents':
+        return <Documents />;
+      case 'clients':
+        return <ClientDirectory />;
+      default:
+        return <AdminDashboard />;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50">
@@ -121,12 +167,9 @@ export default function App() {
       user={session.user}
       onLogout={handleLogout}
     >
-      {currentView === 'admin' && <AdminDashboard />}
-      {currentView === 'accountant' && <AccountantDashboard />}
-      {currentView === 'driver' && <DriverPortal />}
-      {currentView === 'settings' && <Settings />}
-      {currentView === 'financials' && <Financials />}
-      {currentView === 'documents' && <Documents />}
+      <Suspense fallback={<ScreenLoader />}>
+        {renderCurrentView()}
+      </Suspense>
     </Layout>
   );
 }

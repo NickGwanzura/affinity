@@ -20,10 +20,6 @@ if (!neonDatabaseUrl) {
   console.error('❌ [NEON] CRITICAL: Missing VITE_NEON_DATABASE_URL environment variable');
   console.error('❌ [NEON] Database operations will fail until Neon is configured');
   console.error('❌ [NEON] Please add VITE_NEON_DATABASE_URL to your .env file');
-} else {
-  // Log partial URL for debugging (hide password)
-  const sanitizedUrl = neonDatabaseUrl.replace(/:[^:@]+@/, ':****@');
-  console.log('🔧 [NEON] Database URL configured:', sanitizedUrl);
 }
 
 // Create the SQL query function
@@ -41,8 +37,6 @@ export const isNeonConnected = (): boolean => {
 
 // Health check function with detailed diagnostics
 export const checkNeonConnection = async (): Promise<boolean> => {
-  console.log('🔍 [NEON] Running connection health check...');
-  
   if (!neonDatabaseUrl) {
     console.error('❌ [NEON] Health check failed: VITE_NEON_DATABASE_URL not set');
     return false;
@@ -58,10 +52,6 @@ export const checkNeonConnection = async (): Promise<boolean> => {
     const result = await sql`SELECT 1 as health_check, NOW() as server_time`;
     const elapsed = Date.now() - startTime;
     
-    console.log('✅ [NEON] Connection health check PASSED', {
-      responseTime: `${elapsed}ms`,
-      serverTime: result[0]?.server_time
-    });
     return result.length > 0;
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -84,9 +74,7 @@ export const checkTableExists = async (tableName: string): Promise<boolean> => {
         AND table_name = ${tableName}
       ) as exists
     `;
-    const exists = result[0]?.exists === true;
-    console.log(`🔍 [NEON] Table '${tableName}' exists:`, exists);
-    return exists;
+    return result[0]?.exists === true;
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(`❌ [NEON] Error checking table '${tableName}':`, errorMessage);
@@ -110,8 +98,6 @@ export const runFullDiagnostics = async (): Promise<{
     'quote_items', 'invoice_items'
   ];
   
-  console.log('🔍 [NEON] Running full diagnostics...');
-  
   // Check connection
   const connected = await checkNeonConnection();
   if (!connected) {
@@ -128,29 +114,10 @@ export const runFullDiagnostics = async (): Promise<{
     }
   }
   
-  console.log('📊 [NEON] Diagnostics complete:', {
-    connected,
-    tablesFound: Object.values(tables).filter(Boolean).length,
-    tablesMissing: Object.values(tables).filter(v => !v).length,
-    errors
-  });
-  
   return { connected, tables, errors };
 };
 
-// Log initialization status
-if (neonDatabaseUrl) {
-  console.log('✅ [NEON] Client initialized successfully', {
-    timestamp: new Date().toISOString()
-  });
-  
-  // Auto-run health check on initialization (async, non-blocking)
-  checkNeonConnection().then(connected => {
-    if (!connected) {
-      console.error('❌ [NEON] Initial health check failed - database may not be accessible');
-    }
-  });
-} else {
+if (!neonDatabaseUrl) {
   console.error('❌ [NEON] Client NOT initialized - add VITE_NEON_DATABASE_URL to .env');
 }
 
@@ -170,10 +137,7 @@ export async function executeQuery<T>(
   const startTime = Date.now();
   
   try {
-    console.log(`🔄 [NEON] Executing: ${operation}`);
     const result = await queryFn();
-    const elapsed = Date.now() - startTime;
-    console.log(`✅ [NEON] Success: ${operation} (${elapsed}ms)`);
     return result;
   } catch (error: unknown) {
     const elapsed = Date.now() - startTime;

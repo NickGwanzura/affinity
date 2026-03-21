@@ -219,8 +219,6 @@ class NeonAuthService {
   // ============================================
   
   async resetPassword(email: string): Promise<void> {
-    console.log('[NeonAuth] Requesting password reset for:', email);
-    console.log('[NeonAuth] Redirect URL:', `${window.location.origin}/`);
     
     // Try different endpoint formats that Neon Auth might use
     const endpoints = [
@@ -238,7 +236,6 @@ class NeonAuthService {
           method: 'POST',
           body: JSON.stringify(endpoint.body),
         });
-        console.log('[NeonAuth] Password reset response:', response);
         return; // Success, exit function
       } catch (error: any) {
         console.log(`[NeonAuth] ${endpoint.path} failed:`, error.message);
@@ -253,7 +250,6 @@ class NeonAuthService {
   }
 
   async updatePassword(token: string, newPassword: string): Promise<void> {
-    console.log('[NeonAuth] Updating password with token:', token.substring(0, 10) + '...');
     
     // Try different endpoint formats
     const endpoints = [
@@ -272,7 +268,6 @@ class NeonAuthService {
           method: 'POST',
           body: JSON.stringify(endpoint.body),
         });
-        console.log('[NeonAuth] Password update successful');
         return; // Success
       } catch (error: any) {
         console.log(`[NeonAuth] ${endpoint.path} failed:`, error.message);

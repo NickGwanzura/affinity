@@ -9,9 +9,8 @@
  * User ID from Supabase Auth is passed explicitly to Neon queries where needed.
  */
 
-import { Vehicle, Expense, LandedCostSummary, CompanyDetails, AppUser, Quote, Invoice, Payment, AuthSession, SupabaseConfig, UserInvite, UserRole, Client, LineItem, RegistrationRequest, Employee, Payslip, OperatingFund, QuoteItem, InvoiceItem, FinancialStatus } from '../types';
+import { Vehicle, Expense, LandedCostSummary, CompanyDetails, AppUser, Quote, Invoice, Payment, PaymentAllocation, Receipt, AuthSession, SupabaseConfig, UserInvite, UserRole, Client, LineItem, RegistrationRequest, Employee, Payslip, OperatingFund, QuoteItem, InvoiceItem, FinancialStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
-import { supabaseClient } from './supabaseClient';
 import * as db from './databaseService';
 import { isNeonConnected } from './neonClient';
 import { authService } from './authService';
@@ -73,6 +72,8 @@ const sanitizeString = (input: string): string => {
 };
 
 const QUOTE_CURRENCIES = ['USD', 'GBP'] as const;
+const DOCUMENT_CURRENCIES = ['USD', 'GBP'] as const;
+const INVOICE_KINDS = ['Standard', 'Deposit', 'Final'] as const;
 
 const validateRequired = (value: unknown, fieldName: string): void => {
   if (value === null || value === undefined || value === '') {
@@ -97,7 +98,6 @@ class SupabaseService {
   async signUp(email: string, password: string, metadata?: { name: string; role: string }) {
     logAPICall('POST', '/auth/signup', { email });
 
-    // Validation
     validateRequired(email, 'email');
     validateRequired(password, 'password');
     if (!validateEmail(email)) {
@@ -108,23 +108,14 @@ class SupabaseService {
     }
 
     try {
-      // Supabase Auth - RETAINED
-      const { data, error } = await supabaseClient.auth.signUp({
+      const user = await authService.createUser({
         email: sanitizeString(email),
         password,
-        options: {
-          data: metadata ? {
-            name: sanitizeString(metadata.name),
-            role: sanitizeString(metadata.role)
-          } : {}
-        }
+        name: metadata ? sanitizeString(metadata.name) : email.split('@')[0],
+        role: (metadata?.role as UserRole) || 'Driver',
       });
-
-      if (error) {
-        throw new APIError(400, error.message, error);
-      }
-      logAPICall('POST', '/auth/signup', { success: true, userId: data.user?.id });
-      return data;
+      logAPICall('POST', '/auth/signup', { success: true, userId: user.id });
+      return { user };
     } catch (error: unknown) {
       logAPICall('POST', '/auth/signup', { success: false, error: getErrorMessage(error) });
       throw error;
@@ -134,7 +125,6 @@ class SupabaseService {
   async login(email: string, password: string): Promise<AuthSession> {
     logAPICall('POST', '/auth/login', { email });
 
-    // Validation
     validateRequired(email, 'email');
     validateRequired(password, 'password');
     if (!validateEmail(email)) {
@@ -142,45 +132,9 @@ class SupabaseService {
     }
 
     try {
-      // Supabase Auth - RETAINED for credential verification
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: sanitizeString(email),
-        password
-      });
-
-      if (error) throw new APIError(401, 'Invalid credentials', error);
-      if (!data.user) throw new APIError(500, 'No user returned from login');
-
-      // IMPORTANT: Fetch or create user profile in Neon (source of truth for roles)
-      let userProfile = null;
-      try {
-        userProfile = await db.getUserProfileById(data.user.id);
-        
-        // AUTO-SYNC: If user exists in Supabase Auth but not in Neon, create profile
-        if (!userProfile && isNeonConnected()) {
-          const newProfile = {
-            name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
-            email: data.user.email!,
-            role: (data.user.user_metadata?.role as UserRole) || 'Driver',
-            status: 'Active' as const
-          };
-          userProfile = await db.createUserProfile(data.user.id, newProfile);
-        }
-      } catch (profileError: unknown) {
-        // Profile fetch/create failed - will use Supabase metadata fallback
-      }
-
-      // Use Neon profile data if available, otherwise fall back to Supabase metadata
-      const appUser: AppUser = {
-        id: data.user.id,
-        name: userProfile?.name || data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
-        email: data.user.email!,
-        role: userProfile?.role || data.user.user_metadata?.role || 'Driver',
-        status: userProfile?.status || 'Active'
-      };
-
-      logAPICall('POST', '/auth/login', { success: true, userId: appUser.id, role: appUser.role, source: userProfile ? 'neon' : 'supabase' });
-      return { user: appUser };
+      const session = await authService.login(sanitizeString(email), password);
+      logAPICall('POST', '/auth/login', { success: true, userId: session.user.id, role: session.user.role });
+      return session;
     } catch (error: unknown) {
       logAPICall('POST', '/auth/login', { success: false, error: getErrorMessage(error) });
       throw error;
@@ -190,9 +144,7 @@ class SupabaseService {
   async logout(): Promise<void> {
     logAPICall('POST', '/auth/logout');
     try {
-      // Supabase Auth - RETAINED
-      const { error } = await supabaseClient.auth.signOut();
-      if (error) throw new APIError(500, 'Logout failed', error);
+      await authService.logout();
       logAPICall('POST', '/auth/logout', { success: true });
     } catch (error: unknown) {
       logAPICall('POST', '/auth/logout', { success: false, error: getErrorMessage(error) });
@@ -204,76 +156,23 @@ class SupabaseService {
     logAPICall('GET', '/auth/session');
 
     try {
-      // Supabase Auth - RETAINED for session management
-      const { data: { session }, error } = await supabaseClient.auth.getSession();
-
-      if (error) throw new APIError(500, 'Failed to get session', error);
-      if (!session) {
-        logAPICall('GET', '/auth/session', { success: true, hasSession: false });
-        return null;
-      }
-
-      // IMPORTANT: Fetch or create user profile in Neon (source of truth for roles)
-      let userProfile = null;
-      try {
-        userProfile = await db.getUserProfileById(session.user.id);
-        
-        // AUTO-SYNC: If user exists in Supabase Auth but not in Neon, create profile
-        if (!userProfile && isNeonConnected()) {
-          const newProfile = {
-            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-            email: session.user.email!,
-            role: (session.user.user_metadata?.role as UserRole) || 'Driver',
-            status: 'Active' as const
-          };
-          userProfile = await db.createUserProfile(session.user.id, newProfile);
-        }
-      } catch (profileError: unknown) {
-        // Profile fetch/create failed - will use Supabase metadata fallback
-      }
-
-      // Use Neon profile data if available, otherwise fall back to Supabase metadata
-      const appUser: AppUser = {
-        id: session.user.id,
-        name: userProfile?.name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-        email: session.user.email!,
-        role: userProfile?.role || session.user.user_metadata?.role || 'Driver',
-        status: userProfile?.status || 'Active'
-      };
-
-      logAPICall('GET', '/auth/session', { success: true, hasSession: true, userId: appUser.id, role: appUser.role });
-      return { user: appUser };
+      const session = await authService.getSession();
+      logAPICall('GET', '/auth/session', { success: true, hasSession: !!session });
+      return session;
     } catch (error: unknown) {
       logAPICall('GET', '/auth/session', { success: false, error: getErrorMessage(error) });
       throw error;
     }
   }
 
-  // Explicitly sync the current logged-in user to Neon user_profiles
+  // Returns the current logged-in user from Neon auth
   async syncCurrentUser(): Promise<AppUser | null> {
     logAPICall('POST', '/auth/sync-user');
-    
+
     try {
-      const { data: { session }, error } = await supabaseClient.auth.getSession();
-      
-      if (error || !session) {
-        return null;
-      }
-      
-      // Check if user already exists in Neon
-      let userProfile = await db.getUserProfileById(session.user.id);
-      
-      if (!userProfile && isNeonConnected()) {
-        userProfile = await db.createUserProfile(session.user.id, {
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-          email: session.user.email!,
-          role: (session.user.user_metadata?.role as UserRole) || 'Admin', // Default to Admin for first user
-          status: 'Active'
-        });
-      }
-      
-      logAPICall('POST', '/auth/sync-user', { success: true, userId: userProfile?.id });
-      return userProfile;
+      const session = await authService.getSession();
+      logAPICall('POST', '/auth/sync-user', { success: true, userId: session?.user.id });
+      return session?.user ?? null;
     } catch (error: unknown) {
       logAPICall('POST', '/auth/sync-user', { success: false, error: getErrorMessage(error) });
       throw error;
@@ -289,27 +188,7 @@ class SupabaseService {
     }
 
     try {
-      // Supabase Auth - RETAINED
-      // Note: The redirect URL must be whitelisted in Supabase Auth settings
-      // Go to: Authentication > URL Configuration > Redirect URLs
-      // Add: http://localhost:3000/* and https://yourdomain.com/*
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(sanitizeString(email), {
-        redirectTo: redirectUrl,
-      });
-
-      if (error) {
-        // Provide more specific error messages
-        if (error.message?.includes('Email not found') || error.message?.includes('User not found')) {
-          throw new APIError(404, 'No account found with this email address', error);
-        }
-        if (error.message?.includes('redirect')) {
-          throw new APIError(400, 'Redirect URL not authorized. Please contact support.', error);
-        }
-        throw new APIError(400, error.message || 'Failed to send reset email', error);
-      }
-      
+      await authService.resetPassword(sanitizeString(email));
       logAPICall('POST', '/auth/reset-password', { success: true });
     } catch (error: unknown) {
       logAPICall('POST', '/auth/reset-password', { success: false, error: getErrorMessage(error) });
@@ -326,12 +205,10 @@ class SupabaseService {
     }
 
     try {
-      // Supabase Auth - RETAINED
-      const { error } = await supabaseClient.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) throw new APIError(400, 'Failed to update password', error);
+      // Requires a pending reset token stored by authService.resetPassword()
+      const token = localStorage.getItem('pending_reset_token');
+      if (!token) throw new APIError(400, 'No pending password reset. Please request a reset first.');
+      await authService.updatePassword(token, newPassword);
       logAPICall('PUT', '/auth/password', { success: true });
     } catch (error: unknown) {
       logAPICall('PUT', '/auth/password', { success: false, error: getErrorMessage(error) });
@@ -763,7 +640,15 @@ class SupabaseService {
     }
   }
 
-  async createPayment(paymentData: { reference_id: string; type: 'Inbound' | 'Outbound'; amount_usd: number; method: string; date: string }): Promise<Payment> {
+  async createPayment(paymentData: {
+    reference_id: string;
+    client_name?: string;
+    type: 'Inbound' | 'Outbound';
+    amount_usd: number;
+    currency?: 'USD' | 'GBP';
+    method: string;
+    date: string;
+  }): Promise<Payment> {
     logAPICall('POST', '/payments', paymentData);
 
     if (!isNeonConnected()) {
@@ -799,6 +684,12 @@ class SupabaseService {
     if (invoiceData.amount_usd <= 0) {
       throw new ValidationError('Amount must be greater than 0', 'amount_usd');
     }
+    if (invoiceData.currency && !DOCUMENT_CURRENCIES.includes(invoiceData.currency)) {
+      throw new ValidationError('Invoice currency must be USD or GBP', 'currency');
+    }
+    if (invoiceData.invoice_kind && !INVOICE_KINDS.includes(invoiceData.invoice_kind)) {
+      throw new ValidationError('Invalid invoice type', 'invoice_kind');
+    }
     if (invoiceData.status && !FINANCIAL_STATUSES.includes(invoiceData.status)) {
       throw new ValidationError('Invalid invoice status', 'status');
     }
@@ -823,6 +714,12 @@ class SupabaseService {
     }
     if (updates.amount_usd !== undefined && updates.amount_usd <= 0) {
       throw new ValidationError('Amount must be greater than 0', 'amount_usd');
+    }
+    if (updates.currency && !DOCUMENT_CURRENCIES.includes(updates.currency)) {
+      throw new ValidationError('Invoice currency must be USD or GBP', 'currency');
+    }
+    if (updates.invoice_kind && !INVOICE_KINDS.includes(updates.invoice_kind)) {
+      throw new ValidationError('Invalid invoice type', 'invoice_kind');
     }
     if (updates.status && !FINANCIAL_STATUSES.includes(updates.status)) {
       throw new ValidationError('Invalid invoice status', 'status');
@@ -886,6 +783,87 @@ class SupabaseService {
     }
   }
 
+  async getPaymentAllocations(): Promise<PaymentAllocation[]> {
+    logAPICall('GET', '/payment-allocations');
+
+    try {
+      const allocations = await db.getPaymentAllocations();
+      logAPICall('GET', '/payment-allocations', { success: true, count: allocations.length });
+      return allocations;
+    } catch (error: unknown) {
+      logAPICall('GET', '/payment-allocations', { success: false, error: getErrorMessage(error) });
+      throw error;
+    }
+  }
+
+  async getReceipts(): Promise<Receipt[]> {
+    logAPICall('GET', '/receipts');
+
+    try {
+      const receipts = await db.getReceipts();
+      logAPICall('GET', '/receipts', { success: true, count: receipts.length });
+      return receipts;
+    } catch (error: unknown) {
+      logAPICall('GET', '/receipts', { success: false, error: getErrorMessage(error) });
+      throw error;
+    }
+  }
+
+  async createReceipt(receiptData: Omit<Receipt, 'id' | 'created_at' | 'receipt_number'>): Promise<Receipt> {
+    logAPICall('POST', '/receipts', receiptData);
+
+    validateRequired(receiptData.client_name, 'client_name');
+    validateRequired(receiptData.amount_received, 'amount_received');
+    validateRequired(receiptData.payment_method, 'payment_method');
+    validateRequired(receiptData.payment_date, 'payment_date');
+
+    if (receiptData.client_email && !validateEmail(receiptData.client_email)) {
+      throw new ValidationError('Invalid email format', 'client_email');
+    }
+    if (receiptData.amount_received <= 0) {
+      throw new ValidationError('Amount received must be greater than 0', 'amount_received');
+    }
+    if (!DOCUMENT_CURRENCIES.includes(receiptData.currency)) {
+      throw new ValidationError('Receipt currency must be USD or GBP', 'currency');
+    }
+
+    try {
+      const receipt = await db.createReceipt(receiptData);
+      logAPICall('POST', '/receipts', { success: true, receiptId: receipt.id });
+      return receipt;
+    } catch (error: unknown) {
+      logAPICall('POST', '/receipts', { success: false, error: getErrorMessage(error) });
+      throw error;
+    }
+  }
+
+  async updateReceipt(
+    receiptId: string,
+    updates: Partial<Omit<Receipt, 'id' | 'created_at' | 'receipt_number'>>
+  ): Promise<Receipt> {
+    logAPICall('PUT', `/receipts/${receiptId}`, updates);
+    validateRequired(receiptId, 'receiptId');
+
+    if (updates.client_email && !validateEmail(updates.client_email)) {
+      throw new ValidationError('Invalid email format', 'client_email');
+    }
+    if (updates.amount_received !== undefined && updates.amount_received <= 0) {
+      throw new ValidationError('Amount received must be greater than 0', 'amount_received');
+    }
+    if (updates.currency && !DOCUMENT_CURRENCIES.includes(updates.currency)) {
+      throw new ValidationError('Receipt currency must be USD or GBP', 'currency');
+    }
+
+    try {
+      const receipt = await db.updateReceipt(receiptId, updates);
+      logAPICall('PUT', `/receipts/${receiptId}`, { success: true });
+      return receipt;
+    } catch (error: unknown) {
+      logAPICall('PUT', `/receipts/${receiptId}`, { success: false, error: getErrorMessage(error) });
+      throw error;
+    }
+  }
+
   async addPayment(paymentData: Omit<Payment, 'id'>): Promise<Payment> {
     logAPICall('POST', '/payments', paymentData);
 
@@ -893,9 +871,15 @@ class SupabaseService {
     validateRequired(paymentData.reference_id, 'reference_id');
     validateRequired(paymentData.amount_usd, 'amount_usd');
     validateRequired(paymentData.type, 'type');
+    if (paymentData.client_name !== undefined) {
+      validateRequired(paymentData.client_name, 'client_name');
+    }
 
     if (paymentData.amount_usd <= 0) {
       throw new ValidationError('Amount must be greater than 0', 'amount_usd');
+    }
+    if (paymentData.currency && !DOCUMENT_CURRENCIES.includes(paymentData.currency)) {
+      throw new ValidationError('Payment currency must be USD or GBP', 'currency');
     }
 
     try {
@@ -915,6 +899,9 @@ class SupabaseService {
     if (updates.amount_usd !== undefined && updates.amount_usd <= 0) {
       throw new ValidationError('Amount must be greater than 0', 'amount_usd');
     }
+    if (updates.currency && !DOCUMENT_CURRENCIES.includes(updates.currency)) {
+      throw new ValidationError('Payment currency must be USD or GBP', 'currency');
+    }
 
     try {
       const payment = await db.updatePayment(paymentId, updates);
@@ -922,6 +909,36 @@ class SupabaseService {
       return payment;
     } catch (error: unknown) {
       logAPICall('PUT', `/payments/${paymentId}`, { success: false, error: getErrorMessage(error) });
+      throw error;
+    }
+  }
+
+  async replacePaymentAllocations(
+    paymentId: string,
+    allocations: Array<Pick<PaymentAllocation, 'invoice_id' | 'amount_allocated' | 'currency'>>
+  ): Promise<PaymentAllocation[]> {
+    logAPICall('PUT', `/payments/${paymentId}/allocations`, { count: allocations.length });
+    validateRequired(paymentId, 'paymentId');
+
+    allocations.forEach((allocation, index) => {
+      validateRequired(allocation.invoice_id, `allocations[${index}].invoice_id`);
+      validateRequired(allocation.amount_allocated, `allocations[${index}].amount_allocated`);
+
+      if (allocation.amount_allocated <= 0) {
+        throw new ValidationError('Allocated amount must be greater than 0', `allocations[${index}].amount_allocated`);
+      }
+
+      if (!DOCUMENT_CURRENCIES.includes(allocation.currency || 'USD')) {
+        throw new ValidationError('Allocation currency must be USD or GBP', `allocations[${index}].currency`);
+      }
+    });
+
+    try {
+      const saved = await db.replacePaymentAllocations(paymentId, allocations);
+      logAPICall('PUT', `/payments/${paymentId}/allocations`, { success: true, count: saved.length });
+      return saved;
+    } catch (error: unknown) {
+      logAPICall('PUT', `/payments/${paymentId}/allocations`, { success: false, error: getErrorMessage(error) });
       throw error;
     }
   }
@@ -963,7 +980,7 @@ class SupabaseService {
   }
 
   async updateCompanyDetails(details: CompanyDetails): Promise<void> {
-    logAPICall('PUT', '/company', details);
+    logAPICall('PUT', '/company', { name: details.name });
 
     // Validation
     validateRequired(details.name, 'name');
@@ -1025,68 +1042,27 @@ class SupabaseService {
     }
 
     try {
-      // First, try to create auth user in Supabase
-      const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!';
-      const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-        email: userData.email,
-        password: tempPassword,
-        options: {
-          data: {
-            name: userData.name,
-            role: userData.role
-          }
-        }
-      });
-
-      // Handle "User already registered" - user exists in Supabase but maybe not in Neon
-      if (authError) {
-        if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
-          // Check if user already exists in Neon by email
-          const existingUser = await db.getUserProfileByEmail(userData.email);
-          
-          if (existingUser) {
-            // User already in both systems - just update and return
-            const updated = await db.updateUserProfile(existingUser.id, {
-              name: userData.name,
-              role: userData.role,
-              status: userData.status || 'Active'
-            });
-            logAPICall('POST', '/users', { success: true, userId: updated.id, action: 'updated_existing' });
-            return updated;
-          } else {
-            // User in Supabase but not Neon - we can't get their ID without admin API
-            // Show helpful error message
-            throw new Error('User exists in authentication system but not in user profiles. Ask the user to log in once to sync their profile, or use the Invite feature instead.');
-          }
-        }
-        throw authError;
-      }
-      
-      if (!authData.user) throw new Error('Failed to create auth user');
-
-      // Then create user profile in Neon
-      const newUser = await db.createUserProfile(authData.user.id, {
-        name: sanitizeString(userData.name),
-        email: sanitizeString(userData.email),
-        role: userData.role,
-        status: userData.status || 'Active'
-      });
-
-      // IMPORTANT: Send password reset email so user can set their own password
-      // The temp password is not shared with the user - they must use password reset
-      try {
-        const redirectUrl = typeof window !== 'undefined' 
-          ? `${window.location.origin}/login` 
-          : 'https://www.affinitylogistics.space/login';
-        
-        await supabaseClient.auth.resetPasswordForEmail(userData.email, {
-          redirectTo: redirectUrl
+      const existingUser = await db.getUserProfileByEmail(userData.email);
+      if (existingUser) {
+        const updated = await db.updateUserProfile(existingUser.id, {
+          name: userData.name,
+          role: userData.role,
+          status: userData.status || 'Active'
         });
-      } catch (emailError: unknown) {
-        // Log but don't fail - user is created, they can request reset manually
+        logAPICall('POST', '/users', { success: true, userId: updated.id, action: 'updated_existing' });
+        return updated;
       }
 
-      logAPICall('POST', '/users', { success: true, userId: newUser.id, emailSent: true });
+      // Use invite flow — admin sets a temporary password; user resets on first login
+      const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!';
+      const newUser = await authService.createUser({
+        email: sanitizeString(userData.email),
+        password: tempPassword,
+        name: sanitizeString(userData.name),
+        role: userData.role,
+      });
+
+      logAPICall('POST', '/users', { success: true, userId: newUser.id });
       return newUser;
     } catch (error: unknown) {
       const errorMsg = getErrorMessage(error);
@@ -1114,13 +1090,6 @@ class SupabaseService {
         }
       }
 
-      // Try to delete from Supabase Auth (may require admin API)
-      try {
-        await supabaseClient.auth.admin.deleteUser(userId);
-      } catch (authDeleteError: unknown) {
-        // Auth delete failed - profile deleted but auth user may remain
-      }
-
       // Delete from Neon user_profiles
       await db.deleteUserProfile(userId);
 
@@ -1140,12 +1109,7 @@ class SupabaseService {
     }
 
     try {
-      // Supabase Auth - RETAINED
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password'
-      });
-
-      if (error) throw error;
+      await authService.resetPassword(email);
       logAPICall('POST', `/users/reset-password`, { success: true, email });
     } catch (error: unknown) {
       logAPICall('POST', `/users/reset-password`, { success: false, error: getErrorMessage(error) });
@@ -1565,12 +1529,10 @@ class SupabaseService {
     }
 
     try {
-      // Get current user for generated_by field
-      const { data: { user } } = await supabaseClient.auth.getUser();
-
+      const session = await authService.getSession();
       const payslip = await db.generatePayslip({
         ...payslipData,
-        generated_by: user?.id || undefined
+        generated_by: session?.user.id || undefined
       });
       logAPICall('POST', '/payslips', { success: true, payslipId: payslip.id });
       return payslip;

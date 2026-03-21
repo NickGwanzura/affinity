@@ -68,9 +68,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setSuccess('');
     
     try {
-      const resetLink = await authService.resetPassword(email);
-      console.log('[Password Reset] Link:', resetLink);
-      setSuccess(`Password reset initiated! Use this link: ${resetLink}`);
+      await authService.resetPassword(email);
       setSuccess('Password reset initiated! If an account exists with this email, you will receive instructions.');
       setTimeout(() => {
         setMode('login');

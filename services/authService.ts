@@ -5,7 +5,7 @@
  * No Supabase dependency - completely self-hosted auth.
  */
 
-import { sql, executeQuery } from './neonClient';
+import { sql } from './neonClient';
 import { AppUser, UserRole, AuthSession } from '../types';
 
 // ============================================
@@ -45,7 +45,10 @@ async function verifyPassword(password: string, salt: string, hash: string): Pro
 // JWT TOKEN HANDLING
 // ============================================
 
-const JWT_SECRET = import.meta.env.VITE_JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET: string = import.meta.env.VITE_JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('VITE_JWT_SECRET is not set. Define it in your .env file before starting the app.');
+}
 const JWT_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 
 interface JWTPayload {
@@ -250,9 +253,7 @@ class AuthService {
     `;
 
     if (rows.length === 0) {
-      // Don't reveal if email exists or not for security
-      console.log(`[Auth] Password reset requested for non-existent email: ${normalizedEmail}`);
-      return; // Silently return
+      return; // Don't reveal if email exists or not
     }
 
     const user = rows[0];
@@ -271,7 +272,6 @@ class AuthService {
     localStorage.setItem('pending_reset_token', resetToken);
     localStorage.setItem('pending_reset_email', normalizedEmail);
 
-    console.log(`[Auth] Password reset token generated for ${normalizedEmail}: ${resetToken}`);
     
     // In production, you would send an email here with:
     // ${window.location.origin}/#type=recovery&token=${resetToken}
@@ -337,7 +337,6 @@ class AuthService {
     localStorage.removeItem('pending_reset_token');
     localStorage.removeItem('pending_reset_email');
 
-    console.log(`[Auth] Password updated for user: ${resetInfo.userId}`);
   }
 
   // ============================================
@@ -421,7 +420,6 @@ class AuthService {
       WHERE id = ${userId}
     `;
 
-    console.log(`[Auth] Admin changed password for user: ${userId}`);
   }
 
   // ============================================

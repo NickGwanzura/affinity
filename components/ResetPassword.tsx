@@ -62,8 +62,6 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
                          fullUrl.match(/token[:=]([^&]+)/i);
       token = tokenMatch ? tokenMatch[1] : '';
       
-      console.log('[ResetPassword] Full URL:', fullUrl);
-      console.log('[ResetPassword] Token from URL:', token ? 'Found' : 'Not found');
     }
     
     if (!token) {

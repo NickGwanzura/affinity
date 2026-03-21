@@ -1,20 +1,22 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AppUser, UserRole } from '../types';
-import { supabase } from '../services/supabaseService';
 
-export type AppView = 'admin' | 'driver' | 'accountant' | 'settings' | 'financials' | 'documents';
+export type AppView = 'admin' | 'driver' | 'accountant' | 'settings' | 'financials' | 'documents' | 'clients';
 
 interface LayoutProps {
   children: React.ReactNode;
   currentView: AppView;
   onNavigate: (view: AppView) => void;
   user: AppUser;
-  onLogout: () => void;
+  onLogout: () => Promise<void> | void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, user, onLogout }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
   const allNavItems: { id: AppView; label: string; roles: UserRole[]; icon: React.ReactNode }[] = [
     { 
       id: 'admin', 
@@ -46,24 +48,55 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
       roles: ['Admin', 'Driver'],
       icon: <path d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /> 
     },
-    { 
-      id: 'settings', 
-      label: 'Settings', 
+    {
+      id: 'clients',
+      label: 'Clients',
+      roles: ['Admin', 'Accountant'],
+      icon: <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
       roles: ['Admin'],
-      icon: <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /> 
+      icon: <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
     },
   ];
 
   const visibleNavItems = allNavItems.filter(item => item.roles.includes(user.role));
 
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!userMenuRef.current?.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setUserMenuOpen(false);
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
   const handleLogout = async () => {
+    setUserMenuOpen(false);
+    setMobileMenuOpen(false);
+    setIsLoggingOut(true);
     try {
-      await supabase.logout();
-      onLogout();
+      await onLogout();
     } catch (error) {
       console.error('Error logging out:', error);
-      // Still call onLogout to clear local session state
-      onLogout();
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -143,14 +176,26 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
                </div>
 
                {/* User Menu */}
-               <div className="group relative">
-                <button className="p-2 rounded-xl hover:bg-zinc-100 transition-colors">
+               <div className="relative" ref={userMenuRef}>
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={userMenuOpen}
+                  aria-label="Open account menu"
+                  onClick={() => setUserMenuOpen(open => !open)}
+                  className="p-2 rounded-xl hover:bg-zinc-100 transition-colors"
+                >
                   <svg className="w-5 h-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                   </svg>
                 </button>
                 {/* Dropdown Menu */}
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-zinc-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-3 z-[100]">
+                <div
+                  role="menu"
+                  className={`absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-zinc-100 transition-all p-3 z-[100] ${
+                    userMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-1 pointer-events-none'
+                  }`}
+                >
                   <div className="pb-3 mb-3 border-b border-zinc-100">
                     <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Logged in as</p>
                     <p className="text-sm font-bold text-zinc-900">{user.name}</p>
@@ -168,11 +213,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
                     </div>
                   </div>
                   <button 
+                    type="button"
+                    role="menuitem"
                     onClick={handleLogout}
+                    disabled={isLoggingOut}
                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" strokeWidth="2.5" /></svg>
-                    Logout System
+                    {isLoggingOut ? 'Signing Out...' : 'Logout System'}
                   </button>
                 </div>
                </div>
@@ -213,12 +261,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 z-50 safe-area-inset-bottom">
-        <nav className="grid grid-cols-5 gap-1 px-2 py-2">
-          {visibleNavItems.slice(0, 5).map((item) => (
+        <nav className="flex items-stretch gap-1 px-2 py-2 overflow-x-auto">
+          {visibleNavItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-all ${
+              onClick={() => {
+                onNavigate(item.id);
+                setUserMenuOpen(false);
+              }}
+              className={`min-w-[72px] flex-1 flex flex-col items-center gap-1 py-2 px-2 rounded-xl transition-all ${
                 currentView === item.id 
                   ? 'text-blue-600 bg-blue-50' 
                   : 'text-zinc-400 hover:text-zinc-900'

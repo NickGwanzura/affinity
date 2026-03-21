@@ -1,14 +1,19 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails } from '../types';
+import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails, OperatingFund, OperatingFundType, UserRole } from '../types';
+import { AssetRegister } from './AssetRegister';
 import { supabase } from '../services/supabaseService';
-import { generatePayslipPDF } from '../services/pdfService';
+import { generatePayslipPDFAndDownload } from '../services/pdfService';
 import { Button, StatCard, EmptyState, StatusBadge, SkeletonStatCards, SkeletonChart, SkeletonTable } from './ui';
 import { TrendLineChart, DonutPieChart, SimpleBarChart, CHART_COLORS } from './ui/Charts';
 import { defaultIcons } from './ui/EmptyState';
+import { useToast } from './Toast';
+import { useConfirm } from './ConfirmModal';
 
 export const AccountantDashboard: React.FC = () => {
   const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
     value ? value.slice(0, length) : fallback;
+  const { showToast, ToastContainer } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -19,7 +24,13 @@ export const AccountantDashboard: React.FC = () => {
   const [payslips, setPayslips] = useState<Payslip[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'expenses' | 'payments' | 'reports' | 'clients' | 'payslips'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'expenses' | 'payments' | 'reports' | 'clients' | 'payslips' | 'operating-funds' | 'expense-reports' | 'assets'>('overview');
+  const [userRole, setUserRole] = useState<UserRole>('Accountant');
+  const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
+  const [showFundModal, setShowFundModal] = useState(false);
+  const [fundForm, setFundForm] = useState<{ type: OperatingFundType; amount: string; currency: 'USD' | 'GBP'; description: string; reference: string; recipient: string; approved_by: string; date: string }>({
+    type: 'Received', amount: '', currency: 'USD', description: '', reference: '', recipient: '', approved_by: '', date: new Date().toISOString().split('T')[0],
+  });
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -55,11 +66,45 @@ export const AccountantDashboard: React.FC = () => {
   const [editExpenseCategory, setEditExpenseCategory] = useState<'Fuel' | 'Tolls' | 'Food' | 'Repairs' | 'Duty' | 'Shipping' | 'Other'>('Fuel');
   const [editExpenseLocation, setEditExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
 
+  const notifySuccess = (message: string) => showToast(message, 'success');
+  const notifyError = (message: string) => showToast(message, 'error');
+  const notifyWarning = (message: string) => showToast(message, 'warning');
+
+  const handleAddFund = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fundForm.amount || parseFloat(fundForm.amount) <= 0) { notifyWarning('Enter a valid amount'); return; }
+    try {
+      await supabase.addOperatingFund({
+        type: fundForm.type,
+        amount: parseFloat(fundForm.amount),
+        currency: fundForm.currency,
+        description: fundForm.description,
+        reference: fundForm.reference || undefined,
+        recipient: fundForm.recipient || undefined,
+        approved_by: fundForm.approved_by || undefined,
+        date: fundForm.date,
+      });
+      setShowFundModal(false);
+      setFundForm({ type: 'Received', amount: '', currency: 'USD', description: '', reference: '', recipient: '', approved_by: '', date: new Date().toISOString().split('T')[0] });
+      await loadData();
+      notifySuccess('Operating fund entry added');
+    } catch (err: any) { notifyError(err?.message || 'Failed to add fund entry'); }
+  };
+
+  const handleDeleteFund = async (id: string) => {
+    const ok = await confirm({ title: 'Delete Entry', message: 'Remove this operating fund entry? This cannot be undone.', confirmLabel: 'Delete', isDangerous: true });
+    if (!ok) return;
+    try {
+      await supabase.deleteOperatingFund(id);
+      await loadData();
+      notifySuccess('Entry deleted');
+    } catch (err: any) { notifyError(err?.message || 'Failed to delete entry'); }
+  };
+
   // FIX: Centralized data loading function with error handling
   const loadData = async (throwOnError = false) => {
     try {
-      console.log('[AccountantDashboard] loadData: Fetching data...');
-      const [inv, pay, exp, quo, sum, veh, cli, psl, emp, comp] = await Promise.all([
+      const [inv, pay, exp, quo, sum, veh, cli, psl, emp, comp, funds] = await Promise.all([
         supabase.getInvoices(),
         supabase.getPayments(),
         supabase.getExpenses(),
@@ -69,9 +114,9 @@ export const AccountantDashboard: React.FC = () => {
         supabase.getClients(),
         supabase.getPayslips(),
         supabase.getEmployees(),
-        supabase.getCompanyDetails()
+        supabase.getCompanyDetails(),
+        supabase.getOperatingFunds().catch(() => [] as import('../types').OperatingFund[]),
       ]);
-      console.log('[AccountantDashboard] loadData: Successfully fetched all data');
       setInvoices(inv);
       setPayments(pay);
       setExpenses(exp);
@@ -82,6 +127,7 @@ export const AccountantDashboard: React.FC = () => {
       setPayslips(psl);
       setEmployees(emp);
       setCompany(comp);
+      setOperatingFunds(funds);
       setLoading(false);
     } catch (error: any) {
       console.error('[AccountantDashboard] loadData: Error loading data:', error);
@@ -92,6 +138,12 @@ export const AccountantDashboard: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // Get current user role
+    supabase.getSession().then(session => {
+      if (session?.user?.role) {
+        setUserRole(session.user.role);
+      }
+    }).catch(console.error);
   }, []);
 
   const totalRevenue = invoices
@@ -190,18 +242,79 @@ export const AccountantDashboard: React.FC = () => {
       .slice(0, 10);
   }, [invoices]);
 
+  // Expense Report filters
+  const [erDateFrom, setErDateFrom] = useState('');
+  const [erDateTo, setErDateTo] = useState('');
+  const [erCategory, setErCategory] = useState('');
+  const [erLocation, setErLocation] = useState('');
+  const [erVehicle, setErVehicle] = useState('');
+
+  const filteredExpensesForReport = useMemo(() => {
+    return (expenses || []).filter(exp => {
+      const d = new Date(exp.created_at);
+      if (erDateFrom && d < new Date(erDateFrom)) return false;
+      if (erDateTo && d > new Date(erDateTo + 'T23:59:59')) return false;
+      if (erCategory && exp.category !== erCategory) return false;
+      if (erLocation && exp.location !== erLocation) return false;
+      if (erVehicle && exp.vehicle_id !== erVehicle) return false;
+      return true;
+    });
+  }, [expenses, erDateFrom, erDateTo, erCategory, erLocation, erVehicle]);
+
+  const expenseReportByCategory = useMemo(() => {
+    const map: Record<string, { count: number; totalUsd: number }> = {};
+    filteredExpensesForReport.forEach(exp => {
+      const usd = (exp.amount || 0) * (exp.exchange_rate_to_usd || 1);
+      if (!map[exp.category]) map[exp.category] = { count: 0, totalUsd: 0 };
+      map[exp.category].count += 1;
+      map[exp.category].totalUsd += usd;
+    });
+    return Object.entries(map)
+      .map(([category, data]) => ({ category, ...data }))
+      .sort((a, b) => b.totalUsd - a.totalUsd);
+  }, [filteredExpensesForReport]);
+
+  const expenseReportTotal = useMemo(() =>
+    filteredExpensesForReport.reduce((s, e) => s + (e.amount || 0) * (e.exchange_rate_to_usd || 1), 0),
+    [filteredExpensesForReport]);
+
+  const handleExportExpenseReportCSV = () => {
+    const headers = ['Date', 'Category', 'Location', 'Description', 'Driver', 'Amount', 'Currency', 'USD Value', 'Vehicle'];
+    const rows = filteredExpensesForReport.map(e => {
+      const vehicleName = vehicles.find(v => v.id === e.vehicle_id)?.make_model || '';
+      return [
+        new Date(e.created_at).toLocaleDateString('en-GB'),
+        e.category,
+        e.location,
+        `"${(e.description || '').replace(/"/g, '""')}"`,
+        e.driver_name || '',
+        e.amount,
+        e.currency,
+        ((e.amount || 0) * (e.exchange_rate_to_usd || 1)).toFixed(2),
+        `"${vehicleName}"`,
+      ];
+    });
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `expense-report-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!expenseAmount) return;
     
     // Validate driver selection for Driver Disbursement
     if (expenseCategory === 'Driver Disbursement' && !expenseDriver) {
-      alert('Please select a driver for the disbursement');
+      notifyWarning('Please select a driver for the disbursement');
       return;
     }
 
     try {
-      console.log('[AccountantDashboard] handleAddExpense: Adding expense...');
       const newExpense = await supabase.addExpense({
         vehicle_id: expenseVehicle || undefined,
         description: expenseDriver 
@@ -214,7 +327,6 @@ export const AccountantDashboard: React.FC = () => {
         receipt_url: 'https://picsum.photos/400/600',
         driver_name: expenseDriver || undefined
       });
-      console.log('[AccountantDashboard] handleAddExpense: Expense added successfully:', newExpense?.id);
       
       setExpenseVehicle('');
       setExpenseDesc('');
@@ -228,16 +340,16 @@ export const AccountantDashboard: React.FC = () => {
       // FIX: Refresh all data and handle errors
       try {
         await loadData(true);
-        alert(expenseDriver 
+        notifySuccess(expenseDriver 
           ? `Disbursement to ${expenseDriver} recorded successfully!` 
           : 'Expense added successfully!');
       } catch (refreshError) {
         console.error('[AccountantDashboard] handleAddExpense: Expense saved but refresh failed:', refreshError);
-        alert('Expense added but failed to refresh list. Please refresh the page.');
+        notifyWarning('Expense added but failed to refresh list. Please refresh the page.');
       }
     } catch (error: any) {
       console.error('[AccountantDashboard] handleAddExpense: Error adding expense:', error);
-      alert(error?.message || 'Failed to add expense. Please try again.');
+      notifyError(error?.message || 'Failed to add expense. Please try again.');
     }
   };
 
@@ -258,7 +370,6 @@ export const AccountantDashboard: React.FC = () => {
     if (!editingExpense || !editExpenseAmount) return;
 
     try {
-      console.log('[AccountantDashboard] handleUpdateExpense: Updating expense...');
       await supabase.updateExpense(editingExpense.id, {
         vehicle_id: editExpenseVehicle || undefined,
         description: editExpenseDesc,
@@ -267,17 +378,16 @@ export const AccountantDashboard: React.FC = () => {
         category: editExpenseCategory,
         location: editExpenseLocation
       });
-      console.log('[AccountantDashboard] handleUpdateExpense: Expense updated successfully');
       
       setShowEditExpenseModal(false);
       setEditingExpense(null);
       
       // Refresh data
       await loadData(true);
-      alert('Expense updated successfully!');
+      notifySuccess('Expense updated successfully!');
     } catch (error: any) {
       console.error('[AccountantDashboard] handleUpdateExpense: Error updating expense:', error);
-      alert(error?.message || 'Failed to update expense. Please try again.');
+      notifyError(error?.message || 'Failed to update expense. Please try again.');
     }
   };
 
@@ -285,13 +395,10 @@ export const AccountantDashboard: React.FC = () => {
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('[AccountantDashboard] handleSaveClient: Saving client...');
       if (editingClient) {
         await supabase.updateClient(editingClient.id, clientForm);
-        console.log('[AccountantDashboard] handleSaveClient: Client updated successfully');
       } else {
         const newClient = await supabase.createClient(clientForm);
-        console.log('[AccountantDashboard] handleSaveClient: Client created successfully:', newClient?.id);
       }
       
       setShowClientModal(false);
@@ -301,28 +408,34 @@ export const AccountantDashboard: React.FC = () => {
       // FIX: Refresh all data and handle errors
       try {
         await loadData(true);
-        alert(editingClient ? 'Client updated successfully!' : 'Client created successfully!');
+        notifySuccess(editingClient ? 'Client updated successfully!' : 'Client created successfully!');
       } catch (refreshError) {
         console.error('[AccountantDashboard] handleSaveClient: Client saved but refresh failed:', refreshError);
-        alert('Client saved but failed to refresh list. Please refresh the page.');
+        notifyWarning('Client saved but failed to refresh list. Please refresh the page.');
       }
     } catch (error: any) {
       console.error('[AccountantDashboard] handleSaveClient: Error saving client:', error);
-      alert(error?.message || 'Failed to save client. Please try again.');
+      notifyError(error?.message || 'Failed to save client. Please try again.');
     }
   };
 
   const handleDeleteClient = async (id: string) => {
-    if (confirm('Are you sure you want to delete this client?')) {
-      try {
-        console.log('[AccountantDashboard] handleDeleteClient: Deleting client:', id);
-        await supabase.deleteClient(id);
-        console.log('[AccountantDashboard] handleDeleteClient: Client deleted successfully');
-        await loadData(true);
-      } catch (error: any) {
-        console.error('[AccountantDashboard] handleDeleteClient: Error deleting client:', error);
-        alert(error?.message || 'Failed to delete client.');
-      }
+    const approved = await confirm({
+      title: 'Delete client?',
+      message: 'This will permanently remove the client from the accountant workspace.',
+      confirmLabel: 'Delete Client',
+      confirmVariant: 'danger',
+    });
+
+    if (!approved) return;
+
+    try {
+      await supabase.deleteClient(id);
+      await loadData(true);
+      notifySuccess('Client deleted successfully.');
+    } catch (error: any) {
+      console.error('[AccountantDashboard] handleDeleteClient: Error deleting client:', error);
+      notifyError(error?.message || 'Failed to delete client.');
     }
   };
 
@@ -330,7 +443,6 @@ export const AccountantDashboard: React.FC = () => {
   const handleGeneratePayslip = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log('[AccountantDashboard] handleGeneratePayslip: Generating payslip...');
       const payload = {
         employee_id: payslipForm.employee_id,
         month: payslipForm.month,
@@ -350,7 +462,6 @@ export const AccountantDashboard: React.FC = () => {
         notes: payslipForm.notes
       };
       const newPayslip = await supabase.generatePayslip(payload);
-      console.log('[AccountantDashboard] handleGeneratePayslip: Payslip generated successfully:', newPayslip?.id);
       
       setShowPayslipModal(false);
       setPayslipForm({
@@ -363,52 +474,58 @@ export const AccountantDashboard: React.FC = () => {
       // FIX: Refresh all data and handle errors
       try {
         await loadData(true);
-        alert('Payslip generated successfully!');
+        notifySuccess('Payslip generated successfully!');
       } catch (refreshError) {
         console.error('[AccountantDashboard] handleGeneratePayslip: Payslip saved but refresh failed:', refreshError);
-        alert('Payslip generated but failed to refresh list. Please refresh the page.');
+        notifyWarning('Payslip generated but failed to refresh list. Please refresh the page.');
       }
     } catch (error: any) {
       console.error('[AccountantDashboard] handleGeneratePayslip: Error generating payslip:', error);
-      alert(error?.message || 'Failed to generate payslip. Please try again.');
+      notifyError(error?.message || 'Failed to generate payslip. Please try again.');
     }
   };
 
   const handleUpdatePayslipStatus = async (id: string, status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled') => {
     try {
-      console.log('[AccountantDashboard] handleUpdatePayslipStatus: Updating status:', { id, status });
       await supabase.updatePayslipStatus(id, status);
-      console.log('[AccountantDashboard] handleUpdatePayslipStatus: Status updated successfully');
       await loadData(true);
     } catch (error: any) {
       console.error('Error updating payslip status:', error);
-      alert('Failed to update payslip status.');
+      notifyError('Failed to update payslip status.');
     }
   };
 
   const handleDeletePayslip = async (id: string) => {
-    if (confirm('Are you sure you want to delete this payslip?')) {
-      try {
-        await supabase.deletePayslip(id);
-        const updatedPayslips = await supabase.getPayslips();
-        setPayslips(updatedPayslips);
-      } catch (error) {
-        console.error('Error deleting payslip:', error);
-        alert('Failed to delete payslip.');
-      }
+    const approved = await confirm({
+      title: 'Delete payslip?',
+      message: 'This removes the payslip record from the accountant workspace.',
+      confirmLabel: 'Delete Payslip',
+      confirmVariant: 'danger',
+    });
+
+    if (!approved) return;
+
+    try {
+      await supabase.deletePayslip(id);
+      const updatedPayslips = await supabase.getPayslips();
+      setPayslips(updatedPayslips);
+      notifySuccess('Payslip deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting payslip:', error);
+      notifyError('Failed to delete payslip.');
     }
   };
 
   const handleDownloadPayslip = async (payslip: Payslip) => {
     if (!company) {
-      alert('Company details not loaded. Please try again.');
+      notifyError('Company details not loaded. Please try again.');
       return;
     }
     try {
-      await generatePayslipPDF(payslip, company);
+      await generatePayslipPDFAndDownload(payslip, company);
     } catch (error) {
       console.error('Error generating payslip PDF:', error);
-      alert('Failed to generate PDF');
+      notifyError('Failed to generate PDF');
     }
   };
 
@@ -576,7 +693,7 @@ export const AccountantDashboard: React.FC = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
         <div className="border-b border-zinc-200 bg-zinc-50">
           <div className="flex gap-1 p-2 flex-wrap">
-            {(['overview', 'invoices', 'expenses', 'payments', 'reports', 'clients', 'payslips'] as const).map((tab) => (
+            {(['overview', 'invoices', 'expenses', 'payments', 'reports', 'clients', 'payslips', 'operating-funds', 'expense-reports', 'assets'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -586,7 +703,7 @@ export const AccountantDashboard: React.FC = () => {
                     : 'text-zinc-500 hover:text-zinc-900'
                 }`}
               >
-                {tab}
+                {tab === 'operating-funds' ? 'Operating Funds' : tab === 'expense-reports' ? 'Expense Reports' : tab === 'assets' ? 'Asset Register' : tab}
               </button>
             ))}
           </div>
@@ -912,7 +1029,7 @@ export const AccountantDashboard: React.FC = () => {
                   {loading ? (
                     <SkeletonChart />
                   ) : invoiceStatusData.length > 0 ? (
-                    <DonutPieChart data={invoiceStatusData} colors={[CHART_COLORS.success, CHART_COLORS.warning, CHART_COLORS.info, CHART_COLORS.danger]} />
+                    <DonutPieChart data={invoiceStatusData} colors={[CHART_COLORS[1], CHART_COLORS[2], CHART_COLORS[0], CHART_COLORS[3]]} />
                   ) : (
                     <EmptyState 
                       title="No invoice data" 
@@ -1083,8 +1200,283 @@ export const AccountantDashboard: React.FC = () => {
               </table>
             </div>
           )}
+          {activeTab === 'operating-funds' && (() => {
+            const totalReceived = operatingFunds.filter(f => f.type === 'Received').reduce((s, f) => s + f.amount, 0);
+            const totalDisbursed = operatingFunds.filter(f => f.type === 'Disbursed').reduce((s, f) => s + f.amount, 0);
+            const balance = totalReceived - totalDisbursed;
+            return (
+              <div className="space-y-4 p-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-bold text-zinc-900">Operating Funds</h3>
+                  <button onClick={() => setShowFundModal(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
+                    Add Entry
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
+                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Total Received</p>
+                    <p className="text-2xl font-black text-emerald-700 mt-1">${totalReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                  <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
+                    <p className="text-xs font-bold text-red-600 uppercase tracking-wider">Total Disbursed</p>
+                    <p className="text-2xl font-black text-red-700 mt-1">${totalDisbursed.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                  <div className={`rounded-2xl border p-4 ${balance >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
+                    <p className={`text-xs font-bold uppercase tracking-wider ${balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>Balance</p>
+                    <p className={`text-2xl font-black mt-1 ${balance >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>${Math.abs(balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}{balance < 0 ? ' DR' : ''}</p>
+                  </div>
+                </div>
+                <table className="w-full text-sm">
+                  <thead className="bg-zinc-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Description</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Ref / Recipient</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Approved By</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {operatingFunds.length === 0 ? (
+                      <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-400">No entries yet</td></tr>
+                    ) : operatingFunds.map(fund => (
+                      <tr key={fund.id} className="hover:bg-zinc-50 border-t">
+                        <td className="px-4 py-3 text-xs text-zinc-500">{new Date(fund.date).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter ${fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{fund.type}</span>
+                        </td>
+                        <td className="px-4 py-3 font-bold">{fund.currency === 'GBP' ? '£' : '$'}{fund.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-4 py-3 text-zinc-700 max-w-[200px] truncate">{fund.description}</td>
+                        <td className="px-4 py-3 text-xs text-zinc-500">{fund.reference || fund.recipient || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-zinc-500">{fund.approved_by || '—'}</td>
+                        <td className="px-4 py-3 text-right">
+                          <button onClick={() => handleDeleteFund(fund.id)} className="text-red-500 hover:text-red-700 text-xs font-semibold">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+          {activeTab === 'expense-reports' && (
+            <div className="space-y-6">
+              {/* Filters */}
+              <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4">
+                <h3 className="text-sm font-bold text-zinc-700 mb-3 uppercase tracking-wide">Filters</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">From</label>
+                    <input type="date" value={erDateFrom} onChange={e => setErDateFrom(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">To</label>
+                    <input type="date" value={erDateTo} onChange={e => setErDateTo(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">Category</label>
+                    <select value={erCategory} onChange={e => setErCategory(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                      <option value="">All Categories</option>
+                      {['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Driver Disbursement', 'Other'].map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">Location</label>
+                    <select value={erLocation} onChange={e => setErLocation(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                      <option value="">All Locations</option>
+                      {['UK', 'Namibia', 'Zimbabwe', 'Botswana'].map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">Vehicle</label>
+                    <select value={erVehicle} onChange={e => setErVehicle(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                      <option value="">All Vehicles</option>
+                      {vehicles.map(v => <option key={v.id} value={v.id}>{v.make_model} — {v.vin_number}</option>)}
+                    </select>
+                  </div>
+                </div>
+                {(erDateFrom || erDateTo || erCategory || erLocation || erVehicle) && (
+                  <button onClick={() => { setErDateFrom(''); setErDateTo(''); setErCategory(''); setErLocation(''); setErVehicle(''); }} className="mt-3 text-xs text-blue-600 font-semibold hover:underline">
+                    Clear filters
+                  </button>
+                )}
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white border border-zinc-200 rounded-2xl p-5">
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wide mb-1">Total Entries</p>
+                  <p className="text-3xl font-black text-zinc-900">{filteredExpensesForReport.length}</p>
+                </div>
+                <div className="bg-white border border-zinc-200 rounded-2xl p-5">
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wide mb-1">Total (USD)</p>
+                  <p className="text-3xl font-black text-red-600">{formatCurrency(expenseReportTotal)}</p>
+                </div>
+                <div className="bg-white border border-zinc-200 rounded-2xl p-5">
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wide mb-1">Top Category</p>
+                  <p className="text-2xl font-black text-zinc-900">{expenseReportByCategory[0]?.category || '—'}</p>
+                  {expenseReportByCategory[0] && <p className="text-xs text-zinc-500 mt-1">{formatCurrency(expenseReportByCategory[0].totalUsd)}</p>}
+                </div>
+              </div>
+
+              {/* Category Breakdown */}
+              <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+                  <h3 className="font-bold text-zinc-900">Breakdown by Category</h3>
+                  <button onClick={handleExportExpenseReportCSV} className="flex items-center gap-2 bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Export CSV
+                  </button>
+                </div>
+                <table className="w-full text-sm">
+                  <thead className="bg-zinc-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Category</th>
+                      <th className="px-6 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Entries</th>
+                      <th className="px-6 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Total (USD)</th>
+                      <th className="px-6 py-3 text-right text-xs font-bold text-zinc-600 uppercase">% of Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100">
+                    {expenseReportByCategory.length === 0 ? (
+                      <tr><td colSpan={4} className="px-6 py-8 text-center text-zinc-400">No expenses match the selected filters</td></tr>
+                    ) : expenseReportByCategory.map(row => (
+                      <tr key={row.category} className="hover:bg-zinc-50">
+                        <td className="px-6 py-3 font-semibold text-zinc-900">{row.category}</td>
+                        <td className="px-6 py-3 text-right text-zinc-600">{row.count}</td>
+                        <td className="px-6 py-3 text-right font-bold text-zinc-900">{formatCurrency(row.totalUsd)}</td>
+                        <td className="px-6 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="w-16 bg-zinc-100 rounded-full h-1.5">
+                              <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${expenseReportTotal > 0 ? (row.totalUsd / expenseReportTotal) * 100 : 0}%` }} />
+                            </div>
+                            <span className="text-xs text-zinc-500 w-10 text-right">{expenseReportTotal > 0 ? ((row.totalUsd / expenseReportTotal) * 100).toFixed(1) : 0}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {expenseReportByCategory.length > 0 && (
+                      <tr className="bg-zinc-50 font-bold">
+                        <td className="px-6 py-3 text-zinc-900">Total</td>
+                        <td className="px-6 py-3 text-right text-zinc-900">{filteredExpensesForReport.length}</td>
+                        <td className="px-6 py-3 text-right text-zinc-900">{formatCurrency(expenseReportTotal)}</td>
+                        <td className="px-6 py-3 text-right text-zinc-500">100%</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Detail Table */}
+              <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-zinc-100">
+                  <h3 className="font-bold text-zinc-900">All Entries <span className="text-zinc-400 font-normal text-sm">({filteredExpensesForReport.length})</span></h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-zinc-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Category</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Description</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Location</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Driver</th>
+                        <th className="px-4 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Amount</th>
+                        <th className="px-4 py-3 text-right text-xs font-bold text-zinc-600 uppercase">USD Value</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {filteredExpensesForReport.length === 0 ? (
+                        <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-400">No expenses match the selected filters</td></tr>
+                      ) : filteredExpensesForReport.map(exp => (
+                        <tr key={exp.id} className="hover:bg-zinc-50">
+                          <td className="px-4 py-3 text-zinc-500 text-xs">{formatDate(exp.created_at)}</td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-semibold">{exp.category}</span>
+                          </td>
+                          <td className="px-4 py-3 text-zinc-700 max-w-[200px] truncate">{exp.description}</td>
+                          <td className="px-4 py-3 text-zinc-500 text-xs">{exp.location}</td>
+                          <td className="px-4 py-3 text-zinc-500 text-xs">{exp.driver_name || '—'}</td>
+                          <td className="px-4 py-3 text-right font-medium">{exp.amount.toLocaleString()} {exp.currency}</td>
+                          <td className="px-4 py-3 text-right font-bold text-zinc-900">{formatCurrency((exp.amount || 0) * (exp.exchange_rate_to_usd || 1))}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Asset Register Tab */}
+          {activeTab === 'assets' && (
+            <AssetRegister userRole={userRole} />
+          )}
         </div>
       </div>
+
+      {/* Operating Fund Modal */}
+      {showFundModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowFundModal(false)} />
+          <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+            <h3 className="text-2xl font-bold text-zinc-900 mb-6">Add Operating Fund Entry</h3>
+            <form onSubmit={handleAddFund} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Type *</label>
+                  <select value={fundForm.type} onChange={e => setFundForm({ ...fundForm, type: e.target.value as OperatingFundType })} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="Received">Received</option>
+                    <option value="Disbursed">Disbursed</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency</label>
+                  <select value={fundForm.currency} onChange={e => setFundForm({ ...fundForm, currency: e.target.value as 'USD' | 'GBP' })} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="USD">USD</option>
+                    <option value="GBP">GBP</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount *</label>
+                  <input type="number" step="0.01" min="0.01" required value={fundForm.amount} onChange={e => setFundForm({ ...fundForm, amount: e.target.value })} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Date *</label>
+                  <input type="date" required value={fundForm.date} onChange={e => setFundForm({ ...fundForm, date: e.target.value })} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Description *</label>
+                <input required value={fundForm.description} onChange={e => setFundForm({ ...fundForm, description: e.target.value })} placeholder="e.g. Office transfer for operations" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Reference</label>
+                  <input value={fundForm.reference} onChange={e => setFundForm({ ...fundForm, reference: e.target.value })} placeholder="Transfer ref, trip name…" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">{fundForm.type === 'Disbursed' ? 'Recipient' : 'Source'}</label>
+                  <input value={fundForm.recipient} onChange={e => setFundForm({ ...fundForm, recipient: e.target.value })} placeholder="Driver name, office…" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Approved By</label>
+                <input value={fundForm.approved_by} onChange={e => setFundForm({ ...fundForm, approved_by: e.target.value })} placeholder="Manager name" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowFundModal(false)} className="flex-1 px-6 py-3 rounded-xl border text-zinc-700 font-semibold hover:bg-zinc-50">Cancel</button>
+                <button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl">Add Entry</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Client Modal - Reusing AdminDashboard modal structure */}
       {showClientModal && (
@@ -1414,6 +1806,8 @@ export const AccountantDashboard: React.FC = () => {
           </div>
         </div>
       )}
+      <ToastContainer />
+      <ConfirmDialog />
     </div>
   );
 };

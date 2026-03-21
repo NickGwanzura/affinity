@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Vehicle, Expense, LandedCostSummary } from '../types';
-import { supabaseService } from '../services/supabaseService';
+import { supabase as supabaseService } from '../services/supabaseService';
 import { useAsync } from './useAsync';
 import { useToast } from '../components/Toast';
 

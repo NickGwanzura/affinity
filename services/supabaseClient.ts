@@ -79,8 +79,3 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
   }
 };
 
-// Log successful initialization
-console.log('[SUPABASE] Client initialized successfully', {
-  url: supabaseUrl.substring(0, 30) + '...',
-  timestamp: new Date().toISOString()
-});

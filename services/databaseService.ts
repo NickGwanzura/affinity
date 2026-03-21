@@ -15,11 +15,15 @@ import {
   Expense, 
   CompanyDetails, 
   AppUser, 
+  LineItem,
   Quote, 
   QuoteItem,
   Invoice, 
   InvoiceItem,
   Payment, 
+  PaymentAllocation,
+  Receipt,
+  ReceiptItem,
   Client, 
   RegistrationRequest,
   Employee,
@@ -71,26 +75,87 @@ function validateColumnName(columnName: string, allowedColumns: string[]): strin
 const VEHICLE_COLUMNS = ['id', 'vin_number', 'make_model', 'purchase_price_gbp', 'status', 'created_at'];
 const EXPENSE_COLUMNS = ['id', 'vehicle_id', 'description', 'amount', 'currency', 'category', 'location', 'receipt_url', 'driver_name', 'trip_reference', 'created_at'];
 const QUOTE_COLUMNS = ['id', 'quote_number', 'vehicle_id', 'client_name', 'client_email', 'client_address', 'amount_usd', 'currency', 'status', 'description', 'valid_until', 'created_at'];
-const INVOICE_COLUMNS = ['id', 'invoice_number', 'quote_id', 'vehicle_id', 'client_name', 'client_email', 'client_address', 'amount_usd', 'status', 'description', 'due_date', 'created_at'];
+const INVOICE_COLUMNS = ['id', 'invoice_number', 'quote_id', 'vehicle_id', 'client_name', 'client_email', 'client_address', 'amount_usd', 'currency', 'status', 'description', 'due_date', 'created_at'];
 const CLIENT_COLUMNS = ['id', 'name', 'email', 'phone', 'address', 'company', 'notes', 'created_at'];
 const EMPLOYEE_COLUMNS = ['id', 'employee_number', 'name', 'email', 'phone', 'department', 'position', 'base_pay_usd', 'currency', 'employment_type', 'date_hired', 'status', 'created_at', 'updated_at'];
 const PAYSLIP_COLUMNS = ['id', 'payslip_number', 'employee_id', 'month', 'year', 'base_pay', 'gross_pay', 'net_pay', 'status', 'payment_date', 'created_at'];
 const FINANCIAL_STATUSES: FinancialStatus[] = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
 
-function normalizeLineItem(item: InvoiceItem, index: number): Omit<InvoiceItem, 'id' | 'invoice_id' | 'created_at' | 'updated_at'> {
+function isMissingTableError(error: unknown, tableName: string): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return new RegExp(`relation "(?:public\\.)?${tableName}" does not exist`).test(error.message);
+}
+
+function isMissingColumnError(error: unknown, columnName: string, tableName?: string): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const tablePattern = tableName ? ` of relation "${tableName}"` : '';
+  return error.message.includes(`column "${columnName}"${tablePattern} does not exist`);
+}
+
+type NormalizedLineItem = {
+  line_number: number;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+  discount_percentage: number;
+  discount_amount: number;
+  tax_rate: number;
+  tax_amount: number;
+  notes?: string;
+};
+
+function calculateLineItemAmounts(item: Pick<LineItem, 'quantity' | 'unit_price' | 'discount_percentage' | 'tax_rate'>) {
   const quantity = Number(item.quantity ?? 0);
   const unitPrice = Number(item.unit_price ?? 0);
+  const discountPercentage = Math.max(0, Math.min(100, Number(item.discount_percentage ?? 0)));
   const taxRate = Number(item.tax_rate ?? 0);
+  const grossAmount = quantity * unitPrice;
+  const discountAmount = (grossAmount * discountPercentage) / 100;
+  const discountedAmount = Math.max(0, grossAmount - discountAmount);
+  const taxAmount = (taxRate * discountedAmount) / 100;
+
+  return {
+    quantity,
+    unitPrice,
+    discountPercentage,
+    discountAmount,
+    discountedAmount,
+    taxRate,
+    taxAmount,
+  };
+}
+
+function normalizeLineItem(item: LineItem, index: number): NormalizedLineItem {
+  const { quantity, unitPrice, discountPercentage, discountAmount, discountedAmount, taxRate, taxAmount } =
+    calculateLineItemAmounts(item);
 
   return {
     line_number: item.line_number ?? index + 1,
     description: item.description,
     quantity,
     unit_price: unitPrice,
-    amount: quantity * unitPrice,
+    amount: discountedAmount,
+    discount_percentage: discountPercentage,
+    discount_amount: discountAmount,
     tax_rate: taxRate,
-    tax_amount: (taxRate * quantity * unitPrice) / 100,
+    tax_amount: taxAmount,
     notes: item.notes
+  };
+}
+
+function normalizeReceiptItem(item: ReceiptItem, index: number): ReceiptItem {
+  const normalized = normalizeLineItem(item, index);
+  return {
+    ...normalized,
+    invoice_id: item.invoice_id,
+    invoice_number: item.invoice_number,
   };
 }
 
@@ -104,7 +169,7 @@ async function generateUniqueInvoiceNumber(): Promise<string> {
     const candidate = `INV-${year}-${suffix}`;
     const existing = await sql`
       SELECT id
-      FROM invoices
+      FROM public.invoices
       WHERE invoice_number = ${candidate}
       LIMIT 1
     `;
@@ -115,6 +180,29 @@ async function generateUniqueInvoiceNumber(): Promise<string> {
   }
 
   throw new Error('Failed to generate a unique invoice number');
+}
+
+async function generateUniqueReceiptNumber(): Promise<string> {
+  if (!sql) throw new Error('Database not connected');
+
+  const year = new Date().getFullYear();
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase();
+    const candidate = `RCPT-${year}-${suffix}`;
+    const existing = await sql`
+      SELECT id
+      FROM public.receipts
+      WHERE receipt_number = ${candidate}
+      LIMIT 1
+    `;
+
+    if (!existing || existing.length === 0) {
+      return candidate;
+    }
+  }
+
+  throw new Error('Failed to generate a unique receipt number');
 }
 
 // ============================================
@@ -416,8 +504,11 @@ export async function getQuotes(pagination?: PaginationParams): Promise<Quote[] 
       const orderColumn = validateColumnName(sortBy, QUOTE_COLUMNS);
       const orderByClause = sql([`q.${orderColumn} ${orderDirection}`] as unknown as TemplateStringsArray);
       const rows = await sql`
-        SELECT q.*, 
-          (SELECT json_agg(qi.*) FROM quote_items qi WHERE qi.quote_id = q.id) as items
+        SELECT q.*,
+          COALESCE(
+            (SELECT jsonb_agg(to_jsonb(qi) ORDER BY qi.line_number) FROM public.quote_items qi WHERE qi.quote_id = q.id),
+            q.items
+          ) as items
         FROM quotes q
         ORDER BY ${orderByClause}
         LIMIT ${limit} OFFSET ${offset}
@@ -432,8 +523,11 @@ export async function getQuotes(pagination?: PaginationParams): Promise<Quote[] 
       };
     } else {
       const rows = await sql`
-        SELECT q.*, 
-          (SELECT json_agg(qi.*) FROM quote_items qi WHERE qi.quote_id = q.id) as items
+        SELECT q.*,
+          COALESCE(
+            (SELECT jsonb_agg(to_jsonb(qi) ORDER BY qi.line_number) FROM public.quote_items qi WHERE qi.quote_id = q.id),
+            q.items
+          ) as items
         FROM quotes q
         ORDER BY q.created_at DESC
       `;
@@ -451,6 +545,12 @@ export async function createQuote(quoteData: Omit<Quote, 'id' | 'created_at' | '
     const count = parseInt(countResult[0]?.count || '0');
     const quote_number = `QT-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
     
+    const normalizedItems = (quoteData.items || []).map((item, index) => normalizeLineItem(item, index));
+    const totalAmountUsd =
+      normalizedItems.length > 0
+        ? normalizedItems.reduce((sum, item) => sum + item.amount + item.tax_amount, 0)
+        : quoteData.amount_usd;
+
     const rows = await sql`
       INSERT INTO quotes (
         quote_number, vehicle_id, client_name, client_email, client_address, 
@@ -462,12 +562,12 @@ export async function createQuote(quoteData: Omit<Quote, 'id' | 'created_at' | '
         ${quoteData.client_name},
         ${quoteData.client_email || null},
         ${quoteData.client_address || null},
-        ${quoteData.amount_usd},
+        ${totalAmountUsd},
         ${quoteData.currency || 'USD'},
         ${quoteData.status || 'Draft'},
         ${quoteData.description || null},
         ${quoteData.valid_until || null},
-        ${quoteData.items ? JSON.stringify(quoteData.items) : null}::jsonb
+        ${normalizedItems.length > 0 ? JSON.stringify(normalizedItems) : null}::jsonb
       )
       RETURNING *
     `;
@@ -475,8 +575,35 @@ export async function createQuote(quoteData: Omit<Quote, 'id' | 'created_at' | '
     if (!rows || rows.length === 0) {
       throw new Error('Quote insert succeeded but no data returned');
     }
-    
-    return rows[0] as Quote;
+
+    const quote = rows[0] as Quote;
+
+    // Insert line items into quote_items table
+    if (normalizedItems.length > 0) {
+      for (const item of normalizedItems) {
+        await sql`
+          INSERT INTO quote_items (
+            quote_id, line_number, description, quantity, unit_price, amount,
+            discount_percentage, discount_amount, tax_rate, tax_amount, notes
+          )
+          VALUES (
+            ${quote.id}::uuid,
+            ${item.line_number || 1},
+            ${item.description},
+            ${item.quantity},
+            ${item.unit_price},
+            ${item.amount},
+            ${item.discount_percentage || 0},
+            ${item.discount_amount || 0},
+            ${item.tax_rate || 0},
+            ${item.tax_amount || 0},
+            ${item.notes || null}
+          )
+        `;
+      }
+    }
+
+    return { ...quote, items: normalizedItems as QuoteItem[] };
   }, 'createQuote');
 }
 
@@ -484,6 +611,13 @@ export async function updateQuote(quoteId: string, updates: Partial<Omit<Quote, 
   if (!sql) throw new Error('Database not connected');
   
   return executeQuery(async () => {
+    const normalizedItems = updates.items
+      ? updates.items.map((item, index) => normalizeLineItem(item, index))
+      : null;
+    const totalAmountUsd = normalizedItems
+      ? normalizedItems.reduce((sum, item) => sum + item.amount + item.tax_amount, 0)
+      : updates.amount_usd;
+
     const rows = await sql`
       UPDATE quotes
       SET 
@@ -491,12 +625,12 @@ export async function updateQuote(quoteId: string, updates: Partial<Omit<Quote, 
         client_name = COALESCE(${updates.client_name || null}, client_name),
         client_email = COALESCE(${updates.client_email}, client_email),
         client_address = COALESCE(${updates.client_address}, client_address),
-        amount_usd = COALESCE(${updates.amount_usd || null}, amount_usd),
+        amount_usd = COALESCE(${totalAmountUsd || null}, amount_usd),
         currency = COALESCE(${updates.currency || null}, currency),
         status = COALESCE(${updates.status || null}, status),
         description = COALESCE(${updates.description}, description),
         valid_until = COALESCE(${updates.valid_until}, valid_until),
-        items = COALESCE(${updates.items ? JSON.stringify(updates.items) : null}::jsonb, items)
+        items = COALESCE(${normalizedItems ? JSON.stringify(normalizedItems) : null}::jsonb, items)
       WHERE id = ${quoteId}::uuid
       RETURNING *
     `;
@@ -504,8 +638,39 @@ export async function updateQuote(quoteId: string, updates: Partial<Omit<Quote, 
     if (!rows || rows.length === 0) {
       throw new Error('Quote not found');
     }
-    
-    return rows[0] as Quote;
+
+    const quote = rows[0] as Quote;
+
+    // Replace line items if provided
+    if (normalizedItems) {
+      await sql`DELETE FROM quote_items WHERE quote_id = ${quoteId}::uuid`;
+      for (const item of normalizedItems) {
+        await sql`
+          INSERT INTO quote_items (
+            quote_id, line_number, description, quantity, unit_price, amount,
+            discount_percentage, discount_amount, tax_rate, tax_amount, notes
+          )
+          VALUES (
+            ${quoteId}::uuid,
+            ${item.line_number || 1},
+            ${item.description},
+            ${item.quantity},
+            ${item.unit_price},
+            ${item.amount},
+            ${item.discount_percentage || 0},
+            ${item.discount_amount || 0},
+            ${item.tax_rate || 0},
+            ${item.tax_amount || 0},
+            ${item.notes || null}
+          )
+        `;
+      }
+    }
+
+    return {
+      ...quote,
+      ...(normalizedItems ? { items: normalizedItems as QuoteItem[] } : {}),
+    };
   }, 'updateQuote');
 }
 
@@ -564,10 +729,10 @@ export async function getInvoices(pagination?: PaginationParams): Promise<Invoic
       const rows = await sql`
         SELECT i.*,
           COALESCE(
-            (SELECT jsonb_agg(to_jsonb(ii) ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
+            (SELECT jsonb_agg(to_jsonb(ii) ORDER BY ii.line_number) FROM public.invoice_items ii WHERE ii.invoice_id = i.id),
             i.items
           ) as items
-        FROM invoices i
+        FROM public.invoices i
         ORDER BY ${orderByClause}
         LIMIT ${limit} OFFSET ${offset}
       `;
@@ -583,10 +748,10 @@ export async function getInvoices(pagination?: PaginationParams): Promise<Invoic
       const rows = await sql`
         SELECT i.*,
           COALESCE(
-            (SELECT jsonb_agg(to_jsonb(ii) ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
+            (SELECT jsonb_agg(to_jsonb(ii) ORDER BY ii.line_number) FROM public.invoice_items ii WHERE ii.invoice_id = i.id),
             i.items
           ) as items
-        FROM invoices i
+        FROM public.invoices i
         ORDER BY i.created_at DESC
       `;
       return rows as Invoice[];
@@ -594,16 +759,27 @@ export async function getInvoices(pagination?: PaginationParams): Promise<Invoic
   }, 'getInvoices');
 }
 
-export async function createPayment(paymentData: { reference_id: string; type: 'Inbound' | 'Outbound'; amount_usd: number; method: string; date: string }): Promise<Payment> {
+export async function createPayment(paymentData: {
+  reference_id: string;
+  client_name?: string;
+  type: 'Inbound' | 'Outbound';
+  amount_usd: number;
+  currency?: 'USD' | 'GBP';
+  method: string;
+  date: string;
+}): Promise<Payment> {
   if (!sql) throw new Error('Database not connected');
 
   return executeQuery(async () => {
-    const [rows] = await sql`
-      INSERT INTO public.payments (reference_id, type, amount_usd, method, date)
-      VALUES (${paymentData.reference_id}, ${paymentData.type}, ${paymentData.amount_usd}, ${paymentData.method}, ${paymentData.date})
-      RETURNING *
-    `;
-    return rows[0] as Payment;
+    return addPayment({
+      reference_id: paymentData.reference_id,
+      client_name: paymentData.client_name,
+      type: paymentData.type,
+      amount_usd: paymentData.amount_usd,
+      currency: paymentData.currency || 'USD',
+      method: paymentData.method,
+      date: paymentData.date,
+    });
   }, 'createPayment');
 }
 
@@ -612,32 +788,73 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_a
   
   return executeQuery(async () => {
     const invoice_number = await generateUniqueInvoiceNumber();
-    const normalizedItems = (invoiceData.items || []).map((item, index) =>
-      normalizeLineItem(item as InvoiceItem, index)
-    );
-    
-    const rows = await sql`
-      INSERT INTO invoices (
-        invoice_number, quote_id, vehicle_id, client_name, client_email, client_address, 
-        amount_usd, status, description, notes, terms_and_conditions, due_date, items
-      )
-      VALUES (
-        ${invoice_number},
-        ${invoiceData.quote_id || null}::uuid,
-        ${invoiceData.vehicle_id || null}::uuid,
-        ${invoiceData.client_name},
-        ${invoiceData.client_email || null},
-        ${invoiceData.client_address || null},
-        ${invoiceData.amount_usd},
-        ${invoiceData.status || 'Draft'},
-        ${invoiceData.description || null},
-        ${invoiceData.notes || null},
-        ${invoiceData.terms_and_conditions || null},
-        ${invoiceData.due_date},
-        ${normalizedItems.length > 0 ? JSON.stringify(normalizedItems) : null}::jsonb
-      )
-      RETURNING *
-    `;
+    const normalizedItems = (invoiceData.items || []).map((item, index) => normalizeLineItem(item, index));
+    const totalAmountUsd =
+      normalizedItems.length > 0
+        ? normalizedItems.reduce((sum, item) => sum + item.amount + item.tax_amount, 0)
+        : invoiceData.amount_usd;
+
+    let rows;
+    try {
+      rows = await sql`
+        INSERT INTO public.invoices (
+          invoice_number, invoice_kind, quote_id, vehicle_id, client_name, client_email, client_address,
+          amount_usd, currency, status, description, notes, terms_and_conditions, due_date, items, batch
+        )
+        VALUES (
+          ${invoice_number},
+          ${invoiceData.invoice_kind || 'Standard'},
+          ${invoiceData.quote_id || null}::uuid,
+          ${invoiceData.vehicle_id || null}::uuid,
+          ${invoiceData.client_name},
+          ${invoiceData.client_email || null},
+          ${invoiceData.client_address || null},
+          ${totalAmountUsd},
+          ${invoiceData.currency || 'USD'},
+          ${invoiceData.status || 'Draft'},
+          ${invoiceData.description || null},
+          ${invoiceData.notes || null},
+          ${invoiceData.terms_and_conditions || null},
+          ${invoiceData.due_date},
+          ${normalizedItems.length > 0 ? JSON.stringify(normalizedItems) : null}::jsonb,
+          ${invoiceData.batch || null}
+        )
+        RETURNING *
+      `;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (
+        !errorMessage.includes('column "currency" of relation "invoices" does not exist') &&
+        !errorMessage.includes('column "invoice_kind" of relation "invoices" does not exist')
+      ) {
+        throw error;
+      }
+
+      rows = await sql`
+        INSERT INTO public.invoices (
+          invoice_number, quote_id, vehicle_id, client_name, client_email, client_address, 
+          amount_usd, status, description, notes, terms_and_conditions, due_date, items
+        )
+        VALUES (
+          ${invoice_number},
+          ${invoiceData.quote_id || null}::uuid,
+          ${invoiceData.vehicle_id || null}::uuid,
+          ${invoiceData.client_name},
+          ${invoiceData.client_email || null},
+          ${invoiceData.client_address || null},
+          ${totalAmountUsd},
+          ${invoiceData.status || 'Draft'},
+          ${invoiceData.description || null},
+          ${invoiceData.notes || null},
+          ${invoiceData.terms_and_conditions || null},
+          ${invoiceData.due_date},
+          ${normalizedItems.length > 0 ? JSON.stringify(normalizedItems) : null}::jsonb
+        )
+        RETURNING *,
+          ${invoiceData.currency || 'USD'}::text AS currency,
+          ${invoiceData.invoice_kind || 'Standard'}::text AS invoice_kind
+      `;
+    }
     
     if (!rows || rows.length === 0) {
       throw new Error('Invoice insert succeeded but no data returned');
@@ -647,7 +864,10 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_a
 
     for (const item of normalizedItems) {
       await sql`
-        INSERT INTO invoice_items (invoice_id, line_number, description, quantity, unit_price, amount, tax_rate, tax_amount, notes)
+        INSERT INTO public.invoice_items (
+          invoice_id, line_number, description, quantity, unit_price, amount,
+          discount_percentage, discount_amount, tax_rate, tax_amount, notes
+        )
         VALUES (
           ${invoice.id}::uuid,
           ${item.line_number || 1},
@@ -655,6 +875,8 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_a
           ${item.quantity},
           ${item.unit_price},
           ${item.amount},
+          ${item.discount_percentage || 0},
+          ${item.discount_amount || 0},
           ${item.tax_rate || 0},
           ${item.tax_amount || 0},
           ${item.notes || null}
@@ -674,38 +896,80 @@ export async function updateInvoice(invoiceId: string, updates: Partial<Omit<Inv
   
   return executeQuery(async () => {
     const normalizedItems = updates.items
-      ? updates.items.map((item, index) => normalizeLineItem(item as InvoiceItem, index))
+      ? updates.items.map((item, index) => normalizeLineItem(item, index))
       : null;
+    const totalAmountUsd = normalizedItems
+      ? normalizedItems.reduce((sum, item) => sum + item.amount + item.tax_amount, 0)
+      : updates.amount_usd;
 
-    const rows = await sql`
-      UPDATE invoices
-      SET 
-        quote_id = COALESCE(${updates.quote_id || null}::uuid, quote_id),
-        vehicle_id = COALESCE(${updates.vehicle_id || null}::uuid, vehicle_id),
-        client_name = COALESCE(${updates.client_name || null}, client_name),
-        client_email = COALESCE(${updates.client_email}, client_email),
-        client_address = COALESCE(${updates.client_address}, client_address),
-        amount_usd = COALESCE(${updates.amount_usd || null}, amount_usd),
-        status = COALESCE(${updates.status || null}, status),
-        description = COALESCE(${updates.description}, description),
-        notes = COALESCE(${updates.notes}, notes),
-        terms_and_conditions = COALESCE(${updates.terms_and_conditions}, terms_and_conditions),
-        due_date = COALESCE(${updates.due_date || null}, due_date),
-        items = COALESCE(${normalizedItems ? JSON.stringify(normalizedItems) : null}::jsonb, items)
-      WHERE id = ${invoiceId}::uuid
-      RETURNING *
-    `;
+    let rows;
+    try {
+      rows = await sql`
+        UPDATE public.invoices
+        SET 
+          invoice_kind = COALESCE(${updates.invoice_kind || null}, invoice_kind),
+          quote_id = COALESCE(${updates.quote_id || null}::uuid, quote_id),
+          vehicle_id = COALESCE(${updates.vehicle_id || null}::uuid, vehicle_id),
+          client_name = COALESCE(${updates.client_name || null}, client_name),
+          client_email = COALESCE(${updates.client_email}, client_email),
+          client_address = COALESCE(${updates.client_address}, client_address),
+          amount_usd = COALESCE(${totalAmountUsd || null}, amount_usd),
+          currency = COALESCE(${updates.currency || null}, currency),
+          status = COALESCE(${updates.status || null}, status),
+          description = COALESCE(${updates.description}, description),
+          notes = COALESCE(${updates.notes}, notes),
+          terms_and_conditions = COALESCE(${updates.terms_and_conditions}, terms_and_conditions),
+          due_date = COALESCE(${updates.due_date || null}, due_date),
+          items = COALESCE(${normalizedItems ? JSON.stringify(normalizedItems) : null}::jsonb, items),
+          batch = COALESCE(${updates.batch || null}, batch)
+        WHERE id = ${invoiceId}::uuid
+        RETURNING *
+      `;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (
+        !errorMessage.includes('column "currency" of relation "invoices" does not exist') &&
+        !errorMessage.includes('column "invoice_kind" of relation "invoices" does not exist')
+      ) {
+        throw error;
+      }
+
+      rows = await sql`
+        UPDATE public.invoices
+        SET
+          quote_id = COALESCE(${updates.quote_id || null}::uuid, quote_id),
+          vehicle_id = COALESCE(${updates.vehicle_id || null}::uuid, vehicle_id),
+          client_name = COALESCE(${updates.client_name || null}, client_name),
+          client_email = COALESCE(${updates.client_email}, client_email),
+          client_address = COALESCE(${updates.client_address}, client_address),
+          amount_usd = COALESCE(${totalAmountUsd || null}, amount_usd),
+          status = COALESCE(${updates.status || null}, status),
+          description = COALESCE(${updates.description}, description),
+          notes = COALESCE(${updates.notes}, notes),
+          terms_and_conditions = COALESCE(${updates.terms_and_conditions}, terms_and_conditions),
+          due_date = COALESCE(${updates.due_date || null}, due_date),
+          items = COALESCE(${normalizedItems ? JSON.stringify(normalizedItems) : null}::jsonb, items),
+          batch = COALESCE(${updates.batch || null}, batch)
+        WHERE id = ${invoiceId}::uuid
+        RETURNING *,
+          ${updates.currency || 'USD'}::text AS currency,
+          ${updates.invoice_kind || 'Standard'}::text AS invoice_kind
+      `;
+    }
     
     if (!rows || rows.length === 0) {
       throw new Error('Invoice not found');
     }
 
     if (normalizedItems) {
-      await sql`DELETE FROM invoice_items WHERE invoice_id = ${invoiceId}::uuid`;
+      await sql`DELETE FROM public.invoice_items WHERE invoice_id = ${invoiceId}::uuid`;
 
       for (const item of normalizedItems) {
         await sql`
-          INSERT INTO invoice_items (invoice_id, line_number, description, quantity, unit_price, amount, tax_rate, tax_amount, notes)
+          INSERT INTO public.invoice_items (
+            invoice_id, line_number, description, quantity, unit_price, amount,
+            discount_percentage, discount_amount, tax_rate, tax_amount, notes
+          )
           VALUES (
             ${invoiceId}::uuid,
             ${item.line_number || 1},
@@ -713,6 +977,8 @@ export async function updateInvoice(invoiceId: string, updates: Partial<Omit<Inv
             ${item.quantity},
             ${item.unit_price},
             ${item.amount},
+            ${item.discount_percentage || 0},
+            ${item.discount_amount || 0},
             ${item.tax_rate || 0},
             ${item.tax_amount || 0},
             ${item.notes || null}
@@ -733,9 +999,9 @@ export async function deleteInvoice(invoiceId: string): Promise<void> {
   
   return executeQuery(async () => {
     // First delete related invoice items
-    await sql`DELETE FROM invoice_items WHERE invoice_id = ${invoiceId}::uuid`;
+    await sql`DELETE FROM public.invoice_items WHERE invoice_id = ${invoiceId}::uuid`;
     // Then delete the invoice
-    await sql`DELETE FROM invoices WHERE id = ${invoiceId}::uuid`;
+    await sql`DELETE FROM public.invoices WHERE id = ${invoiceId}::uuid`;
   }, 'deleteInvoice');
 }
 
@@ -748,7 +1014,7 @@ export async function updateInvoiceStatus(invoiceId: string, status: FinancialSt
     }
 
     const rows = await sql`
-      UPDATE invoices
+      UPDATE public.invoices
       SET status = ${status}
       WHERE id = ${invoiceId}::uuid
       RETURNING *
@@ -770,36 +1036,351 @@ export async function getPayments(): Promise<Payment[]> {
   if (!sql) throw new Error('Database not connected');
   
   return executeQuery(async () => {
-    const rows = await sql`
-      SELECT id, reference_id, type, amount_usd, method, date
-      FROM payments
-      ORDER BY date DESC
-    `;
-    return rows as Payment[];
+    const attachAllocations = async (rows: Payment[]) => {
+      if (!rows.length) {
+        return rows;
+      }
+
+      try {
+        const paymentIds = rows.map(payment => payment.id);
+        const allocationRows = await sql`
+          SELECT id, payment_id, invoice_id, amount_allocated, currency, created_at
+          FROM public.payment_allocations
+          WHERE payment_id = ANY(${paymentIds}::uuid[])
+          ORDER BY created_at ASC
+        `;
+
+        const allocationsByPaymentId = new Map<string, PaymentAllocation[]>();
+        (allocationRows as PaymentAllocation[]).forEach(allocation => {
+          const existing = allocationsByPaymentId.get(allocation.payment_id) || [];
+          existing.push(allocation);
+          allocationsByPaymentId.set(allocation.payment_id, existing);
+        });
+
+        return rows.map(payment => ({
+          ...payment,
+          allocations: allocationsByPaymentId.get(payment.id) || [],
+        }));
+      } catch (error) {
+        if (isMissingTableError(error, 'payment_allocations')) {
+          return rows.map(payment => ({
+            ...payment,
+            allocations: [],
+          }));
+        }
+        throw error;
+      }
+    };
+
+    try {
+      const rows = await sql`
+        SELECT id, reference_id, client_name, type, amount_usd, currency, method, date
+        FROM public.payments
+        ORDER BY date DESC
+      `;
+      return attachAllocations(rows as Payment[]);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      if (
+        !errorMessage.includes('column "client_name" of relation "payments" does not exist') &&
+        !errorMessage.includes('column "currency" of relation "payments" does not exist') &&
+        !errorMessage.includes('column "client_name" does not exist') &&
+        !errorMessage.includes('column "currency" does not exist')
+      ) {
+        throw error;
+      }
+
+      const rows = await sql`
+        SELECT id, reference_id, NULL::text AS client_name, type, amount_usd, 'USD'::text AS currency, method, date
+        FROM public.payments
+        ORDER BY date DESC
+      `;
+      return attachAllocations(rows as Payment[]);
+    }
   }, 'getPayments');
+}
+
+export async function getPaymentAllocations(): Promise<PaymentAllocation[]> {
+  if (!sql) throw new Error('Database not connected');
+
+  return executeQuery(async () => {
+    try {
+      const rows = await sql`
+        SELECT id, payment_id, invoice_id, amount_allocated, currency, created_at
+        FROM public.payment_allocations
+        ORDER BY created_at DESC
+      `;
+      return rows as PaymentAllocation[];
+    } catch (error) {
+      if (isMissingTableError(error, 'payment_allocations')) {
+        return [];
+      }
+      throw error;
+    }
+  }, 'getPaymentAllocations');
+}
+
+export async function getReceipts(): Promise<Receipt[]> {
+  if (!sql) throw new Error('Database not connected');
+
+  return executeQuery(async () => {
+    try {
+      const rows = await sql`
+        SELECT *
+        FROM public.receipts
+        ORDER BY payment_date DESC, created_at DESC
+      `;
+      return rows as Receipt[];
+    } catch (error) {
+      if (isMissingTableError(error, 'receipts')) {
+        return [];
+      }
+      throw error;
+    }
+  }, 'getReceipts');
+}
+
+export async function createReceipt(receiptData: Omit<Receipt, 'id' | 'created_at' | 'receipt_number'>): Promise<Receipt> {
+  if (!sql) throw new Error('Database not connected');
+
+  return executeQuery(async () => {
+    try {
+      const receiptNumber = await generateUniqueReceiptNumber();
+      const normalizedItems = (receiptData.items || []).map((item, index) => normalizeReceiptItem(item, index));
+      const rows = await sql`
+        INSERT INTO public.receipts (
+          receipt_number,
+          invoice_id,
+          payment_id,
+          client_name,
+          client_email,
+          client_address,
+          amount_received,
+          currency,
+          payment_method,
+          payment_date,
+          reference_number,
+          notes,
+          items,
+          batch
+        )
+        VALUES (
+          ${receiptNumber},
+          ${receiptData.invoice_id || null}::uuid,
+          ${receiptData.payment_id || null}::uuid,
+          ${receiptData.client_name},
+          ${receiptData.client_email || null},
+          ${receiptData.client_address || null},
+          ${receiptData.amount_received},
+          ${receiptData.currency || 'USD'},
+          ${receiptData.payment_method},
+          ${receiptData.payment_date},
+          ${receiptData.reference_number || null},
+          ${receiptData.notes || null},
+          ${normalizedItems.length > 0 ? JSON.stringify(normalizedItems) : null}::jsonb,
+          ${receiptData.batch || null}
+        )
+        RETURNING *
+      `;
+
+      if (!rows || rows.length === 0) {
+        throw new Error('Receipt insert succeeded but no data returned');
+      }
+
+      return {
+        ...(rows[0] as Receipt),
+        ...(normalizedItems.length > 0 ? { items: normalizedItems as ReceiptItem[] } : {}),
+      };
+    } catch (error) {
+      if (isMissingTableError(error, 'receipts')) {
+        throw new Error('Receipts table is missing. Run RECEIPTS_MIGRATION.sql first.');
+      }
+      if (isMissingColumnError(error, 'items', 'receipts')) {
+        const receiptNumber = await generateUniqueReceiptNumber();
+        const rows = await sql`
+          INSERT INTO public.receipts (
+            receipt_number,
+            invoice_id,
+            payment_id,
+            client_name,
+            client_email,
+            client_address,
+            amount_received,
+            currency,
+            payment_method,
+            payment_date,
+            reference_number,
+            notes,
+            batch
+          )
+          VALUES (
+            ${receiptNumber},
+            ${receiptData.invoice_id || null}::uuid,
+            ${receiptData.payment_id || null}::uuid,
+            ${receiptData.client_name},
+            ${receiptData.client_email || null},
+            ${receiptData.client_address || null},
+            ${receiptData.amount_received},
+            ${receiptData.currency || 'USD'},
+            ${receiptData.payment_method},
+            ${receiptData.payment_date},
+            ${receiptData.reference_number || null},
+            ${receiptData.notes || null},
+            ${receiptData.batch || null}
+          )
+          RETURNING *
+        `;
+
+        if (!rows || rows.length === 0) {
+          throw new Error('Receipt insert succeeded but no data returned');
+        }
+
+        return {
+          ...(rows[0] as Receipt),
+          ...(receiptData.items ? { items: receiptData.items } : {}),
+        };
+      }
+      throw error;
+    }
+  }, 'createReceipt');
+}
+
+export async function updateReceipt(
+  receiptId: string,
+  updates: Partial<Omit<Receipt, 'id' | 'created_at' | 'receipt_number'>>
+): Promise<Receipt> {
+  if (!sql) throw new Error('Database not connected');
+
+  return executeQuery(async () => {
+    try {
+      const normalizedItems = updates.items
+        ? updates.items.map((item, index) => normalizeReceiptItem(item, index))
+        : null;
+      const rows = await sql`
+        UPDATE public.receipts
+        SET
+          invoice_id = COALESCE(${updates.invoice_id || null}::uuid, invoice_id),
+          payment_id = COALESCE(${updates.payment_id || null}::uuid, payment_id),
+          client_name = COALESCE(${updates.client_name || null}, client_name),
+          client_email = COALESCE(${updates.client_email}, client_email),
+          client_address = COALESCE(${updates.client_address}, client_address),
+          amount_received = COALESCE(${updates.amount_received || null}, amount_received),
+          currency = COALESCE(${updates.currency || null}, currency),
+          payment_method = COALESCE(${updates.payment_method}, payment_method),
+          payment_date = COALESCE(${updates.payment_date || null}, payment_date),
+          reference_number = COALESCE(${updates.reference_number}, reference_number),
+          notes = COALESCE(${updates.notes}, notes),
+          items = COALESCE(${normalizedItems ? JSON.stringify(normalizedItems) : null}::jsonb, items),
+          batch = COALESCE(${updates.batch || null}, batch)
+        WHERE id = ${receiptId}::uuid
+        RETURNING *
+      `;
+
+      if (!rows || rows.length === 0) {
+        throw new Error('Receipt not found');
+      }
+
+      return {
+        ...(rows[0] as Receipt),
+        ...(normalizedItems ? { items: normalizedItems as ReceiptItem[] } : {}),
+      };
+    } catch (error) {
+      if (isMissingTableError(error, 'receipts')) {
+        throw new Error('Receipts table is missing. Run RECEIPTS_MIGRATION.sql first.');
+      }
+      if (isMissingColumnError(error, 'items', 'receipts')) {
+        const rows = await sql`
+          UPDATE public.receipts
+          SET
+            invoice_id = COALESCE(${updates.invoice_id || null}::uuid, invoice_id),
+            payment_id = COALESCE(${updates.payment_id || null}::uuid, payment_id),
+            client_name = COALESCE(${updates.client_name || null}, client_name),
+            client_email = COALESCE(${updates.client_email}, client_email),
+            client_address = COALESCE(${updates.client_address}, client_address),
+            amount_received = COALESCE(${updates.amount_received || null}, amount_received),
+            currency = COALESCE(${updates.currency || null}, currency),
+            payment_method = COALESCE(${updates.payment_method}, payment_method),
+            payment_date = COALESCE(${updates.payment_date || null}, payment_date),
+            reference_number = COALESCE(${updates.reference_number}, reference_number),
+            notes = COALESCE(${updates.notes}, notes),
+            batch = COALESCE(${updates.batch || null}, batch)
+          WHERE id = ${receiptId}::uuid
+          RETURNING *
+        `;
+
+        if (!rows || rows.length === 0) {
+          throw new Error('Receipt not found');
+        }
+
+        return {
+          ...(rows[0] as Receipt),
+          ...(updates.items ? { items: updates.items } : {}),
+        };
+      }
+      throw error;
+    }
+  }, 'updateReceipt');
 }
 
 export async function addPayment(payment: Omit<Payment, 'id'>): Promise<Payment> {
   if (!sql) throw new Error('Database not connected');
   
   return executeQuery(async () => {
-    const rows = await sql`
-      INSERT INTO payments (reference_id, type, amount_usd, method, date)
-      VALUES (
-        ${payment.reference_id},
-        ${payment.type},
-        ${payment.amount_usd},
-        ${payment.method || null},
-        ${payment.date || new Date().toISOString()}
-      )
-      RETURNING *
-    `;
-    
-    if (!rows || rows.length === 0) {
-      throw new Error('Payment insert succeeded but no data returned');
+    try {
+      const rows = await sql`
+        INSERT INTO public.payments (reference_id, client_name, type, amount_usd, currency, method, date)
+        VALUES (
+          ${payment.reference_id},
+          ${payment.client_name || null},
+          ${payment.type},
+          ${payment.amount_usd},
+          ${payment.currency || 'USD'},
+          ${payment.method || null},
+          ${payment.date || new Date().toISOString()}
+        )
+        RETURNING *
+      `;
+      
+      if (!rows || rows.length === 0) {
+        throw new Error('Payment insert succeeded but no data returned');
+      }
+      
+      return {
+        ...(rows[0] as Payment),
+        allocations: [],
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      if (
+        !errorMessage.includes('column "client_name" of relation "payments" does not exist') &&
+        !errorMessage.includes('column "currency" of relation "payments" does not exist')
+      ) {
+        throw error;
+      }
+
+      const rows = await sql`
+        INSERT INTO public.payments (reference_id, type, amount_usd, method, date)
+        VALUES (
+          ${payment.reference_id},
+          ${payment.type},
+          ${payment.amount_usd},
+          ${payment.method || null},
+          ${payment.date || new Date().toISOString()}
+        )
+        RETURNING *, ${payment.client_name || null}::text AS client_name, ${payment.currency || 'USD'}::text AS currency
+      `;
+
+      if (!rows || rows.length === 0) {
+        throw new Error('Payment insert succeeded but no data returned');
+      }
+
+      return {
+        ...(rows[0] as Payment),
+        allocations: [],
+      };
     }
-    
-    return rows[0] as Payment;
   }, 'addPayment');
 }
 
@@ -807,31 +1388,110 @@ export async function updatePayment(paymentId: string, updates: Partial<Omit<Pay
   if (!sql) throw new Error('Database not connected');
   
   return executeQuery(async () => {
-    const rows = await sql`
-      UPDATE payments
-      SET 
-        reference_id = COALESCE(${updates.reference_id || null}, reference_id),
-        type = COALESCE(${updates.type || null}, type),
-        amount_usd = COALESCE(${updates.amount_usd || null}, amount_usd),
-        method = COALESCE(${updates.method}, method),
-        date = COALESCE(${updates.date || null}, date)
-      WHERE id = ${paymentId}::uuid
-      RETURNING *
-    `;
-    
-    if (!rows || rows.length === 0) {
-      throw new Error('Payment not found');
+    try {
+      const rows = await sql`
+        UPDATE public.payments
+        SET 
+          reference_id = COALESCE(${updates.reference_id || null}, reference_id),
+          client_name = COALESCE(${updates.client_name || null}, client_name),
+          type = COALESCE(${updates.type || null}, type),
+          amount_usd = COALESCE(${updates.amount_usd || null}, amount_usd),
+          currency = COALESCE(${updates.currency || null}, currency),
+          method = COALESCE(${updates.method}, method),
+          date = COALESCE(${updates.date || null}, date)
+        WHERE id = ${paymentId}::uuid
+        RETURNING *
+      `;
+      
+      if (!rows || rows.length === 0) {
+        throw new Error('Payment not found');
+      }
+      
+      return {
+        ...(rows[0] as Payment),
+        allocations: [],
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      if (
+        !errorMessage.includes('column "client_name" of relation "payments" does not exist') &&
+        !errorMessage.includes('column "currency" of relation "payments" does not exist')
+      ) {
+        throw error;
+      }
+
+      const rows = await sql`
+        UPDATE public.payments
+        SET 
+          reference_id = COALESCE(${updates.reference_id || null}, reference_id),
+          type = COALESCE(${updates.type || null}, type),
+          amount_usd = COALESCE(${updates.amount_usd || null}, amount_usd),
+          method = COALESCE(${updates.method}, method),
+          date = COALESCE(${updates.date || null}, date)
+        WHERE id = ${paymentId}::uuid
+        RETURNING *, ${updates.client_name || null}::text AS client_name, ${updates.currency || 'USD'}::text AS currency
+      `;
+
+      if (!rows || rows.length === 0) {
+        throw new Error('Payment not found');
+      }
+
+      return {
+        ...(rows[0] as Payment),
+        allocations: [],
+      };
     }
-    
-    return rows[0] as Payment;
   }, 'updatePayment');
+}
+
+export async function replacePaymentAllocations(
+  paymentId: string,
+  allocations: Array<Pick<PaymentAllocation, 'invoice_id' | 'amount_allocated' | 'currency'>>
+): Promise<PaymentAllocation[]> {
+  if (!sql) throw new Error('Database not connected');
+
+  return executeQuery(async () => {
+    try {
+      await sql`DELETE FROM public.payment_allocations WHERE payment_id = ${paymentId}::uuid`;
+
+      if (!allocations.length) {
+        return [];
+      }
+
+      const inserted: PaymentAllocation[] = [];
+      for (const allocation of allocations) {
+        const rows = await sql`
+          INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency)
+          VALUES (
+            ${paymentId}::uuid,
+            ${allocation.invoice_id}::uuid,
+            ${allocation.amount_allocated},
+            ${allocation.currency || 'USD'}
+          )
+          RETURNING id, payment_id, invoice_id, amount_allocated, currency, created_at
+        `;
+
+        if (rows && rows[0]) {
+          inserted.push(rows[0] as PaymentAllocation);
+        }
+      }
+
+      return inserted;
+    } catch (error) {
+      if (isMissingTableError(error, 'payment_allocations')) {
+        throw new Error('Payment allocations table is missing. Run PAYMENT_ALLOCATIONS_MIGRATION.sql first.');
+      }
+      throw error;
+    }
+  }, 'replacePaymentAllocations');
 }
 
 export async function deletePayment(paymentId: string): Promise<void> {
   if (!sql) throw new Error('Database not connected');
   
   return executeQuery(async () => {
-    await sql`DELETE FROM payments WHERE id = ${paymentId}::uuid`;
+    await sql`DELETE FROM public.payments WHERE id = ${paymentId}::uuid`;
   }, 'deletePayment');
 }
 
@@ -1791,22 +2451,26 @@ export async function getQuoteItems(quoteId: string): Promise<QuoteItem[]> {
 export async function addQuoteItem(quoteId: string, item: Omit<QuoteItem, 'id' | 'quote_id' | 'created_at' | 'updated_at'>): Promise<QuoteItem> {
   if (!sql) throw new Error('Database not connected');
   
-  const amount = item.quantity * item.unit_price;
-  const tax_amount = (item.tax_rate || 0) * amount / 100;
+  const normalizedItem = normalizeLineItem(item, 0);
   
   return executeQuery(async () => {
     const rows = await sql`
-      INSERT INTO quote_items (quote_id, line_number, description, quantity, unit_price, amount, tax_rate, tax_amount, notes)
+      INSERT INTO quote_items (
+        quote_id, line_number, description, quantity, unit_price, amount,
+        discount_percentage, discount_amount, tax_rate, tax_amount, notes
+      )
       VALUES (
         ${quoteId}::uuid,
-        ${item.line_number || 1},
-        ${item.description},
-        ${item.quantity},
-        ${item.unit_price},
-        ${amount},
-        ${item.tax_rate || 0},
-        ${tax_amount},
-        ${item.notes || null}
+        ${normalizedItem.line_number || 1},
+        ${normalizedItem.description},
+        ${normalizedItem.quantity},
+        ${normalizedItem.unit_price},
+        ${normalizedItem.amount},
+        ${normalizedItem.discount_percentage || 0},
+        ${normalizedItem.discount_amount || 0},
+        ${normalizedItem.tax_rate || 0},
+        ${normalizedItem.tax_amount || 0},
+        ${normalizedItem.notes || null}
       )
       RETURNING *
     `;
@@ -1823,21 +2487,25 @@ export async function updateQuoteItem(itemId: string, updates: Partial<Omit<Quot
     if (!current || current.length === 0) throw new Error('Quote item not found');
     
     const currentItem = current[0] as QuoteItem;
-    const quantity = updates.quantity ?? currentItem.quantity;
-    const unit_price = updates.unit_price ?? currentItem.unit_price;
-    const tax_rate = updates.tax_rate ?? currentItem.tax_rate ?? 0;
-    const amount = quantity * unit_price;
-    const tax_amount = (tax_rate * amount) / 100;
+    const normalizedItem = normalizeLineItem(
+      {
+        ...currentItem,
+        ...updates,
+      },
+      (updates.line_number ?? currentItem.line_number ?? 1) - 1
+    );
     
     const rows = await sql`
       UPDATE quote_items
       SET 
         description = COALESCE(${updates.description || null}, description),
-        quantity = ${quantity},
-        unit_price = ${unit_price},
-        amount = ${amount},
-        tax_rate = ${tax_rate},
-        tax_amount = ${tax_amount},
+        quantity = ${normalizedItem.quantity},
+        unit_price = ${normalizedItem.unit_price},
+        amount = ${normalizedItem.amount},
+        discount_percentage = ${normalizedItem.discount_percentage},
+        discount_amount = ${normalizedItem.discount_amount},
+        tax_rate = ${normalizedItem.tax_rate},
+        tax_amount = ${normalizedItem.tax_amount},
         line_number = COALESCE(${updates.line_number || null}, line_number),
         notes = COALESCE(${updates.notes}, notes)
       WHERE id = ${itemId}::uuid
@@ -1873,22 +2541,26 @@ export async function getInvoiceItems(invoiceId: string): Promise<InvoiceItem[]>
 export async function addInvoiceItem(invoiceId: string, item: Omit<InvoiceItem, 'id' | 'invoice_id' | 'created_at' | 'updated_at'>): Promise<InvoiceItem> {
   if (!sql) throw new Error('Database not connected');
   
-  const amount = item.quantity * item.unit_price;
-  const tax_amount = (item.tax_rate || 0) * amount / 100;
+  const normalizedItem = normalizeLineItem(item, 0);
   
   return executeQuery(async () => {
     const rows = await sql`
-      INSERT INTO invoice_items (invoice_id, line_number, description, quantity, unit_price, amount, tax_rate, tax_amount, notes)
+      INSERT INTO invoice_items (
+        invoice_id, line_number, description, quantity, unit_price, amount,
+        discount_percentage, discount_amount, tax_rate, tax_amount, notes
+      )
       VALUES (
         ${invoiceId}::uuid,
-        ${item.line_number || 1},
-        ${item.description},
-        ${item.quantity},
-        ${item.unit_price},
-        ${amount},
-        ${item.tax_rate || 0},
-        ${tax_amount},
-        ${item.notes || null}
+        ${normalizedItem.line_number || 1},
+        ${normalizedItem.description},
+        ${normalizedItem.quantity},
+        ${normalizedItem.unit_price},
+        ${normalizedItem.amount},
+        ${normalizedItem.discount_percentage || 0},
+        ${normalizedItem.discount_amount || 0},
+        ${normalizedItem.tax_rate || 0},
+        ${normalizedItem.tax_amount || 0},
+        ${normalizedItem.notes || null}
       )
       RETURNING *
     `;
@@ -1905,21 +2577,25 @@ export async function updateInvoiceItem(itemId: string, updates: Partial<Omit<In
     if (!current || current.length === 0) throw new Error('Invoice item not found');
     
     const currentItem = current[0] as InvoiceItem;
-    const quantity = updates.quantity ?? currentItem.quantity;
-    const unit_price = updates.unit_price ?? currentItem.unit_price;
-    const tax_rate = updates.tax_rate ?? currentItem.tax_rate ?? 0;
-    const amount = quantity * unit_price;
-    const tax_amount = (tax_rate * amount) / 100;
+    const normalizedItem = normalizeLineItem(
+      {
+        ...currentItem,
+        ...updates,
+      },
+      (updates.line_number ?? currentItem.line_number ?? 1) - 1
+    );
     
     const rows = await sql`
       UPDATE invoice_items
       SET 
         description = COALESCE(${updates.description || null}, description),
-        quantity = ${quantity},
-        unit_price = ${unit_price},
-        amount = ${amount},
-        tax_rate = ${tax_rate},
-        tax_amount = ${tax_amount},
+        quantity = ${normalizedItem.quantity},
+        unit_price = ${normalizedItem.unit_price},
+        amount = ${normalizedItem.amount},
+        discount_percentage = ${normalizedItem.discount_percentage},
+        discount_amount = ${normalizedItem.discount_amount},
+        tax_rate = ${normalizedItem.tax_rate},
+        tax_amount = ${normalizedItem.tax_amount},
         line_number = COALESCE(${updates.line_number || null}, line_number),
         notes = COALESCE(${updates.notes}, notes)
       WHERE id = ${itemId}::uuid
