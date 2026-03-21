@@ -45,9 +45,9 @@ async function verifyPassword(password: string, salt: string, hash: string): Pro
 // JWT TOKEN HANDLING
 // ============================================
 
-const JWT_SECRET: string = import.meta.env.VITE_JWT_SECRET;
+const JWT_SECRET: string | undefined = import.meta.env.VITE_JWT_SECRET;
 if (!JWT_SECRET) {
-  throw new Error('VITE_JWT_SECRET is not set. Define it in your .env file before starting the app.');
+  console.warn('⚠️  VITE_JWT_SECRET is not set. Auth will not work until configured. Add it to .env and redeploy.');
 }
 const JWT_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -115,6 +115,9 @@ async function verifyJWT(token: string): Promise<JWTPayload | null> {
 }
 
 async function importJWTSecret(): Promise<CryptoKey> {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured. Please set VITE_JWT_SECRET in your environment.');
+  }
   return crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(JWT_SECRET),
