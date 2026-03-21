@@ -1171,22 +1171,34 @@ export const Financials: React.FC = () => {
       </div>
 
       {showQuoteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={closeQuoteModal} />
-          <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl">
-            <h3 className="mb-6 text-2xl font-black text-zinc-900">
-              {editingQuote ? `Edit Quote ${editingQuote.quote_number}` : 'Create New Quote'}
-            </h3>
-            <form onSubmit={handleCreateQuote} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
+          <div className="relative max-h-[95vh] w-full max-w-2xl overflow-y-auto rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-2xl font-black text-zinc-900">
+                {editingQuote ? `Edit Quote` : 'Create Quote'}
+              </h3>
+              <button
+                type="button"
+                onClick={closeQuoteModal}
+                className="lg:hidden p-2 -mr-2 text-zinc-400 hover:text-zinc-600"
+                aria-label="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleCreateQuote} className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="text-sm font-semibold text-zinc-700">Vehicle (Optional)</label>
                   <select
                     value={quoteForm.vehicle_id}
                     onChange={e => setQuoteForm({ ...quoteForm, vehicle_id: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">No Vehicle (Custom Quote)</option>
+                    <option value="">No Vehicle</option>
                     {vehicles.map(vehicle => (
                       <option key={vehicle.id} value={vehicle.id}>
                         {vehicle.make_model} ({vehicle.vin_number})
@@ -1195,7 +1207,7 @@ export const Financials: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-zinc-700">Client</label>
+                  <label className="text-sm font-semibold text-zinc-700">Client *</label>
                   <select
                     required
                     value={clients.find(c => c.name === quoteForm.client_name)?.id ?? ''}
@@ -1208,30 +1220,30 @@ export const Financials: React.FC = () => {
                         client_address: client?.address ?? '',
                       });
                     }}
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Select a client…</option>
+                    <option value="">Select…</option>
                     {clients.map(c => (
                       <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-zinc-700">Client Email</label>
+                  <label className="text-sm font-semibold text-zinc-700">Email</label>
                   <input
                     type="email"
                     value={quoteForm.client_email}
                     onChange={e => setQuoteForm({ ...quoteForm, client_email: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="text-sm font-semibold text-zinc-700">Client Address</label>
+                <div className="col-span-1 sm:col-span-2">
+                  <label className="text-sm font-semibold text-zinc-700">Address</label>
                   <textarea
                     rows={2}
                     value={quoteForm.client_address}
                     onChange={e => setQuoteForm({ ...quoteForm, client_address: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -1240,7 +1252,7 @@ export const Financials: React.FC = () => {
                     type="date"
                     value={quoteForm.valid_until}
                     onChange={e => setQuoteForm({ ...quoteForm, valid_until: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -1248,19 +1260,19 @@ export const Financials: React.FC = () => {
                   <select
                     value={quoteForm.currency}
                     onChange={e => setQuoteForm({ ...quoteForm, currency: e.target.value as 'USD' | 'GBP' })}
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="USD">US Dollar (USD)</option>
-                    <option value="GBP">British Pound (GBP)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="GBP">GBP (£)</option>
                   </select>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="text-sm font-semibold text-zinc-700">Notes</label>
                   <input
                     value={quoteForm.description}
                     onChange={e => setQuoteForm({ ...quoteForm, description: e.target.value })}
                     placeholder="Additional notes..."
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="col-span-2 mt-2 border-t pt-4">
@@ -1357,7 +1369,7 @@ export const Financials: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => setQuoteLineItems(quoteLineItems.filter((_, lineIndex) => lineIndex !== index))}
-                                className="w-full rounded-lg p-2 text-red-500 hover:bg-red-50"
+                                className="w-full rounded-lg p-2 sm:p-2 text-red-500 hover:bg-red-50 touch-manipulation"
                               >
                                 <svg className="mx-auto h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path
@@ -1397,17 +1409,19 @@ export const Financials: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={closeQuoteModal}
-                  className="flex-1 rounded-xl border border-zinc-200 px-4 py-3 text-sm font-bold text-zinc-500 hover:bg-zinc-50"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700">
-                  {editingQuote ? 'Save Changes' : 'Create Quote'}
-                </button>
+              <div className="sticky bottom-0 -mx-4 sm:mx-0 -mb-4 sm:mb-0 bg-white pt-4 sm:pt-4 border-t border-zinc-100 mt-4 sm:mt-4">
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={closeQuoteModal}
+                    className="flex-1 rounded-xl border border-zinc-200 px-4 py-3 sm:py-3 text-sm font-bold text-zinc-500 hover:bg-zinc-50 touch-manipulation"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="flex-1 rounded-xl bg-blue-600 px-4 py-3 sm:py-3 text-sm font-bold text-white hover:bg-blue-700 touch-manipulation">
+                    {editingQuote ? 'Save' : 'Create'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -1716,7 +1730,7 @@ export const Financials: React.FC = () => {
                             onClick={() =>
                               setInvoiceLineItems(invoiceLineItems.filter((_, lineIndex) => lineIndex !== index))
                             }
-                            className="mt-2 w-full rounded-lg py-2 text-xs font-bold text-red-500 hover:bg-red-50"
+                            className="mt-2 w-full rounded-lg py-3 sm:py-2 text-xs font-bold text-red-500 hover:bg-red-50 touch-manipulation"
                           >
                             Remove Line
                           </button>
@@ -1760,18 +1774,30 @@ export const Financials: React.FC = () => {
       )}
 
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={closePaymentModal} />
-          <div className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl">
-            <h3 className="mb-2 text-2xl font-black text-zinc-900">{editingPayment ? 'Edit Payment' : 'Record Payment'}</h3>
-            <p className="mb-6 text-sm text-zinc-500">
+          <div className="relative max-h-[95vh] w-full max-w-xl overflow-y-auto rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-3 sm:mb-2">
+              <h3 className="text-lg sm:text-2xl font-black text-zinc-900">{editingPayment ? 'Edit Payment' : 'Record Payment'}</h3>
+              <button
+                type="button"
+                onClick={closePaymentModal}
+                className="lg:hidden p-2 -mr-2 text-zinc-400 hover:text-zinc-600"
+                aria-label="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="mb-4 sm:mb-6 text-xs sm:text-sm text-zinc-500">
               {editingPayment
                 ? 'Update the payment, reallocate it across invoices, and refresh the linked receipt.'
                 : 'Record an inbound payment and immediately create a receipt.'}
             </p>
-            <form onSubmit={handleRecordPayment} className="space-y-4">
+            <form onSubmit={handleRecordPayment} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="text-sm font-semibold text-zinc-700">Client</label>
+                <label className="text-sm font-semibold text-zinc-700">Client *</label>
                 <select
                   required
                   value={paymentForm.client_name}
@@ -1783,7 +1809,7 @@ export const Financials: React.FC = () => {
                     }));
                     setPaymentAllocationForm([createEmptyPaymentAllocationDraft()]);
                   }}
-                  className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Select client</option>
                   {clientOptions.map(clientName => (
@@ -1793,9 +1819,9 @@ export const Financials: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700">Amount</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="col-span-1">
+                  <label className="text-sm font-semibold text-zinc-700">Amount *</label>
                   <input
                     required
                     value={paymentForm.amount}
@@ -1803,10 +1829,10 @@ export const Financials: React.FC = () => {
                     type="number"
                     step="0.01"
                     placeholder="0.00"
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
-                <div>
+                <div className="col-span-1">
                   <label className="text-sm font-semibold text-zinc-700">Currency</label>
                   <select
                     value={paymentForm.currency}
@@ -1825,18 +1851,18 @@ export const Financials: React.FC = () => {
                           : [createEmptyPaymentAllocationDraft()]
                       );
                     }}
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
                   >
                     <option value="USD">USD ($)</option>
                     <option value="GBP">GBP (£)</option>
                   </select>
                 </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700">Payment Method</label>
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="text-sm font-semibold text-zinc-700">Method</label>
                   <select
                     value={paymentForm.method}
                     onChange={e => setPaymentForm({ ...paymentForm, method: e.target.value })}
-                    className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
                   >
                     <option value="Bank Transfer">Bank Transfer</option>
                     <option value="Cash">Cash</option>
@@ -1846,19 +1872,19 @@ export const Financials: React.FC = () => {
                   </select>
                 </div>
               </div>
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex-1">
                     <label className="text-sm font-semibold text-zinc-700">Allocations (Optional)</label>
-                    <p className="mt-1 text-xs text-zinc-500">Split this payment across one or more open invoices in the selected currency.</p>
+                    <p className="mt-1 text-xs text-zinc-500">Split this payment across open invoices.</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setPaymentAllocationForm(current => [...current, createEmptyPaymentAllocationDraft()])}
                     disabled={!paymentForm.client_name}
-                    className="rounded-xl border border-green-200 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full sm:w-auto rounded-xl border border-green-200 px-3 py-3 sm:py-2 text-xs font-bold text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
                   >
-                    Add Allocation
+                    + Add
                   </button>
                 </div>
                 <div className="mt-4 space-y-3">
@@ -1871,8 +1897,8 @@ export const Financials: React.FC = () => {
                     );
 
                     return (
-                      <div key={`${allocation.invoice_id || 'new'}-${index}`} className="rounded-2xl border border-zinc-200 bg-white p-4">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.6fr,0.9fr,auto]">
+                      <div key={`${allocation.invoice_id || 'new'}-${index}`} className="rounded-2xl border border-zinc-200 bg-white p-3 sm:p-4">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.6fr,0.9fr,auto]">
                           <div>
                             <label className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Invoice</label>
                             <select
@@ -1936,7 +1962,7 @@ export const Financials: React.FC = () => {
                                     : current.filter((_, entryIndex) => entryIndex !== index)
                                 )
                               }
-                              className="rounded-xl border border-red-200 px-3 py-3 text-xs font-bold text-red-600 hover:bg-red-50"
+                              className="rounded-xl border border-red-200 px-3 py-3 sm:py-2 text-xs font-bold text-red-600 hover:bg-red-50 touch-manipulation"
                             >
                               Remove
                             </button>
@@ -1968,20 +1994,22 @@ export const Financials: React.FC = () => {
                   value={paymentForm.notes}
                   onChange={e => setPaymentForm({ ...paymentForm, notes: e.target.value })}
                   placeholder="Optional receipt notes..."
-                  className="w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={closePaymentModal}
-                  className="flex-1 rounded-xl border border-zinc-200 px-4 py-3 text-sm font-bold text-zinc-500 hover:bg-zinc-50"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="flex-1 rounded-xl bg-green-600 px-4 py-3 text-sm font-bold text-white hover:bg-green-700">
-                  {editingPayment ? 'Save Payment Changes' : 'Record Payment'}
-                </button>
+              <div className="sticky bottom-0 -mx-4 sm:mx-0 -mb-4 sm:mb-0 bg-white pt-4 sm:pt-4 border-t border-zinc-100 mt-4 sm:mt-4">
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={closePaymentModal}
+                    className="flex-1 rounded-xl border border-zinc-200 px-4 py-3 sm:py-3 text-sm font-bold text-zinc-500 hover:bg-zinc-50 touch-manipulation"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="flex-1 rounded-xl bg-green-600 px-4 py-3 sm:py-3 text-sm font-bold text-white hover:bg-green-700 touch-manipulation">
+                    {editingPayment ? 'Save' : 'Record'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -2044,62 +2072,102 @@ export const Financials: React.FC = () => {
 
         <div className="overflow-x-auto">
           {activeTab === 'quotes' && (
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-zinc-100 bg-zinc-50">
-                <tr>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Quote #</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Client</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Amount</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Status</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Created</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+            <>
+              {/* Mobile cards */}
+              <div className="space-y-3 sm:hidden p-3">
                 {quotes.map(quote => (
-                  <tr key={quote.id} className="transition-colors hover:bg-zinc-50">
-                    <td className="px-8 py-4 font-mono text-xs font-bold text-blue-600">{quote.quote_number}</td>
-                    <td className="px-8 py-4 font-bold text-zinc-900">{quote.client_name}</td>
-                    <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(quote.amount_usd, quote.currency || 'USD')}</td>
-                    <td className="px-8 py-4">
+                  <div key={quote.id} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="font-mono text-xs font-bold text-blue-600">{quote.quote_number}</span>
                       <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-blue-700">
                         {quote.status}
                       </span>
-                    </td>
-                    <td className="px-8 py-4 text-xs text-zinc-400">{new Date(quote.created_at).toLocaleDateString()}</td>
-                    <td className="px-8 py-4">
-                      <div className="flex items-center gap-4">
-                        <button onClick={() => handlePreviewQuote(quote)} className="text-xs font-bold text-zinc-600 hover:text-zinc-900">
-                          Preview
-                        </button>
-                        <button onClick={() => handleDownloadQuote(quote)} className="text-xs font-bold text-blue-600 hover:text-blue-700">
-                          Download
-                        </button>
-                        <button onClick={() => openEditQuoteModal(quote)} className="text-xs font-bold text-amber-600 hover:text-amber-700">
-                          Edit
-                        </button>
-                        <button onClick={() => handleConvertToInvoice(quote)} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">
-                          Convert to Invoice
-                        </button>
-                        <button
-                          onClick={() => handleDeleteQuote(quote)}
-                          disabled={deletingKey === `quote:${quote.id}`}
-                          className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {deletingKey === `quote:${quote.id}` ? 'Deleting...' : 'Delete'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                    </div>
+                    <div className="font-bold text-zinc-900 mb-1">{quote.client_name}</div>
+                    <div className="font-black text-zinc-900 mb-2">{formatMoney(quote.amount_usd, quote.currency || 'USD')}</div>
+                    <div className="text-xs text-zinc-400 mb-3">{new Date(quote.created_at).toLocaleDateString()}</div>
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-zinc-50">
+                      <button onClick={() => handlePreviewQuote(quote)} className="text-xs font-bold text-zinc-600 hover:text-zinc-900 px-2 py-1">
+                        Preview
+                      </button>
+                      <button onClick={() => handleDownloadQuote(quote)} className="text-xs font-bold text-blue-600 hover:text-blue-700 px-2 py-1">
+                        Download
+                      </button>
+                      <button onClick={() => openEditQuoteModal(quote)} className="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1">
+                        Edit
+                      </button>
+                      <button onClick={() => handleConvertToInvoice(quote)} className="text-xs font-bold text-emerald-600 hover:text-emerald-700 px-2 py-1">
+                        Convert
+                      </button>
+                      <button
+                        onClick={() => handleDeleteQuote(quote)}
+                        disabled={deletingKey === `quote:${quote.id}`}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 px-2 py-1"
+                      >
+                        {deletingKey === `quote:${quote.id}` ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+              {/* Desktop table */}
+              <table className="hidden sm:table w-full text-left text-sm">
+                <thead className="border-b border-zinc-100 bg-zinc-50">
+                  <tr>
+                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Quote #</th>
+                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Client</th>
+                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Amount</th>
+                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Status</th>
+                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Created</th>
+                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {quotes.map(quote => (
+                    <tr key={quote.id} className="transition-colors hover:bg-zinc-50">
+                      <td className="px-8 py-4 font-mono text-xs font-bold text-blue-600">{quote.quote_number}</td>
+                      <td className="px-8 py-4 font-bold text-zinc-900">{quote.client_name}</td>
+                      <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(quote.amount_usd, quote.currency || 'USD')}</td>
+                      <td className="px-8 py-4">
+                        <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-blue-700">
+                          {quote.status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-4 text-xs text-zinc-400">{new Date(quote.created_at).toLocaleDateString()}</td>
+                      <td className="px-8 py-4">
+                        <div className="flex items-center gap-4">
+                          <button onClick={() => handlePreviewQuote(quote)} className="text-xs font-bold text-zinc-600 hover:text-zinc-900">
+                            Preview
+                          </button>
+                          <button onClick={() => handleDownloadQuote(quote)} className="text-xs font-bold text-blue-600 hover:text-blue-700">
+                            Download
+                          </button>
+                          <button onClick={() => openEditQuoteModal(quote)} className="text-xs font-bold text-amber-600 hover:text-amber-700">
+                            Edit
+                          </button>
+                          <button onClick={() => handleConvertToInvoice(quote)} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">
+                            Convert to Invoice
+                          </button>
+                          <button
+                            onClick={() => handleDeleteQuote(quote)}
+                            disabled={deletingKey === `quote:${quote.id}`}
+                            className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingKey === `quote:${quote.id}` ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
 
           {activeTab === 'invoices' && (
             <>
-              <div className="flex items-center gap-3 border-b border-zinc-100 px-8 py-4">
-                <svg className="h-4 w-4 shrink-0 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 border-b border-zinc-100 px-4 sm:px-8 py-3">
+                <svg className="h-4 w-4 shrink-0 text-zinc-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm3 4a1 1 0 011-1h10a1 1 0 010 2H7a1 1 0 01-1-1zm4 4a1 1 0 011-1h2a1 1 0 010 2h-2a1 1 0 01-1-1z" />
                 </svg>
                 <input
@@ -2107,7 +2175,7 @@ export const Financials: React.FC = () => {
                   placeholder="Filter by batch code…"
                   value={batchFilter}
                   onChange={e => setBatchFilter(e.target.value)}
-                  className="w-52 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full sm:w-52 rounded-lg border border-zinc-200 px-3 py-2 sm:py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-400"
                 />
                 {batchFilter && (
                   <button onClick={() => setBatchFilter('')} className="text-xs font-bold text-zinc-400 hover:text-zinc-700">
@@ -2120,7 +2188,51 @@ export const Financials: React.FC = () => {
                   </span>
                 )}
               </div>
-            <table className="w-full text-left text-sm">
+              {/* Mobile cards */}
+              <div className="sm:hidden space-y-3 p-3">
+                {invoices.filter(invoice => !batchFilter || (invoice.batch || '').toLowerCase().includes(batchFilter.toLowerCase())).map(invoice => (
+                  <div key={invoice.id} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <div className="font-mono font-bold text-green-600">{invoice.invoice_number}</div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                          {invoice.invoice_kind || 'Standard'}
+                        </div>
+                      </div>
+                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-emerald-700">
+                        {invoice.status}
+                      </span>
+                    </div>
+                    <div className="font-bold text-zinc-900 mb-1">{invoice.client_name}</div>
+                    <div className="font-black text-zinc-900 mb-2">{formatMoney(invoice.amount_usd, invoice.currency || 'USD')}</div>
+                    <div className="flex items-center gap-2 mb-3">
+                      {invoice.batch ? (
+                        <span className="rounded-md bg-blue-50 px-2 py-0.5 font-mono text-[11px] font-bold text-blue-700">{invoice.batch}</span>
+                      ) : null}
+                      <span className="text-xs text-zinc-400">Due: {new Date(invoice.due_date).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-zinc-50">
+                      <button onClick={() => handlePreviewInvoice(invoice)} className="text-xs font-bold text-zinc-600 hover:text-zinc-900 px-2 py-1">
+                        Preview
+                      </button>
+                      <button onClick={() => openEditInvoiceModal(invoice)} className="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDownloadInvoice(invoice)} className="text-xs font-bold text-green-600 hover:text-green-700 px-2 py-1">
+                        Download
+                      </button>
+                      <button
+                        onClick={() => handleDeleteInvoice(invoice)}
+                        disabled={deletingKey === `invoice:${invoice.id}`}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 px-2 py-1"
+                      >
+                        {deletingKey === `invoice:${invoice.id}` ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            <table className="hidden sm:table w-full text-left text-sm">
               <thead className="border-b border-zinc-100 bg-zinc-50">
                 <tr>
                   <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Invoice #</th>
@@ -2184,7 +2296,40 @@ export const Financials: React.FC = () => {
           )}
 
           {activeTab === 'payments' && (
-            <table className="w-full text-left text-sm">
+            <>
+              {/* Mobile cards */}
+              <div className="sm:hidden space-y-3 p-3">
+                {payments.map(payment => (
+                  <div key={payment.id} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <div className="font-bold text-zinc-900">{payment.client_name}</div>
+                        <div className="text-xs font-mono text-zinc-500">{payment.reference_id}</div>
+                      </div>
+                      <span className="rounded-md bg-green-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-green-700">
+                        {payment.type}
+                      </span>
+                    </div>
+                    <div className="font-black text-zinc-900 mb-2">
+                      {formatMoney(payment.amount_usd, normalizeDocumentCurrency(payment.currency))}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-zinc-400 mb-3">
+                      <span className="rounded bg-zinc-100 px-2 py-0.5">{payment.method}</span>
+                      <span>{new Date(payment.date).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-zinc-50">
+                      <button onClick={() => openEditPaymentModal(payment)} className="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDeletePayment(payment)} disabled={deletingKey === `payment:${payment.id}`} className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 px-2 py-1">
+                        {deletingKey === `payment:${payment.id}` ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table */}
+            <table className="hidden sm:table w-full text-left text-sm">
               <thead className="border-b border-zinc-100 bg-zinc-50">
                 <tr>
                   <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Client</th>
@@ -2237,13 +2382,14 @@ export const Financials: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            </>
           )}
 
           {activeTab === 'receipts' && (
-            <div className="p-8">
+            <div className="p-3 sm:p-8">
               {receipts.length === 0 ? (
-                <div className="mx-auto max-w-lg rounded-2xl bg-green-50 p-8 text-center">
-                  <svg className="mx-auto mb-4 h-16 w-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="mx-auto max-w-lg rounded-2xl bg-green-50 p-6 sm:p-8 text-center">
+                  <svg className="mx-auto mb-4 h-12 w-12 sm:h-16 sm:w-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -2251,27 +2397,54 @@ export const Financials: React.FC = () => {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <h3 className="mb-2 text-xl font-black text-zinc-900">Receipts</h3>
-                  <p className="mb-4 text-zinc-500">Record payments and generate receipts for clients.</p>
+                  <h3 className="mb-2 text-lg sm:text-xl font-black text-zinc-900">Receipts</h3>
+                  <p className="mb-4 text-sm sm:text-base text-zinc-500">Record payments and generate receipts for clients.</p>
                   <button
                     onClick={openPaymentModal}
-                    className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-700"
+                    className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-700 touch-manipulation"
                   >
                     Record Payment
                   </button>
                 </div>
               ) : (
                 <>
-                  <div className="mb-6 flex items-center justify-between">
-                    <h3 className="text-xl font-black text-zinc-900">All Receipts</h3>
+                  <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <h3 className="text-lg sm:text-xl font-black text-zinc-900">All Receipts</h3>
                     <button
                       onClick={openPaymentModal}
-                      className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-700"
+                      className="w-full sm:w-auto rounded-xl bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-700 touch-manipulation"
                     >
                       Record Payment
                     </button>
                   </div>
-                  <table className="w-full text-left text-sm">
+                  {/* Mobile-first card layout */}
+                  <div className="space-y-3 sm:hidden">
+                    {receipts.map(receipt => (
+                      <div key={receipt.id} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
+                        <div className="flex items-start justify-between mb-2">
+                          <span className="font-mono text-xs font-bold text-green-600">{receipt.receipt_number}</span>
+                          <span className="text-xs text-zinc-400">{new Date(receipt.payment_date).toLocaleDateString()}</span>
+                        </div>
+                        <div className="font-bold text-zinc-900 mb-1">{receipt.client_name}</div>
+                        <div className="font-black text-zinc-900 mb-3">{formatMoney(receipt.amount_received, receipt.currency)}</div>
+                        {receipt.batch && (
+                          <span className="inline-block rounded-md bg-blue-50 px-2 py-0.5 font-mono text-[11px] font-bold text-blue-700 mb-3">
+                            {receipt.batch}
+                          </span>
+                        )}
+                        <div className="flex gap-3 mt-2 pt-3 border-t border-zinc-50">
+                          <button onClick={() => handleDownloadReceipt(receipt)} className="flex-1 text-center text-xs font-bold text-blue-600 hover:text-blue-800 py-2">
+                            Preview PDF
+                          </button>
+                          <button onClick={() => handleReissueReceipt(receipt)} className="flex-1 text-center text-xs font-bold text-emerald-600 hover:text-emerald-800 py-2">
+                            Reissue
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop table */}
+                  <table className="hidden sm:table w-full text-left text-sm">
                     <thead className="border-b border-zinc-100 bg-zinc-50">
                       <tr>
                         <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Receipt #</th>

@@ -312,45 +312,50 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       <ToastContainer />
       <ConfirmDialog />
 
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Asset Register</h2>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Asset Register</h2>
+        {canEdit && (
+          <Button onClick={() => { setEditingAsset(null); setShowAssetModal(true); }} className="w-full sm:w-auto">
+            + Add Asset
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Total Assets" value={totalAssets.toString()} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard title="Total" value={totalAssets.toString()} />
         <StatCard title="Available" value={availableAssets.toString()} className="bg-green-50" />
         <StatCard title="Borrowed" value={borrowedAssets.toString()} className="bg-blue-50" />
-        <StatCard title="Pending Requests" value={pendingRequests.toString()} className="bg-yellow-50" />
+        <StatCard title="Pending" value={pendingRequests.toString()} className="bg-yellow-50" />
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      {/* Tabs - scrollable on mobile */}
+      <div className="border-b border-gray-200 -mx-3 px-3 sm:mx-0 sm:px-0">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('assets')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === 'assets'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Assets Inventory
+            Assets
           </button>
           <button
             onClick={() => setActiveTab('requests')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === 'requests'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Borrowing Requests
+            Requests
           </button>
         </nav>
       </div>
@@ -546,31 +551,31 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
       {/* Asset Modal */}
       {showAssetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingAsset ? 'Edit Asset' : 'Add New Asset'}
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-md max-h-[95vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4">
+              {editingAsset ? 'Edit Asset' : 'Add Asset'}
             </h3>
-            <form onSubmit={handleAssetSubmit} className="space-y-4">
+            <form onSubmit={handleAssetSubmit} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name *</label>
+                <label className="block text-sm font-semibold text-gray-700">Name *</label>
                 <input
                   type="text"
                   value={assetForm.name}
                   onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Category *</label>
+                <label className="block text-sm font-semibold text-gray-700">Category *</label>
                 <select
                   value={assetForm.category}
                   onChange={(e) => setAssetForm({ ...assetForm, category: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   required
                 >
-                  <option value="">Select category</option>
+                  <option value="">Select…</option>
                   <option value="Electronics">Electronics</option>
                   <option value="Equipment">Equipment</option>
                   <option value="Tools">Tools</option>
@@ -582,43 +587,43 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className="block text-sm font-semibold text-gray-700">Description</label>
                 <textarea
                   value={assetForm.description}
                   onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   rows={2}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Serial Number</label>
+                <label className="block text-sm font-semibold text-gray-700">Serial #</label>
                 <input
                   type="text"
                   value={assetForm.serial_number}
                   onChange={(e) => setAssetForm({ ...assetForm, serial_number: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <label className="block text-sm font-semibold text-gray-700">Status</label>
                   <select
                     value={assetForm.status}
                     onChange={(e) => setAssetForm({ ...assetForm, status: e.target.value as AssetStatus })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="Available">Available</option>
                     <option value="Borrowed">Borrowed</option>
-                    <option value="Under Maintenance">Under Maintenance</option>
+                    <option value="Under Maintenance">Maintenance</option>
                     <option value="Retired">Retired</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Condition</label>
+                  <label className="block text-sm font-semibold text-gray-700">Condition</label>
                   <select
                     value={assetForm.condition}
                     onChange={(e) => setAssetForm({ ...assetForm, condition: e.target.value })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="Excellent">Excellent</option>
                     <option value="Good">Good</option>
@@ -628,15 +633,15 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Location</label>
+                <label className="block text-sm font-semibold text-gray-700">Location</label>
                 <input
                   type="text"
                   value={assetForm.location}
                   onChange={(e) => setAssetForm({ ...assetForm, location: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Purchase Date</label>
                   <input
@@ -657,12 +662,12 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   />
                 </div>
               </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <Button type="button" variant="secondary" onClick={() => { setShowAssetModal(false); setEditingAsset(null); }}>
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 sticky bottom-0 bg-white pt-4 border-t">
+                <Button type="button" variant="secondary" onClick={() => { setShowAssetModal(false); setEditingAsset(null); }} className="w-full sm:w-auto py-3">
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {editingAsset ? 'Update' : 'Create'} Asset
+                <Button type="submit" className="w-full sm:w-auto py-3">
+                  {editingAsset ? 'Save' : 'Create'}
                 </Button>
               </div>
             </form>
@@ -672,18 +677,18 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
       {/* Request Modal */}
       {showRequestModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingRequest ? 'Edit Request' : 'New Asset Request'}
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-md max-h-[95vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4">
+              {editingRequest ? 'Edit Request' : 'New Request'}
             </h3>
-            <form onSubmit={handleRequestSubmit} className="space-y-4">
+            <form onSubmit={handleRequestSubmit} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Asset *</label>
+                <label className="block text-sm font-semibold text-gray-700">Asset *</label>
                 <select
                   value={requestForm.asset_id}
                   onChange={(e) => setRequestForm({ ...requestForm, asset_id: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   required
                   disabled={!!editingRequest}
                 >
@@ -696,23 +701,23 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Requested By *</label>
+                <label className="block text-sm font-semibold text-gray-700">Requested By *</label>
                 <input
                   type="text"
                   value={requestForm.requested_by}
                   onChange={(e) => setRequestForm({ ...requestForm, requested_by: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <label className="block text-sm font-semibold text-gray-700">Email</label>
                   <input
                     type="email"
                     value={requestForm.requester_email}
                     onChange={(e) => setRequestForm({ ...requestForm, requester_email: e.target.value })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 <div>
