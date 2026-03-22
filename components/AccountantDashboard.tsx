@@ -117,17 +117,17 @@ export const AccountantDashboard: React.FC = () => {
         supabase.getCompanyDetails(),
         supabase.getOperatingFunds().catch(() => [] as import('../types').OperatingFund[]),
       ]);
-      setInvoices(inv);
-      setPayments(pay);
-      setExpenses(exp);
-      setQuotes(quo);
-      setSummaries(sum);
-      setVehicles(veh);
-      setClients(cli);
-      setPayslips(psl);
-      setEmployees(emp);
+      setInvoices(Array.isArray(inv) ? inv : []);
+      setPayments(Array.isArray(pay) ? pay : []);
+      setExpenses(Array.isArray(exp) ? exp : []);
+      setQuotes(Array.isArray(quo) ? quo : []);
+      setSummaries(Array.isArray(sum) ? sum : []);
+      setVehicles(Array.isArray(veh) ? veh : []);
+      setClients(Array.isArray(cli) ? cli : []);
+      setPayslips(Array.isArray(psl) ? psl : []);
+      setEmployees(Array.isArray(emp) ? emp : []);
       setCompany(comp);
-      setOperatingFunds(funds);
+      setOperatingFunds(Array.isArray(funds) ? funds : []);
       setLoading(false);
     } catch (error: any) {
       console.error('[AccountantDashboard] loadData: Error loading data:', error);
