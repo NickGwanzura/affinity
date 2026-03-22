@@ -42,6 +42,25 @@
 </script>
 <style>
       body { font-family: 'Manrope', sans-serif; }
+
+      /* Accessibility: respect reduced-motion preference */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* Accessibility: focus-visible for keyboard users only */
+      :focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+      :focus:not(:focus-visible) {
+        outline: none;
+      }
     </style>
 </head>
 <body class="bg-zinc-50 text-zinc-900 antialiased font-sans">

@@ -74,7 +74,7 @@ const StatCard: React.FC<StatCardProps> = memo(({
       aria-label={title}
     >
       {/* Title */}
-      <p className={`${styles.title} text-[10px] font-black uppercase tracking-widest`}>
+      <p className={`${styles.title} text-xs font-black uppercase tracking-widest`}>
         {title}
       </p>
 
@@ -140,7 +140,7 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
       role="region"
       aria-label="Fleet Efficiency"
     >
-      <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest">
+      <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">
         Fleet Efficiency
       </p>
       <h2 className="text-4xl font-black mt-3 text-zinc-900">

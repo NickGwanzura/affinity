@@ -1053,7 +1053,7 @@ END OF REPORT
           {/* Analytics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200 relative overflow-hidden group">
-              <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest">Total Asset Valuation</p>
+              <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">Total Asset Valuation</p>
               <h2 className="text-4xl font-black mt-3 text-zinc-900">
                 ${summaries.reduce((acc, s) => acc + s.total_landed_cost_usd, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </h2>
@@ -1064,7 +1064,7 @@ END OF REPORT
             </div>
 
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
-              <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest">In-Transit Assets</p>
+              <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">In-Transit Assets</p>
               <h2 className="text-4xl font-black mt-3 text-blue-600">
                 {summaries.filter(s => s.status !== 'Sold').length}
               </h2>
@@ -1074,7 +1074,7 @@ END OF REPORT
             </div>
 
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
-              <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest">Fleet Efficiency</p>
+              <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">Fleet Efficiency</p>
               <h2 className="text-4xl font-black mt-3 text-zinc-900">
                 94%
               </h2>
@@ -1119,7 +1119,7 @@ END OF REPORT
                 {statusData.map((s, i) => (
                   <div key={s.name} className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i] }}></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{s.name} ({s.value})</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">{s.name} ({s.value})</span>
                   </div>
                 ))}
               </div>
@@ -1135,10 +1135,10 @@ END OF REPORT
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="bg-zinc-50 border-b border-zinc-100">
-                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]">Asset / VIN</th>
-                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]">Region</th>
-                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]">Purchase Cost</th>
-                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]">Landed Cost</th>
+                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs">Asset / VIN</th>
+                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs">Region</th>
+                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs">Purchase Cost</th>
+                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs">Landed Cost</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -1147,11 +1147,11 @@ END OF REPORT
                       <td className="px-8 py-6">
                         <div className="flex flex-col">
                           <span className="font-black text-zinc-900 text-base">{s.make_model}</span>
-                          <span className="font-mono text-[10px] text-zinc-400 font-bold uppercase tracking-wider">{s.vin_number}</span>
+                          <span className="font-mono text-xs text-zinc-400 font-bold uppercase tracking-wider">{s.vin_number}</span>
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ring-1 ${s.status === 'UK' ? 'bg-zinc-100 text-zinc-500 ring-zinc-200' :
+                        <span className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest ring-1 ${s.status === 'UK' ? 'bg-zinc-100 text-zinc-500 ring-zinc-200' :
                           s.status === 'Namibia' ? 'bg-amber-50 text-amber-700 ring-amber-100' :
                             s.status === 'Zimbabwe' ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' :
                               s.status === 'Botswana' ? 'bg-purple-50 text-purple-700 ring-purple-100' :
@@ -1165,7 +1165,7 @@ END OF REPORT
                         <div className="flex items-center justify-between">
                           <div className="flex flex-col">
                             <span className="font-black text-zinc-900 text-lg">${s.total_landed_cost_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Total Valuation</span>
+                            <span className="text-xs text-zinc-400 font-bold uppercase tracking-widest">Total Valuation</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <button
@@ -1867,8 +1867,8 @@ END OF REPORT
       {/* Operating Funds Modal */}
       {showFundsModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowFundsModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowFundsModal(false)}></div>
+          <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-zinc-900">Record Transaction</h3>
               <button onClick={() => setShowFundsModal(false)} className="text-zinc-400 hover:text-zinc-600">
@@ -2022,7 +2022,7 @@ END OF REPORT
       {/* Add Vehicle Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowAddModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-zinc-900">{editingVehicle ? 'Edit Vehicle' : 'Add Vehicle'}</h3>
@@ -2114,7 +2114,7 @@ END OF REPORT
       {/* Add Expense Modal */}
       {showExpenseModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowExpenseModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowExpenseModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-zinc-900">Add Expense</h3>
@@ -2279,7 +2279,7 @@ END OF REPORT
       {/* Client Modal */}
       {showClientModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowClientModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowClientModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-zinc-900 mb-6">{editingClient ? 'Edit Client' : 'Add New Client'}</h3>
             <form onSubmit={handleSaveClient} className="space-y-4">
@@ -2353,7 +2353,7 @@ END OF REPORT
       {/* Employee Modal */}
       {showEmployeeModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowEmployeeModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowEmployeeModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-3xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-zinc-900 mb-6">{editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
             <form onSubmit={handleSaveEmployee} className="space-y-4">
@@ -2446,7 +2446,7 @@ END OF REPORT
       {/* Payslip Modal */}
       {showPayslipModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowPayslipModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowPayslipModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-zinc-900 mb-6">Generate Payslip</h3>
             <form onSubmit={handleGeneratePayslip} className="space-y-6">
@@ -2592,7 +2592,7 @@ END OF REPORT
       {showDeleteVehicleDialog && vehicleToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm" onClick={() => setShowDeleteVehicleDialog(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
               <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

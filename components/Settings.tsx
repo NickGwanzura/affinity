@@ -621,7 +621,7 @@ export const Settings: React.FC = () => {
                     </svg>
                   </div>
                   <p className="text-2xl sm:text-2xl font-black text-blue-900">{users.length}</p>
-                  <p className="text-[10px] sm:text-xs font-bold text-blue-700 uppercase tracking-wider mt-1">Total Users</p>
+                  <p className="text-xs sm:text-xs font-bold text-blue-700 uppercase tracking-wider mt-1">Total Users</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200 min-h-[100px]">
@@ -631,7 +631,7 @@ export const Settings: React.FC = () => {
                     </svg>
                   </div>
                   <p className="text-2xl sm:text-2xl font-black text-emerald-900">{users.filter(u => u.status === 'Active').length}</p>
-                  <p className="text-[10px] sm:text-xs font-bold text-emerald-700 uppercase tracking-wider mt-1">Active Users</p>
+                  <p className="text-xs sm:text-xs font-bold text-emerald-700 uppercase tracking-wider mt-1">Active Users</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200 min-h-[100px]">
@@ -641,7 +641,7 @@ export const Settings: React.FC = () => {
                     </svg>
                   </div>
                   <p className="text-2xl sm:text-2xl font-black text-purple-900">{users.filter(u => u.role === 'Admin').length}</p>
-                  <p className="text-[10px] sm:text-xs font-bold text-purple-700 uppercase tracking-wider mt-1">Administrators</p>
+                  <p className="text-xs sm:text-xs font-bold text-purple-700 uppercase tracking-wider mt-1">Administrators</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200 min-h-[100px]">
@@ -651,7 +651,7 @@ export const Settings: React.FC = () => {
                     </svg>
                   </div>
                   <p className="text-2xl sm:text-2xl font-black text-amber-900">{users.filter(u => u.status === 'Inactive').length}</p>
-                  <p className="text-[10px] sm:text-xs font-bold text-amber-700 uppercase tracking-wider mt-1">Inactive Users</p>
+                  <p className="text-xs sm:text-xs font-bold text-amber-700 uppercase tracking-wider mt-1">Inactive Users</p>
                 </div>
               </div>
 
@@ -840,7 +840,7 @@ export const Settings: React.FC = () => {
                                 <span className="text-zinc-600 font-mono text-xs truncate block max-w-[200px]" title={user.email}>{user.email}</span>
                               </td>
                               <td className="px-4 lg:px-6 py-4">
-                                <span className={`px-2 py-1 rounded-lg text-[10px] lg:text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 ${user.role === 'Admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
+                                <span className={`px-2 py-1 rounded-lg text-xs lg:text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 ${user.role === 'Admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
                                   user.role === 'Manager' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                                     user.role === 'Accountant' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
                                       'bg-orange-100 text-orange-700 border border-orange-200'
@@ -854,7 +854,7 @@ export const Settings: React.FC = () => {
                                 </span>
                               </td>
                               <td className="px-4 lg:px-6 py-4">
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] lg:text-xs font-bold ${user.status === 'Active'
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs lg:text-xs font-bold ${user.status === 'Active'
                                   ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                                   : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
                                   }`}>
@@ -1065,12 +1065,12 @@ export const Settings: React.FC = () => {
                 <table className="w-full">
                   <thead className="bg-zinc-50 border-b border-zinc-200">
                     <tr>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Name</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Email</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Role</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Status</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Requested</th>
-                      <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-zinc-500">Actions</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Name</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Email</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Role</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Requested</th>
+                      <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-zinc-500">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
@@ -1173,13 +1173,13 @@ export const Settings: React.FC = () => {
                 <table className="w-full">
                   <thead className="bg-zinc-50 border-b border-zinc-200">
                     <tr>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Name</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Email</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Role</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Status</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Expires</th>
-                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">Invited By</th>
-                      <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-zinc-500">Actions</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Name</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Email</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Role</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Expires</th>
+                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Invited By</th>
+                      <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-zinc-500">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
@@ -1264,8 +1264,8 @@ export const Settings: React.FC = () => {
       {/* User Creation Modal */}
       {showUserModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowUserModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowUserModal(false)}></div>
+          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-black text-zinc-900 mb-6">Add New User</h3>
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div className="space-y-1">
@@ -1417,8 +1417,8 @@ export const Settings: React.FC = () => {
       {/* Set Password Modal */}
       {showSetPasswordModal && userToSetPassword && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowSetPasswordModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowSetPasswordModal(false)}></div>
+          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1487,8 +1487,8 @@ export const Settings: React.FC = () => {
       {/* Edit User Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowEditModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowEditModal(false)}></div>
+          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-black text-zinc-900 mb-6">Edit User</h3>
             <form onSubmit={handleEditUser} className="space-y-4">
               <div className="space-y-1">
@@ -1632,8 +1632,8 @@ export const Settings: React.FC = () => {
       {/* Invite Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowInviteModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowInviteModal(false)}></div>
+          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1710,8 +1710,8 @@ export const Settings: React.FC = () => {
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && userToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowDeleteDialog(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowDeleteDialog(false)}></div>
+          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
                 <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

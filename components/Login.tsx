@@ -120,11 +120,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
               <p className="text-2xl font-black mb-1">100%</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-300">Transit Visibility</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-300">Transit Visibility</p>
             </div>
             <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
               <p className="text-2xl font-black mb-1">Zero</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-300">Audit Gaps</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-300">Audit Gaps</p>
             </div>
           </div>
         </div>
@@ -163,7 +163,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             {mode === 'register' && (
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Full Name</label>
+                <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">Full Name</label>
                 <input 
                   type="text" 
                   value={name}
@@ -177,7 +177,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             {mode === 'register' && (
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Role</label>
+                <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">Role</label>
                 <select
                   value={role}
                   onChange={e => setRole(e.target.value as UserRole)}
@@ -202,7 +202,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             )}
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Work Email</label>
+              <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">Work Email</label>
               <input 
                 type="email" 
                 value={email}
@@ -216,7 +216,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             {mode === 'login' && (
               <div className="space-y-1">
                 <div className="flex justify-between items-center mb-1">
-                  <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Secure Password</label>
+                  <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">Secure Password</label>
                   {mode === 'login' && (
                     <button 
                       type="button"
@@ -225,7 +225,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setError('');
                         setSuccess('');
                       }}
-                      className="text-[10px] font-black uppercase text-blue-600 tracking-widest hover:underline"
+                      className="text-xs font-black uppercase text-blue-600 tracking-widest hover:underline"
                     >
                       Forgot?
                     </button>

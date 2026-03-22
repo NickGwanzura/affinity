@@ -274,7 +274,7 @@ export const ClientDirectory: React.FC = () => {
                                 <td className="py-3 font-mono text-xs font-bold text-blue-600">{inv.invoice_number}</td>
                                 <td className="py-3 font-bold text-zinc-900">{formatMoney(inv.amount_usd, inv.currency || 'USD')}</td>
                                 <td className="py-3">
-                                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-zinc-100 text-zinc-500'}`}>{inv.status}</span>
+                                  <span className={`px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-zinc-100 text-zinc-500'}`}>{inv.status}</span>
                                 </td>
                                 <td className="py-3 text-zinc-500 text-xs">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</td>
                                 <td className="py-3 text-zinc-500 text-xs truncate max-w-[200px]">{inv.description || '—'}</td>
@@ -305,7 +305,7 @@ export const ClientDirectory: React.FC = () => {
                                 <td className="py-3 font-mono text-xs font-bold text-blue-600">{q.quote_number}</td>
                                 <td className="py-3 font-bold text-zinc-900">{formatMoney(q.amount_usd, q.currency || 'USD')}</td>
                                 <td className="py-3">
-                                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-zinc-100 text-zinc-500'}`}>{q.status}</span>
+                                  <span className={`px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-zinc-100 text-zinc-500'}`}>{q.status}</span>
                                 </td>
                                 <td className="py-3 text-zinc-500 text-xs">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '—'}</td>
                                 <td className="py-3 text-zinc-500 text-xs truncate max-w-[200px]">{q.description || '—'}</td>

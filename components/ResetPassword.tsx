@@ -169,7 +169,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
             {/* Manual Token Input */}
             {showManualInput && (
               <div className="space-y-1">
-                <label htmlFor="reset-token" className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">
+                <label htmlFor="reset-token" className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">
                   Reset Token (from email)
                 </label>
                 <input
@@ -188,7 +188,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
 
             {/* New Password */}
             <div className="space-y-1">
-              <label htmlFor="new-password" className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">
+              <label htmlFor="new-password" className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">
                 New Password
               </label>
               <div className="relative">
@@ -240,7 +240,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
 
             {/* Confirm Password */}
             <div className="space-y-1">
-              <label htmlFor="confirm-password" className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">
+              <label htmlFor="confirm-password" className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">
                 Confirm Password
               </label>
               <div className="relative">

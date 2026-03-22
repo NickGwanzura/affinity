@@ -254,7 +254,7 @@ export const PayslipsTab: React.FC = () => {
       {/* Generate Payslip Modal */}
       {showPayslipModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowPayslipModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowPayslipModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-zinc-900 mb-6">Generate Payslip</h3>
             <form onSubmit={handleGeneratePayslip} className="space-y-6">

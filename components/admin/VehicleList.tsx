@@ -56,7 +56,7 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
       <td className="px-8 py-6">
         <div className="flex flex-col">
           <span className="font-black text-zinc-900 text-base">{vehicle.make_model}</span>
-          <span className="font-mono text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+          <span className="font-mono text-xs text-zinc-400 font-bold uppercase tracking-wider">
             {vehicle.vin_number}
           </span>
         </div>
@@ -65,14 +65,14 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
       {/* Region Column */}
       <td className="px-8 py-6">
         <span 
-          className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ring-1 ${statusStyles}`}
+          className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest ring-1 ${statusStyles}`}
         >
           {vehicle.status}
         </span>
       </td>
 
       {/* Purchase Cost Column */}
-      <td className="px-8 py-6 font-bold text-zinc-400 tracking-tight">
+      <td className="px-8 py-6 font-bold text-zinc-400 tracking-tight tabular-nums">
         £{vehicle.purchase_price_gbp.toLocaleString()}
       </td>
 
@@ -80,10 +80,10 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
       <td className="px-8 py-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="font-black text-zinc-900 text-lg">
+            <span className="font-black text-zinc-900 text-lg tabular-nums">
               ${vehicle.total_landed_cost_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </span>
-            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
+            <span className="text-xs text-zinc-400 font-bold uppercase tracking-widest">
               Total Valuation
             </span>
           </div>
@@ -183,25 +183,25 @@ export const VehicleList: React.FC<VehicleListProps> = memo(({ vehicles, onEdit,
             <tr className="bg-zinc-50 border-b border-zinc-100">
               <th 
                 scope="col" 
-                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]"
+                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
               >
                 Asset / VIN
               </th>
               <th 
                 scope="col" 
-                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]"
+                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
               >
                 Region
               </th>
               <th 
                 scope="col" 
-                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]"
+                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
               >
                 Purchase Cost
               </th>
               <th 
                 scope="col" 
-                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]"
+                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
               >
                 Landed Cost
               </th>

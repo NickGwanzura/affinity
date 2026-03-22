@@ -39,7 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center gap-2 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-opacity-50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100';
+  const baseStyles = 'inline-flex items-center justify-center gap-2 transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-opacity-50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100';
   
   return (
     <button
@@ -96,7 +96,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 ${iconSizes[size]} ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 min-w-[44px] min-h-[44px] ${iconSizes[size]} ${variantStyles[variant]} ${className}`}
       disabled={isLoading || props.disabled}
       {...props}
     >

@@ -156,7 +156,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                         )}
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">New Password</label>
+                            <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">New Password</label>
                             <input
                                 type="password"
                                 value={password}
@@ -168,7 +168,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Confirm Password</label>
+                            <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">Confirm Password</label>
                             <input
                                 type="password"
                                 value={confirmPassword}

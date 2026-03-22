@@ -2079,7 +2079,7 @@ export const Financials: React.FC = () => {
                   <div key={quote.id} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between mb-2">
                       <span className="font-mono text-xs font-bold text-blue-600">{quote.quote_number}</span>
-                      <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-blue-700">
+                      <span className="rounded-md bg-blue-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-blue-700">
                         {quote.status}
                       </span>
                     </div>
@@ -2114,12 +2114,12 @@ export const Financials: React.FC = () => {
               <table className="hidden sm:table w-full text-left text-sm">
                 <thead className="border-b border-zinc-100 bg-zinc-50">
                   <tr>
-                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Quote #</th>
-                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Client</th>
-                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Amount</th>
-                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Status</th>
-                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Created</th>
-                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Actions</th>
+                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Quote #</th>
+                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
+                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Amount</th>
+                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Status</th>
+                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Created</th>
+                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -2129,7 +2129,7 @@ export const Financials: React.FC = () => {
                       <td className="px-8 py-4 font-bold text-zinc-900">{quote.client_name}</td>
                       <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(quote.amount_usd, quote.currency || 'USD')}</td>
                       <td className="px-8 py-4">
-                        <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-blue-700">
+                        <span className="rounded-md bg-blue-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-blue-700">
                           {quote.status}
                         </span>
                       </td>
@@ -2195,11 +2195,11 @@ export const Financials: React.FC = () => {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="font-mono font-bold text-green-600">{invoice.invoice_number}</div>
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                        <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">
                           {invoice.invoice_kind || 'Standard'}
                         </div>
                       </div>
-                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-emerald-700">
+                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-emerald-700">
                         {invoice.status}
                       </span>
                     </div>
@@ -2235,13 +2235,13 @@ export const Financials: React.FC = () => {
             <table className="hidden sm:table w-full text-left text-sm">
               <thead className="border-b border-zinc-100 bg-zinc-50">
                 <tr>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Invoice #</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Client</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Batch</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Amount</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Status</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Due Date</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Actions</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Invoice #</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Batch</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Amount</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Status</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Due Date</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -2263,7 +2263,7 @@ export const Financials: React.FC = () => {
                     </td>
                     <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(invoice.amount_usd, invoice.currency || 'USD')}</td>
                     <td className="px-8 py-4">
-                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-emerald-700">
+                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-emerald-700">
                         {invoice.status}
                       </span>
                     </td>
@@ -2306,7 +2306,7 @@ export const Financials: React.FC = () => {
                         <div className="font-bold text-zinc-900">{payment.client_name}</div>
                         <div className="text-xs font-mono text-zinc-500">{payment.reference_id}</div>
                       </div>
-                      <span className="rounded-md bg-green-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-green-700">
+                      <span className="rounded-md bg-green-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-green-700">
                         {payment.type}
                       </span>
                     </div>
@@ -2332,14 +2332,14 @@ export const Financials: React.FC = () => {
             <table className="hidden sm:table w-full text-left text-sm">
               <thead className="border-b border-zinc-100 bg-zinc-50">
                 <tr>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Client</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Reference</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Type</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Amount</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Currency</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Method</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Date</th>
-                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Actions</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Reference</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Type</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Amount</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Currency</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Method</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Date</th>
+                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -2353,7 +2353,7 @@ export const Financials: React.FC = () => {
                       ) : null}
                     </td>
                     <td className="px-8 py-4">
-                      <span className={`text-[10px] font-black uppercase ${payment.type === 'Inbound' ? 'text-emerald-600' : 'text-red-600'}`}>
+                      <span className={`text-xs font-black uppercase ${payment.type === 'Inbound' ? 'text-emerald-600' : 'text-red-600'}`}>
                         {payment.type}
                       </span>
                     </td>
@@ -2447,12 +2447,12 @@ export const Financials: React.FC = () => {
                   <table className="hidden sm:table w-full text-left text-sm">
                     <thead className="border-b border-zinc-100 bg-zinc-50">
                       <tr>
-                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Receipt #</th>
-                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Client</th>
-                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Batch</th>
-                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Amount</th>
-                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Date</th>
-                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Actions</th>
+                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Receipt #</th>
+                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
+                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Batch</th>
+                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Amount</th>
+                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Date</th>
+                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100">

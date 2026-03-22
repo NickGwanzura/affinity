@@ -1246,7 +1246,7 @@ export const AccountantDashboard: React.FC = () => {
                       <tr key={fund.id} className="hover:bg-zinc-50 border-t">
                         <td className="px-4 py-3 text-xs text-zinc-500">{new Date(fund.date).toLocaleDateString()}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter ${fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{fund.type}</span>
+                          <span className={`px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter ${fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{fund.type}</span>
                         </td>
                         <td className="px-4 py-3 font-bold">{fund.currency === 'GBP' ? '£' : '$'}{fund.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                         <td className="px-4 py-3 text-zinc-700 max-w-[200px] truncate">{fund.description}</td>
@@ -1421,7 +1421,7 @@ export const AccountantDashboard: React.FC = () => {
       {/* Operating Fund Modal */}
       {showFundModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowFundModal(false)} />
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowFundModal(false)} />
           <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
             <h3 className="text-2xl font-bold text-zinc-900 mb-6">Add Operating Fund Entry</h3>
             <form onSubmit={handleAddFund} className="space-y-4">
@@ -1481,7 +1481,7 @@ export const AccountantDashboard: React.FC = () => {
       {/* Client Modal - Reusing AdminDashboard modal structure */}
       {showClientModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowClientModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowClientModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-zinc-900 mb-6">{editingClient ? 'Edit Client' : 'Add New Client'}</h3>
             <form onSubmit={handleSaveClient} className="space-y-4">
@@ -1499,7 +1499,7 @@ export const AccountantDashboard: React.FC = () => {
       {/* Payslip Modal - Compact version */}
       {showPayslipModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowPayslipModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowPayslipModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-zinc-900 mb-6">Generate Payslip</h3>
             <form onSubmit={handleGeneratePayslip} className="space-y-6">
@@ -1521,7 +1521,7 @@ export const AccountantDashboard: React.FC = () => {
       {/* Add Expense Modal */}
       {showExpenseModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowExpenseModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowExpenseModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-zinc-900">Add Expense</h3>
@@ -1686,7 +1686,7 @@ export const AccountantDashboard: React.FC = () => {
       {/* Edit Expense Modal */}
       {showEditExpenseModal && editingExpense && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowEditExpenseModal(false)}></div>
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowEditExpenseModal(false)}></div>
           <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-zinc-900">Edit Expense</h3>

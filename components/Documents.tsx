@@ -155,14 +155,14 @@ export const Documents: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                     <button 
                       aria-label={`View details for ${exp.description} receipt`}
-                      className="text-white text-[10px] font-black uppercase tracking-widest w-full py-2 bg-white/20 backdrop-blur-md rounded-lg"
+                      className="text-white text-xs font-black uppercase tracking-widest w-full py-2 bg-white/20 backdrop-blur-md rounded-lg"
                     >
                       View Details
                     </button>
                   </div>
                 </div>
                 <div className="p-4 bg-white">
-                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">{exp.category}</p>
+                  <p className="text-xs font-black text-blue-600 uppercase tracking-widest mb-1">{exp.category}</p>
                   <p className="text-sm font-bold text-zinc-900 truncate">{exp.description}</p>
                   <div className="flex justify-between items-center mt-2">
                     <span className="text-xs font-black text-zinc-400">{new Date(exp.created_at).toLocaleDateString()}</span>
@@ -244,7 +244,7 @@ export const Documents: React.FC = () => {
                 <button 
                   onClick={() => generateVehicleStatement(v)}
                   aria-label={`Generate statement for ${v.make_model}`}
-                  className="bg-zinc-900 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-blue-600 transition-all w-full"
+                  className="bg-zinc-900 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-blue-600 transition-all w-full"
                 >
                   Generate Statement
                 </button>

@@ -181,7 +181,7 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
       </td>
 
       {/* Amount Column */}
-      <td className="px-6 py-4 text-right">
+      <td className="px-6 py-4 text-right tabular-nums">
         <div className="flex flex-col items-end">
           <span className="text-sm font-bold text-zinc-900">{formattedAmount}</span>
           {expense.currency !== CURRENCIES.USD && (
@@ -286,7 +286,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
         </div>
         <div className="text-right">
           <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">Total (USD)</p>
-          <p className="text-xl font-black text-zinc-900">
+          <p className="text-xl font-black text-zinc-900 tabular-nums">
             ${totals.usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </p>
         </div>
@@ -303,46 +303,46 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
             <tr className="bg-zinc-50 border-b border-zinc-100">
               <th 
                 scope="col" 
-                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]"
+                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
               >
                 Date
               </th>
               <th 
                 scope="col" 
-                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]"
+                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
               >
                 Category
               </th>
               {showVehicleColumn && (
                 <th 
                   scope="col" 
-                  className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]"
+                  className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
                 >
                   Vehicle
                 </th>
               )}
               <th 
                 scope="col" 
-                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]"
+                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
               >
                 Location
               </th>
               <th 
                 scope="col" 
-                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px]"
+                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
               >
                 Description
               </th>
               <th 
                 scope="col" 
-                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px] text-right"
+                className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs text-right"
               >
                 Amount
               </th>
               {onDelete && (
                 <th 
                   scope="col" 
-                  className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-[10px] text-right"
+                  className="px-6 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs text-right"
                 >
                   Actions
                 </th>
