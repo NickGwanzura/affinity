@@ -68,30 +68,24 @@ export const Settings: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
+      // Load each section independently so one failure doesn't blank the whole page
+      const [c, i, r] = await Promise.all([
+        supabase.getCompanyDetails().catch((e: unknown) => { console.error('[Settings] getCompanyDetails:', e); return null; }),
+        supabase.getInvites().catch((e: unknown) => { console.error('[Settings] getInvites:', e); return [] as UserInvite[]; }),
+        supabase.getRegistrationRequests().catch((e: unknown) => { console.error('[Settings] getRegistrationRequests:', e); return [] as RegistrationRequest[]; }),
+      ]);
+
+      setCompany(c);
+      setInvites(Array.isArray(i) ? i : []);
+      setRegistrationRequests(Array.isArray(r) ? r : []);
+
       try {
-        const [c, i, r] = await Promise.all([
-          supabase.getCompanyDetails(),
-          supabase.getInvites(),
-          supabase.getRegistrationRequests()
-        ]);
-        
-        // Load users separately for better error handling
-        let u: AppUser[] = [];
-        try {
-          u = await loadUsers();
-        } catch (userError: any) {
-          console.error('[Settings] Failed to load users:', userError.message);
-          // Don't fail completely, just show empty users
-        }
-        
-        setCompany(c);
-        setInvites(i);
-        setRegistrationRequests(r);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading settings:', error);
-        setLoading(false);
+        await loadUsers();
+      } catch (userError: any) {
+        console.error('[Settings] loadUsers:', userError.message);
       }
+
+      setLoading(false);
     };
     load();
   }, []);
@@ -541,7 +535,7 @@ export const Settings: React.FC = () => {
                   <label className="text-sm font-semibold text-zinc-700">Phone Number</label>
                   <input
                     type="tel"
-                    value={company.phone}
+                    value={company.phone ?? ''}
                     onChange={(e) => setCompany({ ...company, phone: e.target.value })}
                     className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -550,7 +544,7 @@ export const Settings: React.FC = () => {
                   <label className="text-sm font-semibold text-zinc-700">Website</label>
                   <input
                     type="url"
-                    value={company.website}
+                    value={company.website ?? ''}
                     onChange={(e) => setCompany({ ...company, website: e.target.value })}
                     placeholder="https://example.com"
                     className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
@@ -570,7 +564,7 @@ export const Settings: React.FC = () => {
                 <label className="text-sm font-semibold text-zinc-700">Company Logo URL</label>
                 <input
                   type="url"
-                  value={company.logo_url}
+                  value={company.logo_url ?? ''}
                   onChange={(e) => setCompany({ ...company, logo_url: e.target.value })}
                   placeholder="https://example.com/logo.png"
                   className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
