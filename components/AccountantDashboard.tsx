@@ -143,7 +143,7 @@ export const AccountantDashboard: React.FC = () => {
       if (session?.user?.role) {
         setUserRole(session.user.role);
       }
-    }).catch(console.error);
+    }).catch((err: unknown) => console.error('[AccountantDashboard] getSession failed:', err));
   }, []);
 
   const totalRevenue = invoices

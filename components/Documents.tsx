@@ -232,11 +232,11 @@ export const Documents: React.FC = () => {
                 
                 <div className="grid grid-cols-2 gap-4 mb-4 bg-zinc-50 p-4 rounded-xl">
                   <div>
-                    <p className="text-xs font-semibold text-zinc-500 mb-1" scope="row">Expenses</p>
+                    <p className="text-xs font-semibold text-zinc-500 mb-1">Expenses</p>
                     <p className="text-sm font-black text-zinc-900">{vehicleExpenses.length} items</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-zinc-500 mb-1" scope="row">Total USD</p>
+                    <p className="text-xs font-semibold text-zinc-500 mb-1">Total USD</p>
                     <p className="text-sm font-black text-zinc-900">${totalExpenses.toLocaleString(undefined, {maximumFractionDigits: 2})}</p>
                   </div>
                 </div>
@@ -282,43 +282,43 @@ export const Documents: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider" scope="row">Category</label>
+                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Category</label>
                   <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.category}</p>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider" scope="row">Location</label>
+                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Location</label>
                   <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.location}</p>
                 </div>
               </div>
               
               <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider" scope="row">Description</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Description</label>
                 <p className="text-base text-zinc-900 mt-1">{selectedReceipt.description}</p>
               </div>
               
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider" scope="row">Amount</label>
+                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Amount</label>
                   <p className="text-xl font-black text-zinc-900 mt-1">{selectedReceipt.currency} {selectedReceipt.amount.toLocaleString()}</p>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider" scope="row">USD Equivalent</label>
+                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">USD Equivalent</label>
                   <p className="text-xl font-black text-blue-600 mt-1">${(selectedReceipt.amount * selectedReceipt.exchange_rate_to_usd).toLocaleString(undefined, {maximumFractionDigits: 2})}</p>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider" scope="row">Date</label>
+                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Date</label>
                   <p className="text-base font-bold text-zinc-900 mt-1">{new Date(selectedReceipt.created_at).toLocaleDateString()}</p>
                 </div>
               </div>
               
               <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider" scope="row">Exchange Rate</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Exchange Rate</label>
                 <p className="text-sm text-zinc-900 mt-1">1 {selectedReceipt.currency} = ${selectedReceipt.exchange_rate_to_usd} USD</p>
               </div>
               
               {selectedReceipt.receipt_url && (
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 block" scope="row">Receipt Image</label>
+                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 block">Receipt Image</label>
                   <div className="bg-zinc-50 rounded-xl p-4">
                     {modalImageError ? (
                       <div className="text-center text-zinc-400 py-8">

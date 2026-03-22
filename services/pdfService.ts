@@ -1626,7 +1626,9 @@ function downloadBlob(blob: Blob, filename: string): void {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
+  // Delay revocation so the browser has time to start the download
+  // before the object URL is invalidated (required for Firefox/Safari).
+  setTimeout(() => window.URL.revokeObjectURL(url), 1000);
 }
 
 // Receipt PDF Generation

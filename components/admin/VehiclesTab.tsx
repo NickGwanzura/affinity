@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LandedCostSummary } from '../../types';
+import { LandedCostSummary, Currency, ExpenseCategory, VehicleStatus } from '../../types';
 import { supabase } from '../../services/supabaseService';
 import { useToast } from '../Toast';
 import {
@@ -33,9 +33,9 @@ export const VehiclesTab: React.FC = () => {
   const [expenseVehicle, setExpenseVehicle] = useState('');
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseCurrency, setExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD' | 'BWP'>('NAD');
-  const [expenseCategory, setExpenseCategory] = useState<string>('Fuel');
-  const [expenseLocation, setExpenseLocation] = useState<string>('Namibia');
+  const [expenseCurrency, setExpenseCurrency] = useState<Currency>('NAD');
+  const [expenseCategory, setExpenseCategory] = useState<ExpenseCategory>('Fuel');
+  const [expenseLocation, setExpenseLocation] = useState<VehicleStatus>('Namibia');
   const [expenseDriver, setExpenseDriver] = useState('');
 
   const notifySuccess = (msg: string) => showToast(msg, 'success');
@@ -150,8 +150,8 @@ export const VehiclesTab: React.FC = () => {
           : expenseDesc,
         amount: parseFloat(expenseAmount),
         currency: expenseCurrency,
-        category: expenseCategory as any,
-        location: expenseLocation as any,
+        category: expenseCategory,
+        location: expenseLocation,
         receipt_url: 'https://picsum.photos/400/600',
         driver_name: expenseDriver || undefined,
       });
@@ -193,6 +193,7 @@ export const VehiclesTab: React.FC = () => {
       {/* Action buttons */}
       <div className="flex items-center gap-2 flex-wrap">
         <button
+          type="button"
           onClick={() => setShowExpenseModal(true)}
           className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-green-700 transition-all shadow-xl shadow-green-100 flex items-center gap-2"
         >
@@ -200,6 +201,7 @@ export const VehiclesTab: React.FC = () => {
           Add Expense
         </button>
         <button
+          type="button"
           onClick={openAddVehicleModal}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center gap-2"
         >
@@ -337,6 +339,7 @@ export const VehiclesTab: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <button
+                          type="button"
                           onClick={() => openEditVehicleModal(s)}
                           className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg hover:bg-blue-50 text-blue-600"
                           title="Edit vehicle"
@@ -346,6 +349,7 @@ export const VehiclesTab: React.FC = () => {
                           </svg>
                         </button>
                         <button
+                          type="button"
                           onClick={() => openDeleteDialog(s)}
                           className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg hover:bg-red-50 text-red-600"
                           title="Delete vehicle"
@@ -371,7 +375,7 @@ export const VehiclesTab: React.FC = () => {
           <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-zinc-900">{editingVehicle ? 'Edit Vehicle' : 'Add Vehicle'}</h3>
-              <button onClick={() => { setShowAddModal(false); setEditingVehicle(null); }} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+              <button type="button" onClick={() => { setShowAddModal(false); setEditingVehicle(null); }} className="text-zinc-400 hover:text-zinc-600 transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -416,7 +420,7 @@ export const VehiclesTab: React.FC = () => {
           <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-zinc-900">Add Expense</h3>
-              <button onClick={() => setShowExpenseModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+              <button type="button" onClick={() => setShowExpenseModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -435,7 +439,7 @@ export const VehiclesTab: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency</label>
-                  <select value={expenseCurrency} onChange={(e) => setExpenseCurrency(e.target.value as any)} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+                  <select value={expenseCurrency} onChange={(e) => setExpenseCurrency(e.target.value as Currency)} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
                     <option value="NAD">NAD (Namibia)</option>
                     <option value="GBP">GBP (UK)</option>
                     <option value="USD">USD (General)</option>
@@ -446,7 +450,7 @@ export const VehiclesTab: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-semibold text-zinc-700 mb-2 block">Category</label>
-                  <select value={expenseCategory} onChange={(e) => { setExpenseCategory(e.target.value); if (e.target.value !== 'Driver Disbursement') setExpenseDriver(''); }} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+                  <select value={expenseCategory} onChange={(e) => { setExpenseCategory(e.target.value as ExpenseCategory); if (e.target.value !== 'Driver Disbursement') setExpenseDriver(''); }} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
                     <option value="Fuel">Fuel</option>
                     <option value="Tolls">Tolls</option>
                     <option value="Food">Food</option>
@@ -459,7 +463,7 @@ export const VehiclesTab: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-zinc-700 mb-2 block">Location</label>
-                  <select value={expenseLocation} onChange={(e) => setExpenseLocation(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+                  <select value={expenseLocation} onChange={(e) => setExpenseLocation(e.target.value as VehicleStatus)} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
                     <option value="UK">UK</option>
                     <option value="Namibia">Namibia</option>
                     <option value="Zimbabwe">Zimbabwe</option>
@@ -523,7 +527,7 @@ export const VehiclesTab: React.FC = () => {
             </div>
             <div className="flex gap-3">
               <button type="button" onClick={() => setShowDeleteDialog(false)} className="flex-1 px-6 py-3 rounded-xl font-bold text-sm text-zinc-700 border border-zinc-200 hover:bg-zinc-50 transition-colors">Cancel</button>
-              <button onClick={handleDeleteVehicle} className="flex-1 px-6 py-3 rounded-xl font-bold text-sm bg-red-600 text-white hover:bg-red-700 transition-colors">Delete Vehicle</button>
+              <button type="button" onClick={handleDeleteVehicle} className="flex-1 px-6 py-3 rounded-xl font-bold text-sm bg-red-600 text-white hover:bg-red-700 transition-colors">Delete Vehicle</button>
             </div>
           </div>
         </div>

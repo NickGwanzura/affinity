@@ -1,1826 +1,319 @@
 /**
- * Supabase Service - Auth + Neon Database
- * 
- * ARCHITECTURE:
- * - Supabase: RETAINED FOR AUTH ONLY (signUp, login, logout, sessions, password reset)
- * - Neon: ALL DATABASE OPERATIONS (vehicles, expenses, quotes, invoices, etc.)
- * 
- * Access control is enforced at the application level.
- * User ID from Supabase Auth is passed explicitly to Neon queries where needed.
+ * Data Service — thin facade over databaseService + authService.
+ *
+ * Previously a 1,826-line wrapper with no-op logging and redundant try/catch.
+ * Now a minimal object that calls the real implementations directly.
+ *
+ * All components import { supabase } from this file — the name is kept
+ * intentionally so no component imports need to change.
  */
 
-import { Vehicle, Expense, LandedCostSummary, CompanyDetails, AppUser, Quote, Invoice, Payment, PaymentAllocation, Receipt, AuthSession, SupabaseConfig, UserInvite, UserRole, Client, LineItem, RegistrationRequest, Employee, Payslip, OperatingFund, QuoteItem, InvoiceItem, FinancialStatus } from '../types';
-import { EXCHANGE_RATES } from '../constants';
 import * as db from './databaseService';
-import { isNeonConnected } from './neonClient';
 import { authService } from './authService';
+import { isNeonConnected } from './neonClient';
+import { EXCHANGE_RATES } from '../constants';
+import {
+  Vehicle, Expense, LandedCostSummary, CompanyDetails, AppUser,
+  Quote, Invoice, Payment, PaymentAllocation, Receipt,
+  AuthSession, SupabaseConfig, UserInvite, UserRole, Client,
+  RegistrationRequest, Employee, Payslip, OperatingFund,
+} from '../types';
 
-// Production-ready validation and error handling
-interface APIErrorDetails {
-  message: string;
-  status?: number;
-  code?: string;
-  [key: string]: unknown;
-}
+// ─── Facade ──────────────────────────────────────────────────────────────────
 
-function isAPIError(error: unknown): error is APIErrorDetails {
-  return typeof error === 'object' && error !== null && 'message' in error;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (isAPIError(error)) {
-    return error.message;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return 'An unexpected error occurred';
-}
-
-class APIError extends Error {
-  constructor(public statusCode: number, message: string, public details?: unknown) {
-    super(message);
-    this.name = 'APIError';
-  }
-}
-
-class ValidationError extends Error {
-  constructor(message: string, public field?: string) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
-
-// Request logging for production monitoring
-interface LogData {
-  [key: string]: unknown;
-}
-
-const logAPICall = (method: string, endpoint: string, data?: LogData) => {
-  const timestamp = new Date().toISOString();
-  // Production logging - captured by monitoring system
-};
-
-// Input validation helpers
-const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-const sanitizeString = (input: string): string => {
-  return input.trim().replace(/[<>]/g, '');
-};
-
-const QUOTE_CURRENCIES = ['USD', 'GBP'] as const;
-const DOCUMENT_CURRENCIES = ['USD', 'GBP'] as const;
-const INVOICE_KINDS = ['Standard', 'Deposit', 'Final'] as const;
-
-const validateRequired = (value: unknown, fieldName: string): void => {
-  if (value === null || value === undefined || value === '') {
-    throw new ValidationError(`${fieldName} is required`, fieldName);
-  }
-};
-
-const FINANCIAL_STATUSES: FinancialStatus[] = ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
-
-class SupabaseService {
-  // Configuration - tracks Neon connection status now
+class DataService {
   private config: SupabaseConfig = {
     url: import.meta.env.VITE_SUPABASE_URL || '',
     anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-    isConnected: isNeonConnected() // Now checks Neon, not Supabase DB
+    isConnected: isNeonConnected(),
   };
 
-  // ============================================
-  // AUTH METHODS (Using Supabase Auth - RETAINED)
-  // ============================================
+  // ── Auth ────────────────────────────────────────────────────────────────────
 
   async signUp(email: string, password: string, metadata?: { name: string; role: string }) {
-    logAPICall('POST', '/auth/signup', { email });
-
-    validateRequired(email, 'email');
-    validateRequired(password, 'password');
-    if (!validateEmail(email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-    if (password.length < 8) {
-      throw new ValidationError('Password must be at least 8 characters', 'password');
-    }
-
-    try {
-      const user = await authService.createUser({
-        email: sanitizeString(email),
-        password,
-        name: metadata ? sanitizeString(metadata.name) : email.split('@')[0],
-        role: (metadata?.role as UserRole) || 'Driver',
-      });
-      logAPICall('POST', '/auth/signup', { success: true, userId: user.id });
-      return { user };
-    } catch (error: unknown) {
-      logAPICall('POST', '/auth/signup', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+    return authService.createUser({
+      email: email.toLowerCase().trim(),
+      password,
+      name: metadata?.name || email.split('@')[0],
+      role: (metadata?.role as UserRole) || 'Driver',
+    });
   }
 
-  async login(email: string, password: string): Promise<AuthSession> {
-    logAPICall('POST', '/auth/login', { email });
-
-    validateRequired(email, 'email');
-    validateRequired(password, 'password');
-    if (!validateEmail(email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    try {
-      const session = await authService.login(sanitizeString(email), password);
-      logAPICall('POST', '/auth/login', { success: true, userId: session.user.id, role: session.user.role });
-      return session;
-    } catch (error: unknown) {
-      logAPICall('POST', '/auth/login', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  login(email: string, password: string): Promise<AuthSession> {
+    return authService.login(email, password);
   }
 
-  async logout(): Promise<void> {
-    logAPICall('POST', '/auth/logout');
-    try {
-      await authService.logout();
-      logAPICall('POST', '/auth/logout', { success: true });
-    } catch (error: unknown) {
-      logAPICall('POST', '/auth/logout', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  logout(): Promise<void> {
+    return authService.logout();
   }
 
-  async getSession(): Promise<AuthSession | null> {
-    logAPICall('GET', '/auth/session');
-
-    try {
-      const session = await authService.getSession();
-      logAPICall('GET', '/auth/session', { success: true, hasSession: !!session });
-      return session;
-    } catch (error: unknown) {
-      logAPICall('GET', '/auth/session', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  getSession(): Promise<AuthSession | null> {
+    return authService.getSession();
   }
 
-  // Returns the current logged-in user from Neon auth
   async syncCurrentUser(): Promise<AppUser | null> {
-    logAPICall('POST', '/auth/sync-user');
-
-    try {
-      const session = await authService.getSession();
-      logAPICall('POST', '/auth/sync-user', { success: true, userId: session?.user.id });
-      return session?.user ?? null;
-    } catch (error: unknown) {
-      logAPICall('POST', '/auth/sync-user', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+    const session = await authService.getSession();
+    return session?.user ?? null;
   }
 
-  async resetPassword(email: string) {
-    logAPICall('POST', '/auth/reset-password', { email });
-
-    validateRequired(email, 'email');
-    if (!validateEmail(email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    try {
-      await authService.resetPassword(sanitizeString(email));
-      logAPICall('POST', '/auth/reset-password', { success: true });
-    } catch (error: unknown) {
-      logAPICall('POST', '/auth/reset-password', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  resetPassword(email: string): Promise<void> {
+    return authService.resetPassword(email);
   }
 
-  async updatePassword(newPassword: string) {
-    logAPICall('PUT', '/auth/password');
-
-    validateRequired(newPassword, 'password');
-    if (newPassword.length < 8) {
-      throw new ValidationError('Password must be at least 8 characters', 'password');
-    }
-
-    try {
-      // Requires a pending reset token stored by authService.resetPassword()
-      const token = localStorage.getItem('pending_reset_token');
-      if (!token) throw new APIError(400, 'No pending password reset. Please request a reset first.');
-      await authService.updatePassword(token, newPassword);
-      logAPICall('PUT', '/auth/password', { success: true });
-    } catch (error: unknown) {
-      logAPICall('PUT', '/auth/password', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  async updatePassword(newPassword: string): Promise<void> {
+    const token = localStorage.getItem('pending_reset_token');
+    if (!token) throw new Error('No pending password reset. Please request a reset first.');
+    return authService.updatePassword(token, newPassword);
   }
 
-  // ============================================
-  // REGISTRATION REQUESTS (Using Neon)
-  // ============================================
-
-  async createRegistrationRequest(data: { name: string; email: string; role: UserRole }): Promise<void> {
-    logAPICall('POST', '/auth/registration-request', { email: data.email, role: data.role });
-
-    validateRequired(data.name, 'name');
-    validateRequired(data.email, 'email');
-    validateRequired(data.role, 'role');
-
-    if (!validateEmail(data.email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    try {
-      // Neon Database
-      await db.createRegistrationRequest({
-        name: sanitizeString(data.name),
-        email: sanitizeString(data.email.toLowerCase()),
-        role: data.role
-      });
-
-      logAPICall('POST', '/auth/registration-request', { success: true });
-    } catch (error: unknown) {
-      logAPICall('POST', '/auth/registration-request', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  changePassword(userId: string, current: string, next: string): Promise<void> {
+    return authService.changePassword(userId, current, next);
   }
 
-  async getRegistrationRequests(): Promise<RegistrationRequest[]> {
-    logAPICall('GET', '/auth/registration-requests');
+  // ── Registration requests ────────────────────────────────────────────────
 
-    try {
-      // Neon Database
-      const requests = await db.getRegistrationRequests();
-      logAPICall('GET', '/auth/registration-requests', { success: true, count: requests.length });
-      return requests;
-    } catch (error: unknown) {
-      logAPICall('GET', '/auth/registration-requests', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  createRegistrationRequest(data: { name: string; email: string; role: UserRole }): Promise<void> {
+    return db.createRegistrationRequest(data);
+  }
+
+  getRegistrationRequests(): Promise<RegistrationRequest[]> {
+    return db.getRegistrationRequests();
   }
 
   async approveRegistrationRequest(requestId: string, adminId: string): Promise<void> {
-    logAPICall('POST', `/auth/registration-requests/${requestId}/approve`);
-
-    validateRequired(requestId, 'requestId');
-
-    try {
-      // Get the request from Neon
-      const request = await db.getRegistrationRequestById(requestId);
-      if (!request) {
-        throw new ValidationError('Registration request not found', 'requestId');
-      }
-
-      const inviteToken = crypto.randomUUID();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
-
-      await db.createInvite({
-        email: request.email,
-        role: request.role,
-        name: request.name,
-        invitedBy: adminId,
-        inviteToken,
-        expiresAt: expiresAt.toISOString()
-      });
-
-      // Update request status in Neon
-      await db.updateRegistrationRequestStatus(requestId, 'Approved', adminId);
-
-      logAPICall('POST', `/auth/registration-requests/${requestId}/approve`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('POST', `/auth/registration-requests/${requestId}/approve`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async rejectRegistrationRequest(requestId: string, adminId: string): Promise<void> {
-    logAPICall('POST', `/auth/registration-requests/${requestId}/reject`);
-
-    validateRequired(requestId, 'requestId');
-
-    try {
-      // Neon Database
-      await db.updateRegistrationRequestStatus(requestId, 'Rejected', adminId);
-      logAPICall('POST', `/auth/registration-requests/${requestId}/reject`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('POST', `/auth/registration-requests/${requestId}/reject`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // VEHICLES (Using Neon)
-  // ============================================
-
-  async getVehicles(): Promise<Vehicle[]> {
-    logAPICall('GET', '/vehicles');
-
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
-
-    try {
-      const vehicles = await db.getVehicles();
-      logAPICall('GET', '/vehicles', { success: true, count: vehicles.length, source: 'neon' });
-      return vehicles;
-    } catch (error: unknown) {
-      logAPICall('GET', '/vehicles', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async addVehicle(vehicle: Omit<Vehicle, 'id' | 'created_at'>): Promise<Vehicle> {
-    logAPICall('POST', '/vehicles', vehicle);
-
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
-
-    // Validation
-    validateRequired(vehicle.vin_number, 'vin_number');
-    validateRequired(vehicle.make_model, 'make_model');
-    validateRequired(vehicle.purchase_price_gbp, 'purchase_price_gbp');
-
-    if (vehicle.vin_number.length < 5) {
-      throw new ValidationError('VIN number must be at least 5 characters', 'vin_number');
-    }
-    if (vehicle.purchase_price_gbp <= 0) {
-      throw new ValidationError('Purchase price must be greater than 0', 'purchase_price_gbp');
-    }
-
-    try {
-      const newVehicle = await db.addVehicle({
-        vin_number: sanitizeString(vehicle.vin_number),
-        make_model: sanitizeString(vehicle.make_model),
-        purchase_price_gbp: vehicle.purchase_price_gbp,
-        status: vehicle.status
-      });
-      logAPICall('POST', '/vehicles', { success: true, vehicleId: newVehicle.id });
-      return newVehicle;
-    } catch (error: unknown) {
-      const errorMsg = getErrorMessage(error);
-      if (errorMsg.includes('duplicate') || (isAPIError(error) && error.code === '23505')) {
-        throw new ValidationError('Vehicle with this VIN already exists', 'vin_number');
-      }
-      logAPICall('POST', '/vehicles', { success: false, error: errorMsg });
-      throw error;
-    }
-  }
-
-  async updateVehicle(vehicleId: string, vehicle: Partial<Omit<Vehicle, 'id' | 'created_at'>>): Promise<Vehicle> {
-    logAPICall('PUT', `/vehicles/${vehicleId}`, vehicle);
-    validateRequired(vehicleId, 'vehicleId');
-
-    try {
-      const updated = await db.updateVehicle(vehicleId, vehicle);
-      logAPICall('PUT', `/vehicles/${vehicleId}`, { success: true });
-      return updated;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/vehicles/${vehicleId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deleteVehicle(vehicleId: string): Promise<void> {
-    logAPICall('DELETE', `/vehicles/${vehicleId}`);
-    validateRequired(vehicleId, 'vehicleId');
-
-    try {
-      await db.deleteVehicle(vehicleId);
-      logAPICall('DELETE', `/vehicles/${vehicleId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/vehicles/${vehicleId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // EXPENSES (Using Neon)
-  // ============================================
-
-  async getExpenses(): Promise<Expense[]> {
-    logAPICall('GET', '/expenses');
-
-    try {
-      const expenses = await db.getExpenses();
-      logAPICall('GET', '/expenses', { success: true, count: expenses.length });
-      return expenses;
-    } catch (error: unknown) {
-      logAPICall('GET', '/expenses', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async getExpensesByVehicle(vehicleId: string): Promise<Expense[]> {
-    logAPICall('GET', `/vehicles/${vehicleId}/expenses`);
-    validateRequired(vehicleId, 'vehicleId');
-
-    try {
-      const expenses = await db.getExpensesByVehicle(vehicleId);
-      logAPICall('GET', `/vehicles/${vehicleId}/expenses`, { success: true, count: expenses.length });
-      return expenses;
-    } catch (error: unknown) {
-      logAPICall('GET', `/vehicles/${vehicleId}/expenses`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async addExpense(expenseData: Omit<Expense, 'id' | 'created_at' | 'exchange_rate_to_usd'>): Promise<Expense> {
-    logAPICall('POST', '/expenses', expenseData);
-
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
-
-    // Validation
-    validateRequired(expenseData.amount, 'amount');
-    validateRequired(expenseData.currency, 'currency');
-    validateRequired(expenseData.category, 'category');
-
-    if (expenseData.category === 'Other' && !expenseData.description?.trim()) {
-      throw new ValidationError('Description is required for "Other" category expenses', 'description');
-    }
-
-    if (expenseData.amount <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount');
-    }
-    if (!EXCHANGE_RATES[expenseData.currency]) {
-      throw new ValidationError('Invalid currency', 'currency');
-    }
-
-    try {
-      const expense = await db.addExpense(expenseData);
-      logAPICall('POST', '/expenses', { success: true, expenseId: expense.id });
-      return expense;
-    } catch (error: unknown) {
-      logAPICall('POST', '/expenses', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updateExpense(expenseId: string, updates: Partial<Omit<Expense, 'id' | 'created_at' | 'exchange_rate_to_usd'>>): Promise<Expense> {
-    logAPICall('PUT', `/expenses/${expenseId}`, updates);
-    validateRequired(expenseId, 'expenseId');
-
-    if (updates.amount !== undefined && updates.amount <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount');
-    }
-
-    try {
-      const expense = await db.updateExpense(expenseId, updates);
-      logAPICall('PUT', `/expenses/${expenseId}`, { success: true });
-      return expense;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/expenses/${expenseId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deleteExpense(expenseId: string): Promise<void> {
-    logAPICall('DELETE', `/expenses/${expenseId}`);
-    validateRequired(expenseId, 'expenseId');
-
-    try {
-      await db.deleteExpense(expenseId);
-      logAPICall('DELETE', `/expenses/${expenseId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/expenses/${expenseId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async getLandedCostSummaries(): Promise<LandedCostSummary[]> {
-    logAPICall('GET', '/summaries');
-
-    try {
-      const vehicles = await this.getVehicles();
-      const expenses = await this.getExpenses();
-
-      const summaries = vehicles.map(v => {
-        const vehicleExpenses = expenses.filter(e => e.vehicle_id === v.id);
-        const expensesUsd = vehicleExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-        const purchaseUsd = v.purchase_price_gbp * EXCHANGE_RATES['GBP'];
-
-        return {
-          vehicle_id: v.id,
-          vin_number: v.vin_number,
-          make_model: v.make_model,
-          purchase_price_gbp: v.purchase_price_gbp,
-          total_expenses_usd: expensesUsd,
-          total_landed_cost_usd: purchaseUsd + expensesUsd,
-          status: v.status
-        };
-      });
-
-      logAPICall('GET', '/summaries', { success: true, count: summaries.length });
-      return summaries;
-    } catch (error: unknown) {
-      logAPICall('GET', '/summaries', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // QUOTES (Using Neon)
-  // ============================================
-
-  async getQuotes(): Promise<Quote[]> {
-    logAPICall('GET', '/quotes');
-
-    try {
-      const quotes = await db.getQuotes();
-      logAPICall('GET', '/quotes', { success: true, count: quotes.length });
-      return quotes;
-    } catch (error: unknown) {
-      logAPICall('GET', '/quotes', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async createQuote(quoteData: Omit<Quote, 'id' | 'created_at' | 'quote_number'>): Promise<Quote> {
-    logAPICall('POST', '/quotes', quoteData);
-
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
-
-    // Validation
-    validateRequired(quoteData.client_name, 'client_name');
-    validateRequired(quoteData.amount_usd, 'amount_usd');
-
-    if (quoteData.client_email && !validateEmail(quoteData.client_email)) {
-      throw new ValidationError('Invalid email format', 'client_email');
-    }
-    if (quoteData.amount_usd <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount_usd');
-    }
-    if (quoteData.currency && !QUOTE_CURRENCIES.includes(quoteData.currency)) {
-      throw new ValidationError('Quote currency must be USD or GBP', 'currency');
-    }
-
-    try {
-      const quote = await db.createQuote(quoteData);
-      logAPICall('POST', '/quotes', { success: true, quoteId: quote.id });
-      return quote;
-    } catch (error: unknown) {
-      const errorMsg = getErrorMessage(error);
-      logAPICall('POST', '/quotes', { success: false, error: errorMsg });
-      throw new APIError(500, 'Failed to create quote: ' + errorMsg, error);
-    }
-  }
-
-  async updateQuote(quoteId: string, updates: Partial<Omit<Quote, 'id' | 'created_at' | 'quote_number'>>): Promise<Quote> {
-    logAPICall('PUT', `/quotes/${quoteId}`, updates);
-    validateRequired(quoteId, 'quoteId');
-
-    if (updates.client_email && !validateEmail(updates.client_email)) {
-      throw new ValidationError('Invalid email format', 'client_email');
-    }
-    if (updates.amount_usd !== undefined && updates.amount_usd <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount_usd');
-    }
-    if (updates.currency && !QUOTE_CURRENCIES.includes(updates.currency)) {
-      throw new ValidationError('Quote currency must be USD or GBP', 'currency');
-    }
-
-    try {
-      const quote = await db.updateQuote(quoteId, updates);
-      logAPICall('PUT', `/quotes/${quoteId}`, { success: true });
-      return quote;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/quotes/${quoteId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deleteQuote(quoteId: string): Promise<void> {
-    logAPICall('DELETE', `/quotes/${quoteId}`);
-    validateRequired(quoteId, 'quoteId');
-
-    try {
-      await db.deleteQuote(quoteId);
-      logAPICall('DELETE', `/quotes/${quoteId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/quotes/${quoteId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updateQuoteStatus(quoteId: string, status: string): Promise<Quote> {
-    logAPICall('PATCH', `/quotes/${quoteId}/status`, { status });
-    validateRequired(quoteId, 'quoteId');
-    validateRequired(status, 'status');
-
-    try {
-      const quote = await db.updateQuoteStatus(quoteId, status);
-      logAPICall('PATCH', `/quotes/${quoteId}/status`, { success: true });
-      return quote;
-    } catch (error: unknown) {
-      logAPICall('PATCH', `/quotes/${quoteId}/status`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // INVOICES (Using Neon)
-  // ============================================
-
-  async getInvoices(): Promise<Invoice[]> {
-    logAPICall('GET', '/invoices');
-
-    try {
-      const invoices = await db.getInvoices();
-      logAPICall('GET', '/invoices', { success: true, count: invoices.length });
-      return invoices;
-    } catch (error: unknown) {
-      logAPICall('GET', '/invoices', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async createPayment(paymentData: {
-    reference_id: string;
-    client_name?: string;
-    type: 'Inbound' | 'Outbound';
-    amount_usd: number;
-    currency?: 'USD' | 'GBP';
-    method: string;
-    date: string;
-  }): Promise<Payment> {
-    logAPICall('POST', '/payments', paymentData);
-
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
-
-    try {
-      const payment = await db.createPayment(paymentData);
-      logAPICall('POST', '/payments', { success: true, paymentId: payment.id });
-      return payment;
-    } catch (error: unknown) {
-      const errorMsg = getErrorMessage(error);
-      logAPICall('POST', '/payments', { success: false, error: errorMsg });
-      throw new APIError(500, 'Failed to create payment: ' + errorMsg, error);
-    }
-  }
-
-  async createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_at' | 'invoice_number'>): Promise<Invoice> {
-    logAPICall('POST', '/invoices', invoiceData);
-
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
-
-    // Validation
-    validateRequired(invoiceData.client_name, 'client_name');
-    validateRequired(invoiceData.amount_usd, 'amount_usd');
-    validateRequired(invoiceData.due_date, 'due_date');
-
-    if (invoiceData.client_email && !validateEmail(invoiceData.client_email)) {
-      throw new ValidationError('Invalid email format', 'client_email');
-    }
-    if (invoiceData.amount_usd <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount_usd');
-    }
-    if (invoiceData.currency && !DOCUMENT_CURRENCIES.includes(invoiceData.currency)) {
-      throw new ValidationError('Invoice currency must be USD or GBP', 'currency');
-    }
-    if (invoiceData.invoice_kind && !INVOICE_KINDS.includes(invoiceData.invoice_kind)) {
-      throw new ValidationError('Invalid invoice type', 'invoice_kind');
-    }
-    if (invoiceData.status && !FINANCIAL_STATUSES.includes(invoiceData.status)) {
-      throw new ValidationError('Invalid invoice status', 'status');
-    }
-
-    try {
-      const invoice = await db.createInvoice(invoiceData);
-      logAPICall('POST', '/invoices', { success: true, invoiceId: invoice.id });
-      return invoice;
-    } catch (error: unknown) {
-      const errorMsg = getErrorMessage(error);
-      logAPICall('POST', '/invoices', { success: false, error: errorMsg });
-      throw new APIError(500, 'Failed to create invoice: ' + errorMsg, error);
-    }
-  }
-
-  async updateInvoice(invoiceId: string, updates: Partial<Omit<Invoice, 'id' | 'created_at' | 'invoice_number'>>): Promise<Invoice> {
-    logAPICall('PUT', `/invoices/${invoiceId}`, updates);
-    validateRequired(invoiceId, 'invoiceId');
-
-    if (updates.client_email && !validateEmail(updates.client_email)) {
-      throw new ValidationError('Invalid email format', 'client_email');
-    }
-    if (updates.amount_usd !== undefined && updates.amount_usd <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount_usd');
-    }
-    if (updates.currency && !DOCUMENT_CURRENCIES.includes(updates.currency)) {
-      throw new ValidationError('Invoice currency must be USD or GBP', 'currency');
-    }
-    if (updates.invoice_kind && !INVOICE_KINDS.includes(updates.invoice_kind)) {
-      throw new ValidationError('Invalid invoice type', 'invoice_kind');
-    }
-    if (updates.status && !FINANCIAL_STATUSES.includes(updates.status)) {
-      throw new ValidationError('Invalid invoice status', 'status');
-    }
-
-    try {
-      const invoice = await db.updateInvoice(invoiceId, updates);
-      logAPICall('PUT', `/invoices/${invoiceId}`, { success: true });
-      return invoice;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/invoices/${invoiceId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deleteInvoice(invoiceId: string): Promise<void> {
-    logAPICall('DELETE', `/invoices/${invoiceId}`);
-    validateRequired(invoiceId, 'invoiceId');
-
-    try {
-      await db.deleteInvoice(invoiceId);
-      logAPICall('DELETE', `/invoices/${invoiceId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/invoices/${invoiceId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updateInvoiceStatus(invoiceId: string, status: FinancialStatus): Promise<Invoice> {
-    logAPICall('PATCH', `/invoices/${invoiceId}/status`, { status });
-    validateRequired(invoiceId, 'invoiceId');
-    validateRequired(status, 'status');
-    if (!FINANCIAL_STATUSES.includes(status)) {
-      throw new ValidationError('Invalid invoice status', 'status');
-    }
-
-    try {
-      const invoice = await db.updateInvoiceStatus(invoiceId, status);
-      logAPICall('PATCH', `/invoices/${invoiceId}/status`, { success: true });
-      return invoice;
-    } catch (error: unknown) {
-      logAPICall('PATCH', `/invoices/${invoiceId}/status`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // PAYMENTS (Using Neon)
-  // ============================================
-
-  async getPayments(): Promise<Payment[]> {
-    logAPICall('GET', '/payments');
-
-    try {
-      const payments = await db.getPayments();
-      logAPICall('GET', '/payments', { success: true, count: payments.length });
-      return payments;
-    } catch (error: unknown) {
-      logAPICall('GET', '/payments', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async getPaymentAllocations(): Promise<PaymentAllocation[]> {
-    logAPICall('GET', '/payment-allocations');
-
-    try {
-      const allocations = await db.getPaymentAllocations();
-      logAPICall('GET', '/payment-allocations', { success: true, count: allocations.length });
-      return allocations;
-    } catch (error: unknown) {
-      logAPICall('GET', '/payment-allocations', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async getReceipts(): Promise<Receipt[]> {
-    logAPICall('GET', '/receipts');
-
-    try {
-      const receipts = await db.getReceipts();
-      logAPICall('GET', '/receipts', { success: true, count: receipts.length });
-      return receipts;
-    } catch (error: unknown) {
-      logAPICall('GET', '/receipts', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async createReceipt(receiptData: Omit<Receipt, 'id' | 'created_at' | 'receipt_number'>): Promise<Receipt> {
-    logAPICall('POST', '/receipts', receiptData);
-
-    validateRequired(receiptData.client_name, 'client_name');
-    validateRequired(receiptData.amount_received, 'amount_received');
-    validateRequired(receiptData.payment_method, 'payment_method');
-    validateRequired(receiptData.payment_date, 'payment_date');
-
-    if (receiptData.client_email && !validateEmail(receiptData.client_email)) {
-      throw new ValidationError('Invalid email format', 'client_email');
-    }
-    if (receiptData.amount_received <= 0) {
-      throw new ValidationError('Amount received must be greater than 0', 'amount_received');
-    }
-    if (!DOCUMENT_CURRENCIES.includes(receiptData.currency)) {
-      throw new ValidationError('Receipt currency must be USD or GBP', 'currency');
-    }
-
-    try {
-      const receipt = await db.createReceipt(receiptData);
-      logAPICall('POST', '/receipts', { success: true, receiptId: receipt.id });
-      return receipt;
-    } catch (error: unknown) {
-      logAPICall('POST', '/receipts', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updateReceipt(
-    receiptId: string,
-    updates: Partial<Omit<Receipt, 'id' | 'created_at' | 'receipt_number'>>
-  ): Promise<Receipt> {
-    logAPICall('PUT', `/receipts/${receiptId}`, updates);
-    validateRequired(receiptId, 'receiptId');
-
-    if (updates.client_email && !validateEmail(updates.client_email)) {
-      throw new ValidationError('Invalid email format', 'client_email');
-    }
-    if (updates.amount_received !== undefined && updates.amount_received <= 0) {
-      throw new ValidationError('Amount received must be greater than 0', 'amount_received');
-    }
-    if (updates.currency && !DOCUMENT_CURRENCIES.includes(updates.currency)) {
-      throw new ValidationError('Receipt currency must be USD or GBP', 'currency');
-    }
-
-    try {
-      const receipt = await db.updateReceipt(receiptId, updates);
-      logAPICall('PUT', `/receipts/${receiptId}`, { success: true });
-      return receipt;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/receipts/${receiptId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async addPayment(paymentData: Omit<Payment, 'id'>): Promise<Payment> {
-    logAPICall('POST', '/payments', paymentData);
-
-    // Validation
-    validateRequired(paymentData.reference_id, 'reference_id');
-    validateRequired(paymentData.amount_usd, 'amount_usd');
-    validateRequired(paymentData.type, 'type');
-    if (paymentData.client_name !== undefined) {
-      validateRequired(paymentData.client_name, 'client_name');
-    }
-
-    if (paymentData.amount_usd <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount_usd');
-    }
-    if (paymentData.currency && !DOCUMENT_CURRENCIES.includes(paymentData.currency)) {
-      throw new ValidationError('Payment currency must be USD or GBP', 'currency');
-    }
-
-    try {
-      const payment = await db.addPayment(paymentData);
-      logAPICall('POST', '/payments', { success: true, paymentId: payment.id });
-      return payment;
-    } catch (error: unknown) {
-      logAPICall('POST', '/payments', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updatePayment(paymentId: string, updates: Partial<Omit<Payment, 'id'>>): Promise<Payment> {
-    logAPICall('PUT', `/payments/${paymentId}`, updates);
-    validateRequired(paymentId, 'paymentId');
-
-    if (updates.amount_usd !== undefined && updates.amount_usd <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount_usd');
-    }
-    if (updates.currency && !DOCUMENT_CURRENCIES.includes(updates.currency)) {
-      throw new ValidationError('Payment currency must be USD or GBP', 'currency');
-    }
-
-    try {
-      const payment = await db.updatePayment(paymentId, updates);
-      logAPICall('PUT', `/payments/${paymentId}`, { success: true });
-      return payment;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/payments/${paymentId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async replacePaymentAllocations(
-    paymentId: string,
-    allocations: Array<Pick<PaymentAllocation, 'invoice_id' | 'amount_allocated' | 'currency'>>
-  ): Promise<PaymentAllocation[]> {
-    logAPICall('PUT', `/payments/${paymentId}/allocations`, { count: allocations.length });
-    validateRequired(paymentId, 'paymentId');
-
-    allocations.forEach((allocation, index) => {
-      validateRequired(allocation.invoice_id, `allocations[${index}].invoice_id`);
-      validateRequired(allocation.amount_allocated, `allocations[${index}].amount_allocated`);
-
-      if (allocation.amount_allocated <= 0) {
-        throw new ValidationError('Allocated amount must be greater than 0', `allocations[${index}].amount_allocated`);
-      }
-
-      if (!DOCUMENT_CURRENCIES.includes(allocation.currency || 'USD')) {
-        throw new ValidationError('Allocation currency must be USD or GBP', `allocations[${index}].currency`);
-      }
+    const request = await db.getRegistrationRequestById(requestId);
+    if (!request) throw new Error('Registration request not found');
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await db.createInvite({
+      email: request.email,
+      role: request.role,
+      name: request.name,
+      invitedBy: adminId,
+      inviteToken: crypto.randomUUID(),
+      expiresAt: expiresAt.toISOString(),
     });
 
-    try {
-      const saved = await db.replacePaymentAllocations(paymentId, allocations);
-      logAPICall('PUT', `/payments/${paymentId}/allocations`, { success: true, count: saved.length });
-      return saved;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/payments/${paymentId}/allocations`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+    await db.updateRegistrationRequestStatus(requestId, 'Approved', adminId);
   }
 
-  async deletePayment(paymentId: string): Promise<void> {
-    logAPICall('DELETE', `/payments/${paymentId}`);
-    validateRequired(paymentId, 'paymentId');
-
-    try {
-      await db.deletePayment(paymentId);
-      logAPICall('DELETE', `/payments/${paymentId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/payments/${paymentId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  rejectRegistrationRequest(requestId: string, adminId: string): Promise<void> {
+    return db.updateRegistrationRequestStatus(requestId, 'Rejected', adminId);
   }
 
-  // ============================================
-  // COMPANY DETAILS (Using Neon)
-  // ============================================
+  // ── Vehicles ─────────────────────────────────────────────────────────────
 
-  async getCompanyDetails(): Promise<CompanyDetails> {
-    logAPICall('GET', '/company');
+  getVehicles(): Promise<Vehicle[]> {
+    return db.getVehicles();
+  }
 
-    try {
-      const company = await db.getCompanyDetails();
-      logAPICall('GET', '/company', { success: true, source: 'neon' });
-      return company || {
-        name: "Your Company Name",
-        registration_no: "",
-        tax_id: "",
-        address: "",
-        contact_email: "info@company.com"
+  addVehicle(vehicle: Omit<Vehicle, 'id' | 'created_at'>): Promise<Vehicle> {
+    return db.addVehicle(vehicle);
+  }
+
+  updateVehicle(vehicleId: string, vehicle: Partial<Omit<Vehicle, 'id' | 'created_at'>>): Promise<Vehicle> {
+    return db.updateVehicle(vehicleId, vehicle);
+  }
+
+  deleteVehicle(vehicleId: string): Promise<void> {
+    return db.deleteVehicle(vehicleId);
+  }
+
+  // ── Expenses ──────────────────────────────────────────────────────────────
+
+  getExpenses(): Promise<Expense[]> {
+    return db.getExpenses();
+  }
+
+  getExpensesByVehicle(vehicleId: string): Promise<Expense[]> {
+    return db.getExpensesByVehicle(vehicleId);
+  }
+
+  addExpense(expense: Omit<Expense, 'id' | 'created_at' | 'exchange_rate_to_usd'>): Promise<Expense> {
+    return db.addExpense(expense);
+  }
+
+  updateExpense(expenseId: string, updates: Partial<Omit<Expense, 'id' | 'created_at' | 'exchange_rate_to_usd'>>): Promise<Expense> {
+    return db.updateExpense(expenseId, updates);
+  }
+
+  deleteExpense(expenseId: string): Promise<void> {
+    return db.deleteExpense(expenseId);
+  }
+
+  // ── Landed cost summaries (computed client-side) ─────────────────────────
+
+  async getLandedCostSummaries(): Promise<LandedCostSummary[]> {
+    const [vehicles, expenses] = await Promise.all([db.getVehicles(), db.getExpenses()]);
+    return vehicles.map(v => {
+      const vehicleExpenses = expenses.filter(e => e.vehicle_id === v.id);
+      const expensesUsd = vehicleExpenses.reduce(
+        (sum, e) => sum + (e.amount || 0) * (e.exchange_rate_to_usd || 1),
+        0,
+      );
+      const purchaseUsd = v.purchase_price_gbp * EXCHANGE_RATES['GBP'];
+      return {
+        vehicle_id: v.id,
+        vin_number: v.vin_number,
+        make_model: v.make_model,
+        purchase_price_gbp: v.purchase_price_gbp,
+        total_expenses_usd: expensesUsd,
+        total_landed_cost_usd: purchaseUsd + expensesUsd,
+        status: v.status,
       };
-    } catch (error: unknown) {
-      logAPICall('GET', '/company', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+    });
   }
 
-  async updateCompanyDetails(details: CompanyDetails): Promise<void> {
-    logAPICall('PUT', '/company', { name: details.name });
+  // ── Quotes ────────────────────────────────────────────────────────────────
 
-    // Validation
-    validateRequired(details.name, 'name');
-    validateRequired(details.contact_email, 'contact_email');
+  getQuotes(): Promise<Quote[]> { return db.getQuotes(); }
+  createQuote(data: Omit<Quote, 'id' | 'created_at' | 'quote_number'>): Promise<Quote> { return db.createQuote(data); }
+  updateQuote(id: string, updates: Partial<Omit<Quote, 'id' | 'created_at' | 'quote_number'>>): Promise<Quote> { return db.updateQuote(id, updates); }
+  deleteQuote(id: string): Promise<void> { return db.deleteQuote(id); }
+  updateQuoteStatus(id: string, status: string): Promise<Quote> { return db.updateQuoteStatus(id, status); }
 
-    if (!validateEmail(details.contact_email)) {
-      throw new ValidationError('Invalid email format', 'contact_email');
-    }
+  // ── Invoices ──────────────────────────────────────────────────────────────
 
-    if (details.website && details.website.trim() && !details.website.startsWith('http')) {
-      details.website = 'https://' + details.website;
-    }
+  getInvoices(): Promise<Invoice[]> { return db.getInvoices(); }
+  createInvoice(data: Omit<Invoice, 'id' | 'created_at' | 'invoice_number'>): Promise<Invoice> { return db.createInvoice(data); }
+  updateInvoice(id: string, updates: Partial<Omit<Invoice, 'id' | 'created_at' | 'invoice_number'>>): Promise<Invoice> { return db.updateInvoice(id, updates); }
+  deleteInvoice(id: string): Promise<void> { return db.deleteInvoice(id); }
+  updateInvoiceStatus(id: string, status: Parameters<typeof db.updateInvoiceStatus>[1]): Promise<Invoice> { return db.updateInvoiceStatus(id, status); }
 
-    try {
-      await db.updateCompanyDetails(details);
-      logAPICall('PUT', '/company', { success: true });
-    } catch (error: unknown) {
-      logAPICall('PUT', '/company', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  // ── Payments & Receipts ───────────────────────────────────────────────────
+
+  getPayments(): Promise<Payment[]> { return db.getPayments(); }
+  getPaymentAllocations(): Promise<PaymentAllocation[]> { return db.getPaymentAllocations(); }
+  createPayment(data: Parameters<typeof db.createPayment>[0]): Promise<Payment> { return db.createPayment(data); }
+  addPayment(payment: Omit<Payment, 'id'>): Promise<Payment> { return db.addPayment(payment); }
+  updatePayment(id: string, updates: Partial<Omit<Payment, 'id'>>): Promise<Payment> { return db.updatePayment(id, updates); }
+  deletePayment(id: string): Promise<void> { return db.deletePayment(id); }
+  replacePaymentAllocations(paymentId: string, allocations: Parameters<typeof db.replacePaymentAllocations>[1]): Promise<void> {
+    return db.replacePaymentAllocations(paymentId, allocations);
   }
 
-  // ============================================
-  // USERS (Profile in Neon, Auth in Supabase)
-  // ============================================
+  getReceipts(): Promise<Receipt[]> { return db.getReceipts(); }
+  createReceipt(data: Omit<Receipt, 'id' | 'created_at' | 'receipt_number'>): Promise<Receipt> { return db.createReceipt(data); }
+  updateReceipt(id: string, updates: Parameters<typeof db.updateReceipt>[1]): Promise<Receipt> { return db.updateReceipt(id, updates); }
 
-  async getUsers(): Promise<AppUser[]> {
-    logAPICall('GET', '/users');
+  // ── Company ───────────────────────────────────────────────────────────────
 
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
+  getCompanyDetails(): Promise<CompanyDetails | null> { return db.getCompanyDetails(); }
+  updateCompanyDetails(details: CompanyDetails): Promise<void> { return db.updateCompanyDetails(details); }
 
-    try {
-      const users = await db.getUserProfiles();
-      logAPICall('GET', '/users', { success: true, count: users.length });
-      return users;
-    } catch (error: unknown) {
-      logAPICall('GET', '/users', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
+  // ── Users ─────────────────────────────────────────────────────────────────
+
+  getUsers(): Promise<AppUser[]> { return db.getUserProfiles(); }
 
   async createUser(userData: Omit<AppUser, 'id'>): Promise<AppUser> {
-    logAPICall('POST', '/users', { email: userData.email, role: userData.role });
-
-    // Validation
-    validateRequired(userData.name, 'name');
-    validateRequired(userData.email, 'email');
-    validateRequired(userData.role, 'role');
-
-    if (!validateEmail(userData.email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    const validRoles = ['Admin', 'Manager', 'Driver', 'Accountant'];
-    if (!validRoles.includes(userData.role)) {
-      throw new ValidationError('Invalid role', 'role');
-    }
-
-    try {
-      const existingUser = await db.getUserProfileByEmail(userData.email);
-      if (existingUser) {
-        const updated = await db.updateUserProfile(existingUser.id, {
-          name: userData.name,
-          role: userData.role,
-          status: userData.status || 'Active'
-        });
-        logAPICall('POST', '/users', { success: true, userId: updated.id, action: 'updated_existing' });
-        return updated;
-      }
-
-      // Use invite flow — admin sets a temporary password; user resets on first login
-      const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!';
-      const newUser = await authService.createUser({
-        email: sanitizeString(userData.email),
-        password: tempPassword,
-        name: sanitizeString(userData.name),
+    // Upsert: if email already exists update profile, otherwise create new auth user
+    const existing = await db.getUserProfileByEmail(userData.email);
+    if (existing) {
+      return db.updateUserProfile(existing.id, {
+        name: userData.name,
         role: userData.role,
+        status: userData.status || 'Active',
       });
-
-      logAPICall('POST', '/users', { success: true, userId: newUser.id });
-      return newUser;
-    } catch (error: unknown) {
-      const errorMsg = getErrorMessage(error);
-      logAPICall('POST', '/users', { success: false, error: errorMsg });
-      throw new APIError(500, 'Failed to create user: ' + errorMsg, error);
     }
+    const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!';
+    return authService.createUser({
+      email: userData.email.toLowerCase().trim(),
+      password: tempPassword,
+      name: userData.name,
+      role: userData.role,
+    });
   }
 
   async deleteUser(userId: string): Promise<void> {
-    logAPICall('DELETE', `/users/${userId}`);
-    validateRequired(userId, 'userId');
-
-    try {
-      // Check if user exists
-      const user = await db.getUserProfileById(userId);
-      if (!user) {
-        throw new ValidationError('User not found', 'userId');
-      }
-
-      // Prevent deleting the last admin
-      if (user.role === 'Admin') {
-        const adminCount = await db.countAdminUsers();
-        if (adminCount === 1) {
-          throw new ValidationError('Cannot delete the last admin user', 'userId');
-        }
-      }
-
-      // Delete from Neon user_profiles
-      await db.deleteUserProfile(userId);
-
-      logAPICall('DELETE', `/users/${userId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/users/${userId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
+    const user = await db.getUserProfileById(userId);
+    if (!user) throw new Error('User not found');
+    if (user.role === 'Admin') {
+      const adminCount = await db.countAdminUsers();
+      if (adminCount === 1) throw new Error('Cannot delete the last admin user');
     }
-  }
-
-  async resetUserPassword(email: string): Promise<void> {
-    logAPICall('POST', `/users/reset-password`, { email });
-
-    validateRequired(email, 'email');
-    if (!validateEmail(email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    try {
-      await authService.resetPassword(email);
-      logAPICall('POST', `/users/reset-password`, { success: true, email });
-    } catch (error: unknown) {
-      logAPICall('POST', `/users/reset-password`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+    return db.deleteUserProfile(userId);
   }
 
   async updateUser(userId: string, updates: Partial<Omit<AppUser, 'id'>>): Promise<AppUser> {
-    logAPICall('PUT', `/users/${userId}`, updates);
-    validateRequired(userId, 'userId');
-
-    if (updates.email && !validateEmail(updates.email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
     if (updates.role) {
-      const validRoles = ['Admin', 'Manager', 'Driver', 'Accountant'];
-      if (!validRoles.includes(updates.role)) {
-        throw new ValidationError('Invalid role', 'role');
-      }
-    }
-
-    try {
-      // Get current user
-      const currentUser = await db.getUserProfileById(userId);
-      if (!currentUser) {
-        throw new ValidationError('User not found', 'userId');
-      }
-
-      // Prevent removing last admin
-      if (updates.role && currentUser.role === 'Admin' && updates.role !== 'Admin') {
+      const current = await db.getUserProfileById(userId);
+      if (current?.role === 'Admin' && updates.role !== 'Admin') {
         const adminCount = await db.countAdminUsers();
-        if (adminCount === 1) {
-          throw new ValidationError('Cannot change role of the last admin', 'role');
-        }
+        if (adminCount === 1) throw new Error('Cannot change role of the last admin');
       }
-
-      // Update in Neon
-      const updatedUser = await db.updateUserProfile(userId, {
-        name: updates.name ? sanitizeString(updates.name) : undefined,
-        email: updates.email ? sanitizeString(updates.email) : undefined,
-        role: updates.role,
-        status: updates.status
-      });
-
-      logAPICall('PUT', `/users/${userId}`, { success: true });
-      return updatedUser;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/users/${userId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
     }
+    return db.updateUserProfile(userId, updates);
   }
 
-  async getSupabaseConfig(): Promise<SupabaseConfig> {
-    logAPICall('GET', '/config');
-    return {
-      ...this.config,
-      isConnected: isNeonConnected() // Check Neon connection
-    };
+  resetUserPassword(email: string): Promise<void> {
+    return authService.resetPassword(email);
   }
 
-  async updateSupabaseConfig(config: SupabaseConfig): Promise<void> {
-    logAPICall('PUT', '/config', { hasUrl: !!config.url, hasKey: !!config.anonKey });
-    this.config = { ...config, isConnected: isNeonConnected() };
-    logAPICall('PUT', '/config', { success: true, isConnected: this.config.isConnected });
+  adminSetUserPassword(userId: string, newPassword: string): Promise<void> {
+    return authService.adminSetUserPassword(userId, newPassword);
   }
 
-  // ============================================
-  // CLIENTS (Using Neon)
-  // ============================================
+  // ── Clients ───────────────────────────────────────────────────────────────
 
-  async getClients(): Promise<Client[]> {
-    logAPICall('GET', '/clients');
+  getClients(): Promise<Client[]> { return db.getClients(); }
+  createClient(data: Omit<Client, 'id' | 'created_at'>): Promise<Client> { return db.createClient(data); }
+  updateClient(id: string, updates: Partial<Omit<Client, 'id' | 'created_at'>>): Promise<Client> { return db.updateClient(id, updates); }
+  deleteClient(id: string): Promise<void> { return db.deleteClient(id); }
 
-    try {
-      const clients = await db.getClients();
-      logAPICall('GET', '/clients', { success: true, count: clients.length });
-      return clients;
-    } catch (error: unknown) {
-      logAPICall('GET', '/clients', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  // ── Employees & Payslips ──────────────────────────────────────────────────
+
+  getEmployees(): Promise<Employee[]> { return db.getEmployees(); }
+  createEmployee(data: Omit<Employee, 'id' | 'employee_number' | 'created_at' | 'updated_at'>): Promise<Employee> { return db.createEmployee(data); }
+  updateEmployee(id: string, updates: Partial<Omit<Employee, 'id' | 'employee_number' | 'created_at'>>): Promise<Employee> { return db.updateEmployee(id, updates); }
+  deleteEmployee(id: string): Promise<void> { return db.deleteEmployee(id); }
+
+  getPayslips(filters?: { employeeId?: string; year?: number; month?: number }): Promise<Payslip[]> {
+    return db.getPayslips(filters);
   }
+  generatePayslip(data: Parameters<typeof db.generatePayslip>[0]): Promise<Payslip> { return db.generatePayslip(data); }
+  updatePayslipStatus(id: string, status: Parameters<typeof db.updatePayslipStatus>[1]): Promise<Payslip> { return db.updatePayslipStatus(id, status); }
+  deletePayslip(id: string): Promise<void> { return db.deletePayslip(id); }
 
-  async createClient(clientData: Omit<Client, 'id' | 'created_at'>): Promise<Client> {
-    logAPICall('POST', '/clients', { email: clientData.email });
+  // ── Invites ───────────────────────────────────────────────────────────────
 
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
+  getInvites(): Promise<UserInvite[]> { return db.getInvites(); }
+  createInvite(data: Parameters<typeof db.createInvite>[0]): Promise<UserInvite> { return db.createInvite(data); }
+  getInviteByToken(token: string): Promise<UserInvite | null> { return db.getInviteByToken(token); }
+  deleteInvite(inviteId: string): Promise<void> { return db.updateInviteStatus(inviteId, 'Cancelled'); }
 
-    // Validation
-    validateRequired(clientData.name, 'name');
-    validateRequired(clientData.email, 'email');
-
-    if (!validateEmail(clientData.email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    try {
-      // Check for duplicate email
-      const isDuplicate = await db.checkDuplicateClientEmail(clientData.email);
-      if (isDuplicate) {
-        throw new ValidationError('Client with this email already exists', 'email');
-      }
-
-      const client = await db.createClient({
-        name: sanitizeString(clientData.name),
-        email: sanitizeString(clientData.email),
-        phone: clientData.phone ? sanitizeString(clientData.phone) : undefined,
-        address: clientData.address ? sanitizeString(clientData.address) : undefined,
-        company: clientData.company ? sanitizeString(clientData.company) : undefined,
-        notes: clientData.notes ? sanitizeString(clientData.notes) : undefined
-      });
-
-      logAPICall('POST', '/clients', { success: true, clientId: client.id });
-      return client;
-    } catch (error: unknown) {
-      const errorMsg = getErrorMessage(error);
-      logAPICall('POST', '/clients', { success: false, error: errorMsg });
-      throw new APIError(500, 'Failed to create client: ' + errorMsg, error);
-    }
-  }
-
-  async updateClient(clientId: string, updates: Partial<Omit<Client, 'id' | 'created_at'>>): Promise<Client> {
-    logAPICall('PUT', `/clients/${clientId}`, updates);
-    validateRequired(clientId, 'clientId');
-
-    if (updates.email && !validateEmail(updates.email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    try {
-      // Check for duplicate email if updating email
-      if (updates.email) {
-        const isDuplicate = await db.checkDuplicateClientEmail(updates.email, clientId);
-        if (isDuplicate) {
-          throw new ValidationError('Client with this email already exists', 'email');
-        }
-      }
-
-      const client = await db.updateClient(clientId, updates);
-      logAPICall('PUT', `/clients/${clientId}`, { success: true });
-      return client;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/clients/${clientId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deleteClient(clientId: string): Promise<void> {
-    logAPICall('DELETE', `/clients/${clientId}`);
-    validateRequired(clientId, 'clientId');
-
-    try {
-      await db.deleteClient(clientId);
-      logAPICall('DELETE', `/clients/${clientId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/clients/${clientId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // INVITES (Using Neon)
-  // ============================================
-
-  async createInvite(email: string, role: UserRole, name: string, invitedBy: string): Promise<UserInvite> {
-    logAPICall('POST', '/invites', { email, role });
-
-    validateRequired(email, 'email');
-    validateRequired(role, 'role');
-    validateRequired(name, 'name');
-
-    if (!validateEmail(email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    try {
-      const inviteToken = crypto.randomUUID();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
-
-      const invite = await db.createInvite({
-        email: sanitizeString(email),
-        role,
-        name: sanitizeString(name),
-        invitedBy,
-        inviteToken,
-        expiresAt: expiresAt.toISOString()
-      });
-
-      logAPICall('POST', '/invites', { success: true, inviteId: invite.id });
-      return invite;
-    } catch (error: unknown) {
-      logAPICall('POST', '/invites', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async getInvites(): Promise<UserInvite[]> {
-    logAPICall('GET', '/invites');
-
-    try {
-      const invites = await db.getInvites();
-      logAPICall('GET', '/invites', { success: true, count: invites.length });
-      return invites;
-    } catch (error: unknown) {
-      logAPICall('GET', '/invites', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async getInviteByToken(token: string): Promise<UserInvite | null> {
-    logAPICall('GET', `/invites/token/${token}`);
-
-    try {
-      const invite = await db.getInviteByToken(token);
-      return invite;
-    } catch (error: unknown) {
-      logAPICall('GET', `/invites/token/${token}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  resendInvite(inviteId: string): Promise<UserInvite> {
+    const newExpiry = new Date();
+    newExpiry.setDate(newExpiry.getDate() + 7);
+    return db.updateInviteExpiry(inviteId, newExpiry.toISOString());
   }
 
   async acceptInvite(token: string, password: string): Promise<AuthSession> {
-    logAPICall('POST', '/invites/accept', { token });
-
-    try {
-      // Verify invite
-      const invite = await this.getInviteByToken(token);
-      if (!invite) {
-        throw new ValidationError('Invalid or expired invite token', 'token');
-      }
-
-      await authService.createUser({
-        email: invite.email,
-        password,
-        name: invite.name,
-        role: invite.role
-      });
-
-      // Update Invite Status in Neon
-      await db.updateInviteStatus(invite.id, 'Accepted');
-
-      return await authService.login(invite.email, password);
-    } catch (error: unknown) {
-      logAPICall('POST', '/invites/accept', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+    const invite = await db.getInviteByToken(token);
+    if (!invite) throw new Error('Invalid or expired invite token');
+    await authService.createUser({ email: invite.email, password, name: invite.name, role: invite.role });
+    await db.updateInviteStatus(invite.id, 'Accepted');
+    return authService.login(invite.email, password);
   }
 
-  async deleteInvite(inviteId: string): Promise<void> {
-    logAPICall('DELETE', `/invites/${inviteId}`);
+  // ── Operating Funds ───────────────────────────────────────────────────────
 
-    try {
-      await db.updateInviteStatus(inviteId, 'Cancelled');
-      logAPICall('DELETE', `/invites/${inviteId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/invites/${inviteId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  getOperatingFunds(): Promise<OperatingFund[]> { return db.getOperatingFunds(); }
+  addOperatingFund(fund: Omit<OperatingFund, 'id' | 'created_at'>): Promise<OperatingFund> { return db.addOperatingFund(fund); }
+  updateOperatingFund(id: string, updates: Partial<Omit<OperatingFund, 'id' | 'created_at'>>): Promise<OperatingFund> { return db.updateOperatingFund(id, updates); }
+  deleteOperatingFund(id: string): Promise<void> { return db.deleteOperatingFund(id); }
+  getOperatingFundsBalance(): Promise<{ received: number; disbursed: number; balance: number }> { return db.getOperatingFundsBalance(); }
+
+  // ── Config (legacy) ───────────────────────────────────────────────────────
+
+  async getSupabaseConfig(): Promise<SupabaseConfig> {
+    return { ...this.config, isConnected: isNeonConnected() };
   }
 
-  async resendInvite(inviteId: string): Promise<UserInvite> {
-    logAPICall('POST', `/invites/${inviteId}/resend`);
-
-    try {
-      const newExpiry = new Date();
-      newExpiry.setDate(newExpiry.getDate() + 7);
-
-      const invite = await db.updateInviteExpiry(inviteId, newExpiry.toISOString());
-      return invite;
-    } catch (error: unknown) {
-      logAPICall('POST', `/invites/${inviteId}/resend`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // EMPLOYEES (Using Neon)
-  // ============================================
-
-  async getEmployees(): Promise<Employee[]> {
-    logAPICall('GET', '/employees');
-
-    try {
-      const employees = await db.getEmployees();
-      logAPICall('GET', '/employees', { success: true, count: employees.length });
-      return employees;
-    } catch (error: unknown) {
-      logAPICall('GET', '/employees', { success: false, error: getErrorMessage(error) });
-      return [];
-    }
-  }
-
-  async createEmployee(employeeData: Omit<Employee, 'id' | 'employee_number' | 'created_at' | 'updated_at'>): Promise<Employee> {
-    logAPICall('POST', '/employees', { email: employeeData.email });
-
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
-
-    // Validation
-    validateRequired(employeeData.name, 'name');
-    validateRequired(employeeData.email, 'email');
-    validateRequired(employeeData.position, 'position');
-    validateRequired(employeeData.base_pay_usd, 'base_pay_usd');
-    validateRequired(employeeData.date_hired, 'date_hired');
-
-    if (!validateEmail(employeeData.email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    if (employeeData.base_pay_usd < 0) {
-      throw new ValidationError('Base pay must be positive', 'base_pay_usd');
-    }
-
-    try {
-      const employee = await db.createEmployee(employeeData);
-      logAPICall('POST', '/employees', { success: true, employeeId: employee.id });
-      return employee;
-    } catch (error: unknown) {
-      logAPICall('POST', '/employees', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updateEmployee(employeeId: string, updates: Partial<Omit<Employee, 'id' | 'employee_number' | 'created_at'>>): Promise<Employee> {
-    logAPICall('PUT', `/employees/${employeeId}`, updates);
-    validateRequired(employeeId, 'employeeId');
-
-    if (updates.email && !validateEmail(updates.email)) {
-      throw new ValidationError('Invalid email format', 'email');
-    }
-
-    if (updates.base_pay_usd !== undefined && updates.base_pay_usd < 0) {
-      throw new ValidationError('Base pay must be positive', 'base_pay_usd');
-    }
-
-    try {
-      const employee = await db.updateEmployee(employeeId, updates);
-      logAPICall('PUT', `/employees/${employeeId}`, { success: true });
-      return employee;
-    } catch (error: unknown) {
-      logAPICall('PUT', `/employees/${employeeId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deleteEmployee(employeeId: string): Promise<void> {
-    logAPICall('DELETE', `/employees/${employeeId}`);
-    validateRequired(employeeId, 'employeeId');
-
-    try {
-      await db.deleteEmployee(employeeId);
-      logAPICall('DELETE', `/employees/${employeeId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/employees/${employeeId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // PAYSLIPS (Using Neon)
-  // ============================================
-
-  async getPayslips(filters?: { employeeId?: string; year?: number; month?: number }): Promise<Payslip[]> {
-    logAPICall('GET', '/payslips', filters);
-
-    try {
-      const payslips = await db.getPayslips(filters);
-      logAPICall('GET', '/payslips', { success: true, count: payslips.length });
-      return payslips;
-    } catch (error: unknown) {
-      logAPICall('GET', '/payslips', { success: false, error: getErrorMessage(error) });
-      return [];
-    }
-  }
-
-  async generatePayslip(payslipData: {
-    employee_id: string;
-    month: number;
-    year: number;
-    base_pay: number;
-    overtime_hours?: number;
-    overtime_rate?: number;
-    bonus?: number;
-    allowances?: number;
-    commission?: number;
-    tax_deduction?: number;
-    pension_deduction?: number;
-    health_insurance?: number;
-    other_deductions?: number;
-    payment_date?: string;
-    payment_method?: string;
-    notes?: string;
-  }): Promise<Payslip> {
-    logAPICall('POST', '/payslips', { employee_id: payslipData.employee_id, month: payslipData.month, year: payslipData.year });
-
-    if (!isNeonConnected()) {
-      throw new Error('Database not configured. Please check VITE_NEON_DATABASE_URL.');
-    }
-
-    // Validation
-    validateRequired(payslipData.employee_id, 'employee_id');
-    validateRequired(payslipData.month, 'month');
-    validateRequired(payslipData.year, 'year');
-    validateRequired(payslipData.base_pay, 'base_pay');
-
-    if (payslipData.month < 1 || payslipData.month > 12) {
-      throw new ValidationError('Month must be between 1 and 12', 'month');
-    }
-
-    if (payslipData.year < 2000) {
-      throw new ValidationError('Invalid year', 'year');
-    }
-
-    try {
-      const session = await authService.getSession();
-      const payslip = await db.generatePayslip({
-        ...payslipData,
-        generated_by: session?.user.id || undefined
-      });
-      logAPICall('POST', '/payslips', { success: true, payslipId: payslip.id });
-      return payslip;
-    } catch (error: unknown) {
-      logAPICall('POST', '/payslips', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updatePayslipStatus(payslipId: string, status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled'): Promise<Payslip> {
-    logAPICall('PATCH', `/payslips/${payslipId}/status`, { status });
-    validateRequired(payslipId, 'payslipId');
-    validateRequired(status, 'status');
-
-    try {
-      const payslip = await db.updatePayslipStatus(payslipId, status);
-      logAPICall('PATCH', `/payslips/${payslipId}/status`, { success: true });
-      return payslip;
-    } catch (error: unknown) {
-      logAPICall('PATCH', `/payslips/${payslipId}/status`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deletePayslip(payslipId: string): Promise<void> {
-    logAPICall('DELETE', `/payslips/${payslipId}`);
-    validateRequired(payslipId, 'payslipId');
-
-    try {
-      await db.deletePayslip(payslipId);
-      logAPICall('DELETE', `/payslips/${payslipId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/payslips/${payslipId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // QUOTE ITEMS (Using Neon)
-  // ============================================
-
-  async getQuoteItems(quoteId: string): Promise<QuoteItem[]> {
-    logAPICall('GET', `/quote-items/${quoteId}`);
-    validateRequired(quoteId, 'quoteId');
-
-    try {
-      const items = await db.getQuoteItems(quoteId);
-      logAPICall('GET', `/quote-items/${quoteId}`, { success: true, count: items.length });
-      return items;
-    } catch (error: unknown) {
-      logAPICall('GET', `/quote-items/${quoteId}`, { success: false, error: getErrorMessage(error) });
-      return [];
-    }
-  }
-
-  async addQuoteItem(quoteId: string, item: Omit<QuoteItem, 'id' | 'quote_id' | 'created_at' | 'updated_at'>): Promise<QuoteItem> {
-    logAPICall('POST', `/quote-items/${quoteId}`, item);
-
-    validateRequired(quoteId, 'quoteId');
-    validateRequired(item.description, 'description');
-    validateRequired(item.quantity, 'quantity');
-    validateRequired(item.unit_price, 'unit_price');
-
-    if (item.quantity <= 0) {
-      throw new ValidationError('Quantity must be greater than 0', 'quantity');
-    }
-    if (item.unit_price < 0) {
-      throw new ValidationError('Unit price cannot be negative', 'unit_price');
-    }
-
-    try {
-      const newItem = await db.addQuoteItem(quoteId, item);
-      logAPICall('POST', `/quote-items/${quoteId}`, { success: true, itemId: newItem.id });
-      return newItem;
-    } catch (error: unknown) {
-      logAPICall('POST', `/quote-items/${quoteId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updateQuoteItem(itemId: string, updates: Partial<QuoteItem>): Promise<QuoteItem> {
-    logAPICall('PATCH', `/quote-items/${itemId}`, updates);
-    validateRequired(itemId, 'itemId');
-
-    if (updates.quantity !== undefined && updates.quantity <= 0) {
-      throw new ValidationError('Quantity must be greater than 0', 'quantity');
-    }
-    if (updates.unit_price !== undefined && updates.unit_price < 0) {
-      throw new ValidationError('Unit price cannot be negative', 'unit_price');
-    }
-
-    try {
-      const item = await db.updateQuoteItem(itemId, updates);
-      logAPICall('PATCH', `/quote-items/${itemId}`, { success: true });
-      return item;
-    } catch (error: unknown) {
-      logAPICall('PATCH', `/quote-items/${itemId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deleteQuoteItem(itemId: string): Promise<void> {
-    logAPICall('DELETE', `/quote-items/${itemId}`);
-    validateRequired(itemId, 'itemId');
-
-    try {
-      await db.deleteQuoteItem(itemId);
-      logAPICall('DELETE', `/quote-items/${itemId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/quote-items/${itemId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // INVOICE ITEMS (Using Neon)
-  // ============================================
-
-  async getInvoiceItems(invoiceId: string): Promise<InvoiceItem[]> {
-    logAPICall('GET', `/invoice-items/${invoiceId}`);
-    validateRequired(invoiceId, 'invoiceId');
-
-    try {
-      const items = await db.getInvoiceItems(invoiceId);
-      logAPICall('GET', `/invoice-items/${invoiceId}`, { success: true, count: items.length });
-      return items;
-    } catch (error: unknown) {
-      logAPICall('GET', `/invoice-items/${invoiceId}`, { success: false, error: getErrorMessage(error) });
-      return [];
-    }
-  }
-
-  async addInvoiceItem(invoiceId: string, item: Omit<InvoiceItem, 'id' | 'invoice_id' | 'created_at' | 'updated_at'>): Promise<InvoiceItem> {
-    logAPICall('POST', `/invoice-items/${invoiceId}`, item);
-
-    validateRequired(invoiceId, 'invoiceId');
-    validateRequired(item.description, 'description');
-    validateRequired(item.quantity, 'quantity');
-    validateRequired(item.unit_price, 'unit_price');
-
-    if (item.quantity <= 0) {
-      throw new ValidationError('Quantity must be greater than 0', 'quantity');
-    }
-    if (item.unit_price < 0) {
-      throw new ValidationError('Unit price cannot be negative', 'unit_price');
-    }
-
-    try {
-      const newItem = await db.addInvoiceItem(invoiceId, item);
-      logAPICall('POST', `/invoice-items/${invoiceId}`, { success: true, itemId: newItem.id });
-      return newItem;
-    } catch (error: unknown) {
-      logAPICall('POST', `/invoice-items/${invoiceId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updateInvoiceItem(itemId: string, updates: Partial<InvoiceItem>): Promise<InvoiceItem> {
-    logAPICall('PATCH', `/invoice-items/${itemId}`, updates);
-    validateRequired(itemId, 'itemId');
-
-    if (updates.quantity !== undefined && updates.quantity <= 0) {
-      throw new ValidationError('Quantity must be greater than 0', 'quantity');
-    }
-    if (updates.unit_price !== undefined && updates.unit_price < 0) {
-      throw new ValidationError('Unit price cannot be negative', 'unit_price');
-    }
-
-    try {
-      const item = await db.updateInvoiceItem(itemId, updates);
-      logAPICall('PATCH', `/invoice-items/${itemId}`, { success: true });
-      return item;
-    } catch (error: unknown) {
-      logAPICall('PATCH', `/invoice-items/${itemId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deleteInvoiceItem(itemId: string): Promise<void> {
-    logAPICall('DELETE', `/invoice-items/${itemId}`);
-    validateRequired(itemId, 'itemId');
-
-    try {
-      await db.deleteInvoiceItem(itemId);
-      logAPICall('DELETE', `/invoice-items/${itemId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/invoice-items/${itemId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // OPERATING FUNDS (Using Neon)
-  // Track money received from office and disbursements
-  // ============================================
-
-  async getOperatingFunds(): Promise<OperatingFund[]> {
-    logAPICall('GET', '/operating-funds');
-
-    try {
-      const funds = await db.getOperatingFunds();
-      logAPICall('GET', '/operating-funds', { success: true, count: funds.length });
-      return funds;
-    } catch (error: unknown) {
-      logAPICall('GET', '/operating-funds', { success: false, error: getErrorMessage(error) });
-      return [];
-    }
-  }
-
-  async getOperatingFundsBalance(): Promise<{ received: number; disbursed: number; balance: number }> {
-    logAPICall('GET', '/operating-funds/balance');
-
-    try {
-      const balance = await db.getOperatingFundsBalance();
-      logAPICall('GET', '/operating-funds/balance', { success: true, balance: balance.balance });
-      return balance;
-    } catch (error: unknown) {
-      logAPICall('GET', '/operating-funds/balance', { success: false, error: getErrorMessage(error) });
-      return { received: 0, disbursed: 0, balance: 0 };
-    }
-  }
-
-  async addOperatingFund(fundData: Omit<OperatingFund, 'id' | 'created_at'>): Promise<OperatingFund> {
-    logAPICall('POST', '/operating-funds', { type: fundData.type, amount: fundData.amount });
-
-    validateRequired(fundData.type, 'type');
-    validateRequired(fundData.amount, 'amount');
-    validateRequired(fundData.description, 'description');
-    validateRequired(fundData.date, 'date');
-
-    if (fundData.amount <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount');
-    }
-
-    try {
-      const fund = await db.addOperatingFund({
-        type: fundData.type,
-        amount: fundData.amount,
-        currency: fundData.currency || 'USD',
-        description: sanitizeString(fundData.description),
-        reference: fundData.reference ? sanitizeString(fundData.reference) : undefined,
-        recipient: fundData.recipient ? sanitizeString(fundData.recipient) : undefined,
-        approved_by: fundData.approved_by,
-        date: fundData.date
-      });
-      logAPICall('POST', '/operating-funds', { success: true, fundId: fund.id });
-      return fund;
-    } catch (error: unknown) {
-      logAPICall('POST', '/operating-funds', { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async updateOperatingFund(fundId: string, updates: Partial<Omit<OperatingFund, 'id' | 'created_at'>>): Promise<OperatingFund> {
-    logAPICall('PATCH', `/operating-funds/${fundId}`, updates);
-    validateRequired(fundId, 'fundId');
-
-    if (updates.amount !== undefined && updates.amount <= 0) {
-      throw new ValidationError('Amount must be greater than 0', 'amount');
-    }
-
-    try {
-      const fund = await db.updateOperatingFund(fundId, {
-        ...updates,
-        description: updates.description ? sanitizeString(updates.description) : undefined,
-        reference: updates.reference ? sanitizeString(updates.reference) : undefined,
-        recipient: updates.recipient ? sanitizeString(updates.recipient) : undefined
-      });
-      logAPICall('PATCH', `/operating-funds/${fundId}`, { success: true });
-      return fund;
-    } catch (error: unknown) {
-      logAPICall('PATCH', `/operating-funds/${fundId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
-  }
-
-  async deleteOperatingFund(fundId: string): Promise<void> {
-    logAPICall('DELETE', `/operating-funds/${fundId}`);
-    validateRequired(fundId, 'fundId');
-
-    try {
-      await db.deleteOperatingFund(fundId);
-      logAPICall('DELETE', `/operating-funds/${fundId}`, { success: true });
-    } catch (error: unknown) {
-      logAPICall('DELETE', `/operating-funds/${fundId}`, { success: false, error: getErrorMessage(error) });
-      throw error;
-    }
+  async updateSupabaseConfig(config: SupabaseConfig): Promise<void> {
+    this.config = { ...config, isConnected: isNeonConnected() };
   }
 }
 
-export const supabase = new SupabaseService();
+export const supabase = new DataService();

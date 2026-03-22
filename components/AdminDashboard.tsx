@@ -140,7 +140,7 @@ export const AdminDashboard: React.FC = () => {
       if (session?.user?.role) {
         setUserRole(session.user.role);
       }
-    }).catch(console.error);
+    }).catch((err: unknown) => console.error('[AdminDashboard] getSession failed:', err));
   }, []);
 
   const handleSaveVehicle = async (e: React.FormEvent) => {

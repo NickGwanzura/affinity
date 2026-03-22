@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Asset, CompanyDetails, LandedCostSummary } from '../../types';
 import { supabase } from '../../services/supabaseService';
 import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload } from '../../services/pdfService';
@@ -39,7 +39,10 @@ export const ReportsTab: React.FC = () => {
         setCompany(companyData);
 
         try {
-          const assetRes = await fetch('/api/assets', { credentials: 'include' });
+          const token = localStorage.getItem('affinity_auth_token');
+          const assetRes = await fetch('/api/assets', {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
           if (assetRes.ok) setAssets(await assetRes.json());
         } catch {
           // assets are optional for reports
@@ -57,7 +60,7 @@ export const ReportsTab: React.FC = () => {
 
   // ── Filtering helpers ─────────────────────────────────────────────────────
 
-  const getFilteredExpenses = () => {
+  const filteredExpenses = useMemo(() => {
     let filtered = [...(expenses || [])];
     if (reportDateFrom) filtered = filtered.filter(e => new Date(e.created_at) >= new Date(reportDateFrom));
     if (reportDateTo) filtered = filtered.filter(e => new Date(e.created_at) <= new Date(reportDateTo));
@@ -65,14 +68,14 @@ export const ReportsTab: React.FC = () => {
       filtered = filtered.filter(e => e.vehicle_id === reportVehicleFilter);
     }
     return filtered;
-  };
+  }, [expenses, reportDateFrom, reportDateTo, reportVehicleFilter]);
 
-  const getFilteredSummaries = () => {
+  const filteredSummaries = useMemo(() => {
     if (reportVehicleFilter && reportVehicleFilter !== 'all') {
       return summaries.filter(s => s.vehicle_id === reportVehicleFilter);
     }
     return summaries;
-  };
+  }, [summaries, reportVehicleFilter]);
 
   const truncateValue = (value: string | null | undefined, length: number) =>
     value ? value.slice(0, length) : '-';
@@ -85,8 +88,8 @@ export const ReportsTab: React.FC = () => {
     setIsExporting(true);
     try {
       await generateFleetReportPDFAndDownload(
-        getFilteredSummaries(),
-        getFilteredExpenses(),
+        filteredSummaries,
+        filteredExpenses,
         vehicles,
         company,
         { dateFrom: reportDateFrom || undefined, dateTo: reportDateTo || undefined }
@@ -103,7 +106,6 @@ export const ReportsTab: React.FC = () => {
   const handleExportCSV = () => {
     setIsExporting(true);
     try {
-      const filteredExpenses = getFilteredExpenses();
       const headers = ['Date', 'Vehicle ID', 'Vehicle', 'Category', 'Location', 'Amount', 'Currency', 'Exchange Rate', 'USD Value', 'Description'];
       const rows = filteredExpenses.map(e => [
         new Date(e.created_at).toISOString().split('T')[0],
@@ -126,7 +128,7 @@ export const ReportsTab: React.FC = () => {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       notifySuccess('CSV exported successfully!');
     } catch (err) {
       console.error('[ReportsTab] handleExportCSV error:', err);
@@ -141,8 +143,8 @@ export const ReportsTab: React.FC = () => {
     setIsExporting(true);
     try {
       await generateAuditReportPDFAndDownload(
-        getFilteredSummaries(),
-        getFilteredExpenses(),
+        filteredSummaries,
+        filteredExpenses,
         company,
         { dateFrom: reportDateFrom || undefined, dateTo: reportDateTo || undefined }
       );
@@ -160,7 +162,7 @@ export const ReportsTab: React.FC = () => {
     setIsExporting(true);
     try {
       await generateExpensesReportPDFAndDownload(
-        expenses,
+        filteredExpenses,
         company,
         vehicles,
         { dateFrom: reportDateFrom || undefined, dateTo: reportDateTo || undefined }
@@ -216,9 +218,6 @@ export const ReportsTab: React.FC = () => {
       </div>
     );
   }
-
-  const filteredExpenses = getFilteredExpenses();
-  const filteredSummaries = getFilteredSummaries();
 
   return (
     <div className="space-y-6">
