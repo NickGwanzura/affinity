@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Asset, CompanyDetails, LandedCostSummary } from '../../types';
 import { supabase } from '../../services/supabaseService';
-import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload } from '../../services/pdfService';
+import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload } from '../../services/pdfService';
 import { useToast } from '../Toast';
 
 export const ReportsTab: React.FC = () => {
@@ -77,102 +77,24 @@ export const ReportsTab: React.FC = () => {
   const truncateValue = (value: string | null | undefined, length: number) =>
     value ? value.slice(0, length) : '-';
 
-  const statusData = [
-    { name: 'UK', value: summaries.filter(s => s.status === 'UK').length },
-    { name: 'Namibia', value: summaries.filter(s => s.status === 'Namibia').length },
-    { name: 'Zimbabwe', value: summaries.filter(s => s.status === 'Zimbabwe').length },
-    { name: 'Botswana', value: summaries.filter(s => s.status === 'Botswana').length },
-    { name: 'Sold', value: summaries.filter(s => s.status === 'Sold').length },
-  ];
 
   // ── Export handlers ───────────────────────────────────────────────────────
 
   const handleExportPDF = async () => {
+    if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
     setIsExporting(true);
     try {
-      const filteredExpenses = getFilteredExpenses();
-      const filteredSummaries = getFilteredSummaries();
-
-      const reportContent = `
-╔═══════════════════════════════════════════════════════════════════╗
-║           AFFINITY LOGISTICS - FLEET ANALYTICS REPORT             ║
-╚═══════════════════════════════════════════════════════════════════╝
-
-Generated: ${new Date().toLocaleString()}
-${reportDateFrom || reportDateTo ? `\nReport Period: ${reportDateFrom || 'Beginning'} to ${reportDateTo || 'Present'}` : ''}
-${reportVehicleFilter !== 'all' ? `\nFiltered by Vehicle: ${vehicles.find(v => v.id === reportVehicleFilter)?.make_model || 'Unknown'}` : ''}
-
-═══════════════════════════════════════════════════════════════════
-
-EXECUTIVE SUMMARY
-═══════════════════════════════════════════════════════════════════
-Total Fleet Value:        $${filteredSummaries.reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-Total Expenses:          $${filteredExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-Number of Vehicles:       ${filteredSummaries.length}
-Number of Transactions:   ${filteredExpenses.length}
-Average Cost per Vehicle: $${filteredSummaries.length > 0 ? (filteredSummaries.reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0) / filteredSummaries.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
-
-═══════════════════════════════════════════════════════════════════
-
-EXPENSES BY CATEGORY
-═══════════════════════════════════════════════════════════════════
-${['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Other'].map(category => {
-  const catExpenses = filteredExpenses.filter(e => e.category === category);
-  const total = catExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-  const totalAll = filteredExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-  const percentage = totalAll > 0 ? ((total / totalAll) * 100).toFixed(1) : '0.0';
-  return `${category.padEnd(15)} $${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).padStart(12)}  (${percentage}%)`;
-}).join('\n')}
-
-═══════════════════════════════════════════════════════════════════
-
-EXPENSES BY LOCATION
-═══════════════════════════════════════════════════════════════════
-${['UK', 'Namibia', 'Zimbabwe', 'Botswana'].map(location => {
-  const locExpenses = filteredExpenses.filter(e => e.location === location);
-  const total = locExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-  return `${location.padEnd(15)} $${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).padStart(12)}  (${locExpenses.length} transactions)`;
-}).join('\n')}
-
-═══════════════════════════════════════════════════════════════════
-
-TOP 10 VEHICLES BY TOTAL COST
-═══════════════════════════════════════════════════════════════════
-Rank  VIN            Make & Model              Status      Total Cost
-────  ─────────────  ────────────────────────  ──────────  ──────────
-${[...filteredSummaries]
-  .sort((a, b) => (b.total_landed_cost_usd || 0) - (a.total_landed_cost_usd || 0))
-  .slice(0, 10)
-  .map((s, i) =>
-    `${(i + 1).toString().padStart(3)}   ${truncateValue(s.vin_number, 13).padEnd(13)}  ${truncateValue(s.make_model, 24).padEnd(24)}  ${(s.status || '-').padEnd(10)}  $${(s.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-  ).join('\n')}
-
-═══════════════════════════════════════════════════════════════════
-
-VEHICLE STATUS DISTRIBUTION
-═══════════════════════════════════════════════════════════════════
-${statusData.map(s => `${s.name.padEnd(15)} ${s.value.toString().padStart(3)} vehicles`).join('\n')}
-
-═══════════════════════════════════════════════════════════════════
-
-This report was generated by Affinity Logistics Management System
-For questions, contact: support@affinity-logistics.com
-═══════════════════════════════════════════════════════════════════
-`;
-
-      const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `affinity-fleet-report-${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      notifySuccess('Report exported successfully!');
+      await generateFleetReportPDFAndDownload(
+        getFilteredSummaries(),
+        getFilteredExpenses(),
+        vehicles,
+        company,
+        { dateFrom: reportDateFrom || undefined, dateTo: reportDateTo || undefined }
+      );
+      notifySuccess('Fleet analytics report PDF downloaded!');
     } catch (err) {
       console.error('[ReportsTab] handleExportPDF error:', err);
-      notifyError('Failed to export report. Please try again.');
+      notifyError('Failed to generate fleet report PDF. Please try again.');
     } finally {
       setIsExporting(false);
     }
@@ -214,138 +136,20 @@ For questions, contact: support@affinity-logistics.com
     }
   };
 
-  const handleAuditReport = () => {
+  const handleAuditReport = async () => {
+    if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
     setIsExporting(true);
     try {
-      const filteredExpenses = getFilteredExpenses();
-      const filteredSummaries = getFilteredSummaries();
-
-      const totalExpenses = filteredExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-      const totalValue = filteredSummaries.reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0);
-      const avgValue = filteredSummaries.length > 0 ? totalValue / filteredSummaries.length : 0;
-
-      const byCategory = ['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Other'].map(category => {
-        const catExpenses = filteredExpenses.filter(e => e.category === category);
-        return { category, count: catExpenses.length, total: catExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0) };
-      }).filter(c => c.count > 0);
-
-      const byLocation = ['UK', 'Namibia', 'Zimbabwe', 'Botswana'].map(location => {
-        const locExpenses = filteredExpenses.filter(e => e.location === location);
-        return { location, count: locExpenses.length, total: locExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0) };
-      }).filter(l => l.count > 0);
-
-      const vehiclesByStatus = statusData.reduce((acc, s) => { acc[s.name] = s.value; return acc; }, {} as Record<string, number>);
-      const soldCount = vehiclesByStatus['Sold'] || 0;
-
-      const auditReport = `╔═══════════════════════════════════════════════════════════════════════════════╗
-║              AUDIT REPORT - AFFINITY LOGISTICS MANAGEMENT                     ║
-║                        COMPREHENSIVE FLEET ANALYSIS                            ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-Generated: ${new Date().toLocaleString()}
-Report Period: ${reportDateFrom || 'Beginning'} → ${reportDateTo || 'Present'}
-${reportVehicleFilter !== 'all' ? `Filtered by Vehicle: ${vehicles.find(v => v.id === reportVehicleFilter)?.make_model}\n` : ''}
-═══════════════════════════════════════════════════════════════════════════════
-
-FLEET SUMMARY
-═══════════════════════════════════════════════════════════════════════════════
-Total Vehicles:           ${filteredSummaries.length}
-Total Fleet Value:        $${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-Average Vehicle Value:    $${avgValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-
-Vehicle Distribution by Status:
-${Object.entries(vehiclesByStatus).map(([status, count]) =>
-  `  • ${status.padEnd(20)} ${String(count).padStart(3)} vehicles`
-).join('\n')}
-
-═══════════════════════════════════════════════════════════════════════════════
-
-EXPENSE ANALYSIS
-═══════════════════════════════════════════════════════════════════════════════
-Total Expenses:           $${totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-Total Transactions:       ${filteredExpenses.length}
-Average per Transaction:  $${filteredExpenses.length > 0 ? (totalExpenses / filteredExpenses.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
-
-Expenses by Category:
-${byCategory.map(c => {
-  const pct = ((c.total / totalExpenses) * 100).toFixed(1);
-  return `  • ${c.category.padEnd(20)} $${c.total.toLocaleString(undefined, { minimumFractionDigits: 2 }).padStart(12)}  (${pct.padStart(5)}%)  ${c.count} transactions`;
-}).join('\n')}
-
-Expenses by Location:
-${byLocation.map(l => {
-  const pct = ((l.total / totalExpenses) * 100).toFixed(1);
-  return `  • ${l.location.padEnd(20)} $${l.total.toLocaleString(undefined, { minimumFractionDigits: 2 }).padStart(12)}  (${pct.padStart(5)}%)  ${l.count} transactions`;
-}).join('\n')}
-
-═══════════════════════════════════════════════════════════════════════════════
-
-DETAILED VEHICLE BREAKDOWN
-═══════════════════════════════════════════════════════════════════════════════
-${filteredSummaries.map((v, idx) => `
-Vehicle ${idx + 1}: ${v.make_model}
-VIN: ${v.vin_number}
-Status: ${v.status}
-Purchase Price (GBP): £${v.purchase_price_gbp.toLocaleString()}
-Total Expenses (USD): $${v.total_expenses_usd.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-Total Landed Cost:    $${v.total_landed_cost_usd.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-Expense Ratio:        ${((v.total_expenses_usd || 0) / (v.total_landed_cost_usd || 1) * 100).toFixed(2)}%
-${'─'.repeat(79)}`
-).join('\n')}
-
-═══════════════════════════════════════════════════════════════════════════════
-
-KEY PERFORMANCE INDICATORS
-═══════════════════════════════════════════════════════════════════════════════
-• Fleet Utilization:      ${filteredSummaries.length > 0 ? (((filteredSummaries.length - soldCount) / filteredSummaries.length) * 100).toFixed(1) : 0}%
-• Average Expense/Vehicle: $${filteredSummaries.length > 0 ? (totalExpenses / filteredSummaries.length).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'}
-• Total Asset Value:      $${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-• Expense to Value Ratio: ${totalValue > 0 ? ((totalExpenses / totalValue) * 100).toFixed(2) : 0}%
-
-═══════════════════════════════════════════════════════════════════════════════
-
-RECOMMENDATIONS
-═══════════════════════════════════════════════════════════════════════════════
-${byCategory.length > 0 ? `
-• Highest expense category: ${[...byCategory].sort((a, b) => b.total - a.total)[0]?.category}
-  Consider strategies to optimize ${byCategory[0]?.category.toLowerCase()} costs.
-` : ''}${byLocation.length > 0 ? `
-• Highest expense location: ${[...byLocation].sort((a, b) => b.total - a.total)[0]?.location}
-  Review operational efficiency in ${byLocation[0]?.location}.
-` : ''}
-• Monitor vehicles with expense ratios >30% for potential cost optimization
-• Regular maintenance scheduling can reduce repair expenses
-• Consider fuel card programs to track and manage fuel costs better
-
-═══════════════════════════════════════════════════════════════════════════════
-
-AUDIT CERTIFICATION
-═══════════════════════════════════════════════════════════════════════════════
-This audit report has been automatically generated by the Affinity Logistics
-Management System. All data is current as of the generation timestamp above.
-
-For inquiries or clarifications, please contact:
-  Email: support@affinity-logistics.com
-  Phone: +44 20 7946 0958
-
-═══════════════════════════════════════════════════════════════════════════════
-END OF REPORT
-═══════════════════════════════════════════════════════════════════════════════
-`;
-
-      const blob = new Blob([auditReport], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `affinity-audit-report-${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      notifySuccess('Comprehensive audit report generated successfully!');
+      await generateAuditReportPDFAndDownload(
+        getFilteredSummaries(),
+        getFilteredExpenses(),
+        company,
+        { dateFrom: reportDateFrom || undefined, dateTo: reportDateTo || undefined }
+      );
+      notifySuccess('Audit report PDF downloaded!');
     } catch (err) {
       console.error('[ReportsTab] handleAuditReport error:', err);
-      notifyError('Failed to generate audit report. Please try again.');
+      notifyError('Failed to generate audit report PDF. Please try again.');
     } finally {
       setIsExporting(false);
     }

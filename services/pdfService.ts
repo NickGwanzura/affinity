@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense, Asset } from '../types';
+import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense, Asset, LandedCostSummary } from '../types';
 import affinityLogoUrl from '../assets/affinity-logo.svg';
 
 // ============================================================================
@@ -2375,4 +2375,424 @@ export const generateAssetRegisterReportPDFAndDownload = async (
 ): Promise<void> => {
   const blob = await generateAssetRegisterReportPDF(assets, company);
   downloadBlob(blob, `Asset_Register_${new Date().toISOString().split('T')[0]}.pdf`);
+};
+
+// ============================================================================
+// FLEET ANALYTICS REPORT PDF
+// ============================================================================
+
+export const generateFleetReportPDF = async (
+  summaries: LandedCostSummary[],
+  expenses: Expense[],
+  vehicles: Vehicle[],
+  company: CompanyDetails,
+  options?: { dateFrom?: string; dateTo?: string; vehicleFilter?: string }
+): Promise<Blob> => {
+  const sanitizedCompany = sanitizeCompany(company);
+  const dateStr = new Date().toISOString().split('T')[0];
+  const builder = new PDFBuilder(sanitizedCompany, `Fleet_Analytics_Report_${dateStr}.pdf`);
+  const doc = builder.getDocument();
+
+  const periodLabel = options?.dateFrom || options?.dateTo
+    ? `${options.dateFrom || 'Beginning'} – ${options.dateTo || 'Present'}`
+    : 'All time';
+
+  const totalFleetValue = summaries.reduce((s, v) => s + (v.total_landed_cost_usd || 0), 0);
+  const totalExpenses = expenses.reduce((s, e) => s + (e.amount || 0) * (e.exchange_rate_to_usd || 1), 0);
+
+  await builder.addLogoWatermark();
+  (await builder.addHeader())
+    .addTitle('FLEET ANALYTICS REPORT')
+    .addMetadataSection(
+      ['Report Date:', 'Period:', 'Total Vehicles:', 'Total Transactions:'],
+      [
+        new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        periodLabel,
+        String(summaries.length),
+        String(expenses.length),
+      ],
+      125,
+      65
+    );
+
+  let currentY = 120;
+
+  // ── Executive Summary Box ────────────────────────────────────────────────
+  currentY = builder.ensureContentSpace(38, currentY);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 32, 3, 3, 'F');
+  doc.setDrawColor(...COLORS.BORDER_GRAY);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 32, 3, 3, 'S');
+
+  const colW = 45;
+  const summaryItems = [
+    { label: 'FLEET VALUE', value: formatCurrencyAmount(totalFleetValue, 'USD') },
+    { label: 'TOTAL EXPENSES', value: formatCurrencyAmount(totalExpenses, 'USD') },
+    { label: 'VEHICLES', value: String(summaries.length) },
+    { label: 'AVG COST / VEHICLE', value: summaries.length > 0 ? formatCurrencyAmount(totalFleetValue / summaries.length, 'USD') : '$0' },
+  ];
+  summaryItems.forEach((item, i) => {
+    const x = LAYOUT.MARGIN_LEFT + 5 + i * colW;
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
+    doc.text(item.label, x, currentY + 10);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text(item.value, x, currentY + 22);
+  });
+  currentY += 42;
+
+  // ── Top 10 Vehicles Table ────────────────────────────────────────────────
+  const top10 = [...summaries]
+    .sort((a, b) => (b.total_landed_cost_usd || 0) - (a.total_landed_cost_usd || 0))
+    .slice(0, 10);
+
+  if (top10.length > 0) {
+    currentY = builder.ensureContentSpace(20 + top10.length * 7, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('TOP VEHICLES BY TOTAL COST', LAYOUT.MARGIN_LEFT, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['RANK', 'MAKE & MODEL', 'VIN', 'STATUS', 'PURCHASE (GBP)', 'TOTAL COST (USD)']],
+      body: top10.map((v, i) => [
+        String(i + 1),
+        sanitizeText(v.make_model) || '—',
+        sanitizeText(v.vin_number) || '—',
+        sanitizeText(v.status) || '—',
+        `£${(v.purchase_price_gbp || 0).toLocaleString()}`,
+        formatCurrencyAmount(v.total_landed_cost_usd || 0, 'USD'),
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: { fillColor: TABLE_STYLES.HEAD_FILL, textColor: COLORS.PRIMARY_DARK, fontStyle: 'bold', fontSize: FONT_SIZES.XSMALL, cellPadding: TABLE_STYLES.HEAD_PADDING },
+      styles: { fontSize: FONT_SIZES.XSMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
+      columnStyles: {
+        0: { cellWidth: 12, halign: 'center' },
+        1: { cellWidth: 44 },
+        2: { cellWidth: 36 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 32, halign: 'right' },
+        5: { cellWidth: 34, halign: 'right', fontStyle: 'bold' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+    currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 14;
+  }
+
+  // ── Vehicle Status Distribution ──────────────────────────────────────────
+  const statusGroups = ['UK', 'Namibia', 'Zimbabwe', 'Botswana', 'Sold']
+    .map(s => ({ status: s, count: summaries.filter(v => v.status === s).length }))
+    .filter(s => s.count > 0);
+
+  if (statusGroups.length > 0) {
+    currentY = builder.ensureContentSpace(20 + statusGroups.length * 7, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('VEHICLE STATUS DISTRIBUTION', LAYOUT.MARGIN_LEFT, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['STATUS / LOCATION', 'VEHICLES', '% OF FLEET']],
+      body: statusGroups.map(s => [
+        s.status,
+        String(s.count),
+        summaries.length > 0 ? `${((s.count / summaries.length) * 100).toFixed(1)}%` : '0.0%',
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: { fillColor: TABLE_STYLES.HEAD_FILL, textColor: COLORS.PRIMARY_DARK, fontStyle: 'bold', fontSize: FONT_SIZES.SMALL, cellPadding: TABLE_STYLES.HEAD_PADDING },
+      styles: { fontSize: FONT_SIZES.SMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
+      columnStyles: {
+        0: { cellWidth: 60 },
+        1: { cellWidth: 30, halign: 'center', fontStyle: 'bold' },
+        2: { cellWidth: 30, halign: 'right' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+    currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 14;
+  }
+
+  // ── Expenses by Category ─────────────────────────────────────────────────
+  const EXPENSE_CATEGORIES = ['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Driver Disbursement', 'Other'];
+  const categoryTotals = EXPENSE_CATEGORIES
+    .map(cat => ({
+      category: cat,
+      total: expenses.filter(e => e.category === cat).reduce((s, e) => s + (e.amount || 0) * (e.exchange_rate_to_usd || 1), 0),
+      count: expenses.filter(e => e.category === cat).length,
+    }))
+    .filter(c => c.count > 0);
+
+  if (categoryTotals.length > 0) {
+    currentY = builder.ensureContentSpace(20 + categoryTotals.length * 7, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('EXPENSES BY CATEGORY', LAYOUT.MARGIN_LEFT, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['CATEGORY', 'TRANSACTIONS', 'USD TOTAL', '% OF TOTAL']],
+      body: categoryTotals.map(c => [
+        c.category,
+        String(c.count),
+        formatCurrencyAmount(c.total, 'USD'),
+        totalExpenses > 0 ? `${((c.total / totalExpenses) * 100).toFixed(1)}%` : '0.0%',
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: { fillColor: TABLE_STYLES.HEAD_FILL, textColor: COLORS.PRIMARY_DARK, fontStyle: 'bold', fontSize: FONT_SIZES.SMALL, cellPadding: TABLE_STYLES.HEAD_PADDING },
+      styles: { fontSize: FONT_SIZES.SMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 30, halign: 'center' },
+        2: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+        3: { cellWidth: 30, halign: 'right' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+    currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 14;
+  }
+
+  // ── Expenses by Location ─────────────────────────────────────────────────
+  const locationTotals = ['UK', 'Namibia', 'Zimbabwe', 'Botswana']
+    .map(loc => ({
+      location: loc,
+      total: expenses.filter(e => e.location === loc).reduce((s, e) => s + (e.amount || 0) * (e.exchange_rate_to_usd || 1), 0),
+      count: expenses.filter(e => e.location === loc).length,
+    }))
+    .filter(l => l.count > 0);
+
+  if (locationTotals.length > 0) {
+    currentY = builder.ensureContentSpace(20 + locationTotals.length * 7, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('EXPENSES BY LOCATION', LAYOUT.MARGIN_LEFT, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['LOCATION', 'TRANSACTIONS', 'USD TOTAL', '% OF TOTAL']],
+      body: locationTotals.map(l => [
+        l.location,
+        String(l.count),
+        formatCurrencyAmount(l.total, 'USD'),
+        totalExpenses > 0 ? `${((l.total / totalExpenses) * 100).toFixed(1)}%` : '0.0%',
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: { fillColor: TABLE_STYLES.HEAD_FILL, textColor: COLORS.PRIMARY_DARK, fontStyle: 'bold', fontSize: FONT_SIZES.SMALL, cellPadding: TABLE_STYLES.HEAD_PADDING },
+      styles: { fontSize: FONT_SIZES.SMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 30, halign: 'center' },
+        2: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+        3: { cellWidth: 30, halign: 'right' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+  }
+
+  builder.addFooter({ additionalText: `Fleet Analytics Report — ${new Date().toLocaleDateString()}`, fontSize: FONT_SIZES.XXSMALL });
+  return builder.generate();
+};
+
+export const generateFleetReportPDFAndDownload = async (
+  summaries: LandedCostSummary[],
+  expenses: Expense[],
+  vehicles: Vehicle[],
+  company: CompanyDetails,
+  options?: { dateFrom?: string; dateTo?: string; vehicleFilter?: string }
+): Promise<void> => {
+  const blob = await generateFleetReportPDF(summaries, expenses, vehicles, company, options);
+  downloadBlob(blob, `Fleet_Analytics_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+};
+
+// ============================================================================
+// AUDIT REPORT PDF
+// ============================================================================
+
+export const generateAuditReportPDF = async (
+  summaries: LandedCostSummary[],
+  expenses: Expense[],
+  company: CompanyDetails,
+  options?: { dateFrom?: string; dateTo?: string }
+): Promise<Blob> => {
+  const sanitizedCompany = sanitizeCompany(company);
+  const dateStr = new Date().toISOString().split('T')[0];
+  const builder = new PDFBuilder(sanitizedCompany, `Audit_Report_${dateStr}.pdf`);
+  const doc = builder.getDocument();
+
+  const totalExpenses = expenses.reduce((s, e) => s + (e.amount || 0) * (e.exchange_rate_to_usd || 1), 0);
+  const totalValue = summaries.reduce((s, v) => s + (v.total_landed_cost_usd || 0), 0);
+  const soldCount = summaries.filter(v => v.status === 'Sold').length;
+  const periodLabel = options?.dateFrom || options?.dateTo
+    ? `${options.dateFrom || 'Beginning'} – ${options.dateTo || 'Present'}`
+    : 'All time';
+
+  await builder.addLogoWatermark();
+  (await builder.addHeader())
+    .addTitle('FLEET AUDIT REPORT')
+    .addMetadataSection(
+      ['Report Date:', 'Period:', 'Total Vehicles:', 'Expense Transactions:'],
+      [
+        new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        periodLabel,
+        String(summaries.length),
+        String(expenses.length),
+      ],
+      125,
+      65
+    );
+
+  let currentY = 120;
+
+  // ── KPI Summary Box ──────────────────────────────────────────────────────
+  currentY = builder.ensureContentSpace(38, currentY);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 32, 3, 3, 'F');
+  doc.setDrawColor(...COLORS.BORDER_GRAY);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 32, 3, 3, 'S');
+
+  const colW = 45;
+  const kpiItems = [
+    { label: 'TOTAL ASSET VALUE', value: formatCurrencyAmount(totalValue, 'USD') },
+    { label: 'TOTAL EXPENSES', value: formatCurrencyAmount(totalExpenses, 'USD') },
+    { label: 'FLEET UTILISATION', value: summaries.length > 0 ? `${(((summaries.length - soldCount) / summaries.length) * 100).toFixed(1)}%` : '0%' },
+    { label: 'EXPENSE / VALUE RATIO', value: totalValue > 0 ? `${((totalExpenses / totalValue) * 100).toFixed(2)}%` : '0%' },
+  ];
+  kpiItems.forEach((item, i) => {
+    const x = LAYOUT.MARGIN_LEFT + 5 + i * colW;
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
+    doc.text(item.label, x, currentY + 10);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text(item.value, x, currentY + 22);
+  });
+  currentY += 42;
+
+  // ── Detailed Vehicle Breakdown ───────────────────────────────────────────
+  if (summaries.length > 0) {
+    currentY = builder.ensureContentSpace(20, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('DETAILED VEHICLE BREAKDOWN', LAYOUT.MARGIN_LEFT, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['MAKE & MODEL', 'VIN', 'STATUS', 'PURCHASE (GBP)', 'EXPENSES (USD)', 'TOTAL COST', 'EXP. RATIO']],
+      body: summaries.map(v => [
+        sanitizeText(v.make_model) || '—',
+        sanitizeText(v.vin_number) || '—',
+        sanitizeText(v.status) || '—',
+        `£${(v.purchase_price_gbp || 0).toLocaleString()}`,
+        formatCurrencyAmount(v.total_expenses_usd || 0, 'USD'),
+        formatCurrencyAmount(v.total_landed_cost_usd || 0, 'USD'),
+        v.total_landed_cost_usd ? `${((v.total_expenses_usd || 0) / v.total_landed_cost_usd * 100).toFixed(1)}%` : '0%',
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: { fillColor: TABLE_STYLES.HEAD_FILL, textColor: COLORS.PRIMARY_DARK, fontStyle: 'bold', fontSize: FONT_SIZES.XSMALL, cellPadding: TABLE_STYLES.HEAD_PADDING },
+      styles: { fontSize: FONT_SIZES.XSMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
+      columnStyles: {
+        0: { cellWidth: 36 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 24, halign: 'right' },
+        4: { cellWidth: 24, halign: 'right' },
+        5: { cellWidth: 26, halign: 'right', fontStyle: 'bold' },
+        6: { cellWidth: 18, halign: 'right' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+    currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 14;
+  }
+
+  // ── Expenses by Category ─────────────────────────────────────────────────
+  const EXPENSE_CATEGORIES = ['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Driver Disbursement', 'Other'];
+  const categoryTotals = EXPENSE_CATEGORIES
+    .map(cat => ({
+      category: cat,
+      total: expenses.filter(e => e.category === cat).reduce((s, e) => s + (e.amount || 0) * (e.exchange_rate_to_usd || 1), 0),
+      count: expenses.filter(e => e.category === cat).length,
+    }))
+    .filter(c => c.count > 0);
+
+  if (categoryTotals.length > 0) {
+    currentY = builder.ensureContentSpace(20 + categoryTotals.length * 7, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('EXPENSES BY CATEGORY', LAYOUT.MARGIN_LEFT, currentY);
+
+    const highestCat = [...categoryTotals].sort((a, b) => b.total - a.total)[0];
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['CATEGORY', 'TRANSACTIONS', 'USD TOTAL', '% OF TOTAL']],
+      body: categoryTotals.map(c => [
+        c.category,
+        String(c.count),
+        formatCurrencyAmount(c.total, 'USD'),
+        totalExpenses > 0 ? `${((c.total / totalExpenses) * 100).toFixed(1)}%` : '0.0%',
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: { fillColor: TABLE_STYLES.HEAD_FILL, textColor: COLORS.PRIMARY_DARK, fontStyle: 'bold', fontSize: FONT_SIZES.SMALL, cellPadding: TABLE_STYLES.HEAD_PADDING },
+      styles: { fontSize: FONT_SIZES.SMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 30, halign: 'center' },
+        2: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+        3: { cellWidth: 30, halign: 'right' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+    currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 14;
+
+    // Highest-cost note
+    if (highestCat) {
+      currentY = builder.ensureContentSpace(14, currentY);
+      doc.setFontSize(FONT_SIZES.SMALL);
+      doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+      doc.setTextColor(...COLORS.SECONDARY_GRAY);
+      doc.text(`Highest expense category: ${highestCat.category} (${totalExpenses > 0 ? ((highestCat.total / totalExpenses) * 100).toFixed(1) : 0}% of total)`, LAYOUT.MARGIN_LEFT, currentY);
+      currentY += 10;
+    }
+  }
+
+  // ── Grand Total Box ──────────────────────────────────────────────────────
+  currentY = builder.ensureContentSpace(28, currentY);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 22, 3, 3, 'F');
+  doc.setFontSize(FONT_SIZES.SMALL);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+  doc.setTextColor(...COLORS.SECONDARY_GRAY);
+  doc.text('TOTAL EXPENSES (USD)', LAYOUT.MARGIN_LEFT + 5, currentY + 9);
+  doc.setFontSize(FONT_SIZES.LARGE);
+  doc.setTextColor(...COLORS.PRIMARY_DARK);
+  doc.text(formatCurrencyAmount(totalExpenses, 'USD'), LAYOUT.MARGIN_RIGHT - 5, currentY + 16, { align: 'right' });
+
+  builder.addFooter({ additionalText: `Fleet Audit Report — ${new Date().toLocaleDateString()}`, fontSize: FONT_SIZES.XXSMALL });
+  return builder.generate();
+};
+
+export const generateAuditReportPDFAndDownload = async (
+  summaries: LandedCostSummary[],
+  expenses: Expense[],
+  company: CompanyDetails,
+  options?: { dateFrom?: string; dateTo?: string }
+): Promise<void> => {
+  const blob = await generateAuditReportPDF(summaries, expenses, company, options);
+  downloadBlob(blob, `Audit_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 };
