@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { LandedCostSummary } from '../../types';
+import { Asset, CompanyDetails, LandedCostSummary } from '../../types';
 import { supabase } from '../../services/supabaseService';
+import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload } from '../../services/pdfService';
 import { useToast } from '../Toast';
 
 export const ReportsTab: React.FC = () => {
@@ -9,6 +10,8 @@ export const ReportsTab: React.FC = () => {
   const [summaries, setSummaries] = useState<LandedCostSummary[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [company, setCompany] = useState<CompanyDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -24,14 +27,23 @@ export const ReportsTab: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [summaryData, vehicleData, expenseData] = await Promise.all([
+        const [summaryData, vehicleData, expenseData, companyData] = await Promise.all([
           supabase.getLandedCostSummaries(),
           supabase.getVehicles(),
           supabase.getExpenses(),
+          supabase.getCompanyDetails(),
         ]);
         setSummaries(summaryData);
         setVehicles(vehicleData);
         setExpenses(expenseData);
+        setCompany(companyData);
+
+        try {
+          const assetRes = await fetch('/api/assets', { credentials: 'include' });
+          if (assetRes.ok) setAssets(await assetRes.json());
+        } catch {
+          // assets are optional for reports
+        }
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         console.error('[ReportsTab] load error:', err);
@@ -339,6 +351,39 @@ END OF REPORT
     }
   };
 
+  const handleExpensesReportPDF = async () => {
+    if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
+    setIsExporting(true);
+    try {
+      await generateExpensesReportPDFAndDownload(
+        expenses,
+        company,
+        vehicles,
+        { dateFrom: reportDateFrom || undefined, dateTo: reportDateTo || undefined }
+      );
+      notifySuccess('Expenses report PDF downloaded!');
+    } catch (err) {
+      console.error('[ReportsTab] handleExpensesReportPDF error:', err);
+      notifyError('Failed to generate expenses PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleAssetRegisterReportPDF = async () => {
+    if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
+    setIsExporting(true);
+    try {
+      await generateAssetRegisterReportPDFAndDownload(assets, company);
+      notifySuccess('Asset register report PDF downloaded!');
+    } catch (err) {
+      console.error('[ReportsTab] handleAssetRegisterReportPDF error:', err);
+      notifyError('Failed to generate asset register PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -592,6 +637,14 @@ END OF REPORT
           <button onClick={handleAuditReport} disabled={isExporting} className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg border border-amber-400 disabled:opacity-50 disabled:cursor-not-allowed">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             Audit Report
+          </button>
+          <button onClick={handleExpensesReportPDF} disabled={isExporting} className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
+            Expenses Report PDF
+          </button>
+          <button onClick={handleAssetRegisterReportPDF} disabled={isExporting} className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            Asset Register PDF
           </button>
         </div>
         <p className="text-sm text-indigo-100 mt-4">

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense } from '../types';
+import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense, Asset } from '../types';
 import affinityLogoUrl from '../assets/affinity-logo.svg';
 
 // ============================================================================
@@ -24,14 +24,14 @@ const FONTS = {
 };
 
 const FONT_SIZES = {
-  XXLARGE: 28,
-  XLARGE: 16,
-  LARGE: 14,
-  MEDIUM: 12,
-  REGULAR: 10,
-  SMALL: 9,
-  XSMALL: 8,
-  XXSMALL: 7,
+  XXLARGE: 22,   // Document titles (INVOICE, RECEIPT, etc.) — refined, not blocky
+  XLARGE: 11,    // Company name — present but not dominant
+  LARGE: 16,     // Hero numbers (totals, key amounts) — the star of the page
+  MEDIUM: 12,    // Section labels, "TOTAL DUE:" text
+  REGULAR: 10,   // Client name, body text
+  SMALL: 9,      // Metadata values, table cell content
+  XSMALL: 8,     // Metadata labels, footer text, table headers
+  XXSMALL: 7,    // Disclaimer, fine print
 };
 
 const LAYOUT = {
@@ -49,10 +49,10 @@ const LAYOUT = {
 };
 
 const TABLE_STYLES = {
-  HEAD_FILL: [240, 240, 240] as [number, number, number],
-  CELL_PADDING: 4,
-  HEAD_PADDING: 5,
-  LINE_WIDTH: 0.3,
+  HEAD_FILL: [235, 237, 242] as [number, number, number],  // slightly cooler fill for financial crispness
+  CELL_PADDING: 3.5,
+  HEAD_PADDING: 4,
+  LINE_WIDTH: 0.25,
 };
 
 const COLUMN_WIDTHS = {
@@ -426,19 +426,21 @@ class PDFBuilder {
     const logoHeight = logo ? Math.min(maxLogoHeight, (logo.height / Math.max(logo.width, 1)) * maxLogoWidth) : 0;
     const textStartX = hasLogo ? LAYOUT.MARGIN_LEFT + logoWidth + 8 : LAYOUT.MARGIN_LEFT;
     const contentWidth = hasLogo ? 78 : 95;
-    const lineHeight = 4.5;
-    const nameLineHeight = 6.5;
+    const lineHeight = 4.2;
+    const nameLineHeight = 5.2;
 
     if (logo) {
       doc.addImage(logo.dataUrl, 'PNG', LAYOUT.MARGIN_LEFT, 12, logoWidth, logoHeight);
     }
 
-    // Company Name
+    // Company Name — restrained size so the document title commands attention
     doc.setFontSize(FONT_SIZES.XLARGE);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.setCharSpace(0.4);
     const companyNameLines = doc.splitTextToSize(company.name.toUpperCase(), contentWidth);
     doc.text(companyNameLines, textStartX, LAYOUT.HEADER_Y);
+    doc.setCharSpace(0);
 
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
@@ -539,7 +541,9 @@ class PDFBuilder {
     doc.setFontSize(FONT_SIZES.XXLARGE);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.setCharSpace(2.0);
     doc.text(text, LAYOUT.MARGIN_RIGHT, 25, { align: 'right' });
+    doc.setCharSpace(0);
 
     // Separator line
     doc.setDrawColor(...COLORS.BORDER_GRAY);
@@ -565,10 +569,12 @@ class PDFBuilder {
     doc.roundedRect(125, 33, 70, 16, 3, 3, 'F');
 
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
-    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
+    doc.setCharSpace(0.8);
     doc.text('STATUS', 132, 39);
     doc.text('TOTAL DUE', 132, 46);
+    doc.setCharSpace(0);
 
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setTextColor(...statusColor);
@@ -599,12 +605,15 @@ class PDFBuilder {
     labels.forEach((label, index) => {
       const valueLines = doc.splitTextToSize(values[index] || '', valueWidth);
 
-      doc.setFontSize(FONT_SIZES.SMALL);
-      doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
-      doc.setTextColor(...COLORS.SECONDARY_GRAY);
+      // Label: small, light, recedes — value is the star
+      doc.setFontSize(FONT_SIZES.XSMALL);
+      doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+      doc.setTextColor(...COLORS.LIGHT_GRAY);
       doc.text(label, x, currentY);
 
-      doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+      // Value: slightly larger, bold, dark — commands attention
+      doc.setFontSize(FONT_SIZES.SMALL);
+      doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
       doc.setTextColor(...COLORS.PRIMARY_DARK);
       doc.text(valueLines, LAYOUT.MARGIN_RIGHT, currentY, { align: 'right' });
 
@@ -626,9 +635,9 @@ class PDFBuilder {
   ): this {
     const { doc } = this;
 
-    doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
-    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.text(title, LAYOUT.MARGIN_LEFT, startY);
 
     doc.setFontSize(FONT_SIZES.REGULAR);
@@ -695,7 +704,7 @@ class PDFBuilder {
 
     autoTable(doc, {
       startY,
-      head: [['Description', 'Qty', 'Unit Price', 'Disc %', 'Amount']],
+      head: [['DESCRIPTION', 'QTY', 'UNIT PRICE', 'DISC %', 'AMOUNT']],
       body: data.map(row => row.map(cell => String(cell))),
       theme: 'plain',
       margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - this.getFooterStartY() + 6 },
@@ -736,7 +745,7 @@ class PDFBuilder {
 
     autoTable(doc, {
       startY,
-      head: [['Earnings', 'Amount']],
+      head: [['EARNINGS', 'AMOUNT']],
       body: data,
       theme: 'plain',
       headStyles: {
@@ -774,7 +783,7 @@ class PDFBuilder {
 
     autoTable(doc, {
       startY,
-      head: [['Deductions', 'Amount']],
+      head: [['DEDUCTIONS', 'AMOUNT']],
       body: data,
       theme: 'plain',
       headStyles: {
@@ -894,28 +903,38 @@ class PDFBuilder {
     doc.rect(LAYOUT.MARGIN_LEFT, summaryY, 180, 35);
 
     // Gross Pay
-    doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
-    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
+    doc.setCharSpace(0.6);
     doc.text('GROSS PAY', 35, summaryY + 12);
+    doc.setCharSpace(0);
     doc.setFontSize(FONT_SIZES.LARGE);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(`$${payslip.gross_pay.toLocaleString()}`, 35, summaryY + 25);
 
     // Deductions
-    doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
+    doc.setCharSpace(0.6);
     doc.text('DEDUCTIONS', 100, summaryY + 12);
+    doc.setCharSpace(0);
     doc.setFontSize(FONT_SIZES.LARGE);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(`-$${payslip.total_deductions.toLocaleString()}`, 100, summaryY + 25);
 
     // Net Pay (highlighted)
     doc.setFillColor(...COLORS.FILL_LIGHT);
     doc.rect(145, summaryY, 50, 35, 'F');
-    doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
+    doc.setCharSpace(0.6);
     doc.text('NET PAY', 170, summaryY + 12, { align: 'center' });
+    doc.setCharSpace(0);
     doc.setFontSize(FONT_SIZES.MEDIUM);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
@@ -1466,7 +1485,7 @@ export const generateVehicleStatementPDF = async (
   if (sanitizedExpenses.length > 0) {
     autoTable(doc, {
       startY: tableStartY,
-      head: [['Date', 'Category', 'Description', 'Location', 'Amount', 'USD Equiv.']],
+      head: [['DATE', 'CATEGORY', 'DESCRIPTION', 'LOCATION', 'AMOUNT', 'USD EQUIV.']],
       body: sanitizedExpenses.map((expense) => [
         new Date(expense.created_at).toLocaleDateString(),
         expense.category,
@@ -1550,7 +1569,7 @@ export const generateVehicleStatementPDF = async (
 
     autoTable(doc, {
       startY: currentY + 6,
-      head: [['Category', 'USD Total']],
+      head: [['CATEGORY', 'USD TOTAL']],
       body: categoryRows,
       theme: 'plain',
       margin: {
@@ -1797,7 +1816,7 @@ export const generateStatementPDF = async (
 
     autoTable(doc, {
       startY: currentY,
-      head: [['Invoice #', 'Issue Date', 'Due Date', 'Status', 'Amount', 'Owing Balance']],
+      head: [['INVOICE #', 'ISSUE DATE', 'DUE DATE', 'STATUS', 'AMOUNT', 'OWING BALANCE']],
       body: sanitizedInvoices.map(invoice => [
         invoice.invoice_number,
         new Date(invoice.created_at).toLocaleDateString(),
@@ -1845,7 +1864,7 @@ export const generateStatementPDF = async (
 
     autoTable(doc, {
       startY: currentY,
-      head: [['Reference', 'Date', 'Method', 'Amount']],
+      head: [['REFERENCE', 'DATE', 'METHOD', 'AMOUNT']],
       body: statement.payments.map(payment => {
         const paymentCurrency = inferPaymentCurrency(
           payment,
@@ -1957,4 +1976,403 @@ export const generateStatementPDFAndDownload = async (
 ): Promise<void> => {
   const blob = await generateStatementPDF(statement, company);
   downloadBlob(blob, `Statement_${statement.client_name.replace(/\s+/g, '_')}.pdf`);
+};
+
+// ============================================================================
+// EXPENSES REPORT PDF
+// ============================================================================
+
+export const generateExpensesReportPDF = async (
+  expenses: Expense[],
+  company: CompanyDetails,
+  vehicles: Vehicle[],
+  options?: { dateFrom?: string; dateTo?: string }
+): Promise<Blob> => {
+  const sanitizedCompany = sanitizeCompany(company);
+  const dateStr = new Date().toISOString().split('T')[0];
+  const builder = new PDFBuilder(sanitizedCompany, `Expenses_Report_${dateStr}.pdf`);
+  const doc = builder.getDocument();
+
+  const vehicleMap = new Map(vehicles.map(v => [v.id, sanitizeText(v.make_model) || 'Unknown']));
+
+  const sanitizedExpenses = [...expenses]
+    .map(e => ({
+      ...e,
+      description: sanitizeText(e.description) || 'Expense',
+      category: sanitizeText(e.category) || 'Other',
+      location: sanitizeText(e.location) || 'N/A',
+      currency: sanitizeText(e.currency) || 'USD',
+      amount: sanitizeNumber(e.amount),
+      exchange_rate_to_usd: sanitizeNumber(e.exchange_rate_to_usd) || 1,
+      created_at: sanitizeText(e.created_at) || new Date().toISOString(),
+    }))
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  const totalUsd = sanitizedExpenses.reduce((sum, e) => sum + e.amount * e.exchange_rate_to_usd, 0);
+
+  const periodLabel = options?.dateFrom || options?.dateTo
+    ? `${options.dateFrom || 'Beginning'} – ${options.dateTo || 'Present'}`
+    : 'All time';
+
+  await builder.addLogoWatermark();
+  (await builder.addHeader())
+    .addTitle('EXPENSES REPORT')
+    .addMetadataSection(
+      ['Report Date:', 'Period:', 'Total Transactions:', 'Total (USD):'],
+      [
+        new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        periodLabel,
+        String(sanitizedExpenses.length),
+        formatCurrencyAmount(totalUsd, 'USD'),
+      ],
+      125,
+      65
+    );
+
+  const tableStartY = 120;
+
+  if (sanitizedExpenses.length > 0) {
+    autoTable(doc, {
+      startY: tableStartY,
+      head: [['DATE', 'CATEGORY', 'DESCRIPTION', 'VEHICLE / SOURCE', 'LOCATION', 'AMOUNT', 'USD EQUIV.']],
+      body: sanitizedExpenses.map(e => [
+        new Date(e.created_at).toLocaleDateString(),
+        e.category,
+        e.description,
+        e.vehicle_id ? (vehicleMap.get(e.vehicle_id) || 'Unknown Vehicle') : 'General',
+        e.location,
+        `${e.currency} ${e.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+        formatCurrencyAmount(e.amount * e.exchange_rate_to_usd, 'USD'),
+      ]),
+      theme: 'plain',
+      margin: {
+        left: LAYOUT.MARGIN_LEFT,
+        right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT,
+        bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6,
+      },
+      headStyles: {
+        fillColor: TABLE_STYLES.HEAD_FILL,
+        textColor: COLORS.PRIMARY_DARK,
+        fontStyle: 'bold',
+        fontSize: FONT_SIZES.XSMALL,
+        cellPadding: TABLE_STYLES.HEAD_PADDING,
+      },
+      styles: {
+        fontSize: FONT_SIZES.XSMALL,
+        cellPadding: 3,
+        lineColor: COLORS.BORDER_GRAY,
+        lineWidth: TABLE_STYLES.LINE_WIDTH,
+        textColor: COLORS.PRIMARY_DARK,
+      },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: 24 },
+        2: { cellWidth: 46 },
+        3: { cellWidth: 28 },
+        4: { cellWidth: 18 },
+        5: { cellWidth: 26, halign: 'right' },
+        6: { cellWidth: 26, halign: 'right', fontStyle: 'bold' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+  } else {
+    const emptyY = builder.ensureContentSpace(16, tableStartY);
+    doc.setFontSize(FONT_SIZES.REGULAR);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.text('No expenses recorded for the selected period.', LAYOUT.MARGIN_LEFT, emptyY);
+  }
+
+  // Category breakdown
+  const EXPENSE_CATEGORIES = ['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Driver Disbursement', 'Other'];
+  const categoryTotals = EXPENSE_CATEGORIES
+    .map(cat => ({
+      category: cat,
+      total: sanitizedExpenses
+        .filter(e => e.category === cat)
+        .reduce((sum, e) => sum + e.amount * e.exchange_rate_to_usd, 0),
+      count: sanitizedExpenses.filter(e => e.category === cat).length,
+    }))
+    .filter(c => c.count > 0);
+
+  const locationTotals = ['UK', 'Namibia', 'Zimbabwe', 'Botswana']
+    .map(loc => ({
+      location: loc,
+      total: sanitizedExpenses
+        .filter(e => e.location === loc)
+        .reduce((sum, e) => sum + e.amount * e.exchange_rate_to_usd, 0),
+      count: sanitizedExpenses.filter(e => e.location === loc).length,
+    }))
+    .filter(l => l.count > 0);
+
+  if (categoryTotals.length > 0 || locationTotals.length > 0) {
+    let currentY = ((doc as any).lastAutoTable?.finalY || tableStartY) + 14;
+    currentY = builder.ensureContentSpace(20 + (categoryTotals.length + locationTotals.length) * 7, currentY);
+
+    if (categoryTotals.length > 0) {
+      doc.setFontSize(FONT_SIZES.MEDIUM);
+      doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+      doc.setTextColor(...COLORS.PRIMARY_DARK);
+      doc.text('BREAKDOWN BY CATEGORY', LAYOUT.MARGIN_LEFT, currentY);
+
+      autoTable(doc, {
+        startY: currentY + 6,
+        head: [['CATEGORY', 'TRANSACTIONS', 'USD TOTAL', '% OF TOTAL']],
+        body: categoryTotals.map(c => [
+          c.category,
+          String(c.count),
+          formatCurrencyAmount(c.total, 'USD'),
+          totalUsd > 0 ? `${((c.total / totalUsd) * 100).toFixed(1)}%` : '0.0%',
+        ]),
+        theme: 'plain',
+        margin: {
+          left: LAYOUT.MARGIN_LEFT,
+          right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT,
+          bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6,
+        },
+        headStyles: {
+          fillColor: TABLE_STYLES.HEAD_FILL,
+          textColor: COLORS.PRIMARY_DARK,
+          fontStyle: 'bold',
+          fontSize: FONT_SIZES.SMALL,
+        },
+        styles: {
+          fontSize: FONT_SIZES.SMALL,
+          lineColor: COLORS.BORDER_GRAY,
+          lineWidth: TABLE_STYLES.LINE_WIDTH,
+          textColor: COLORS.PRIMARY_DARK,
+        },
+        columnStyles: {
+          0: { cellWidth: 50 },
+          1: { cellWidth: 30, halign: 'center' },
+          2: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+          3: { cellWidth: 30, halign: 'right' },
+        },
+        alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+      });
+      currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 10;
+    }
+
+    if (locationTotals.length > 0) {
+      currentY = builder.ensureContentSpace(20 + locationTotals.length * 7, currentY);
+      doc.setFontSize(FONT_SIZES.MEDIUM);
+      doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+      doc.setTextColor(...COLORS.PRIMARY_DARK);
+      doc.text('BREAKDOWN BY LOCATION', LAYOUT.MARGIN_LEFT, currentY);
+
+      autoTable(doc, {
+        startY: currentY + 6,
+        head: [['LOCATION', 'TRANSACTIONS', 'USD TOTAL', '% OF TOTAL']],
+        body: locationTotals.map(l => [
+          l.location,
+          String(l.count),
+          formatCurrencyAmount(l.total, 'USD'),
+          totalUsd > 0 ? `${((l.total / totalUsd) * 100).toFixed(1)}%` : '0.0%',
+        ]),
+        theme: 'plain',
+        margin: {
+          left: LAYOUT.MARGIN_LEFT,
+          right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT,
+          bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6,
+        },
+        headStyles: {
+          fillColor: TABLE_STYLES.HEAD_FILL,
+          textColor: COLORS.PRIMARY_DARK,
+          fontStyle: 'bold',
+          fontSize: FONT_SIZES.SMALL,
+        },
+        styles: {
+          fontSize: FONT_SIZES.SMALL,
+          lineColor: COLORS.BORDER_GRAY,
+          lineWidth: TABLE_STYLES.LINE_WIDTH,
+          textColor: COLORS.PRIMARY_DARK,
+        },
+        columnStyles: {
+          0: { cellWidth: 50 },
+          1: { cellWidth: 30, halign: 'center' },
+          2: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+          3: { cellWidth: 30, halign: 'right' },
+        },
+        alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+      });
+      currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 14;
+    }
+
+    // Grand total box
+    currentY = builder.ensureContentSpace(28, currentY);
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 22, 3, 3, 'F');
+    doc.setFontSize(FONT_SIZES.SMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.text('TOTAL EXPENSES (USD)', LAYOUT.MARGIN_LEFT + 5, currentY + 9);
+    doc.setFontSize(FONT_SIZES.LARGE);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text(formatCurrencyAmount(totalUsd, 'USD'), LAYOUT.MARGIN_RIGHT - 5, currentY + 16, { align: 'right' });
+  }
+
+  builder.addFooter({ additionalText: `Expenses Report — ${periodLabel}`, fontSize: FONT_SIZES.XXSMALL });
+  return builder.generate();
+};
+
+export const generateExpensesReportPDFAndDownload = async (
+  expenses: Expense[],
+  company: CompanyDetails,
+  vehicles: Vehicle[],
+  options?: { dateFrom?: string; dateTo?: string }
+): Promise<void> => {
+  const blob = await generateExpensesReportPDF(expenses, company, vehicles, options);
+  downloadBlob(blob, `Expenses_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+};
+
+// ============================================================================
+// ASSET REGISTER REPORT PDF
+// ============================================================================
+
+export const generateAssetRegisterReportPDF = async (
+  assets: Asset[],
+  company: CompanyDetails
+): Promise<Blob> => {
+  const sanitizedCompany = sanitizeCompany(company);
+  const dateStr = new Date().toISOString().split('T')[0];
+  const builder = new PDFBuilder(sanitizedCompany, `Asset_Register_${dateStr}.pdf`);
+  const doc = builder.getDocument();
+
+  const sanitizedAssets = assets.map(a => ({
+    ...a,
+    name: sanitizeText(a.name) || 'Unnamed Asset',
+    category: sanitizeText(a.category) || 'Uncategorised',
+    serial_number: sanitizeText(a.serial_number) || '—',
+    status: sanitizeText(a.status) || 'Unknown',
+    location: sanitizeText(a.location) || '—',
+    condition: sanitizeText(a.condition) || '—',
+    purchase_date: sanitizeText(a.purchase_date) || '',
+    purchase_value: sanitizeNumber(a.purchase_value),
+    description: sanitizeText(a.description) || '',
+  }));
+
+  const totalValue = sanitizedAssets.reduce((sum, a) => sum + a.purchase_value, 0);
+  const statusCounts = ['Available', 'Borrowed', 'Under Maintenance', 'Retired'].map(s => ({
+    status: s,
+    count: sanitizedAssets.filter(a => a.status === s).length,
+  }));
+
+  await builder.addLogoWatermark();
+  (await builder.addHeader())
+    .addTitle('ASSET REGISTER')
+    .addMetadataSection(
+      ['Report Date:', 'Total Assets:', 'Total Value (USD):', 'Available:', 'Borrowed:'],
+      [
+        new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        String(sanitizedAssets.length),
+        formatCurrencyAmount(totalValue, 'USD'),
+        String(statusCounts.find(s => s.status === 'Available')?.count ?? 0),
+        String(statusCounts.find(s => s.status === 'Borrowed')?.count ?? 0),
+      ],
+      125,
+      65
+    );
+
+  const tableStartY = 120;
+
+  if (sanitizedAssets.length > 0) {
+    autoTable(doc, {
+      startY: tableStartY,
+      head: [['ASSET NAME', 'CATEGORY', 'SERIAL NO.', 'STATUS', 'LOCATION', 'CONDITION', 'PURCHASE DATE', 'VALUE (USD)']],
+      body: sanitizedAssets.map(a => [
+        a.name,
+        a.category,
+        a.serial_number,
+        a.status,
+        a.location,
+        a.condition,
+        a.purchase_date ? new Date(a.purchase_date).toLocaleDateString() : '—',
+        a.purchase_value > 0 ? formatCurrencyAmount(a.purchase_value, 'USD') : '—',
+      ]),
+      theme: 'plain',
+      margin: {
+        left: LAYOUT.MARGIN_LEFT,
+        right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT,
+        bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6,
+      },
+      headStyles: {
+        fillColor: TABLE_STYLES.HEAD_FILL,
+        textColor: COLORS.PRIMARY_DARK,
+        fontStyle: 'bold',
+        fontSize: FONT_SIZES.XSMALL,
+        cellPadding: TABLE_STYLES.HEAD_PADDING,
+      },
+      styles: {
+        fontSize: FONT_SIZES.XSMALL,
+        cellPadding: 3,
+        lineColor: COLORS.BORDER_GRAY,
+        lineWidth: TABLE_STYLES.LINE_WIDTH,
+        textColor: COLORS.PRIMARY_DARK,
+      },
+      columnStyles: {
+        0: { cellWidth: 32 },
+        1: { cellWidth: 24 },
+        2: { cellWidth: 24 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 18 },
+        6: { cellWidth: 20 },
+        7: { cellWidth: 28, halign: 'right', fontStyle: 'bold' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+  } else {
+    const emptyY = builder.ensureContentSpace(16, tableStartY);
+    doc.setFontSize(FONT_SIZES.REGULAR);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.text('No assets recorded in the register.', LAYOUT.MARGIN_LEFT, emptyY);
+  }
+
+  // Status summary box
+  let currentY = ((doc as any).lastAutoTable?.finalY || tableStartY) + 14;
+  currentY = builder.ensureContentSpace(34, currentY);
+  const activeCounts = statusCounts.filter(s => s.count > 0);
+  const boxWidth = 180;
+  const colWidth = activeCounts.length > 0 ? boxWidth / Math.max(activeCounts.length, 1) : boxWidth;
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, boxWidth, 28, 3, 3, 'F');
+  doc.setFontSize(FONT_SIZES.XSMALL);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+  doc.setTextColor(...COLORS.SECONDARY_GRAY);
+
+  statusCounts.forEach((s, i) => {
+    const x = LAYOUT.MARGIN_LEFT + 5 + i * colWidth;
+    doc.text(s.status.toUpperCase(), x, currentY + 9);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text(String(s.count), x, currentY + 20);
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+  });
+
+  if (totalValue > 0) {
+    currentY = currentY + 40;
+    currentY = builder.ensureContentSpace(22, currentY);
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 22, 3, 3, 'F');
+    doc.setFontSize(FONT_SIZES.SMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.text('TOTAL ASSET VALUE (USD)', LAYOUT.MARGIN_LEFT + 5, currentY + 9);
+    doc.setFontSize(FONT_SIZES.LARGE);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text(formatCurrencyAmount(totalValue, 'USD'), LAYOUT.MARGIN_RIGHT - 5, currentY + 16, { align: 'right' });
+  }
+
+  builder.addFooter({ additionalText: `Asset Register Report — ${new Date().toLocaleDateString()}`, fontSize: FONT_SIZES.XXSMALL });
+  return builder.generate();
+};
+
+export const generateAssetRegisterReportPDFAndDownload = async (
+  assets: Asset[],
+  company: CompanyDetails
+): Promise<void> => {
+  const blob = await generateAssetRegisterReportPDF(assets, company);
+  downloadBlob(blob, `Asset_Register_${new Date().toISOString().split('T')[0]}.pdf`);
 };
