@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails, OperatingFund, OperatingFundType, UserRole } from '../types';
 import { AssetRegister } from './AssetRegister';
 import { supabase } from '../services/supabaseService';
-import { generatePayslipPDFAndDownload } from '../services/pdfService';
+import { generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
 import { Button, StatCard, EmptyState, StatusBadge, SkeletonStatCards, SkeletonChart, SkeletonTable } from './ui';
 import { TrendLineChart, DonutPieChart, SimpleBarChart, CHART_COLORS } from './ui/Charts';
 import { defaultIcons } from './ui/EmptyState';
@@ -588,15 +588,29 @@ export const AccountantDashboard: React.FC = () => {
     return { grossPay, totalDeductions, netPay, overtimePay };
   };
 
-  const handleExportPDF = () => {
-    const reportContent = `Financial Report\n\nRevenue: ${formatCurrency(totalRevenue)}\nExpenses: ${formatCurrency(totalExpenses)}\nNet Profit: ${formatCurrency(netProfit)}\nPending Invoices: ${formatCurrency(totalPending)}\n\nGenerated: ${new Date().toLocaleString()}`;
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `financial-report-${new Date().toISOString().split('T')[0]}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleExportPDF = async () => {
+    if (!company) { notifyError('Company details not loaded.'); return; }
+    try {
+      await generateExpensesReportPDFAndDownload(expenses, company, vehicles);
+    } catch (err) {
+      console.error('[AccountantDashboard] handleExportPDF error:', err);
+      notifyError('Failed to generate PDF. Please try again.');
+    }
+  };
+
+  const handleExportExpenseReportPDF = async () => {
+    if (!company) { notifyError('Company details not loaded.'); return; }
+    try {
+      await generateExpensesReportPDFAndDownload(
+        filteredExpensesForReport,
+        company,
+        vehicles,
+        { dateFrom: erDateFrom || undefined, dateTo: erDateTo || undefined }
+      );
+    } catch (err) {
+      console.error('[AccountantDashboard] handleExportExpenseReportPDF error:', err);
+      notifyError('Failed to generate PDF. Please try again.');
+    }
   };
 
   const handleExportCSV = () => {
@@ -1423,10 +1437,16 @@ export const AccountantDashboard: React.FC = () => {
               <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
                   <h3 className="font-bold text-zinc-900">Breakdown by Category</h3>
-                  <button onClick={handleExportExpenseReportCSV} className="flex items-center gap-2 bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Export CSV
-                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={handleExportExpenseReportPDF} className="flex items-center gap-2 bg-emerald-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-emerald-700 transition-all">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      Export PDF
+                    </button>
+                    <button onClick={handleExportExpenseReportCSV} className="flex items-center gap-2 bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                      Export CSV
+                    </button>
+                  </div>
                 </div>
                 <table className="w-full text-sm">
                   <thead className="bg-zinc-50">
