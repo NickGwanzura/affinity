@@ -242,6 +242,44 @@ export const AccountantDashboard: React.FC = () => {
       .slice(0, 10);
   }, [invoices]);
 
+  // Merged client list: DB clients + unique clients extracted from invoices
+  const mergedClients = useMemo(() => {
+    const dbClientNames = new Set(clients.map(c => c.name.toLowerCase().trim()));
+    const seen = new Set<string>();
+    const invoiceOnlyClients: Client[] = [];
+
+    for (const inv of invoices) {
+      const key = inv.client_name?.toLowerCase().trim();
+      if (key && !dbClientNames.has(key) && !seen.has(key)) {
+        seen.add(key);
+        invoiceOnlyClients.push({
+          id: `__invoice__${inv.client_name}`,
+          name: inv.client_name,
+          email: inv.client_email || '',
+          phone: '',
+          address: inv.client_address || '',
+          company: '',
+          notes: '',
+          created_at: '',
+        });
+      }
+    }
+
+    return [...clients, ...invoiceOnlyClients].sort((a, b) => a.name.localeCompare(b.name));
+  }, [clients, invoices]);
+
+  const getClientStats = (client: Client) => {
+    const clientInvoices = invoices.filter(inv =>
+      (client.id && !client.id.startsWith('__invoice__') && inv.client_id === client.id) ||
+      inv.client_name?.toLowerCase().trim() === client.name.toLowerCase().trim()
+    );
+    return {
+      count: clientInvoices.length,
+      total: clientInvoices.reduce((s, inv) => s + (inv.amount_usd || 0), 0),
+      lastInvoice: clientInvoices.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]?.created_at,
+    };
+  };
+
   // Expense Report filters
   const [erDateFrom, setErDateFrom] = useState('');
   const [erDateTo, setErDateTo] = useState('');
@@ -395,10 +433,11 @@ export const AccountantDashboard: React.FC = () => {
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (editingClient) {
+      if (editingClient && !editingClient.id.startsWith('__invoice__')) {
         await supabase.updateClient(editingClient.id, clientForm);
       } else {
-        const newClient = await supabase.createClient(clientForm);
+        // Virtual (invoice-sourced) clients or new clients → create in DB
+        await supabase.createClient(clientForm);
       }
       
       setShowClientModal(false);
@@ -1142,30 +1181,88 @@ export const AccountantDashboard: React.FC = () => {
           )}
 
           {activeTab === 'clients' && (
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Header */}
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-zinc-900">Clients</h3>
-                <button onClick={() => { setEditingClient(null); setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' }); setShowClientModal(true); }} className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 flex items-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg> Add Client</button>
+                <div>
+                  <h3 className="text-lg font-bold text-zinc-900">Clients</h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">{mergedClients.length} total — includes all clients from invoices</p>
+                </div>
+                <button
+                  onClick={() => { setEditingClient(null); setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' }); setShowClientModal(true); }}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 flex items-center gap-2 text-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
+                  Add Client
+                </button>
               </div>
-              <table className="w-full">
-                <thead className="bg-zinc-50">
-                  <tr><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Name</th><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Email</th><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Phone</th><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Company</th><th className="px-4 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Actions</th></tr>
-                </thead>
-                <tbody>
-                  {clients.length === 0 ? <tr><td colSpan={5} className="px-6 py-8 text-center text-zinc-500">No clients yet</td></tr> : clients.map(client => (
-                    <tr key={client.id} className="hover:bg-zinc-50 border-t">
-                      <td className="px-4 py-3 font-semibold">{client.name}</td>
-                      <td className="px-4 py-3 text-zinc-600">{client.email || '-'}</td>
-                      <td className="px-4 py-3 text-zinc-600">{client.phone || '-'}</td>
-                      <td className="px-4 py-3 text-zinc-600">{client.company || '-'}</td>
-                      <td className="px-4 py-3 text-right space-x-2">
-                        <button onClick={() => { setEditingClient(client); setClientForm({ name: client.name, email: client.email || '', phone: client.phone || '', address: client.address || '', company: client.company || '', notes: client.notes || '' }); setShowClientModal(true); }} className="text-blue-600 hover:text-blue-800 font-semibold">Edit</button>
-                        <button onClick={() => handleDeleteClient(client.id)} className="text-red-600 hover:text-red-800 font-semibold">Delete</button>
-                      </td>
+
+              {/* Table */}
+              <div className="rounded-2xl border border-zinc-200 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-zinc-50 border-b border-zinc-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-wider">Client</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-wider">Contact</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-wider">Company</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-zinc-500 uppercase tracking-wider">Invoices</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-zinc-500 uppercase tracking-wider">Total Revenue</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-zinc-500 uppercase tracking-wider">Source</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-zinc-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100">
+                    {mergedClients.length === 0 ? (
+                      <tr><td colSpan={7} className="px-6 py-12 text-center text-zinc-400">No clients yet — they will appear here once invoices are created</td></tr>
+                    ) : mergedClients.map(client => {
+                      const isVirtual = client.id.startsWith('__invoice__');
+                      const stats = getClientStats(client);
+                      return (
+                        <tr key={client.id} className="hover:bg-zinc-50 transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="font-semibold text-zinc-900">{client.name}</p>
+                            {client.address && <p className="text-xs text-zinc-400 truncate max-w-[160px]">{client.address}</p>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="text-zinc-700">{client.email || '—'}</p>
+                            {client.phone && <p className="text-xs text-zinc-400">{client.phone}</p>}
+                          </td>
+                          <td className="px-4 py-3 text-zinc-600">{client.company || '—'}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="inline-block px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-bold">{stats.count}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold text-green-700">
+                            {stats.total > 0 ? `$${stats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {isVirtual
+                              ? <span className="inline-block px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">Invoice</span>
+                              : <span className="inline-block px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200">Saved</span>
+                            }
+                          </td>
+                          <td className="px-4 py-3 text-right space-x-3">
+                            <button
+                              onClick={() => { setEditingClient(client); setClientForm({ name: client.name, email: client.email || '', phone: client.phone || '', address: client.address || '', company: client.company || '', notes: client.notes || '' }); setShowClientModal(true); }}
+                              className="text-blue-600 hover:text-blue-800 font-semibold text-xs"
+                            >
+                              {isVirtual ? 'Save & Edit' : 'Edit'}
+                            </button>
+                            {!isVirtual && (
+                              <button onClick={() => handleDeleteClient(client.id)} className="text-red-500 hover:text-red-700 font-semibold text-xs">Delete</button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {mergedClients.some(c => c.id.startsWith('__invoice__')) && (
+                <p className="text-xs text-zinc-400">
+                  <span className="font-semibold text-amber-600">Invoice</span> clients are pulled from your invoice records. Click <span className="font-semibold">Save &amp; Edit</span> to save them as full client records.
+                </p>
+              )}
             </div>
           )}
 
