@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="description" content="Affinity Logistics - Internal logistics and finance operations app for vehicle movement, landed-cost tracking, billing, receipts, statements, payroll, and document generation.">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#0f62fe">
     <meta property="og:title" content="Affinity Logistics">
     <meta property="og:description" content="Internal logistics and finance operations app for vehicle movement, landed-cost tracking, billing, receipts, statements, payroll, and document generation.">
     <meta property="og:type" content="website">
@@ -15,33 +14,37 @@
     <title>Affinity Logistics</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Manrope', 'sans-serif'],
-              mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+              sans: ['IBM Plex Sans', 'sans-serif'],
+              mono: ['IBM Plex Mono', 'monospace'],
+            },
+            colors: {
+              // Carbon Blue palette
+              'carbon-blue': {
+                10: '#edf5ff',
+                20: '#d0e2ff',
+                30: '#a6c8ff',
+                40: '#78a9ff',
+                50: '#4589ff',
+                60: '#0f62fe',
+                70: '#0043ce',
+                80: '#002d9c',
+                90: '#001d6c',
+                100: '#001141',
+              },
             },
           },
         },
       }
     </script>
-<script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "recharts": "https://esm.sh/recharts@^3.6.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0"
-  }
-}
-</script>
 <style>
-      body { font-family: 'Manrope', sans-serif; }
+      body { font-family: 'IBM Plex Sans', sans-serif; }
 
       /* Accessibility: respect reduced-motion preference */
       @media (prefers-reduced-motion: reduce) {
@@ -53,17 +56,13 @@
         }
       }
 
-      /* Accessibility: focus-visible for keyboard users only */
-      :focus-visible {
-        outline: 2px solid #2563eb;
-        outline-offset: 2px;
-      }
-      :focus:not(:focus-visible) {
-        outline: none;
+      /* Carbon overrides for Tailwind compatibility */
+      .cds--header ~ .cds--content {
+        margin-top: 3rem;
       }
     </style>
 </head>
-<body class="bg-zinc-50 text-zinc-900 antialiased font-sans">
+<body>
     <div id="root"></div>
 <script type="module" src="/index.tsx"></script>
 </body>

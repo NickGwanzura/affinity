@@ -1,5 +1,6 @@
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { Loading, InlineLoading } from '@carbon/react';
 import { Login } from './components/Login';
 import { AcceptInvite } from './components/AcceptInvite';
 import { ResetPassword } from './components/ResetPassword';
@@ -30,11 +31,8 @@ const ClientDirectory = lazy(() =>
 );
 
 const ScreenLoader = () => (
-  <div className="min-h-[40vh] flex items-center justify-center">
-    <div className="flex items-center gap-3 text-zinc-500">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      <span className="text-sm font-bold uppercase tracking-widest">Loading workspace</span>
-    </div>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+    <InlineLoading description="Loading workspace..." status="active" />
   </div>
 );
 
@@ -125,8 +123,8 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--cds-background, #f4f4f4)' }}>
+        <Loading description="Initializing Affinity Logistics..." withOverlay={false} />
       </div>
     );
   }

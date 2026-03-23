@@ -12,6 +12,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,json,css}\""
   },
   "dependencies": {
+    "@carbon/icons-react": "^11.76.0",
+    "@carbon/react": "^1.103.0",
     "@google/genai": "^1.37.0",
     "@neondatabase/serverless": "^1.0.2",
     "@supabase/supabase-js": "^2.90.1",

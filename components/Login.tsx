@@ -1,5 +1,16 @@
-
 import React, { useState } from 'react';
+import {
+  Button,
+  Form,
+  TextInput,
+  PasswordInput,
+  Select,
+  SelectItem,
+  InlineNotification,
+  Stack,
+  Tag,
+} from '@carbon/react';
+import { Login as LoginIcon, Email, ArrowRight, Warning } from '@carbon/icons-react';
 import { authService } from '../services/authService';
 import { supabase } from '../services/supabaseService';
 import { AuthSession, UserRole } from '../types';
@@ -8,15 +19,23 @@ interface LoginProps {
   onLogin: (session: AuthSession) => void;
 }
 
+type Mode = 'login' | 'register' | 'forgot';
+
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
-  const [email, setEmail] = useState('');
+  const [mode, setMode]         = useState<Mode>('login');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [role, setRole] = useState<UserRole>('Driver');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [name, setName]         = useState('');
+  const [role, setRole]         = useState<UserRole>('Driver');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState('');
+
+  const reset = (nextMode: Mode) => {
+    setMode(nextMode);
+    setError('');
+    setSuccess('');
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,8 +45,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const session = await authService.login(email, password);
       onLogin(session);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -38,263 +56,291 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
     setError('');
     setSuccess('');
-    
     try {
-      await supabase.createRegistrationRequest({
-        name,
-        email,
-        role
-      });
-      setSuccess('Access request submitted. An administrator will approve it and send you an invite to set your password.');
+      await supabase.createRegistrationRequest({ name, email, role });
+      setSuccess('Access request submitted. An administrator will approve it and send you an invite.');
       setName('');
       setEmail('');
       setRole('Driver');
-      setTimeout(() => {
-        setMode('login');
-        setSuccess('');
-      }, 3000);
+      setTimeout(() => reset('login'), 3500);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Registration failed';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
-    
     try {
       await authService.resetPassword(email);
-      setSuccess('Password reset initiated! If an account exists with this email, you will receive instructions.');
-      setTimeout(() => {
-        setMode('login');
-        setSuccess('');
-      }, 3000);
+      setSuccess('If an account exists with this email, you will receive reset instructions.');
+      setTimeout(() => reset('login'), 3500);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send reset email';
-      console.error('[Forgot Password] Error:', err);
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Failed to send reset email');
     } finally {
       setLoading(false);
     }
   };
 
+  const modeTitle: Record<Mode, string> = {
+    login:    'Sign in',
+    register: 'Request access',
+    forgot:   'Reset password',
+  };
+
+  const submitLabel: Record<Mode, string> = {
+    login:    loading ? 'Signing in…' : 'Sign in',
+    register: loading ? 'Submitting…' : 'Submit request',
+    forgot:   loading ? 'Sending…'    : 'Send reset email',
+  };
+
+  const onSubmit = mode === 'login' ? handleLogin : mode === 'forgot' ? handleForgot : handleRegister;
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row font-sans">
-      {/* Left Column: Visual/Marketing */}
-      <div className="md:w-1/2 bg-blue-900 relative flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=2000" 
-            className="w-full h-full object-cover opacity-30 grayscale"
-            alt="Logistics background"
-          />
-          <div className="absolute inset-0 bg-blue-900/60 mix-blend-multiply"></div>
-        </div>
-        
-        <div className="relative z-10 px-12 py-24 text-white max-w-xl">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-2xl">
-              <svg className="w-8 h-8 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'IBM Plex Sans, sans-serif' }}>
+      {/* ── Left: Branding panel ── */}
+      <div
+        style={{
+          flex: '0 0 45%',
+          background: 'linear-gradient(160deg, #001141 0%, #0043ce 60%, #0f62fe 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          padding: '4rem 3.5rem',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+        className="hidden md:flex"
+      >
+        {/* Background grid decoration */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.05,
+          backgroundImage: 'linear-gradient(var(--cds-border-inverse,#fff) 1px, transparent 1px), linear-gradient(90deg, var(--cds-border-inverse,#fff) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {/* Logo mark */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3rem' }}>
+            <div style={{
+              width: 48, height: 48,
+              background: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f62fe" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tighter leading-none">AFFINITY</h1>
-              <p className="text-xs font-bold tracking-[0.3em] text-blue-300 uppercase">Operations Engine</p>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.25rem', letterSpacing: '0.05em', lineHeight: 1 }}>
+                AFFINITY
+              </div>
+              <div style={{ color: '#78a9ff', fontSize: '0.75rem', letterSpacing: '0.2em', marginTop: '0.2rem' }}>
+                LOGISTICS
+              </div>
             </div>
           </div>
-          
-          <h2 className="text-5xl font-black leading-tight mb-6">
+
+          <h2 style={{ color: '#fff', fontSize: '2.5rem', fontWeight: 300, lineHeight: 1.2, marginBottom: '1.5rem' }}>
             Global Logistics,<br />
-            <span className="text-blue-400">Intelligent Transit.</span>
+            <strong style={{ fontWeight: 700 }}>Intelligent Transit.</strong>
           </h2>
-          <p className="text-lg text-blue-100 font-medium mb-8">
-            The all-in-one platform for cross-border vehicle logistics, landed cost tracking, and driver management across the SADC region.
+          <p style={{ color: '#a6c8ff', fontSize: '1rem', lineHeight: 1.6, marginBottom: '3rem', maxWidth: '360px' }}>
+            The all-in-one platform for cross-border vehicle logistics, landed cost tracking,
+            and driver management across the SADC region.
           </p>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
-              <p className="text-2xl font-black mb-1">100%</p>
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-300">Transit Visibility</p>
-            </div>
-            <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
-              <p className="text-2xl font-black mb-1">Zero</p>
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-300">Audit Gaps</p>
-            </div>
+
+          {/* Stat chips */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', maxWidth: '380px' }}>
+            {[
+              { value: '100%', label: 'Transit Visibility' },
+              { value: 'Zero', label: 'Audit Gaps' },
+              { value: 'Live', label: 'Cost Tracking' },
+              { value: 'Multi', label: 'Currency Support' },
+            ].map(stat => (
+              <div key={stat.label} style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                padding: '1rem',
+              }}>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.5rem' }}>{stat.value}</div>
+                <div style={{ color: '#78a9ff', fontSize: '0.75rem', letterSpacing: '0.1em', marginTop: '0.25rem' }}>
+                  {stat.label.toUpperCase()}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Right Column: Auth Form */}
-      <div className="md:w-1/2 bg-white flex items-center justify-center p-8">
-        <div className="max-w-md w-full">
-          <div className="mb-10">
-            <h3 className="text-3xl font-black text-zinc-900 mb-2">
-              {mode === 'login' ? 'Welcome Back' : mode === 'forgot' ? 'Reset Password' : 'Create Account'}
-            </h3>
-            <p className="text-zinc-500 font-medium">
-              {mode === 'login' 
-                ? 'Please sign in to access your dashboard.' 
-                : mode === 'forgot'
-                ? 'Enter your email to receive a password reset link.'
-                : 'Request access and admin will approve your account.'}
-            </p>
+      {/* ── Right: Auth form ── */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--cds-background, #f4f4f4)',
+        padding: '2rem',
+      }}>
+        <div style={{ width: '100%', maxWidth: '400px' }}>
+          {/* Mode tabs */}
+          <div style={{ display: 'flex', gap: '0', marginBottom: '2rem', borderBottom: '1px solid var(--cds-border-subtle-01, #e0e0e0)' }}>
+            {(['login', 'register', 'forgot'] as Mode[]).map(m => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => reset(m)}
+                style={{
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.875rem',
+                  fontWeight: mode === m ? 600 : 400,
+                  color: mode === m ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-text-secondary, #525252)',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: mode === m ? '2px solid var(--cds-interactive, #0f62fe)' : '2px solid transparent',
+                  cursor: 'pointer',
+                  letterSpacing: '0.01em',
+                  marginBottom: '-1px',
+                  transition: 'all 0.1s',
+                  fontFamily: 'IBM Plex Sans, sans-serif',
+                }}
+              >
+                {m === 'login' ? 'Sign in' : m === 'register' ? 'Request access' : 'Reset password'}
+              </button>
+            ))}
           </div>
 
-          <form onSubmit={mode === 'login' ? handleLogin : mode === 'forgot' ? handleForgotPassword : handleRegister} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm font-bold flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="2.5" /></svg>
-                {error}
-              </div>
-            )}
-            
-            {success && (
-              <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl border border-emerald-200 text-sm font-bold flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeWidth="2.5" /></svg>
-                {success}
-              </div>
-            )}
+          <h3 style={{
+            fontSize: '1.75rem',
+            fontWeight: 300,
+            color: 'var(--cds-text-primary, #161616)',
+            marginBottom: '1.75rem',
+            lineHeight: 1.25,
+          }}>
+            {modeTitle[mode]}
+          </h3>
 
-            {mode === 'register' && (
-              <div className="space-y-1">
-                <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">Full Name</label>
-                <input 
-                  type="text" 
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  required 
-                  placeholder="John Smith"
-                  className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
-                />
-              </div>
-            )}
-
-            {mode === 'register' && (
-              <div className="space-y-1">
-                <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">Role</label>
-                <select
-                  value={role}
-                  onChange={e => setRole(e.target.value as UserRole)}
-                  className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
-                >
-                  <option value="Driver">Driver</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Accountant">Accountant</option>
-                </select>
-              </div>
-            )}
-
-            {mode === 'forgot' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-                <p className="text-sm text-blue-800 flex items-start gap-2">
-                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>We'll send you an email with a link to reset your password.</span>
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">Work Email</label>
-              <input 
-                type="email" 
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required 
-                placeholder="email@affinity-logistics.com"
-                className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
+          {/* Notifications */}
+          {error && (
+            <div style={{ marginBottom: '1rem' }}>
+              <InlineNotification
+                kind="error"
+                title="Error:"
+                subtitle={error}
+                lowContrast
+                hideCloseButton={false}
+                onClose={() => setError('')}
               />
             </div>
+          )}
+          {success && (
+            <div style={{ marginBottom: '1rem' }}>
+              <InlineNotification
+                kind="success"
+                title="Success:"
+                subtitle={success}
+                lowContrast
+                hideCloseButton={false}
+                onClose={() => setSuccess('')}
+              />
+            </div>
+          )}
 
-            {mode === 'login' && (
-              <div className="space-y-1">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">Secure Password</label>
-                  {mode === 'login' && (
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setMode('forgot');
-                        setError('');
-                        setSuccess('');
-                      }}
-                      className="text-xs font-black uppercase text-blue-600 tracking-widest hover:underline"
-                    >
-                      Forgot?
-                    </button>
-                  )}
-                </div>
-                <input 
-                  type="password" 
+          <Form onSubmit={onSubmit}>
+            <Stack gap={6}>
+              {mode === 'register' && (
+                <TextInput
+                  id="login-name"
+                  labelText="Full name"
+                  placeholder="John Smith"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  required
+                />
+              )}
+
+              {mode === 'register' && (
+                <Select
+                  id="login-role"
+                  labelText="Role"
+                  value={role}
+                  onChange={e => setRole(e.target.value as UserRole)}
+                >
+                  <SelectItem value="Driver"     text="Driver" />
+                  <SelectItem value="Manager"    text="Manager" />
+                  <SelectItem value="Accountant" text="Accountant" />
+                </Select>
+              )}
+
+              <TextInput
+                id="login-email"
+                labelText="Work email"
+                type="email"
+                placeholder="email@affinity-logistics.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+              />
+
+              {mode === 'login' && (
+                <PasswordInput
+                  id="login-password"
+                  labelText="Password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  required={mode !== 'forgot'}
-                  placeholder="••••••••"
-                  className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
+                  required
+                  showPasswordLabel="Show password"
+                  hidePasswordLabel="Hide password"
                 />
-              </div>
-            )}
-
-            {mode === 'register' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <p className="text-sm text-blue-800">
-                  Submit your details for approval. You will set your password after an administrator approves your request and shares your invite link.
-                </p>
-              </div>
-            )}
-
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {mode === 'login' ? (
-                      <path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" strokeWidth="2.5" />
-                    ) : mode === 'forgot' ? (
-                      <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeWidth="2.5" />
-                    ) : (
-                      <path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" strokeWidth="2.5" />
-                    )}
-                  </svg>
-                  {mode === 'login' ? 'Sign In to Platform' : mode === 'forgot' ? 'Send Reset Email' : 'Submit Request'}
-                </>
               )}
-            </button>
-            
-            <div className="text-center pt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  if (mode === 'forgot') {
-                    setMode('login');
-                  } else {
-                    setMode(mode === 'login' ? 'register' : 'login');
-                  }
-                  setError('');
-                  setSuccess('');
-                }}
-                className="text-sm font-bold text-zinc-500 hover:text-blue-600 transition-colors"
+
+              {mode === 'forgot' && (
+                <p style={{ fontSize: '0.875rem', color: 'var(--cds-text-secondary, #525252)', lineHeight: 1.5 }}>
+                  We'll send reset instructions to your email address if an account exists.
+                </p>
+              )}
+
+              {mode === 'register' && (
+                <p style={{ fontSize: '0.875rem', color: 'var(--cds-text-secondary, #525252)', lineHeight: 1.5 }}>
+                  Your request will be reviewed by an administrator who will send you an invite link to set your password.
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                renderIcon={mode === 'login' ? LoginIcon : mode === 'forgot' ? Email : ArrowRight}
+                size="lg"
+                style={{ width: '100%', maxWidth: '100%' }}
               >
-                {mode === 'login' 
-                  ? "Don't have an account? Request Access" 
-                  : mode === 'forgot'
-                  ? 'Remember your password? Sign In'
-                  : 'Already have an account? Sign In'}
-              </button>
-            </div>
-          </form>
+                {submitLabel[mode]}
+              </Button>
+
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => reset('forgot')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--cds-link-primary, #0f62fe)',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontFamily: 'IBM Plex Sans, sans-serif',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Forgot your password?
+                </button>
+              )}
+            </Stack>
+          </Form>
         </div>
       </div>
     </div>

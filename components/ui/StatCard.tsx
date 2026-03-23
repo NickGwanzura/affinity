@@ -1,26 +1,29 @@
 import React from 'react';
+import { Tile } from '@carbon/react';
+import { SkeletonText, SkeletonPlaceholder } from '@carbon/react';
 
 interface StatCardProps {
-  title: string;
-  value: string | number;
+  title:     string;
+  value:     string | number;
   subtitle?: string;
-  icon?: React.ReactNode;
+  icon?:     React.ReactNode;
   trend?: {
-    value: number;
+    value:      number;
     isPositive: boolean;
   };
-  color?: 'blue' | 'green' | 'red' | 'amber' | 'purple' | 'zinc';
+  color?:     'blue' | 'green' | 'red' | 'amber' | 'purple' | 'zinc';
   isLoading?: boolean;
   className?: string;
 }
 
-const colorSchemes = {
-  blue: { bg: 'bg-blue-50', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', trend: 'text-blue-600' },
-  green: { bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', trend: 'text-emerald-600' },
-  red: { bg: 'bg-rose-50', iconBg: 'bg-rose-100', iconColor: 'text-rose-600', trend: 'text-rose-600' },
-  amber: { bg: 'bg-amber-50', iconBg: 'bg-amber-100', iconColor: 'text-amber-600', trend: 'text-amber-600' },
-  purple: { bg: 'bg-purple-50', iconBg: 'bg-purple-100', iconColor: 'text-purple-600', trend: 'text-purple-600' },
-  zinc: { bg: 'bg-zinc-50', iconBg: 'bg-zinc-100', iconColor: 'text-zinc-600', trend: 'text-zinc-600' },
+// Carbon design-token colors mapped from the old palette
+const accentMap: Record<string, { bg: string; text: string }> = {
+  blue:   { bg: 'var(--cds-support-info-inverse,#4589ff)',    text: 'var(--cds-background,#fff)' },
+  green:  { bg: 'var(--cds-support-success-inverse,#24a148)', text: 'var(--cds-background,#fff)' },
+  red:    { bg: 'var(--cds-support-error-inverse,#da1e28)',   text: 'var(--cds-background,#fff)' },
+  amber:  { bg: 'var(--cds-support-warning-inverse,#f1c21b)', text: 'var(--cds-text-primary,#161616)' },
+  purple: { bg: '#8a3ffc',                                    text: '#fff' },
+  zinc:   { bg: 'var(--cds-layer-02,#e0e0e0)',               text: 'var(--cds-text-primary,#161616)' },
 };
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -29,57 +32,103 @@ export const StatCard: React.FC<StatCardProps> = ({
   subtitle,
   icon,
   trend,
-  color = 'blue',
+  color     = 'blue',
   isLoading = false,
   className = '',
 }) => {
-  const colors = colorSchemes[color];
+  const accent = accentMap[color] ?? accentMap.blue;
 
   if (isLoading) {
     return (
-      <div className={`bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 ${className}`}>
-        <div className="animate-pulse">
-          <div className="flex justify-between items-start mb-4">
-            <div className="h-4 w-24 bg-zinc-200 rounded" />
-            <div className="w-10 h-10 bg-zinc-200 rounded-xl" />
-          </div>
-          <div className="h-8 w-32 bg-zinc-200 rounded mb-2" />
-          <div className="h-3 w-16 bg-zinc-200 rounded" />
+      <Tile className={className} style={{ padding: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+          <div style={{ width: '60%' }}><SkeletonText /></div>
+          <div style={{ width: 40, height: 40 }}><SkeletonPlaceholder /></div>
         </div>
-      </div>
+        <div style={{ width: '40%', marginBottom: '0.5rem' }}><SkeletonText heading /></div>
+        <div style={{ width: '25%' }}><SkeletonText /></div>
+      </Tile>
     );
   }
 
   return (
-    <div className={`bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 hover:shadow-md transition-shadow ${className}`}>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">{title}</p>
-        {icon && (
-          <div className={`w-10 h-10 ${colors.iconBg} rounded-xl flex items-center justify-center ${colors.iconColor}`}>
-            {icon}
+    <Tile
+      className={className}
+      style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden' }}
+    >
+      {/* Left accent bar */}
+      <div style={{
+        position: 'absolute',
+        top: 0, left: 0,
+        width: 4,
+        height: '100%',
+        background: accent.bg,
+      }} />
+
+      <div style={{ paddingLeft: '0.5rem' }}>
+        {/* Header row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+          <p style={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: 'var(--cds-text-secondary, #525252)',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            margin: 0,
+          }}>
+            {title}
+          </p>
+          {icon && (
+            <div style={{
+              width: 40, height: 40,
+              background: accent.bg,
+              color: accent.text,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              {icon}
+            </div>
+          )}
+        </div>
+
+        {/* Value */}
+        <p style={{
+          fontSize: '2rem',
+          fontWeight: 300,
+          color: 'var(--cds-text-primary, #161616)',
+          fontVariantNumeric: 'tabular-nums',
+          lineHeight: 1.1,
+          margin: '0 0 0.5rem',
+        }}>
+          {value}
+        </p>
+
+        {/* Trend / subtitle */}
+        {(trend || subtitle) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {trend && (
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: trend.isPositive
+                  ? 'var(--cds-support-success, #24a148)'
+                  : 'var(--cds-support-error, #da1e28)',
+              }}>
+                {trend.isPositive ? '↑' : '↓'}
+                {Math.abs(trend.value)}%
+              </span>
+            )}
+            {subtitle && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)' }}>
+                {subtitle}
+              </span>
+            )}
           </div>
         )}
       </div>
-      <p className="text-3xl font-bold text-zinc-900 tabular-nums">{value}</p>
-      {(subtitle || trend) && (
-        <div className="flex items-center gap-2 mt-2">
-          {trend && (
-            <span className={`text-xs font-semibold flex items-center gap-1 ${trend.isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {trend.isPositive ? (
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-              ) : (
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-              )}
-              {Math.abs(trend.value)}%
-            </span>
-          )}
-          {subtitle && <p className="text-xs text-zinc-500">{subtitle}</p>}
-        </div>
-      )}
-    </div>
+    </Tile>
   );
 };

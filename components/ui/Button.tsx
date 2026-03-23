@@ -1,113 +1,117 @@
 import React from 'react';
+import { Button as CarbonButton, InlineLoading } from '@carbon/react';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success' | 'ghost' | 'warning';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonSize    = 'sm' | 'md' | 'lg';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
+interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+  children?: React.ReactNode;
+  variant?:  ButtonVariant;
+  size?:     ButtonSize;
   isLoading?: boolean;
-  leftIcon?: React.ReactNode;
+  leftIcon?:  React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  renderIcon?: React.ComponentType<{ size?: number }>;
 }
 
-const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 focus:ring-blue-500',
-  secondary: 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 focus:ring-zinc-400',
-  danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200 focus:ring-rose-500',
-  success: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 focus:ring-emerald-500',
-  ghost: 'bg-transparent hover:bg-zinc-100 text-zinc-600 border border-zinc-200 focus:ring-zinc-400',
-  warning: 'bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-200 focus:ring-amber-500',
+// Map our variant names → Carbon Button kinds
+const kindMap: Record<ButtonVariant, 'primary' | 'secondary' | 'danger' | 'ghost' | 'tertiary'> = {
+  primary:   'primary',
+  secondary: 'secondary',
+  danger:    'danger',
+  success:   'primary',   // Carbon has no "success" kind; use primary (icon conveys success)
+  ghost:     'ghost',
+  warning:   'tertiary',  // Carbon has no "warning" kind; use tertiary
 };
 
-const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-3 py-2 text-xs font-semibold rounded-lg',
-  md: 'px-4 py-2.5 text-sm font-semibold rounded-xl',
-  lg: 'px-6 py-3.5 text-base font-bold rounded-xl',
+// Map our size names → Carbon Button sizes
+const sizeMap: Record<ButtonSize, 'sm' | 'md' | 'lg'> = {
+  sm: 'sm',
+  md: 'md',
+  lg: 'lg',
 };
 
 export const Button: React.FC<ButtonProps> = ({
   children,
-  variant = 'primary',
-  size = 'md',
+  variant   = 'primary',
+  size      = 'md',
   isLoading = false,
   leftIcon,
   rightIcon,
   fullWidth = false,
   disabled,
   className = '',
+  renderIcon,
+  style,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center gap-2 transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-opacity-50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100';
-  
+  if (isLoading) {
+    return (
+      <CarbonButton
+        kind={kindMap[variant]}
+        size={sizeMap[size]}
+        disabled
+        style={{ ...(fullWidth ? { width: '100%', maxWidth: '100%' } : {}), ...style }}
+        className={className}
+      >
+        <InlineLoading status="active" style={{ display: 'inline-flex', marginRight: '0.5rem' }} />
+        {children}
+      </CarbonButton>
+    );
+  }
+
   return (
-    <button
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
-      disabled={disabled || isLoading}
-      {...props}
+    <CarbonButton
+      kind={kindMap[variant]}
+      size={sizeMap[size]}
+      disabled={disabled}
+      renderIcon={renderIcon as React.ComponentType | undefined}
+      style={{ ...(fullWidth ? { width: '100%', maxWidth: '100%' } : {}), ...style }}
+      className={className}
+      {...(props as Record<string, unknown>)}
     >
-      {isLoading ? (
-        <>
-          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          {children}
-        </>
-      ) : (
-        <>
-          {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
-          {children}
-          {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
-        </>
-      )}
-    </button>
+      {leftIcon && <span style={{ marginRight: '0.5rem', display: 'inline-flex', alignItems: 'center' }}>{leftIcon}</span>}
+      {children}
+      {rightIcon && <span style={{ marginLeft: '0.5rem', display: 'inline-flex', alignItems: 'center' }}>{rightIcon}</span>}
+    </CarbonButton>
   );
 };
 
-// Icon Button variant
+// ── Icon button ─────────────────────────────────────────────────────────────
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  icon: React.ReactNode;
-  variant?: ButtonVariant;
-  size?: 'sm' | 'md' | 'lg';
+  icon:       React.ReactNode;
+  variant?:   ButtonVariant;
+  size?:      'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  label?:     string;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({
   icon,
-  variant = 'ghost',
-  size = 'md',
+  variant   = 'ghost',
+  size      = 'md',
   isLoading = false,
+  label     = 'Action',
   className = '',
+  disabled,
   ...props
-}) => {
-  const iconSizes = {
-    sm: 'p-1.5',
-    md: 'p-2',
-    lg: 'p-3',
-  };
-  
-  const iconSizesInner = {
-    sm: 'w-4 h-4',
-    md: 'w-5 h-5',
-    lg: 'w-6 h-6',
-  };
-  
-  return (
-    <button
-      className={`inline-flex items-center justify-center rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 min-w-[44px] min-h-[44px] ${iconSizes[size]} ${variantStyles[variant]} ${className}`}
-      disabled={isLoading || props.disabled}
-      {...props}
-    >
-      {isLoading ? (
-        <svg className={`animate-spin ${iconSizesInner[size]}`} fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-      ) : (
-        <span className={iconSizesInner[size]}>{icon}</span>
-      )}
-    </button>
-  );
-};
+}) => (
+  <CarbonButton
+    kind={kindMap[variant]}
+    size={sizeMap[size]}
+    hasIconOnly
+    iconDescription={label}
+    renderIcon={() => (isLoading ? (
+      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
+        <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+    ) : (
+      <span style={{ display: 'inline-flex', alignItems: 'center' }}>{icon}</span>
+    ))}
+    disabled={isLoading || disabled}
+    className={className}
+    {...(props as Record<string, unknown>)}
+  />
+);

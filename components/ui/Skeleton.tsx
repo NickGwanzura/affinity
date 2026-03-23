@@ -1,82 +1,74 @@
 import React from 'react';
+import { SkeletonText, SkeletonPlaceholder } from '@carbon/react';
 
+// ── Base Skeleton ─────────────────────────────────────────────────────────────
 interface SkeletonProps {
   className?: string;
-  variant?: 'text' | 'circular' | 'rectangular' | 'rounded';
-  width?: string | number;
-  height?: string | number;
+  variant?:   'text' | 'circular' | 'rectangular' | 'rounded';
+  width?:     string | number;
+  height?:    string | number;
 }
 
 export const Skeleton: React.FC<SkeletonProps> = ({
   className = '',
-  variant = 'text',
+  variant   = 'text',
   width,
   height,
 }) => {
-  const baseStyles = 'animate-pulse bg-zinc-200';
-  
-  const variantStyles = {
-    text: 'rounded',
-    circular: 'rounded-full',
-    rectangular: '',
-    rounded: 'rounded-xl',
-  };
+  const wrapStyle: React.CSSProperties = { width, height };
 
-  const style: React.CSSProperties = {
-    width: width,
-    height: height,
-  };
+  if (variant === 'text') {
+    return (
+      <div className={className} style={wrapStyle}>
+        <SkeletonText />
+      </div>
+    );
+  }
+
+  const radius =
+    variant === 'circular' ? '50%' :
+    variant === 'rounded'  ? '4px' : '0';
 
   return (
-    <div
-      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
-      style={style}
-    />
+    <div className={className} style={{ ...wrapStyle, borderRadius: radius, overflow: 'hidden' }}>
+      <SkeletonPlaceholder />
+    </div>
   );
 };
 
-// Pre-built skeleton layouts
+// ── Pre-built layouts ─────────────────────────────────────────────────────────
+
 export const SkeletonCard: React.FC = () => (
-  <div className="bg-white p-6 rounded-2xl border border-zinc-200">
-    <div className="flex justify-between items-start mb-4">
-      <Skeleton width="6rem" height="0.875rem" />
-      <Skeleton variant="circular" width="2.5rem" height="2.5rem" />
+  <div style={{ padding: '1.5rem', background: 'var(--cds-layer-01, #fff)', border: '1px solid var(--cds-border-subtle-01, #e0e0e0)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+      <div style={{ width: '55%' }}><SkeletonText /></div>
+      <div style={{ width: 40, height: 40 }}><SkeletonPlaceholder /></div>
     </div>
-    <Skeleton width="8rem" height="2rem" className="mb-2" />
-    <Skeleton width="4rem" height="0.75rem" />
+    <div style={{ width: '40%', marginBottom: '0.5rem' }}><SkeletonText heading /></div>
+    <div style={{ width: '25%' }}><SkeletonText /></div>
   </div>
 );
 
 export const SkeletonTableRow: React.FC<{ cols?: number }> = ({ cols = 4 }) => (
-  <div className="flex gap-4 py-3">
+  <div style={{ display: 'flex', gap: '1rem', padding: '0.75rem 0' }}>
     {Array.from({ length: cols }).map((_, i) => (
-      <Skeleton
-        key={i}
-        className="flex-1"
-        height="1rem"
-        width={i === 0 ? '40%' : '100%'}
-      />
+      <div key={i} style={{ flex: i === 0 ? '0 0 40%' : 1 }}>
+        <SkeletonText />
+      </div>
     ))}
   </div>
 );
 
-export const SkeletonTable: React.FC<{ rows?: number; cols?: number }> = ({ 
-  rows = 5, 
-  cols = 4 
+export const SkeletonTable: React.FC<{ rows?: number; cols?: number }> = ({
+  rows = 5,
+  cols = 4,
 }) => (
-  <div className="space-y-2">
-    {/* Header */}
-    <div className="flex gap-4 py-3 border-b border-zinc-200">
+  <div>
+    <div style={{ display: 'flex', gap: '1rem', padding: '0.75rem 0', borderBottom: '1px solid var(--cds-border-subtle-01, #e0e0e0)' }}>
       {Array.from({ length: cols }).map((_, i) => (
-        <Skeleton
-          key={i}
-          className="flex-1"
-          height="0.875rem"
-          width="100%"
-        />
+        <div key={i} style={{ flex: 1 }}><SkeletonText /></div>
       ))}
     </div>
-    {/* Rows */}
     {Array.from({ length: rows }).map((_, i) => (
       <SkeletonTableRow key={i} cols={cols} />
     ))}
@@ -84,7 +76,7 @@ export const SkeletonTable: React.FC<{ rows?: number; cols?: number }> = ({
 );
 
 export const SkeletonStatCards: React.FC<{ count?: number }> = ({ count = 4 }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
     {Array.from({ length: count }).map((_, i) => (
       <SkeletonCard key={i} />
     ))}
@@ -92,8 +84,8 @@ export const SkeletonStatCards: React.FC<{ count?: number }> = ({ count = 4 }) =
 );
 
 export const SkeletonChart: React.FC = () => (
-  <div className="bg-white p-6 rounded-2xl border border-zinc-200">
-    <Skeleton width="12rem" height="1.25rem" className="mb-6" />
-    <Skeleton variant="rounded" className="w-full" height="16rem" />
+  <div style={{ padding: '1.5rem', background: 'var(--cds-layer-01, #fff)', border: '1px solid var(--cds-border-subtle-01, #e0e0e0)' }}>
+    <div style={{ width: '40%', marginBottom: '1.5rem' }}><SkeletonText heading /></div>
+    <div style={{ width: '100%', height: '16rem' }}><SkeletonPlaceholder /></div>
   </div>
 );
