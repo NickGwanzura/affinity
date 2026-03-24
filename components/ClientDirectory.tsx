@@ -128,9 +128,9 @@ export const ClientDirectory: React.FC = () => {
         <p className="mt-1 text-zinc-500 text-sm">{enrichedClients.length} clients · search across invoices, quotes & payments</p>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar list */}
-        <div className="w-80 flex-shrink-0">
+        <div className="w-full lg:w-80 flex-shrink-0">
           <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
             <div className="p-4 border-b border-zinc-100">
               <div className="relative">
@@ -145,7 +145,7 @@ export const ClientDirectory: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="overflow-y-auto max-h-[calc(100vh-280px)]">
+            <div className="overflow-y-auto max-h-64 lg:max-h-[calc(100vh-280px)]">
               {filtered.length === 0 ? (
                 <p className="text-center py-12 text-zinc-400 text-sm">No clients found</p>
               ) : (
@@ -200,7 +200,7 @@ export const ClientDirectory: React.FC = () => {
               <div className="space-y-4">
                 {/* Client header card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-6">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-2xl font-black text-zinc-900">{c.name}</h2>
                       {c.company && <p className="text-zinc-500 text-sm mt-0.5">{c.company}</p>}
@@ -216,7 +216,7 @@ export const ClientDirectory: React.FC = () => {
                   </div>
 
                   {/* Stats row */}
-                  <div className="grid grid-cols-4 gap-4 mt-6 pt-4 border-t border-zinc-100">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-4 border-t border-zinc-100">
                     <div>
                       <p className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Total Billed</p>
                       <p className="text-xl font-black text-zinc-900 mt-1">{formatMoney(stats.totalBilled)}</p>
@@ -238,7 +238,7 @@ export const ClientDirectory: React.FC = () => {
 
                 {/* Tabs */}
                 <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
-                  <div className="flex gap-1 p-2 border-b border-zinc-100 bg-zinc-50">
+                  <div className="flex gap-1 p-2 border-b border-zinc-100 bg-zinc-50 overflow-x-auto">
                     {(['invoices', 'quotes', 'payments'] as const).map(tab => (
                       <button
                         key={tab}
@@ -258,7 +258,8 @@ export const ClientDirectory: React.FC = () => {
                       clientInvoices.length === 0 ? (
                         <p className="text-center py-10 text-zinc-400 text-sm">No invoices for this client</p>
                       ) : (
-                        <table className="w-full text-sm">
+                        <div className="overflow-x-auto">
+                        <table className="w-full text-sm min-w-[40rem]">
                           <thead>
                             <tr className="border-b border-zinc-100">
                               <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-zinc-400">Invoice #</th>
@@ -282,6 +283,7 @@ export const ClientDirectory: React.FC = () => {
                             ))}
                           </tbody>
                         </table>
+                        </div>
                       )
                     )}
 
@@ -289,7 +291,8 @@ export const ClientDirectory: React.FC = () => {
                       clientQuotes.length === 0 ? (
                         <p className="text-center py-10 text-zinc-400 text-sm">No quotes for this client</p>
                       ) : (
-                        <table className="w-full text-sm">
+                        <div className="overflow-x-auto">
+                        <table className="w-full text-sm min-w-[40rem]">
                           <thead>
                             <tr className="border-b border-zinc-100">
                               <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-zinc-400">Quote #</th>
@@ -313,6 +316,7 @@ export const ClientDirectory: React.FC = () => {
                             ))}
                           </tbody>
                         </table>
+                        </div>
                       )
                     )}
 
@@ -320,7 +324,8 @@ export const ClientDirectory: React.FC = () => {
                       clientPayments.length === 0 ? (
                         <p className="text-center py-10 text-zinc-400 text-sm">No payments recorded for this client</p>
                       ) : (
-                        <table className="w-full text-sm">
+                        <div className="overflow-x-auto">
+                        <table className="w-full text-sm min-w-[32rem]">
                           <thead>
                             <tr className="border-b border-zinc-100">
                               <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-zinc-400">Ref</th>
@@ -340,6 +345,7 @@ export const ClientDirectory: React.FC = () => {
                             ))}
                           </tbody>
                         </table>
+                        </div>
                       )
                     )}
                   </div>

@@ -154,6 +154,8 @@ button:not(.cds--btn)[class*='text-indigo-']:not([class*='bg-']):not([class*='bo
 .login-shell {
   display: flex;
   min-height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at top right, rgba(15, 98, 254, 0.08), transparent 28%),
     linear-gradient(180deg, #f8fafc 0%, #f4f4f4 100%);
@@ -280,6 +282,11 @@ button:not(.cds--btn)[class*='text-indigo-']:not([class*='bg-']):not([class*='bo
   display: none;
 }
 
+.login-shell__mobile-brand .cds--tag {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .login-shell__mobile-brand-row {
   display: flex;
   align-items: flex-start;
@@ -379,7 +386,7 @@ button:not(.cds--btn)[class*='text-indigo-']:not([class*='bg-']):not([class*='bo
   cursor: pointer;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1024px) {
   .login-shell {
     display: block;
   }
@@ -421,5 +428,47 @@ button:not(.cds--btn)[class*='text-indigo-']:not([class*='bg-']):not([class*='bo
 
   .login-shell__title {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-shell__panel {
+    min-height: 100dvh;
+    align-items: flex-start;
+    padding: max(0.875rem, env(safe-area-inset-top)) 0.875rem max(1.25rem, env(safe-area-inset-bottom));
+  }
+
+  .login-shell__mobile-brand {
+    padding: 0.875rem;
+  }
+
+  .login-shell__mobile-brand-row {
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .login-shell__mobile-title {
+    font-size: 1.25rem;
+  }
+
+  .login-shell__mobile-text {
+    font-size: 0.8125rem;
+  }
+
+  .login-shell__card {
+    padding: 1rem 0.875rem;
+  }
+
+  .login-shell__tabs {
+    margin-bottom: 1rem;
+  }
+
+  .login-shell__tab {
+    min-height: 2.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .login-shell__title {
+    font-size: 1.375rem;
   }
 }

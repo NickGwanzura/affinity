@@ -71,12 +71,12 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
       : resolvedSubmitLabelSource(form.type);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={onClose} />
-      <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-zinc-900">{title}</h3>
-          <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+      <div className="relative bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-3 mb-5 sm:mb-6">
+          <h3 className="text-xl sm:text-2xl font-bold text-zinc-900">{title}</h3>
+          <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center -mr-2 -mt-2">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -87,7 +87,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           {typeSelectorVariant === 'cards' ? (
             <div>
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Transaction Type *</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => onChange({ type: 'Received' })}
@@ -117,13 +117,13 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-zinc-700 mb-2 block">Type *</label>
                 <select
                   value={form.type}
                   onChange={(event) => onChange({ type: event.target.value as OperatingFundType })}
-                  className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
                 >
                   <option value="Received">Received</option>
                   <option value="Disbursed">Disbursed</option>
@@ -134,7 +134,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 <select
                   value={form.currency}
                   onChange={(event) => onChange({ currency: event.target.value as Currency })}
-                  className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
                 >
                   {currencyOptions.map((currency) => (
                     <option key={currency} value={currency}>
@@ -147,7 +147,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'cards' && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount *</label>
                 <input
@@ -158,7 +158,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   value={form.amount}
                   onChange={(event) => onChange({ amount: event.target.value })}
                   placeholder="0.00"
-                  className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
               <div>
@@ -166,7 +166,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 <select
                   value={form.currency}
                   onChange={(event) => onChange({ currency: event.target.value as Currency })}
-                  className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
                 >
                   {currencyOptions.map((currency) => (
                     <option key={currency} value={currency}>
@@ -179,7 +179,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'select' && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount *</label>
                 <input
@@ -189,7 +189,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   required
                   value={form.amount}
                   onChange={(event) => onChange({ amount: event.target.value })}
-                  className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
               <div>
@@ -199,7 +199,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   required
                   value={form.date}
                   onChange={(event) => onChange({ date: event.target.value })}
-                  className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
             </div>
@@ -214,7 +214,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 onChange={(event) => onChange({ description: event.target.value })}
                 required
                 placeholder={form.type === 'Received' ? receivedDescriptionPlaceholder : disbursedDescriptionPlaceholder}
-                className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
               />
             </div>
           )}
@@ -226,7 +226,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 value={form.recipient}
                 onChange={(event) => onChange({ recipient: event.target.value })}
                 required
-                className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
               >
                 <option value="">-- Select Driver --</option>
                 {drivers.map((driver) => (
@@ -239,7 +239,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'cards' && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-zinc-700 mb-2 block">Reference</label>
                 <input
@@ -247,7 +247,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   value={form.reference}
                   onChange={(event) => onChange({ reference: event.target.value })}
                   placeholder="e.g., TRF-001"
-                  className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
               <div>
@@ -296,7 +296,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                     value={form.recipient}
                     onChange={(event) => onChange({ recipient: event.target.value })}
                     required
-                    className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                    className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
                   >
                     <option value="">-- Select Driver --</option>
                     {drivers.map((driver) => (
@@ -310,7 +310,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                     value={form.recipient}
                     onChange={(event) => onChange({ recipient: event.target.value })}
                     placeholder="Office, branch, cash float..."
-                    className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                    className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
                   />
                 ) : null}
               </div>
@@ -324,12 +324,12 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 value={form.approved_by || ''}
                 onChange={(event) => onChange({ approved_by: event.target.value })}
                 placeholder="Manager name"
-                className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
               />
             </div>
           )}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
             <Button type="button" variant="secondary" fullWidth onClick={onClose}>
               Cancel
             </Button>

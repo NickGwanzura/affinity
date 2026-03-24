@@ -1,31 +1,57 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Expense, Vehicle, CompanyDetails } from '../types';
+import { Expense, Vehicle, CompanyDetails, UserRole } from '../types';
 import { supabase } from '../services/supabaseService';
 import { generateVehicleStatementPDFAndDownload } from '../services/pdfService';
 import { useToast } from '../components/Toast';
+import { getDriverIdentityAliases } from '../utils/driverIdentity';
 
 export const Documents: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'receipts' | 'statements'>('receipts');
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [company, setCompany] = useState<CompanyDetails | null>(null);
+  const [viewerRole, setViewerRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedReceipt, setSelectedReceipt] = useState<Expense | null>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [modalImageError, setModalImageError] = useState(false);
   const { showToast, ToastContainer } = useToast();
 
+  const uniqueById = <T extends { id: string }>(items: T[]) => {
+    const seen = new Set<string>();
+    return items.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  };
+
   useEffect(() => {
     const load = async () => {
       try {
-        const [e, v, c] = await Promise.all([
-          supabase.getExpenses(),
+        const session = await supabase.getSession();
+        const role = session?.user?.role || null;
+        setViewerRole(role);
+
+        const driverAliases = role === 'Driver' ? getDriverIdentityAliases(session?.user) : [];
+
+        const [expenseGroups, v, c] = await Promise.all([
+          role === 'Driver'
+            ? Promise.all(driverAliases.map((alias) => supabase.getExpensesByDriver(alias).catch(() => [] as Expense[])))
+            : Promise.resolve([await supabase.getExpenses()]),
           supabase.getVehicles(),
           supabase.getCompanyDetails()
         ]);
-        setExpenses(e);
-        setVehicles(v);
+
+        const scopedExpenses = uniqueById(expenseGroups.flat());
+        const scopedVehicles =
+          role === 'Driver'
+            ? v.filter((vehicle) => scopedExpenses.some((expense) => expense.vehicle_id === vehicle.id))
+            : v;
+
+        setExpenses(scopedExpenses);
+        setVehicles(scopedVehicles);
         setCompany(c);
         setLoading(false);
       } catch (error) {
@@ -88,7 +114,11 @@ export const Documents: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div>
         <h2 className="text-3xl font-black text-zinc-900 tracking-tight">Document Center</h2>
-        <p className="text-zinc-500 font-medium">Audit-ready receipts and consolidated fleet statements</p>
+        <p className="text-zinc-500 font-medium">
+          {viewerRole === 'Driver'
+            ? 'Your receipts and statements tied to your trip activity'
+            : 'Audit-ready receipts and consolidated fleet statements'}
+        </p>
       </div>
 
       <div className="flex gap-1 bg-zinc-100 p-1.5 rounded-2xl w-fit">

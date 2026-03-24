@@ -114,8 +114,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
         <HeaderGlobalBar>
           {/* User identity chip */}
           <div
+            className="hidden lg:flex"
             style={{
-              display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0 1rem',
@@ -159,15 +159,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
             aria-label="Account details"
             style={{
               position: 'fixed',
-              top: '3rem',
-              right: 0,
-              width: '280px',
+              top: '3.5rem',
+              right: '0.5rem',
+              width: 'min(280px, calc(100vw - 1rem))',
               background: 'var(--cds-layer-01, #f4f4f4)',
-              borderLeft: '1px solid var(--cds-border-subtle, #e0e0e0)',
-              borderBottom: '1px solid var(--cds-border-subtle, #e0e0e0)',
+              border: '1px solid var(--cds-border-subtle, #e0e0e0)',
               zIndex: 8000,
-              padding: '1.5rem',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+              padding: '1rem',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
             }}
           >
             <p style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>

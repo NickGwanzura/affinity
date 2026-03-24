@@ -60,12 +60,12 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
   const showDriverSelector = showDriverDisbursement && form.category === 'Driver Disbursement';
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={onClose} />
-      <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-zinc-900">{title}</h3>
-          <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+      <div className="relative bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-3 mb-5 sm:mb-6">
+          <h3 className="text-xl sm:text-2xl font-bold text-zinc-900">{title}</h3>
+          <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors min-w-[44px] min-h-[44px] inline-flex items-center justify-center -mr-2 -mt-2">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -80,7 +80,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
             <select
               value={form.vehicleId}
               onChange={(event) => onChange({ vehicleId: event.target.value })}
-              className={`w-full px-4 py-3 rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent transition-all outline-none`}
+              className={`w-full px-4 py-3 text-base rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent transition-all outline-none`}
             >
               <option value="">None (General expense)</option>
               {vehicles.map((vehicle) => (
@@ -91,7 +91,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount</label>
               <input
@@ -101,7 +101,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
                 onChange={(event) => onChange({ amount: event.target.value })}
                 required
                 placeholder="0.00"
-                className={`w-full px-4 py-3 rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none`}
+                className={`w-full px-4 py-3 text-base rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none`}
               />
             </div>
             <div>
@@ -109,7 +109,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
               <select
                 value={form.currency}
                 onChange={(event) => onChange({ currency: event.target.value as Currency })}
-                className={`w-full px-4 py-3 rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none`}
+                className={`w-full px-4 py-3 text-base rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none`}
               >
                 <option value="NAD">NAD (Namibia)</option>
                 <option value="GBP">GBP (UK)</option>
@@ -119,7 +119,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Category</label>
               <select
@@ -131,7 +131,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
                     driverName: nextCategory === 'Driver Disbursement' ? form.driverName : '',
                   });
                 }}
-                className={`w-full px-4 py-3 rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none`}
+                className={`w-full px-4 py-3 text-base rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none`}
               >
                 {categoryOptions.map((category) => (
                   <option key={category} value={category}>
@@ -145,7 +145,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
               <select
                 value={form.location}
                 onChange={(event) => onChange({ location: event.target.value as VehicleStatus })}
-                className={`w-full px-4 py-3 rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none`}
+                className={`w-full px-4 py-3 text-base rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none`}
               >
                 <option value="UK">UK</option>
                 <option value="Namibia">Namibia</option>
@@ -164,7 +164,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
                 value={form.driverName}
                 onChange={(event) => onChange({ driverName: event.target.value })}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-3 text-base rounded-xl border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
               >
                 <option value="">-- Select Driver --</option>
                 {drivers.map((driver) => (
@@ -192,7 +192,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
               placeholder={form.category === 'Other' ? 'Please specify the type of expense' : 'E.g. Full tank at Engen Windhoek'}
               rows={3}
               required={form.category === 'Other'}
-              className={`w-full px-4 py-3 rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none resize-none`}
+              className={`w-full px-4 py-3 text-base rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none resize-none`}
             />
             {form.category === 'Other' && (
               <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
@@ -204,7 +204,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
             )}
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
             <Button type="button" variant="secondary" fullWidth onClick={onClose}>
               Cancel
             </Button>
