@@ -383,6 +383,20 @@ export async function getExpensesByVehicle(vehicleId: string): Promise<Expense[]
   }, 'getExpensesByVehicle');
 }
 
+export async function getExpensesByDriver(driverName: string): Promise<Expense[]> {
+  if (!sql) throw new Error('Database not connected');
+
+  return executeQuery(async () => {
+    const rows = await sql`
+      SELECT *
+      FROM expenses
+      WHERE LOWER(COALESCE(driver_name, '')) = LOWER(${driverName})
+      ORDER BY created_at DESC
+    `;
+    return rows as Expense[];
+  }, 'getExpensesByDriver');
+}
+
 export async function addExpense(expense: Omit<Expense, 'id' | 'created_at' | 'exchange_rate_to_usd'>): Promise<Expense> {
   if (!sql) throw new Error('Database not connected');
   
@@ -2628,6 +2642,20 @@ export async function getOperatingFunds(): Promise<OperatingFund[]> {
     `;
     return (rows || []) as OperatingFund[];
   }, 'getOperatingFunds');
+}
+
+export async function getOperatingFundsByRecipient(recipient: string): Promise<OperatingFund[]> {
+  if (!sql) throw new Error('Database not connected');
+
+  return executeQuery(async () => {
+    const rows = await sql`
+      SELECT id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
+      FROM operating_funds
+      WHERE LOWER(COALESCE(recipient, '')) = LOWER(${recipient})
+      ORDER BY date DESC, created_at DESC
+    `;
+    return (rows || []) as OperatingFund[];
+  }, 'getOperatingFundsByRecipient');
 }
 
 export async function addOperatingFund(fund: Omit<OperatingFund, 'id' | 'created_at'>): Promise<OperatingFund> {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LandedCostSummary, Currency, ExpenseCategory, VehicleStatus } from '../../types';
+import { LandedCostSummary, Currency, ExpenseCategory, VehicleStatus, AppUser } from '../../types';
 import { supabase } from '../../services/supabaseService';
 import { useToast } from '../Toast';
 import {
@@ -14,6 +14,7 @@ export const VehiclesTab: React.FC = () => {
 
   const [summaries, setSummaries] = useState<LandedCostSummary[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<AppUser[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,14 +45,16 @@ export const VehiclesTab: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [summaryData, vehicleData, expenseData] = await Promise.all([
+      const [summaryData, vehicleData, expenseData, userData] = await Promise.all([
         supabase.getLandedCostSummaries(),
         supabase.getVehicles(),
         supabase.getExpenses(),
+        supabase.getUsers(),
       ]);
       setSummaries(summaryData);
       setVehicles(vehicleData);
       setExpenses(expenseData);
+      setDrivers(userData.filter((user) => user.role === 'Driver' && user.status === 'Active'));
     } catch (err: any) {
       console.error('[VehiclesTab] fetchData error:', err);
     } finally {
@@ -476,8 +479,9 @@ export const VehiclesTab: React.FC = () => {
                   <label className="text-sm font-semibold text-amber-800 mb-2 block">Select Driver <span className="text-red-500">*</span></label>
                   <select value={expenseDriver} onChange={(e) => setExpenseDriver(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none">
                     <option value="">-- Select Driver --</option>
-                    <option value="David">David</option>
-                    <option value="Boulton">Boulton</option>
+                    {drivers.map((driver) => (
+                      <option key={driver.id} value={driver.name}>{driver.name}</option>
+                    ))}
                   </select>
                   <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>

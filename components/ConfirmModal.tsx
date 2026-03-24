@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from './ui';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -22,11 +23,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onCancel,
 }) => {
   if (!isOpen) return null;
-
-  const confirmStyles = {
-    danger: 'bg-red-600 hover:bg-red-700 text-white',
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
-  };
 
   return (
     <div
@@ -76,18 +72,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </div>
 
         <div className="flex gap-3 mt-6 justify-end">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 text-sm font-semibold text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
-          >
+          <Button onClick={onCancel} variant="ghost" size="sm">
             {cancelLabel}
-          </button>
-          <button
-            onClick={onConfirm}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${confirmStyles[confirmVariant]}`}
-          >
+          </Button>
+          <Button onClick={onConfirm} variant={confirmVariant} size="sm">
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

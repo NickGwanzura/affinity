@@ -131,6 +131,10 @@ class DataService {
     return db.getExpensesByVehicle(vehicleId);
   }
 
+  getExpensesByDriver(driverName: string): Promise<Expense[]> {
+    return db.getExpensesByDriver(driverName);
+  }
+
   addExpense(expense: Omit<Expense, 'id' | 'created_at' | 'exchange_rate_to_usd'>): Promise<Expense> {
     return db.addExpense(expense);
   }
@@ -300,6 +304,7 @@ class DataService {
   // ── Operating Funds ───────────────────────────────────────────────────────
 
   getOperatingFunds(): Promise<OperatingFund[]> { return db.getOperatingFunds(); }
+  getOperatingFundsByRecipient(recipient: string): Promise<OperatingFund[]> { return db.getOperatingFundsByRecipient(recipient); }
   addOperatingFund(fund: Omit<OperatingFund, 'id' | 'created_at'>): Promise<OperatingFund> { return db.addOperatingFund(fund); }
   updateOperatingFund(id: string, updates: Partial<Omit<OperatingFund, 'id' | 'created_at'>>): Promise<OperatingFund> { return db.updateOperatingFund(id, updates); }
   deleteOperatingFund(id: string): Promise<void> { return db.deleteOperatingFund(id); }

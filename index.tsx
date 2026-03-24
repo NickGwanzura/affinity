@@ -2,6 +2,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import '@carbon/styles/css/styles.css';
+import './styles/app.css';
 import App from './App';
 
 const rootElement = document.getElementById('root');

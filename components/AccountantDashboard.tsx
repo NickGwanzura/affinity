@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails, OperatingFund, OperatingFundType, UserRole } from '../types';
+import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails, OperatingFund, OperatingFundType, UserRole, AppUser } from '../types';
 import { AssetRegister } from './AssetRegister';
 import { supabase } from '../services/supabaseService';
 import { generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
@@ -49,6 +49,7 @@ export const AccountantDashboard: React.FC = () => {
   
   // Expense Form State
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<AppUser[]>([]);
   const [expenseVehicle, setExpenseVehicle] = useState('');
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
@@ -73,6 +74,7 @@ export const AccountantDashboard: React.FC = () => {
   const handleAddFund = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fundForm.amount || parseFloat(fundForm.amount) <= 0) { notifyWarning('Enter a valid amount'); return; }
+    if (fundForm.type === 'Disbursed' && !fundForm.recipient) { notifyWarning('Please select the driver receiving this disbursement'); return; }
     try {
       await supabase.addOperatingFund({
         type: fundForm.type,
@@ -104,7 +106,7 @@ export const AccountantDashboard: React.FC = () => {
   // FIX: Centralized data loading function with error handling
   const loadData = async (throwOnError = false) => {
     try {
-      const [inv, pay, exp, quo, sum, veh, cli, psl, emp, comp, funds] = await Promise.all([
+      const [inv, pay, exp, quo, sum, veh, cli, psl, emp, comp, funds, users] = await Promise.all([
         supabase.getInvoices(),
         supabase.getPayments(),
         supabase.getExpenses(),
@@ -116,6 +118,7 @@ export const AccountantDashboard: React.FC = () => {
         supabase.getEmployees(),
         supabase.getCompanyDetails(),
         supabase.getOperatingFunds().catch(() => [] as import('../types').OperatingFund[]),
+        supabase.getUsers(),
       ]);
       setInvoices(Array.isArray(inv) ? inv : []);
       setPayments(Array.isArray(pay) ? pay : []);
@@ -128,6 +131,7 @@ export const AccountantDashboard: React.FC = () => {
       setEmployees(Array.isArray(emp) ? emp : []);
       setCompany(comp);
       setOperatingFunds(Array.isArray(funds) ? funds : []);
+      setDrivers(Array.isArray(users) ? users.filter((user) => user.role === 'Driver' && user.status === 'Active') : []);
       setLoading(false);
     } catch (error: any) {
       console.error('[AccountantDashboard] loadData: Error loading data:', error);
@@ -1579,7 +1583,16 @@ export const AccountantDashboard: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-zinc-700 mb-2 block">{fundForm.type === 'Disbursed' ? 'Recipient' : 'Source'}</label>
-                  <input value={fundForm.recipient} onChange={e => setFundForm({ ...fundForm, recipient: e.target.value })} placeholder="Driver name, office…" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  {fundForm.type === 'Disbursed' ? (
+                    <select value={fundForm.recipient} onChange={e => setFundForm({ ...fundForm, recipient: e.target.value })} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none">
+                      <option value="">-- Select Driver --</option>
+                      {drivers.map((driver) => (
+                        <option key={driver.id} value={driver.name}>{driver.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input value={fundForm.recipient} onChange={e => setFundForm({ ...fundForm, recipient: e.target.value })} placeholder="Office, branch, cash float…" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  )}
                 </div>
               </div>
               <div>
@@ -1746,8 +1759,9 @@ export const AccountantDashboard: React.FC = () => {
                     className="w-full px-4 py-3 rounded-xl border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
                   >
                     <option value="">-- Select Driver --</option>
-                    <option value="David">David</option>
-                    <option value="Boulton">Boulton</option>
+                    {drivers.map((driver) => (
+                      <option key={driver.id} value={driver.name}>{driver.name}</option>
+                    ))}
                   </select>
                   <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">

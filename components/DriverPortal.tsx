@@ -1,38 +1,91 @@
-
-import React, { useState, useEffect, useRef } from 'react';
-import { Currency, ExpenseCategory, Vehicle, VehicleStatus } from '../types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Currency, Expense, ExpenseCategory, OperatingFund, Vehicle, VehicleStatus } from '../types';
+import { EXCHANGE_RATES } from '../constants';
 import { supabase } from '../services/supabaseService';
 import { supabaseClient } from '../services/supabaseClient';
+import { Button } from './ui';
+
+type DriverLedgerEntry = {
+  id: string;
+  date: string;
+  isCredit: boolean;
+  title: string;
+  subtitle: string;
+  vehicleLabel: string;
+  amount: number;
+  currency: Currency;
+  amountUsd: number;
+  receiptUrl?: string;
+};
+
+const formatUsd = (value: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  }).format(value || 0);
+
+const formatMoney = (value: number, currency: Currency) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 2,
+  }).format(value || 0);
 
 export const DriverPortal: React.FC = () => {
+  const [currentDriver, setCurrentDriver] = useState('');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [driverExpenses, setDriverExpenses] = useState<Expense[]>([]);
+  const [driverFunds, setDriverFunds] = useState<OperatingFund[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<Currency>('NAD');
-  const [category, setCategory] = useState<ExpenseCategory>('Fuel');
+  const [category, setCategory] = useState<Exclude<ExpenseCategory, 'Driver Disbursement'>>('Fuel');
   const [location, setLocation] = useState<VehicleStatus>('Namibia');
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string>('');
-  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [uploadError, setUploadError] = useState('');
+  const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const loadVehicles = async () => {
-      try {
-        const data = await supabase.getVehicles();
-        setVehicles(data);
-      } catch (error) {
-        setUploadError('Failed to load vehicles. Please refresh the page.');
+  const loadPortalData = async () => {
+    try {
+      setLoading(true);
+      setUploadError('');
+
+      const session = await supabase.getSession();
+      const driverName = session?.user?.name?.trim();
+
+      if (!driverName) {
+        throw new Error('Unable to load your driver profile. Please sign in again.');
       }
-    };
-    loadVehicles();
+
+      setCurrentDriver(driverName);
+
+      const [vehicleData, expenseData, fundData] = await Promise.all([
+        supabase.getVehicles(),
+        supabase.getExpensesByDriver(driverName),
+        supabase.getOperatingFundsByRecipient(driverName).catch(() => [] as OperatingFund[]),
+      ]);
+
+      setVehicles(vehicleData);
+      setDriverExpenses(expenseData);
+      setDriverFunds((fundData || []).filter((fund) => fund.type === 'Disbursed'));
+    } catch (error: any) {
+      setUploadError(error?.message || 'Failed to load your driver funds. Please refresh the page.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPortalData();
   }, []);
 
-  // Cleanup object URL to prevent memory leak
   useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -41,37 +94,110 @@ export const DriverPortal: React.FC = () => {
     };
   }, [previewUrl]);
 
+  const vehicleNames = useMemo(() => {
+    return new Map(vehicles.map((vehicle) => [vehicle.id, `${vehicle.make_model} (${vehicle.vin_number})`]));
+  }, [vehicles]);
+
+  const expenseDisbursements = useMemo(
+    () => driverExpenses.filter((expense) => expense.category === 'Driver Disbursement'),
+    [driverExpenses],
+  );
+
+  const drawdowns = useMemo(
+    () => driverExpenses.filter((expense) => expense.category !== 'Driver Disbursement'),
+    [driverExpenses],
+  );
+
+  const allocatedFromExpenseUsd = useMemo(
+    () => expenseDisbursements.reduce((sum, expense) => sum + expense.amount * (expense.exchange_rate_to_usd || 1), 0),
+    [expenseDisbursements],
+  );
+
+  const allocatedFromFundsUsd = useMemo(
+    () => driverFunds.reduce((sum, fund) => sum + fund.amount * (EXCHANGE_RATES[fund.currency] || 1), 0),
+    [driverFunds],
+  );
+
+  const spentUsd = useMemo(
+    () => drawdowns.reduce((sum, expense) => sum + expense.amount * (expense.exchange_rate_to_usd || 1), 0),
+    [drawdowns],
+  );
+
+  const allocatedUsd = allocatedFromExpenseUsd + allocatedFromFundsUsd;
+  const availableUsd = allocatedUsd - spentUsd;
+
+  const ledger = useMemo<DriverLedgerEntry[]>(() => {
+    const allocationEntries: DriverLedgerEntry[] = expenseDisbursements.map((expense) => ({
+      id: `expense-disbursement-${expense.id}`,
+      date: expense.created_at,
+      isCredit: true,
+      title: 'Vehicle/Trip Disbursement',
+      subtitle: expense.description || 'Driver funds allocated',
+      vehicleLabel: expense.vehicle_id ? vehicleNames.get(expense.vehicle_id) || 'Assigned vehicle' : 'General allocation',
+      amount: expense.amount,
+      currency: expense.currency,
+      amountUsd: expense.amount * (expense.exchange_rate_to_usd || 1),
+    }));
+
+    const operatingFundEntries: DriverLedgerEntry[] = driverFunds.map((fund) => ({
+      id: `operating-fund-${fund.id}`,
+      date: fund.date || fund.created_at,
+      isCredit: true,
+      title: 'Operating Fund Disbursement',
+      subtitle: fund.description || fund.reference || 'Operating funds allocated',
+      vehicleLabel: 'General allocation',
+      amount: fund.amount,
+      currency: fund.currency,
+      amountUsd: fund.amount * (EXCHANGE_RATES[fund.currency] || 1),
+    }));
+
+    const drawdownEntries: DriverLedgerEntry[] = drawdowns.map((expense) => ({
+      id: `expense-${expense.id}`,
+      date: expense.created_at,
+      isCredit: false,
+      title: expense.category,
+      subtitle: expense.description || 'Expense submitted',
+      vehicleLabel: expense.vehicle_id ? vehicleNames.get(expense.vehicle_id) || 'Assigned vehicle' : 'General expense',
+      amount: expense.amount,
+      currency: expense.currency,
+      amountUsd: expense.amount * (expense.exchange_rate_to_usd || 1),
+      receiptUrl: expense.receipt_url,
+    }));
+
+    return [...allocationEntries, ...operatingFundEntries, ...drawdownEntries].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+  }, [drawdowns, driverFunds, expenseDisbursements, vehicleNames]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setUploadError('Please select an image file');
-        return;
-      }
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError('File size must be less than 10MB');
-        return;
-      }
-      
-      // Cleanup previous preview URL before creating new one
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-      
-      setSelectedFile(file);
-      setUploadError('');
-      // Create preview URL using FileReader
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.onerror = () => {
-        setUploadError('Failed to read file. Please try again.');
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file');
+      return;
     }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size must be less than 10MB');
+      return;
+    }
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setSelectedFile(file);
+    setUploadError('');
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.onerror = () => {
+      setUploadError('Failed to read file. Please try again.');
+    };
+    reader.readAsDataURL(file);
   };
 
   const uploadReceipt = async (file: File): Promise<string | null> => {
@@ -79,27 +205,22 @@ export const DriverPortal: React.FC = () => {
       setUploading(true);
       setUploadError('');
 
-      // Generate unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `receipts/${fileName}`;
 
-      // Upload to Supabase Storage
-      const { data, error } = await supabaseClient.storage
+      const { error } = await supabaseClient.storage
         .from('receipts')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
         });
 
       if (error) {
         throw error;
       }
 
-      // Get public URL
-      const { data: urlData } = supabaseClient.storage
-        .from('receipts')
-        .getPublicUrl(filePath);
+      const { data: urlData } = supabaseClient.storage.from('receipts').getPublicUrl(filePath);
 
       if (!urlData?.publicUrl) {
         throw new Error('Failed to get public URL');
@@ -114,56 +235,6 @@ export const DriverPortal: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount) return;
-
-    setSubmitting(true);
-    setUploadError('');
-    
-    try {
-      let receiptUrl: string | undefined = undefined;
-
-      // Upload receipt if file is selected
-      if (selectedFile) {
-        receiptUrl = await uploadReceipt(selectedFile);
-        if (!receiptUrl) {
-          // Upload failed, but don't block submission
-          setUploadError('Receipt upload failed, continuing without receipt. You may want to retry.');
-        }
-      }
-
-      await supabase.addExpense({
-        vehicle_id: selectedVehicle || undefined,
-        description,
-        amount: parseFloat(amount),
-        currency,
-        category,
-        location,
-        receipt_url: receiptUrl
-      });
-      
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-      
-      // Reset form
-      setDescription('');
-      setAmount('');
-      setSelectedFile(null);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-      setPreviewUrl('');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    } catch (error: any) {
-      setUploadError(error.message || 'Failed to submit expense. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const clearReceipt = () => {
     setSelectedFile(null);
     if (previewUrl) {
@@ -175,210 +246,339 @@ export const DriverPortal: React.FC = () => {
     }
   };
 
-  return (
-    <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-zinc-200 font-sans">
-      <div className="bg-zinc-900 p-6 text-white text-center">
-        <h2 className="text-2xl font-bold">Driver Log</h2>
-        <p className="text-zinc-400 text-sm mt-1">Submit transit expenses in real-time</p>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!currentDriver) {
+      setUploadError('Your driver profile is not available right now. Please sign in again.');
+      return;
+    }
+
+    const parsedAmount = parseFloat(amount);
+    if (!parsedAmount || parsedAmount <= 0) {
+      setUploadError('Enter a valid amount to draw down.');
+      return;
+    }
+
+    const amountUsd = parsedAmount * (EXCHANGE_RATES[currency] || 1);
+    if (amountUsd > availableUsd + 0.001) {
+      setUploadError(`This drawdown exceeds your available balance of ${formatUsd(availableUsd)}.`);
+      return;
+    }
+
+    setSubmitting(true);
+    setUploadError('');
+
+    try {
+      let receiptUrl: string | undefined;
+
+      if (selectedFile) {
+        receiptUrl = await uploadReceipt(selectedFile) || undefined;
+        if (!receiptUrl) {
+          setUploadError('Receipt upload failed, continuing without receipt. You may want to retry.');
+        }
+      }
+
+      await supabase.addExpense({
+        vehicle_id: selectedVehicle || undefined,
+        description,
+        amount: parsedAmount,
+        currency,
+        category,
+        location,
+        receipt_url: receiptUrl,
+        driver_name: currentDriver,
+      });
+
+      await loadPortalData();
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+
+      setDescription('');
+      setAmount('');
+      clearReceipt();
+    } catch (error: any) {
+      setUploadError(error.message || 'Failed to submit expense. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="bg-white border border-zinc-200 rounded-3xl shadow-sm p-10 text-center">
+          <div className="w-10 h-10 mx-auto mb-4 rounded-full border-2 border-zinc-300 border-t-zinc-900 animate-spin" />
+          <p className="text-zinc-600 font-medium">Loading your funds and drawdowns...</p>
+        </div>
       </div>
+    );
+  }
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        {success && (
-          <div className="bg-emerald-50 text-emerald-700 p-4 rounded-lg border border-emerald-200 flex items-center gap-2 animate-bounce font-medium">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Expense logged successfully!
-          </div>
-        )}
-
-        <div className="space-y-1">
-          <label htmlFor="vehicle-select" className="text-sm font-semibold text-zinc-700">
-            Vehicle Selection <span className="text-zinc-400 text-xs">(Optional)</span>
-          </label>
-          <select
-            id="vehicle-select"
-            value={selectedVehicle}
-            onChange={(e) => setSelectedVehicle(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-          >
-            <option value="">None (General expense)</option>
-            {vehicles.map((v) => (
-              <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label htmlFor="amount-input" className="text-sm font-semibold text-zinc-700">Amount</label>
-            <input
-              id="amount-input"
-              type="number"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-              placeholder="0.00"
-              autoComplete="off"
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="currency-select" className="text-sm font-semibold text-zinc-700">Currency</label>
-            <select
-              id="currency-select"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value as Currency)}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            >
-              <option value="NAD">NAD (Namibia)</option>
-              <option value="GBP">GBP (UK)</option>
-              <option value="USD">USD (General)</option>
-              <option value="BWP">BWP (Botswana)</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label htmlFor="category-select" className="text-sm font-semibold text-zinc-700">Category</label>
-            <select
-              id="category-select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            >
-              <option value="Fuel">Fuel</option>
-              <option value="Tolls">Tolls</option>
-              <option value="Food">Food</option>
-              <option value="Repairs">Repairs</option>
-              <option value="Duty">Duty</option>
-              <option value="Shipping">Shipping</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="location-select" className="text-sm font-semibold text-zinc-700">Current Location</label>
-            <select
-              id="location-select"
-              value={location}
-              onChange={(e) => setLocation(e.target.value as VehicleStatus)}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            >
-              <option value="UK">UK</option>
-              <option value="Namibia">Namibia</option>
-              <option value="Zimbabwe">Zimbabwe</option>
-              <option value="Botswana">Botswana</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="description-input" className="text-sm font-semibold text-zinc-700">
-            Description {category === 'Other' && <span className="text-red-500">*</span>}
-          </label>
-          <textarea
-            id="description-input"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={category === 'Other' ? "Please specify the type of expense" : "E.g. Full tank at Engen Windhoek"}
-            rows={2}
-            required={category === 'Other'}
-            autoComplete="off"
-            className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-          />
-          {category === 'Other' && (
-            <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              Required: Please describe what this expense is for
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <section className="bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_35%),linear-gradient(135deg,#111827_0%,#0f172a_45%,#164e63_100%)] rounded-[2rem] p-8 text-white shadow-2xl">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-emerald-200 text-sm uppercase tracking-[0.28em] font-semibold">Driver Funds</p>
+            <h2 className="text-4xl font-black mt-3">Welcome back, {currentDriver}</h2>
+            <p className="text-slate-300 mt-3 max-w-2xl">
+              View every allocation made by admin or accounting, track what you have already spent, and submit the next drawdown from the balance available to you.
             </p>
-          )}
+          </div>
+          <div className="bg-white/10 border border-white/15 rounded-3xl px-6 py-5 backdrop-blur-sm">
+            <p className="text-slate-300 text-xs uppercase tracking-[0.25em] font-semibold">Available To Draw</p>
+            <p className={`text-4xl font-black mt-2 ${availableUsd >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+              {formatUsd(availableUsd)}
+            </p>
+            <p className="text-slate-300 text-sm mt-2">
+              {availableUsd > 0 ? 'You can submit expenses against this balance now.' : 'No available balance right now. Ask admin or accounting to top up your funds.'}
+            </p>
+          </div>
         </div>
+      </section>
 
-        <div className="space-y-1">
-          <label htmlFor="receipt-input" className="text-sm font-semibold text-zinc-700">
-            Receipt Image <span className="text-zinc-400 text-xs">(Optional)</span>
-          </label>
-          {previewUrl ? (
-            <div className="relative border-2 border-zinc-200 rounded-xl overflow-hidden">
-              <img src={previewUrl} alt="Receipt preview" className="w-full h-48 object-cover" />
-              <button
-                type="button"
-                onClick={clearReceipt}
-                aria-label="Remove receipt image"
-                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-2">
-                {selectedFile?.name}
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="bg-white rounded-3xl border border-zinc-200 p-6 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-zinc-400">Allocated</p>
+          <p className="text-3xl font-black text-zinc-900 mt-3">{formatUsd(allocatedUsd)}</p>
+          <p className="text-sm text-zinc-500 mt-2">
+            {expenseDisbursements.length + driverFunds.length} allocation{expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded for you
+          </p>
+        </div>
+        <div className="bg-white rounded-3xl border border-zinc-200 p-6 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-zinc-400">Spent</p>
+          <p className="text-3xl font-black text-zinc-900 mt-3">{formatUsd(spentUsd)}</p>
+          <p className="text-sm text-zinc-500 mt-2">
+            {drawdowns.length} drawdown{drawdowns.length === 1 ? '' : 's'} submitted from the app
+          </p>
+        </div>
+        <div className="bg-white rounded-3xl border border-zinc-200 p-6 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-zinc-400">Allocations Mix</p>
+          <p className="text-3xl font-black text-zinc-900 mt-3">{formatUsd(allocatedFromExpenseUsd)}</p>
+          <p className="text-sm text-zinc-500 mt-2">
+            Trip-specific disbursements plus {formatUsd(allocatedFromFundsUsd)} from operating fund top-ups
+          </p>
+        </div>
+      </section>
+
+      <section className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-6 border-b border-zinc-200 bg-zinc-50/80">
+            <h3 className="text-2xl font-black text-zinc-900">Submit Drawdown</h3>
+            <p className="text-zinc-500 mt-2">
+              Every expense submitted here is tagged to your driver profile and deducted from your available funds.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {success && (
+              <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl border border-emerald-200 font-medium">
+                Expense logged successfully and your drawdown balance has been refreshed.
+              </div>
+            )}
+
+            {uploadError && (
+              <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl border border-rose-200 font-medium">
+                {uploadError}
+              </div>
+            )}
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label htmlFor="vehicle-select" className="text-sm font-semibold text-zinc-700 block mb-2">
+                  Vehicle <span className="text-zinc-400 text-xs">(Optional)</span>
+                </label>
+                <select
+                  id="vehicle-select"
+                  value={selectedVehicle}
+                  onChange={(e) => setSelectedVehicle(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
+                >
+                  <option value="">General drawdown</option>
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.make_model} ({vehicle.vin_number})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="category-select" className="text-sm font-semibold text-zinc-700 block mb-2">Category</label>
+                <select
+                  id="category-select"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as Exclude<ExpenseCategory, 'Driver Disbursement'>)}
+                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
+                >
+                  <option value="Fuel">Fuel</option>
+                  <option value="Tolls">Tolls</option>
+                  <option value="Food">Food</option>
+                  <option value="Repairs">Repairs</option>
+                  <option value="Duty">Duty</option>
+                  <option value="Shipping">Shipping</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
             </div>
-          ) : (
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
-              role="button"
-              tabIndex={0}
-              aria-label="Click to upload receipt image"
-              className="border-2 border-dashed border-zinc-200 rounded-xl p-4 flex flex-col items-center justify-center bg-transparent hover:bg-zinc-50 transition-colors cursor-pointer group"
-            >
-              <svg className="w-8 h-8 text-zinc-300 group-hover:text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span className="text-xs text-zinc-400 group-hover:text-blue-600 font-medium font-sans">Capture or Upload Receipt</span>
-              <span className="text-xs text-zinc-300 mt-1">Click to select image (max 10MB)</span>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <label htmlFor="amount-input" className="text-sm font-semibold text-zinc-700 block mb-2">Amount</label>
+                <input
+                  id="amount-input"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                  placeholder="0.00"
+                  autoComplete="off"
+                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="currency-select" className="text-sm font-semibold text-zinc-700 block mb-2">Currency</label>
+                <select
+                  id="currency-select"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as Currency)}
+                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
+                >
+                  <option value="NAD">NAD</option>
+                  <option value="USD">USD</option>
+                  <option value="GBP">GBP</option>
+                  <option value="BWP">BWP</option>
+                </select>
+              </div>
             </div>
-          )}
-          <input 
-            ref={fileInputRef}
-            id="receipt-input"
-            type="file" 
-            accept="image/*" 
-            capture="environment" 
-            onChange={handleFileSelect}
-            className="hidden" 
-            aria-label="Receipt file input"
-          />
-          {uploadError && (
-            <p className="text-xs text-red-600 mt-1 flex items-center gap-1" role="alert">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              {uploadError}
-            </p>
-          )}
-          {uploading && (
-            <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-              <span className="h-3 w-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
-              Uploading receipt...
-            </p>
-          )}
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label htmlFor="location-select" className="text-sm font-semibold text-zinc-700 block mb-2">Location</label>
+                <select
+                  id="location-select"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value as VehicleStatus)}
+                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
+                >
+                  <option value="UK">UK</option>
+                  <option value="Namibia">Namibia</option>
+                  <option value="Zimbabwe">Zimbabwe</option>
+                  <option value="Botswana">Botswana</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="receipt-input" className="text-sm font-semibold text-zinc-700 block mb-2">
+                  Receipt <span className="text-zinc-400 text-xs">(Optional)</span>
+                </label>
+                <input
+                  id="receipt-input"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="w-full px-4 py-[0.8rem] rounded-2xl border border-zinc-200 bg-white text-sm file:mr-4 file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:rounded-xl file:font-semibold"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="description-input" className="text-sm font-semibold text-zinc-700 block mb-2">Description</label>
+              <textarea
+                id="description-input"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                placeholder="What is this expense for?"
+                className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none resize-none"
+              />
+            </div>
+
+            {previewUrl && (
+              <div className="rounded-3xl border border-zinc-200 p-4 bg-zinc-50">
+                <div className="flex items-center justify-between gap-4 mb-3">
+                  <p className="text-sm font-semibold text-zinc-700">Receipt preview</p>
+                  <Button type="button" variant="danger" size="sm" onClick={clearReceipt}>
+                    Remove
+                  </Button>
+                </div>
+                <img src={previewUrl} alt="Receipt preview" className="max-h-72 rounded-2xl object-contain bg-white border border-zinc-200" />
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              fullWidth
+              isLoading={submitting || uploading}
+              disabled={availableUsd <= 0}
+              className="w-full"
+            >
+              Submit Drawdown
+            </Button>
+          </form>
         </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all transform active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 font-sans"
-        >
-          {submitting ? (
-            <span className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-label="Submitting expense"></span>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Submit Expense
-            </>
-          )}
-        </button>
-      </form>
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-zinc-200">
+              <h3 className="text-xl font-black text-zinc-900">Latest Activity</h3>
+              <p className="text-zinc-500 mt-1">Allocations and drawdowns tied to your profile</p>
+            </div>
+
+            <div className="divide-y divide-zinc-200">
+              {ledger.length === 0 ? (
+                <div className="p-6 text-zinc-500">
+                  No funds or drawdowns are attached to your profile yet.
+                </div>
+              ) : (
+                ledger.slice(0, 8).map((entry) => (
+                  <div key={entry.id} className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-black text-zinc-900">{entry.title}</p>
+                        <p className="text-sm text-zinc-600 mt-1">{entry.subtitle}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-zinc-500">
+                          <span>{new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                          <span>{entry.vehicleLabel}</span>
+                          {entry.receiptUrl && (
+                            <>
+                              <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                              <a href={entry.receiptUrl} target="_blank" rel="noreferrer" className="font-semibold text-cyan-700 hover:text-cyan-800">
+                                Receipt
+                              </a>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <p className={`text-sm font-black ${entry.isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {entry.isCredit ? '+' : '-'}{formatMoney(entry.amount, entry.currency)}
+                        </p>
+                        <p className="text-xs text-zinc-500 mt-1">{formatUsd(entry.amountUsd)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6">
+            <h3 className="text-xl font-black text-zinc-900">How It Works</h3>
+            <div className="space-y-3 mt-4 text-sm text-zinc-600">
+              <p>Funds become available here when an admin or accountant records a driver disbursement for your profile.</p>
+              <p>Those allocations can be general or attached to a vehicle, and both show up in your activity feed.</p>
+              <p>Every expense you submit from this portal is tagged to you and deducted from the available balance shown above.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
