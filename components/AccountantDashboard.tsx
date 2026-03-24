@@ -1,13 +1,19 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails, OperatingFund, OperatingFundType, UserRole, AppUser } from '../types';
+import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails, OperatingFund, OperatingFundType, UserRole, AppUser, Employee, Vehicle, Currency, ExpenseCategory, VehicleStatus } from '../types';
 import { AssetRegister } from './AssetRegister';
+import AccountantClientsView from './accountant/AccountantClientsView';
+import OperatingFundsView from './accountant/OperatingFundsView';
+import ReportsOverviewView from './accountant/ReportsOverviewView';
+import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
+import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
+import PayslipsListView from './shared/PayslipsListView';
 import { supabase } from '../services/supabaseService';
-import { generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
-import { Button, StatCard, EmptyState, StatusBadge, SkeletonStatCards, SkeletonChart, SkeletonTable } from './ui';
-import { TrendLineChart, DonutPieChart, SimpleBarChart, CHART_COLORS } from './ui/Charts';
-import { defaultIcons } from './ui/EmptyState';
+import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
+import { Button, StatCard, StatusBadge, SkeletonStatCards, SkeletonTable } from './ui';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
+import { buildDriverFundsReportData } from '../utils/driverFunds';
+import { formatCurrency as formatMoney, formatDate as formatDateValue, getMonthName } from '../utils/formatters';
 
 export const AccountantDashboard: React.FC = () => {
   const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
@@ -22,7 +28,7 @@ export const AccountantDashboard: React.FC = () => {
   const [summaries, setSummaries] = useState<LandedCostSummary[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [payslips, setPayslips] = useState<Payslip[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'expenses' | 'payments' | 'reports' | 'clients' | 'payslips' | 'operating-funds' | 'expense-reports' | 'assets'>('overview');
   const [userRole, setUserRole] = useState<UserRole>('Accountant');
@@ -48,14 +54,14 @@ export const AccountantDashboard: React.FC = () => {
   });
   
   // Expense Form State
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<AppUser[]>([]);
   const [expenseVehicle, setExpenseVehicle] = useState('');
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseCurrency, setExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD' | 'BWP'>('NAD');
-  const [expenseCategory, setExpenseCategory] = useState<'Fuel' | 'Tolls' | 'Food' | 'Repairs' | 'Duty' | 'Shipping' | 'Other'>('Fuel');
-  const [expenseLocation, setExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
+  const [expenseCurrency, setExpenseCurrency] = useState<Currency>('NAD');
+  const [expenseCategory, setExpenseCategory] = useState<ExpenseCategory>('Fuel');
+  const [expenseLocation, setExpenseLocation] = useState<VehicleStatus>('Namibia');
   const [expenseDriver, setExpenseDriver] = useState<string>('');
   const [company, setCompany] = useState<CompanyDetails | null>(null);
 
@@ -63,13 +69,57 @@ export const AccountantDashboard: React.FC = () => {
   const [editExpenseVehicle, setEditExpenseVehicle] = useState('');
   const [editExpenseDesc, setEditExpenseDesc] = useState('');
   const [editExpenseAmount, setEditExpenseAmount] = useState('');
-  const [editExpenseCurrency, setEditExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD' | 'BWP'>('NAD');
-  const [editExpenseCategory, setEditExpenseCategory] = useState<'Fuel' | 'Tolls' | 'Food' | 'Repairs' | 'Duty' | 'Shipping' | 'Other'>('Fuel');
-  const [editExpenseLocation, setEditExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
+  const [editExpenseCurrency, setEditExpenseCurrency] = useState<Currency>('NAD');
+  const [editExpenseCategory, setEditExpenseCategory] = useState<ExpenseCategory>('Fuel');
+  const [editExpenseLocation, setEditExpenseLocation] = useState<VehicleStatus>('Namibia');
 
   const notifySuccess = (message: string) => showToast(message, 'success');
   const notifyError = (message: string) => showToast(message, 'error');
   const notifyWarning = (message: string) => showToast(message, 'warning');
+
+  const addExpenseFormValue: ExpenseEntryFormValue = {
+    vehicleId: expenseVehicle,
+    amount: expenseAmount,
+    currency: expenseCurrency,
+    category: expenseCategory,
+    location: expenseLocation,
+    description: expenseDesc,
+    driverName: expenseDriver,
+  };
+
+  const editExpenseFormValue: ExpenseEntryFormValue = {
+    vehicleId: editExpenseVehicle,
+    amount: editExpenseAmount,
+    currency: editExpenseCurrency,
+    category: editExpenseCategory,
+    location: editExpenseLocation,
+    description: editExpenseDesc,
+    driverName: '',
+  };
+
+  const handleAddExpenseFormChange = (updates: Partial<ExpenseEntryFormValue>) => {
+    if (updates.vehicleId !== undefined) setExpenseVehicle(updates.vehicleId);
+    if (updates.amount !== undefined) setExpenseAmount(updates.amount);
+    if (updates.currency !== undefined) setExpenseCurrency(updates.currency);
+    if (updates.category !== undefined) setExpenseCategory(updates.category);
+    if (updates.location !== undefined) setExpenseLocation(updates.location);
+    if (updates.description !== undefined) setExpenseDesc(updates.description);
+    if (updates.driverName !== undefined) setExpenseDriver(updates.driverName);
+  };
+
+  const handleEditExpenseFormChange = (updates: Partial<ExpenseEntryFormValue>) => {
+    if (updates.vehicleId !== undefined) setEditExpenseVehicle(updates.vehicleId);
+    if (updates.amount !== undefined) setEditExpenseAmount(updates.amount);
+    if (updates.currency !== undefined) setEditExpenseCurrency(updates.currency);
+    if (updates.category !== undefined) setEditExpenseCategory(updates.category);
+    if (updates.location !== undefined) setEditExpenseLocation(updates.location);
+    if (updates.description !== undefined) setEditExpenseDesc(updates.description);
+  };
+
+  const operatingFundFormValue: OperatingFundFormValue = { ...fundForm };
+  const handleOperatingFundFormChange = (updates: Partial<OperatingFundFormValue>) => {
+    setFundForm((prev) => ({ ...prev, ...updates }));
+  };
 
   const handleAddFund = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,7 +242,7 @@ export const AccountantDashboard: React.FC = () => {
     for (let i = 11; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const monthLabel = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      const monthLabel = formatDateValue(d, 'en-US', { month: 'short', year: '2-digit' });
       
       const monthRevenue = invoices
         .filter(inv => inv.status === 'Paid' && String(inv.created_at).startsWith(monthKey))
@@ -245,6 +295,11 @@ export const AccountantDashboard: React.FC = () => {
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
   }, [invoices]);
+
+  const driverFundsReport = useMemo(
+    () => buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles),
+    [drivers, expenses, operatingFunds, vehicles],
+  );
 
   // Merged client list: DB clients + unique clients extracted from invoices
   const mergedClients = useMemo(() => {
@@ -325,7 +380,7 @@ export const AccountantDashboard: React.FC = () => {
     const rows = filteredExpensesForReport.map(e => {
       const vehicleName = vehicles.find(v => v.id === e.vehicle_id)?.make_model || '';
       return [
-        new Date(e.created_at).toLocaleDateString('en-GB'),
+        formatDateValue(e.created_at, 'en-GB'),
         e.category,
         e.location,
         `"${(e.description || '').replace(/"/g, '""')}"`,
@@ -402,8 +457,8 @@ export const AccountantDashboard: React.FC = () => {
     setEditExpenseDesc(expense.description || '');
     setEditExpenseAmount(expense.amount.toString());
     setEditExpenseCurrency(expense.currency);
-    setEditExpenseCategory(expense.category as any);
-    setEditExpenseLocation(expense.location as any);
+    setEditExpenseCategory(expense.category);
+    setEditExpenseLocation(expense.location);
     setShowEditExpenseModal(true);
   };
 
@@ -620,7 +675,7 @@ export const AccountantDashboard: React.FC = () => {
   const handleExportCSV = () => {
     const headers = ['Date', 'Category', 'Location', 'Amount', 'Currency', 'USD Value', 'Description'];
     const rows = (expenses || []).map(e => [
-      new Date(e.created_at).toLocaleDateString(),
+      formatDate(e.created_at),
       e.category,
       e.location,
       e.amount,
@@ -638,20 +693,30 @@ export const AccountantDashboard: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const formatCurrency = (amount: number, currency: 'USD' | 'GBP' = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency
-    }).format(amount);
+  const handleExportDriverFundsReport = async () => {
+    if (!company) {
+      notifyError('Company details not loaded.');
+      return;
+    }
+
+    try {
+      await generateDriverFundsReportPDFAndDownload(expenses, operatingFunds, drivers, vehicles, company);
+      notifySuccess('Driver funds report downloaded.');
+    } catch (err) {
+      console.error('[AccountantDashboard] handleExportDriverFundsReport error:', err);
+      notifyError('Failed to generate driver funds PDF. Please try again.');
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
+  const formatCurrency = (amount: number, currency: 'USD' | 'GBP' = 'USD') =>
+    formatMoney(amount, currency);
+
+  const formatDate = (dateString: string) =>
+    formatDateValue(dateString, 'en-GB', {
       day: '2-digit',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -994,208 +1059,24 @@ export const AccountantDashboard: React.FC = () => {
           )}
 
           {activeTab === 'reports' && (
-            <div className="space-y-6">
-              {/* Stats Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard 
-                  title="This Month Revenue" 
-                  value={formatCurrency(monthlyRevenue)} 
-                  trend={monthlyRevenue > (monthlyTrendData[10]?.revenue || 0) ? 'up' : 'down'}
-                  trendValue={`${monthlyTrendData[10]?.revenue ? Math.abs(Math.round(((monthlyRevenue - monthlyTrendData[10].revenue) / monthlyTrendData[10].revenue) * 100)) : 0}% vs last month`}
-                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                />
-                <StatCard 
-                  title="This Month Expenses" 
-                  value={formatCurrency(monthlyExpenses)} 
-                  trend={monthlyExpenses < (monthlyTrendData[10]?.expenses || 0) ? 'up' : 'down'}
-                  trendValue={`${monthlyTrendData[10]?.expenses ? Math.abs(Math.round(((monthlyExpenses - monthlyTrendData[10].expenses) / monthlyTrendData[10].expenses) * 100)) : 0}% vs last month`}
-                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                />
-                <StatCard 
-                  title="Net Profit" 
-                  value={formatCurrency(monthlyProfit)} 
-                  trend={monthlyProfit >= 0 ? 'up' : 'down'}
-                  trendValue={monthlyProfit >= 0 ? 'Positive' : 'Negative'}
-                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
-                />
-                <StatCard 
-                  title="Pending Invoices" 
-                  value={formatCurrency(totalPending)} 
-                  trend="neutral"
-                  trendValue={`${pendingInvoices.length} invoices`}
-                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                />
-              </div>
-
-              {/* Charts Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Revenue vs Expenses Trend */}
-                <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                    </svg>
-                    Revenue vs Expenses Trend (12 Months)
-                  </h3>
-                  {loading ? (
-                    <SkeletonChart />
-                  ) : monthlyTrendData.some(d => d.revenue > 0 || d.expenses > 0) ? (
-                    <TrendLineChart data={monthlyTrendData} />
-                  ) : (
-                    <EmptyState 
-                      title="No trend data available" 
-                      description="Financial data will appear here once you have invoices and expenses."
-                      icon={defaultIcons.chart}
-                    />
-                  )}
-                </div>
-
-                {/* Expense by Category Pie Chart */}
-                <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-                    </svg>
-                    Expenses by Category
-                  </h3>
-                  {loading ? (
-                    <SkeletonChart />
-                  ) : expenseCategoryData.length > 0 ? (
-                    <DonutPieChart data={expenseCategoryData} />
-                  ) : (
-                    <EmptyState 
-                      title="No expense data" 
-                      description="Expense categories will appear here once you add expenses."
-                      icon={defaultIcons.document}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Secondary Charts Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Invoice Status Breakdown */}
-                <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Invoice Status Breakdown
-                  </h3>
-                  {loading ? (
-                    <SkeletonChart />
-                  ) : invoiceStatusData.length > 0 ? (
-                    <DonutPieChart data={invoiceStatusData} colors={[CHART_COLORS[1], CHART_COLORS[2], CHART_COLORS[0], CHART_COLORS[3]]} />
-                  ) : (
-                    <EmptyState 
-                      title="No invoice data" 
-                      description="Invoice status breakdown will appear here once you create invoices."
-                      icon={defaultIcons.document}
-                    />
-                  )}
-                </div>
-
-                {/* Revenue by Client Bar Chart */}
-                <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Top Clients by Revenue
-                  </h3>
-                  {loading ? (
-                    <SkeletonChart />
-                  ) : revenueByClientData.length > 0 ? (
-                    <SimpleBarChart data={revenueByClientData} />
-                  ) : (
-                    <EmptyState 
-                      title="No client revenue data" 
-                      description="Client revenue data will appear here once you have paid invoices."
-                      icon={defaultIcons.users}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Detailed Reports */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Top Vehicles by Cost */}
-                <div className="bg-white p-6 rounded-2xl border border-zinc-200">
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    Top Vehicles by Total Cost
-                  </h3>
-                  <div className="space-y-2">
-                    {[...summaries]
-                      .sort((a, b) => b.total_landed_cost_usd - a.total_landed_cost_usd)
-                      .slice(0, 5)
-                      .map((summary, index) => (
-                      <div key={summary.vehicle_id} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
-                        <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-zinc-900 text-sm">{summary.make_model}</p>
-                          <p className="text-xs text-zinc-500">{summary.vin_number}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-zinc-900">{formatCurrency(summary.total_landed_cost_usd)}</p>
-                          <span className="text-xs text-zinc-500">{summary.status}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Invoice Status Summary */}
-                <div className="bg-white p-6 rounded-2xl border border-zinc-200">
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Invoice Summary
-                  </h3>
-                  <div className="space-y-3">
-                    {['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'].map(status => {
-                      const statusInvoices = invoices.filter(inv => inv.status === status);
-                      const total = statusInvoices.reduce((sum, inv) => sum + inv.amount_usd, 0);
-                      return statusInvoices.length > 0 ? (
-                        <div key={status} className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <StatusBadge status={status} />
-                            <span className="text-sm text-zinc-600">({statusInvoices.length})</span>
-                          </div>
-                          <span className="text-sm font-bold text-zinc-900">{formatCurrency(total)}</span>
-                        </div>
-                      ) : null;
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Export Options */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-2xl text-white">
-                <h3 className="text-lg font-bold mb-2">Export Reports</h3>
-                <p className="text-sm text-blue-100 mb-4">Download comprehensive financial reports for your records</p>
-                <div className="flex gap-3">
-                  <button onClick={handleExportPDF} className="px-6 py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Export PDF
-                  </button>
-                  <button onClick={handleExportCSV} className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 border border-white/20">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Export CSV
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ReportsOverviewView
+              monthlyRevenue={monthlyRevenue}
+              monthlyExpenses={monthlyExpenses}
+              monthlyProfit={monthlyProfit}
+              monthlyTrendData={monthlyTrendData}
+              totalPending={totalPending}
+              pendingInvoiceCount={pendingInvoices.length}
+              totalExpenses={totalExpenses}
+              expenseCategoryData={expenseCategoryData}
+              invoiceStatusData={invoiceStatusData}
+              invoices={invoices}
+              revenueByClientData={revenueByClientData}
+              summaries={summaries}
+              formatCurrency={formatCurrency}
+              onExportPDF={handleExportPDF}
+              onExportCSV={handleExportCSV}
+              onExportDriverFundsReport={handleExportDriverFundsReport}
+            />
           )}
 
           {activeTab === 'clients' && (
@@ -1215,72 +1096,23 @@ export const AccountantDashboard: React.FC = () => {
                 </button>
               </div>
 
-              {/* Table */}
-              <div className="rounded-2xl border border-zinc-200 overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-zinc-50 border-b border-zinc-200">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-wider">Client</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-wider">Contact</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-wider">Company</th>
-                      <th className="px-4 py-3 text-center text-xs font-bold text-zinc-500 uppercase tracking-wider">Invoices</th>
-                      <th className="px-4 py-3 text-right text-xs font-bold text-zinc-500 uppercase tracking-wider">Total Revenue</th>
-                      <th className="px-4 py-3 text-center text-xs font-bold text-zinc-500 uppercase tracking-wider">Source</th>
-                      <th className="px-4 py-3 text-right text-xs font-bold text-zinc-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100">
-                    {mergedClients.length === 0 ? (
-                      <tr><td colSpan={7} className="px-6 py-12 text-center text-zinc-400">No clients yet — they will appear here once invoices are created</td></tr>
-                    ) : mergedClients.map(client => {
-                      const isVirtual = client.id.startsWith('__invoice__');
-                      const stats = getClientStats(client);
-                      return (
-                        <tr key={client.id} className="hover:bg-zinc-50 transition-colors">
-                          <td className="px-4 py-3">
-                            <p className="font-semibold text-zinc-900">{client.name}</p>
-                            {client.address && <p className="text-xs text-zinc-400 truncate max-w-[160px]">{client.address}</p>}
-                          </td>
-                          <td className="px-4 py-3">
-                            <p className="text-zinc-700">{client.email || '—'}</p>
-                            {client.phone && <p className="text-xs text-zinc-400">{client.phone}</p>}
-                          </td>
-                          <td className="px-4 py-3 text-zinc-600">{client.company || '—'}</td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="inline-block px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-bold">{stats.count}</span>
-                          </td>
-                          <td className="px-4 py-3 text-right font-bold text-green-700">
-                            {stats.total > 0 ? `$${stats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {isVirtual
-                              ? <span className="inline-block px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">Invoice</span>
-                              : <span className="inline-block px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200">Saved</span>
-                            }
-                          </td>
-                          <td className="px-4 py-3 text-right space-x-3">
-                            <button
-                              onClick={() => { setEditingClient(client); setClientForm({ name: client.name, email: client.email || '', phone: client.phone || '', address: client.address || '', company: client.company || '', notes: client.notes || '' }); setShowClientModal(true); }}
-                              className="text-blue-600 hover:text-blue-800 font-semibold text-xs"
-                            >
-                              {isVirtual ? 'Save & Edit' : 'Edit'}
-                            </button>
-                            {!isVirtual && (
-                              <button onClick={() => handleDeleteClient(client.id)} className="text-red-500 hover:text-red-700 font-semibold text-xs">Delete</button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {mergedClients.some(c => c.id.startsWith('__invoice__')) && (
-                <p className="text-xs text-zinc-400">
-                  <span className="font-semibold text-amber-600">Invoice</span> clients are pulled from your invoice records. Click <span className="font-semibold">Save &amp; Edit</span> to save them as full client records.
-                </p>
-              )}
+              <AccountantClientsView
+                clients={mergedClients}
+                getClientStats={getClientStats}
+                onEditClient={(client) => {
+                  setEditingClient(client);
+                  setClientForm({
+                    name: client.name,
+                    email: client.email || '',
+                    phone: client.phone || '',
+                    address: client.address || '',
+                    company: client.company || '',
+                    notes: client.notes || '',
+                  });
+                  setShowClientModal(true);
+                }}
+                onDeleteClient={handleDeleteClient}
+              />
             </div>
           )}
 
@@ -1290,93 +1122,26 @@ export const AccountantDashboard: React.FC = () => {
                 <h3 className="text-lg font-bold text-zinc-900">Payslips</h3>
                 <button onClick={() => { setPayslipForm({ employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(), base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '', tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '', payment_date: '', payment_method: 'Bank Transfer', notes: '' }); setShowPayslipModal(true); }} className="bg-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-pink-700 flex items-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg> Generate Payslip</button>
               </div>
-              <table className="w-full">
-                <thead className="bg-zinc-50">
-                  <tr><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Payslip #</th><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Employee</th><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Period</th><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Gross Pay</th><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Net Pay</th><th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Status</th><th className="px-4 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Actions</th></tr>
-                </thead>
-                <tbody>
-                  {payslips.length === 0 ? <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-500">No payslips yet</td></tr> : payslips.map(payslip => (
-                    <tr key={payslip.id} className="hover:bg-zinc-50 border-t">
-                      <td className="px-4 py-3 font-mono text-sm">{payslip.payslip_number}</td>
-                      <td className="px-4 py-3 font-semibold">{payslip.employee?.name || 'N/A'}</td>
-                      <td className="px-4 py-3">{new Date(payslip.year, payslip.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td>
-                      <td className="px-4 py-3 font-semibold">${payslip.gross_pay.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-green-600 font-bold">${payslip.net_pay.toLocaleString()}</td>
-                      <td className="px-4 py-3"><span className={`px-2 py-1 text-xs font-semibold rounded-md ${payslip.status === 'Generated' ? 'bg-blue-100 text-blue-700' : payslip.status === 'Approved' ? 'bg-yellow-100 text-yellow-700' : payslip.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{payslip.status}</span></td>
-                      <td className="px-4 py-3 text-right space-x-2">
-                        {payslip.status === 'Generated' && <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Approved')} className="text-yellow-600 hover:text-yellow-800 font-semibold text-sm">Approve</button>}
-                        {payslip.status === 'Approved' && <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Paid')} className="text-green-600 hover:text-green-800 font-semibold text-sm">Mark Paid</button>}
-                        <button onClick={() => handleDownloadPayslip(payslip)} className="text-purple-600 hover:text-purple-800 font-semibold text-sm inline-flex items-center gap-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>PDF</button>
-                        <button onClick={() => handleDeletePayslip(payslip.id)} className="text-red-600 hover:text-red-800 font-semibold text-sm">Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <PayslipsListView
+                payslips={payslips}
+                onApprove={(id) => handleUpdatePayslipStatus(id, 'Approved')}
+                onMarkPaid={(id) => handleUpdatePayslipStatus(id, 'Paid')}
+                onDownload={handleDownloadPayslip}
+                onDelete={handleDeletePayslip}
+                showIntro={false}
+              />
             </div>
           )}
-          {activeTab === 'operating-funds' && (() => {
-            const totalReceived = operatingFunds.filter(f => f.type === 'Received').reduce((s, f) => s + f.amount, 0);
-            const totalDisbursed = operatingFunds.filter(f => f.type === 'Disbursed').reduce((s, f) => s + f.amount, 0);
-            const balance = totalReceived - totalDisbursed;
-            return (
-              <div className="space-y-4 p-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold text-zinc-900">Operating Funds</h3>
-                  <button onClick={() => setShowFundModal(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 flex items-center gap-2 text-sm">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
-                    Add Entry
-                  </button>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
-                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Total Received</p>
-                    <p className="text-2xl font-black text-emerald-700 mt-1">${totalReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                  </div>
-                  <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
-                    <p className="text-xs font-bold text-red-600 uppercase tracking-wider">Total Disbursed</p>
-                    <p className="text-2xl font-black text-red-700 mt-1">${totalDisbursed.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                  </div>
-                  <div className={`rounded-2xl border p-4 ${balance >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
-                    <p className={`text-xs font-bold uppercase tracking-wider ${balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>Balance</p>
-                    <p className={`text-2xl font-black mt-1 ${balance >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>${Math.abs(balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}{balance < 0 ? ' DR' : ''}</p>
-                  </div>
-                </div>
-                <table className="w-full text-sm">
-                  <thead className="bg-zinc-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Type</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Amount</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Description</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Ref / Recipient</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Approved By</th>
-                      <th className="px-4 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {operatingFunds.length === 0 ? (
-                      <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-400">No entries yet</td></tr>
-                    ) : operatingFunds.map(fund => (
-                      <tr key={fund.id} className="hover:bg-zinc-50 border-t">
-                        <td className="px-4 py-3 text-xs text-zinc-500">{new Date(fund.date).toLocaleDateString()}</td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter ${fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{fund.type}</span>
-                        </td>
-                        <td className="px-4 py-3 font-bold">{fund.currency === 'GBP' ? '£' : '$'}{fund.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                        <td className="px-4 py-3 text-zinc-700 max-w-[200px] truncate">{fund.description}</td>
-                        <td className="px-4 py-3 text-xs text-zinc-500">{fund.reference || fund.recipient || '—'}</td>
-                        <td className="px-4 py-3 text-xs text-zinc-500">{fund.approved_by || '—'}</td>
-                        <td className="px-4 py-3 text-right">
-                          <button onClick={() => handleDeleteFund(fund.id)} className="text-red-500 hover:text-red-700 text-xs font-semibold">Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })()}
+          {activeTab === 'operating-funds' && (
+            <OperatingFundsView
+              operatingFunds={operatingFunds}
+              driverFundsReport={driverFundsReport}
+              formatCurrency={formatCurrency}
+              onDeleteFund={handleDeleteFund}
+              onExportDriverFundsReport={handleExportDriverFundsReport}
+              onOpenFundModal={() => setShowFundModal(true)}
+            />
+          )}
           {activeTab === 'expense-reports' && (
             <div className="space-y-6">
               {/* Filters */}
@@ -1539,74 +1304,24 @@ export const AccountantDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Operating Fund Modal */}
-      {showFundModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowFundModal(false)} />
-          <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
-            <h3 className="text-2xl font-bold text-zinc-900 mb-6">Add Operating Fund Entry</h3>
-            <form onSubmit={handleAddFund} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Type *</label>
-                  <select value={fundForm.type} onChange={e => setFundForm({ ...fundForm, type: e.target.value as OperatingFundType })} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <option value="Received">Received</option>
-                    <option value="Disbursed">Disbursed</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency</label>
-                  <select value={fundForm.currency} onChange={e => setFundForm({ ...fundForm, currency: e.target.value as 'USD' | 'GBP' })} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <option value="USD">USD</option>
-                    <option value="GBP">GBP</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount *</label>
-                  <input type="number" step="0.01" min="0.01" required value={fundForm.amount} onChange={e => setFundForm({ ...fundForm, amount: e.target.value })} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Date *</label>
-                  <input type="date" required value={fundForm.date} onChange={e => setFundForm({ ...fundForm, date: e.target.value })} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Description *</label>
-                <input required value={fundForm.description} onChange={e => setFundForm({ ...fundForm, description: e.target.value })} placeholder="e.g. Office transfer for operations" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Reference</label>
-                  <input value={fundForm.reference} onChange={e => setFundForm({ ...fundForm, reference: e.target.value })} placeholder="Transfer ref, trip name…" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">{fundForm.type === 'Disbursed' ? 'Recipient' : 'Source'}</label>
-                  {fundForm.type === 'Disbursed' ? (
-                    <select value={fundForm.recipient} onChange={e => setFundForm({ ...fundForm, recipient: e.target.value })} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none">
-                      <option value="">-- Select Driver --</option>
-                      {drivers.map((driver) => (
-                        <option key={driver.id} value={driver.name}>{driver.name}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input value={fundForm.recipient} onChange={e => setFundForm({ ...fundForm, recipient: e.target.value })} placeholder="Office, branch, cash float…" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
-                  )}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Approved By</label>
-                <input value={fundForm.approved_by} onChange={e => setFundForm({ ...fundForm, approved_by: e.target.value })} placeholder="Manager name" className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-500 outline-none" />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowFundModal(false)} className="flex-1 px-6 py-3 rounded-xl border text-zinc-700 font-semibold hover:bg-zinc-50">Cancel</button>
-                <button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl">Add Entry</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <OperatingFundEntryModal
+        isOpen={showFundModal}
+        title="Add Operating Fund Entry"
+        onClose={() => setShowFundModal(false)}
+        onSubmit={handleAddFund}
+        form={operatingFundFormValue}
+        onChange={handleOperatingFundFormChange}
+        drivers={drivers}
+        currencyOptions={['USD', 'GBP']}
+        accent="indigo"
+        typeSelectorVariant="select"
+        showApprovedBy
+        showRecipientForReceived
+        recipientReceivedLabel="Source"
+        submitLabel="Add Entry"
+        receivedDescriptionPlaceholder="e.g. Office transfer for operations"
+        disbursedDescriptionPlaceholder="e.g. Driver trip float"
+      />
 
       {/* Client Modal - Reusing AdminDashboard modal structure */}
       {showClientModal && (
@@ -1635,7 +1350,7 @@ export const AccountantDashboard: React.FC = () => {
             <form onSubmit={handleGeneratePayslip} className="space-y-6">
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-3 md:col-span-1"><label className="text-sm font-semibold text-zinc-700 mb-2 block">Employee *</label><select value={payslipForm.employee_id} onChange={(e) => { const empId = e.target.value; const emp = employees.find(e => e.id === empId); setPayslipForm({...payslipForm, employee_id: empId, base_pay: emp ? emp.base_pay_usd.toString() : ''}); }} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-pink-500 outline-none"><option value="">Select Employee</option>{employees.map(emp => (<option key={emp.id} value={emp.id}>{emp.name} - {emp.position}</option>))}</select></div>
-                <div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Month *</label><select value={payslipForm.month} onChange={(e) => setPayslipForm({...payslipForm, month: parseInt(e.target.value)})} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-pink-500 outline-none">{Array.from({length: 12}, (_, i) => i + 1).map(m => (<option key={m} value={m}>{new Date(2000, m - 1).toLocaleDateString('en-US', {month: 'long'})}</option>))}</select></div>
+                <div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Month *</label><select value={payslipForm.month} onChange={(e) => setPayslipForm({...payslipForm, month: parseInt(e.target.value)})} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-pink-500 outline-none">{Array.from({length: 12}, (_, i) => i + 1).map(m => (<option key={m} value={m}>{getMonthName(m)}</option>))}</select></div>
                 <div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Year *</label><input type="number" value={payslipForm.year} onChange={(e) => setPayslipForm({...payslipForm, year: parseInt(e.target.value)})} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-pink-500 outline-none" /></div>
               </div>
               <div className="bg-green-50 border border-green-200 rounded-2xl p-4"><h4 className="text-sm font-bold text-green-800 mb-3">Earnings</h4><div className="grid grid-cols-3 gap-4"><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Base Pay *</label><input type="number" step="0.01" value={payslipForm.base_pay} onChange={(e) => setPayslipForm({...payslipForm, base_pay: e.target.value})} required className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">OT Hours</label><input type="number" step="0.01" value={payslipForm.overtime_hours} onChange={(e) => setPayslipForm({...payslipForm, overtime_hours: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">OT Rate</label><input type="number" step="0.01" value={payslipForm.overtime_rate} onChange={(e) => setPayslipForm({...payslipForm, overtime_rate: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Bonus</label><input type="number" step="0.01" value={payslipForm.bonus} onChange={(e) => setPayslipForm({...payslipForm, bonus: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Allowances</label><input type="number" step="0.01" value={payslipForm.allowances} onChange={(e) => setPayslipForm({...payslipForm, allowances: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Commission</label><input type="number" step="0.01" value={payslipForm.commission} onChange={(e) => setPayslipForm({...payslipForm, commission: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div></div></div>
@@ -1648,295 +1363,33 @@ export const AccountantDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Add Expense Modal */}
-      {showExpenseModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowExpenseModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-zinc-900">Add Expense</h3>
-              <button 
-                onClick={() => setShowExpenseModal(false)}
-                className="text-zinc-400 hover:text-zinc-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleAddExpense} className="space-y-5">
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Vehicle Selection <span className="text-zinc-400 text-xs">(Optional)</span></label>
-                <select
-                  value={expenseVehicle}
-                  onChange={(e) => setExpenseVehicle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
-                >
-                  <option value="">None (General expense)</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={expenseAmount}
-                    onChange={(e) => setExpenseAmount(e.target.value)}
-                    required
-                    placeholder="0.00"
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency</label>
-                  <select
-                    value={expenseCurrency}
-                    onChange={(e) => setExpenseCurrency(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                  >
-                    <option value="NAD">NAD (Namibia)</option>
-                    <option value="GBP">GBP (UK)</option>
-                    <option value="USD">USD (General)</option>
-                    <option value="BWP">BWP (Botswana)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Category</label>
-                  <select
-                    value={expenseCategory}
-                    onChange={(e) => {
-                      setExpenseCategory(e.target.value as any);
-                      if (e.target.value !== 'Driver Disbursement') {
-                        setExpenseDriver('');
-                      }
-                    }}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                  >
-                    <option value="Fuel">Fuel</option>
-                    <option value="Tolls">Tolls</option>
-                    <option value="Food">Food</option>
-                    <option value="Repairs">Repairs</option>
-                    <option value="Duty">Duty</option>
-                    <option value="Shipping">Shipping</option>
-                    <option value="Driver Disbursement">💰 Driver Disbursement</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Location</label>
-                  <select
-                    value={expenseLocation}
-                    onChange={(e) => setExpenseLocation(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                  >
-                    <option value="UK">UK</option>
-                    <option value="Namibia">Namibia</option>
-                    <option value="Zimbabwe">Zimbabwe</option>
-                    <option value="Botswana">Botswana</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Driver Selection - Only shown for Driver Disbursement */}
-              {expenseCategory === 'Driver Disbursement' && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <label className="text-sm font-semibold text-amber-800 mb-2 block">
-                    Select Driver <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={expenseDriver}
-                    onChange={(e) => setExpenseDriver(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                  >
-                    <option value="">-- Select Driver --</option>
-                    {drivers.map((driver) => (
-                      <option key={driver.id} value={driver.name}>{driver.name}</option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    Money disbursed to this driver for trip expenses
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">
-                  Description {expenseCategory === 'Other' && <span className="text-red-500">*</span>}
-                </label>
-                <textarea
-                  value={expenseDesc}
-                  onChange={(e) => setExpenseDesc(e.target.value)}
-                  placeholder={expenseCategory === 'Other' ? "Please specify the type of expense" : "E.g. Full tank at Engen Windhoek"}
-                  rows={3}
-                  required={expenseCategory === 'Other'}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none"
-                />
-                {expenseCategory === 'Other' && (
-                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    Required: Please describe what this expense is for
-                  </p>
-                )}
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowExpenseModal(false)}
-                  className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200 transition-all"
-                >
-                  Add Expense
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ExpenseEntryModal
+        isOpen={showExpenseModal}
+        title="Add Expense"
+        submitLabel="Add Expense"
+        onClose={() => setShowExpenseModal(false)}
+        onSubmit={handleAddExpense}
+        vehicles={vehicles}
+        drivers={drivers}
+        form={addExpenseFormValue}
+        onChange={handleAddExpenseFormChange}
+        accent="green"
+      />
 
       {/* Edit Expense Modal */}
-      {showEditExpenseModal && editingExpense && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowEditExpenseModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-zinc-900">Edit Expense</h3>
-              <button 
-                onClick={() => setShowEditExpenseModal(false)}
-                className="text-zinc-400 hover:text-zinc-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateExpense} className="space-y-5">
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Vehicle Selection <span className="text-zinc-400 text-xs">(Optional)</span></label>
-                <select
-                  value={editExpenseVehicle}
-                  onChange={(e) => setEditExpenseVehicle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                >
-                  <option value="">None (General expense)</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={editExpenseAmount}
-                    onChange={(e) => setEditExpenseAmount(e.target.value)}
-                    required
-                    placeholder="0.00"
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency <span className="text-blue-600">*</span></label>
-                  <select
-                    value={editExpenseCurrency}
-                    onChange={(e) => setEditExpenseCurrency(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-xl border border-blue-300 bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-semibold"
-                  >
-                    <option value="NAD">NAD (Namibia)</option>
-                    <option value="GBP">GBP (UK)</option>
-                    <option value="USD">USD (General)</option>
-                    <option value="BWP">BWP (Botswana)</option>
-                  </select>
-                  <p className="text-xs text-blue-600 mt-1">Change the currency for this expense</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Category</label>
-                  <select
-                    value={editExpenseCategory}
-                    onChange={(e) => setEditExpenseCategory(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  >
-                    <option value="Fuel">Fuel</option>
-                    <option value="Tolls">Tolls</option>
-                    <option value="Food">Food</option>
-                    <option value="Repairs">Repairs</option>
-                    <option value="Duty">Duty</option>
-                    <option value="Shipping">Shipping</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Location</label>
-                  <select
-                    value={editExpenseLocation}
-                    onChange={(e) => setEditExpenseLocation(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  >
-                    <option value="UK">UK</option>
-                    <option value="Namibia">Namibia</option>
-                    <option value="Zimbabwe">Zimbabwe</option>
-                    <option value="Botswana">Botswana</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Description</label>
-                <textarea
-                  value={editExpenseDesc}
-                  onChange={(e) => setEditExpenseDesc(e.target.value)}
-                  placeholder="E.g. Full tank at Engen Windhoek"
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowEditExpenseModal(false)}
-                  className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all"
-                >
-                  Update Expense
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ExpenseEntryModal
+        isOpen={showEditExpenseModal && Boolean(editingExpense)}
+        title="Edit Expense"
+        submitLabel="Update Expense"
+        onClose={() => setShowEditExpenseModal(false)}
+        onSubmit={handleUpdateExpense}
+        vehicles={vehicles}
+        drivers={drivers}
+        form={editExpenseFormValue}
+        onChange={handleEditExpenseFormChange}
+        accent="blue"
+        categoryOptions={['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Other']}
+      />
       <ToastContainer />
       <ConfirmDialog />
     </div>

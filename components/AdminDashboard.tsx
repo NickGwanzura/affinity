@@ -1,15 +1,22 @@
 
-import React, { useEffect, useState } from 'react';
-import { LandedCostSummary, VehicleStatus, Currency, Client, Employee, Payslip, CompanyDetails, OperatingFund, UserRole, AppUser } from '../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { LandedCostSummary, VehicleStatus, Currency, Client, Employee, Payslip, CompanyDetails, OperatingFund, UserRole, AppUser, Expense, Vehicle, ExpenseCategory } from '../types';
 import { supabase } from '../services/supabaseService';
 import { AssetRegister } from './AssetRegister';
-import { generatePayslipPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload } from '../services/pdfService';
+import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload } from '../services/pdfService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell
-} from 'recharts';
+import AdminFundsView from './admin/AdminFundsView';
+import AdminClientsView from './admin/AdminClientsView';
+import AdminEmployeesView from './admin/AdminEmployeesView';
+import AdminOverviewView from './admin/AdminOverviewView';
+import ReportsTab from './admin/ReportsTab';
+import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
+import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
+import PayslipsListView from './shared/PayslipsListView';
+import { buildDriverFundsReportData } from '../utils/driverFunds';
+import { toVehicleEditorRecord, type VehicleEditorRecord } from '../utils/dashboardViewModels';
+import { getMonthName } from '../utils/formatters';
 
 export const AdminDashboard: React.FC = () => {
   const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
@@ -25,13 +32,7 @@ export const AdminDashboard: React.FC = () => {
   const [vehicleToDelete, setVehicleToDelete] = useState<{ id: string; make_model: string; vin_number: string } | null>(null);
   const [activeView, setActiveView] = useState<'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'assets'>('dashboard');
   const [userRole, setUserRole] = useState<UserRole>('Admin');
-  const [expenses, setExpenses] = useState<any[]>([]);
-
-  // Report filters
-  const [reportDateFrom, setReportDateFrom] = useState<string>('');
-  const [reportDateTo, setReportDateTo] = useState<string>('');
-  const [reportVehicleFilter, setReportVehicleFilter] = useState<string>('all');
-  const [isExporting, setIsExporting] = useState(false);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
   // Clients state
   const [clients, setClients] = useState<Client[]>([]);
@@ -80,24 +81,48 @@ export const AdminDashboard: React.FC = () => {
   const [newVin, setNewVin] = useState('');
   const [newModel, setNewModel] = useState('');
   const [newPrice, setNewPrice] = useState('');
-  const [editingVehicle, setEditingVehicle] = useState<any | null>(null);
+  const [editingVehicle, setEditingVehicle] = useState<VehicleEditorRecord | null>(null);
 
   // Expense Form State
-
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<AppUser[]>([]);
   const [company, setCompany] = useState<CompanyDetails | null>(null);
   const [expenseVehicle, setExpenseVehicle] = useState('');
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseCurrency, setExpenseCurrency] = useState<'NAD' | 'GBP' | 'USD' | 'BWP'>('NAD');
-  const [expenseCategory, setExpenseCategory] = useState<'Fuel' | 'Tolls' | 'Food' | 'Repairs' | 'Duty' | 'Shipping' | 'Other'>('Fuel');
-  const [expenseLocation, setExpenseLocation] = useState<'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana'>('Namibia');
+  const [expenseCurrency, setExpenseCurrency] = useState<Currency>('NAD');
+  const [expenseCategory, setExpenseCategory] = useState<ExpenseCategory>('Fuel');
+  const [expenseLocation, setExpenseLocation] = useState<VehicleStatus>('Namibia');
   const [expenseDriver, setExpenseDriver] = useState<string>('');
 
   const notifySuccess = (message: string) => showToast(message, 'success');
   const notifyError = (message: string) => showToast(message, 'error');
   const notifyWarning = (message: string) => showToast(message, 'warning');
+
+  const expenseFormValue: ExpenseEntryFormValue = {
+    vehicleId: expenseVehicle,
+    amount: expenseAmount,
+    currency: expenseCurrency,
+    category: expenseCategory,
+    location: expenseLocation,
+    description: expenseDesc,
+    driverName: expenseDriver,
+  };
+
+  const handleExpenseFormChange = (updates: Partial<ExpenseEntryFormValue>) => {
+    if (updates.vehicleId !== undefined) setExpenseVehicle(updates.vehicleId);
+    if (updates.amount !== undefined) setExpenseAmount(updates.amount);
+    if (updates.currency !== undefined) setExpenseCurrency(updates.currency);
+    if (updates.category !== undefined) setExpenseCategory(updates.category);
+    if (updates.location !== undefined) setExpenseLocation(updates.location);
+    if (updates.description !== undefined) setExpenseDesc(updates.description);
+    if (updates.driverName !== undefined) setExpenseDriver(updates.driverName);
+  };
+
+  const operatingFundFormValue: OperatingFundFormValue = { ...fundsForm };
+  const handleOperatingFundFormChange = (updates: Partial<OperatingFundFormValue>) => {
+    setFundsForm((prev) => ({ ...prev, ...updates }));
+  };
 
   // FIX: fetchData now throws errors instead of swallowing them silently
   // This ensures callers can handle refresh failures appropriately
@@ -157,7 +182,7 @@ export const AdminDashboard: React.FC = () => {
       };
 
       if (editingVehicle) {
-        await supabase.updateVehicle(editingVehicle.vehicle_id || editingVehicle.id, vehicleData);
+        await supabase.updateVehicle(editingVehicle.id, vehicleData);
       } else {
         await supabase.addVehicle(vehicleData);
       }
@@ -193,16 +218,17 @@ export const AdminDashboard: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const openEditVehicleModal = (vehicle: any) => {
-    setEditingVehicle(vehicle);
-    setNewVin(vehicle.vin_number);
-    setNewModel(vehicle.make_model);
-    setNewPrice(vehicle.purchase_price_gbp.toString());
+  const openEditVehicleModal = (vehicle: LandedCostSummary) => {
+    const vehicleRecord = toVehicleEditorRecord(vehicle);
+    setEditingVehicle(vehicleRecord);
+    setNewVin(vehicleRecord.vin_number);
+    setNewModel(vehicleRecord.make_model);
+    setNewPrice(vehicleRecord.purchase_price_gbp.toString());
     setShowAddModal(true);
   };
 
 
-  const openDeleteVehicleDialog = (vehicle: any) => {
+  const openDeleteVehicleDialog = (vehicle: LandedCostSummary) => {
     setVehicleToDelete({
       id: vehicle.vehicle_id,
       make_model: vehicle.make_model,
@@ -229,30 +255,6 @@ export const AdminDashboard: React.FC = () => {
       setShowDeleteVehicleDialog(false);
       setVehicleToDelete(null);
     }
-  };
-
-  // Helper functions for filtering data
-  const getFilteredExpenses = () => {
-    let filtered = [...(expenses || [])];
-
-    if (reportDateFrom) {
-      filtered = filtered.filter(e => new Date(e.created_at) >= new Date(reportDateFrom));
-    }
-    if (reportDateTo) {
-      filtered = filtered.filter(e => new Date(e.created_at) <= new Date(reportDateTo));
-    }
-    if (reportVehicleFilter && reportVehicleFilter !== 'all') {
-      filtered = filtered.filter(e => e.vehicle_id === reportVehicleFilter);
-    }
-
-    return filtered;
-  };
-
-  const getFilteredSummaries = () => {
-    if (reportVehicleFilter && reportVehicleFilter !== 'all') {
-      return summaries.filter(s => s.vehicle_id === reportVehicleFilter);
-    }
-    return summaries;
   };
 
   const handleAddExpense = async (e: React.FormEvent) => {
@@ -293,98 +295,6 @@ export const AdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error adding expense:', error);
       notifyError('Failed to add expense. Please try again.');
-    }
-  };
-
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    try {
-      // Get filtered data
-      const filteredExpenses = getFilteredExpenses();
-      const filteredSummaries = getFilteredSummaries();
-
-
-      await generateFleetReportPDFAndDownload(
-        filteredSummaries,
-        filteredExpenses,
-        vehicles,
-        company || { name: 'Affinity Logistics', registration_no: '', tax_id: '', address: '' },
-        {
-          dateFrom: reportDateFrom || undefined,
-          dateTo: reportDateTo || undefined,
-          vehicleFilter: reportVehicleFilter !== 'all' ? reportVehicleFilter : undefined,
-        }
-      );
-      notifySuccess('Report exported successfully!');
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-      notifyError('Failed to export report. Please try again.');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleExportCSV = () => {
-    setIsExporting(true);
-    try {
-      const filteredExpenses = getFilteredExpenses();
-
-      const headers = ['Date', 'Vehicle ID', 'Vehicle', 'Category', 'Location', 'Amount', 'Currency', 'Exchange Rate', 'USD Value', 'Description'];
-      const rows = filteredExpenses.map(e => [
-        new Date(e.created_at).toISOString().split('T')[0],
-        e.vehicle_id || 'N/A',
-        vehicles.find(v => v.id === e.vehicle_id)?.make_model || 'General',
-        e.category || 'N/A',
-        e.location || 'N/A',
-        (e.amount || 0).toFixed(2),
-        e.currency || 'USD',
-        (e.exchange_rate_to_usd || 1).toFixed(4),
-        ((e.amount || 0) * (e.exchange_rate_to_usd || 1)).toFixed(2),
-        `"${(e.description || 'No description').replace(/"/g, '""')}"`
-      ]);
-
-      const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `affinity-expenses-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      notifySuccess('CSV exported successfully!');
-    } catch (error) {
-      console.error('Error exporting CSV:', error);
-      notifyError('Failed to export CSV. Please try again.');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleAuditReport = async () => {
-    setIsExporting(true);
-    try {
-      const filteredExpenses = getFilteredExpenses();
-      const filteredSummaries = getFilteredSummaries();
-
-
-      await generateAuditReportPDFAndDownload(
-        filteredSummaries,
-        filteredExpenses,
-        company || { name: 'Affinity Logistics', registration_no: '', tax_id: '', address: '' },
-        {
-          dateFrom: reportDateFrom || undefined,
-          dateTo: reportDateTo || undefined,
-        }
-      );
-      notifySuccess('Comprehensive audit report generated successfully!');
-    } catch (error) {
-      console.error('Error generating audit report:', error);
-      notifyError('Failed to generate audit report. Please try again.');
-    } finally {
-      setIsExporting(false);
     }
   };
 
@@ -666,14 +576,39 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-  const statusData = [
+  const handleExportDriverFundsReport = async () => {
+    if (!company) {
+      notifyWarning('Company details are still loading. Please try again in a moment.');
+      return;
+    }
+
+    try {
+      await generateDriverFundsReportPDFAndDownload(
+        expenses,
+        operatingFunds,
+        drivers,
+        vehicles,
+        company,
+      );
+      notifySuccess('Driver funds report PDF downloaded!');
+    } catch (error: any) {
+      console.error('[AdminDashboard] handleExportDriverFundsReport:', error);
+      notifyError(error?.message || 'Failed to export the driver funds report.');
+    }
+  };
+
+  const statusData = useMemo(() => ([
     { name: 'UK', value: summaries.filter(s => s.status === 'UK').length },
     { name: 'Namibia', value: summaries.filter(s => s.status === 'Namibia').length },
     { name: 'Zimbabwe', value: summaries.filter(s => s.status === 'Zimbabwe').length },
     { name: 'Botswana', value: summaries.filter(s => s.status === 'Botswana').length },
     { name: 'Sold', value: summaries.filter(s => s.status === 'Sold').length },
-  ];
+  ]), [summaries]);
+
+  const driverFundsReport = useMemo(
+    () => buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles),
+    [drivers, expenses, operatingFunds, vehicles],
+  );
 
   if (loading) {
     return (
@@ -846,814 +781,83 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {activeView === 'dashboard' && (
-        <>
-          {/* Analytics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200 relative overflow-hidden group">
-              <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">Total Asset Valuation</p>
-              <h2 className="text-4xl font-black mt-3 text-zinc-900">
-                ${summaries.reduce((acc, s) => acc + s.total_landed_cost_usd, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </h2>
-              <div className="mt-4 flex items-center gap-1.5 text-emerald-600 text-sm font-bold">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" strokeWidth="3" /></svg>
-                Healthy Inventory
-              </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
-              <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">In-Transit Assets</p>
-              <h2 className="text-4xl font-black mt-3 text-blue-600">
-                {summaries.filter(s => s.status !== 'Sold').length}
-              </h2>
-              <div className="mt-4 flex items-center gap-3">
-                <span className="text-zinc-400 text-xs font-bold tracking-tight">Active routes across Namibia & Zim</span>
-              </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
-              <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">Fleet Efficiency</p>
-              <h2 className="text-4xl font-black mt-3 text-zinc-900">
-                94%
-              </h2>
-              <div className="mt-5 h-2.5 bg-zinc-100 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500 w-[94%] rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Visual Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
-              <h3 className="text-xl font-black mb-8 text-zinc-900 tracking-tight">Landed Cost Breakdown</h3>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={summaries}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="vin_number" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
-                    <Legend iconType="circle" />
-                    <Bar dataKey="total_expenses_usd" name="Transit Expenses" fill="#3b82f6" stackId="a" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="total_landed_cost_usd" name="Base Purchase" fill="#f1f5f9" stackId="a" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
-              <h3 className="text-xl font-black mb-8 text-zinc-900 tracking-tight">Geographic Distribution</h3>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={statusData} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={8} dataKey="value">
-                      {statusData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={8} />)}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4 flex flex-wrap justify-center gap-6">
-                {statusData.map((s, i) => (
-                  <div key={s.name} className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i] }}></div>
-                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">{s.name} ({s.value})</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Active Inventory List */}
-          <div className="bg-white rounded-3xl shadow-sm border border-zinc-200 overflow-hidden">
-            <div className="px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/30">
-              <h3 className="text-xl font-black text-zinc-900 tracking-tight">Current Inventory</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="bg-zinc-50 border-b border-zinc-100">
-                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs">Asset / VIN</th>
-                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs">Region</th>
-                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs">Purchase Cost</th>
-                    <th className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs">Landed Cost</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {summaries.map((s) => (
-                    <tr key={s.vehicle_id} className="hover:bg-zinc-50 transition-all group">
-                      <td className="px-8 py-6">
-                        <div className="flex flex-col">
-                          <span className="font-black text-zinc-900 text-base">{s.make_model}</span>
-                          <span className="font-mono text-xs text-zinc-400 font-bold uppercase tracking-wider">{s.vin_number}</span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest ring-1 ${s.status === 'UK' ? 'bg-zinc-100 text-zinc-500 ring-zinc-200' :
-                          s.status === 'Namibia' ? 'bg-amber-50 text-amber-700 ring-amber-100' :
-                            s.status === 'Zimbabwe' ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' :
-                              s.status === 'Botswana' ? 'bg-purple-50 text-purple-700 ring-purple-100' :
-                                'bg-blue-50 text-blue-700 ring-blue-100'
-                          }`}>
-                          {s.status}
-                        </span>
-                      </td>
-                      <td className="px-8 py-6 font-bold text-zinc-400 tracking-tight">£{s.purchase_price_gbp.toLocaleString()}</td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span className="font-black text-zinc-900 text-lg">${s.total_landed_cost_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                            <span className="text-xs text-zinc-400 font-bold uppercase tracking-widest">Total Valuation</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => openEditVehicleModal(s)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg hover:bg-blue-50 text-blue-600"
-                              title="Edit vehicle"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => openDeleteVehicleDialog(s)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg hover:bg-red-50 text-red-600"
-                              title="Delete vehicle"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
-
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
+        <AdminOverviewView
+          summaries={summaries}
+          statusData={statusData}
+          onEditVehicle={openEditVehicleModal}
+          onDeleteVehicle={openDeleteVehicleDialog}
+        />
       )}
 
-      {activeView === 'reports' && (
-        <div className="space-y-6">
-          {/* Reports Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-8 rounded-3xl text-white">
-            <h3 className="text-2xl font-black mb-2">Fleet Analytics & Reports</h3>
-            <p className="text-purple-100">Comprehensive insights into your logistics operations</p>
-          </div>
-
-          {/* Report Filters */}
-          <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-            <h4 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              Report Filters
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">Date From</label>
-                <input
-                  type="date"
-                  value={reportDateFrom}
-                  onChange={(e) => setReportDateFrom(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-purple-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">Date To</label>
-                <input
-                  type="date"
-                  value={reportDateTo}
-                  onChange={(e) => setReportDateTo(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-purple-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">Filter by Vehicle</label>
-                <select
-                  value={reportVehicleFilter}
-                  onChange={(e) => setReportVehicleFilter(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-purple-500 outline-none"
-                >
-                  <option value="all">All Vehicles</option>
-                  {vehicles.map(v => (
-                    <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => {
-                  setReportDateFrom('');
-                  setReportDateTo('');
-                  setReportVehicleFilter('all');
-                }}
-                className="px-4 py-2 bg-zinc-100 text-zinc-700 font-semibold rounded-lg hover:bg-zinc-200 transition-colors"
-              >
-                Clear Filters
-              </button>
-              {(reportDateFrom || reportDateTo || reportVehicleFilter !== 'all') && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-semibold">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Filters active - Showing filtered results
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Total Fleet Value</p>
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-3xl font-bold text-zinc-900">${getFilteredSummaries().reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-              <p className="text-xs text-zinc-500 mt-2">{getFilteredSummaries().length} vehicles</p>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Total Expenses</p>
-                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-3xl font-bold text-zinc-900">${getFilteredExpenses().reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-              <p className="text-xs text-zinc-500 mt-2">{getFilteredExpenses().length} transactions</p>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Avg Cost Per Vehicle</p>
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-3xl font-bold text-zinc-900">${getFilteredSummaries().length > 0 ? (getFilteredSummaries().reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0) / getFilteredSummaries().length).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}</p>
-              <p className="text-xs text-zinc-500 mt-2">Per unit analysis</p>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Expense Ratio</p>
-                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-3xl font-bold text-zinc-900">{getFilteredSummaries().length > 0 ? ((getFilteredExpenses().reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0) / getFilteredSummaries().reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0)) * 100).toFixed(1) : 0}%</p>
-              <p className="text-xs text-zinc-500 mt-2">Expenses to value</p>
-            </div>
-          </div>
-
-          {/* Detailed Reports */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Expense Breakdown */}
-            <div className="bg-white p-6 rounded-2xl border border-zinc-200">
-              <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-                </svg>
-                Expenses by Category
-              </h3>
-              <div className="space-y-3">
-                {['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Other'].map(category => {
-                  const categoryExpenses = getFilteredExpenses().filter(e => e.category === category);
-                  const total = categoryExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-                  const totalExpenseValue = getFilteredExpenses().reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-                  const percentage = totalExpenseValue > 0 ? (total / totalExpenseValue * 100) : 0;
-                  return total > 0 ? (
-                    <div key={category} className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-zinc-700">{category}</span>
-                        <span className="text-sm font-bold text-purple-600">${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                      </div>
-                      <div className="w-full bg-zinc-100 rounded-full h-2">
-                        <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${percentage}%` }}></div>
-                      </div>
-                      <p className="text-xs text-zinc-500">{categoryExpenses.length} transactions • {percentage.toFixed(1)}%</p>
-                    </div>
-                  ) : null;
-                })}
-              </div>
-            </div>
-
-            {/* Location Analysis */}
-            <div className="bg-white p-6 rounded-2xl border border-zinc-200">
-              <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Expenses by Location
-              </h3>
-              <div className="space-y-3">
-                {['UK', 'Namibia', 'Zimbabwe', 'Botswana'].map(location => {
-                  const locationExpenses = getFilteredExpenses().filter(e => e.location === location);
-                  const total = locationExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-                  const totalExpenseValue = getFilteredExpenses().reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
-                  const percentage = totalExpenseValue > 0 ? (total / totalExpenseValue * 100) : 0;
-                  return total > 0 ? (
-                    <div key={location} className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg hover:bg-zinc-100 transition-colors">
-                      <div>
-                        <p className="font-semibold text-zinc-900">{location}</p>
-                        <p className="text-xs text-zinc-500">{locationExpenses.length} transactions • {percentage.toFixed(1)}% of total</p>
-                      </div>
-                      <span className="text-lg font-bold text-blue-600">${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                    </div>
-                  ) : null;
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Vehicle Cost Rankings */}
-          <div className="bg-white p-6 rounded-2xl border border-zinc-200">
-            <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-              Top Vehicles by Total Cost
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-zinc-50 border-b border-zinc-200">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Rank</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Vehicle</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">VIN</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Status</th>
-                    <th className="px-4 py-3 text-right font-semibold text-zinc-700">Purchase Price</th>
-                    <th className="px-4 py-3 text-right font-semibold text-zinc-700">Total Cost</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {[...getFilteredSummaries()].sort((a, b) => (b.total_landed_cost_usd || 0) - (a.total_landed_cost_usd || 0)).slice(0, 10).map((summary, index) => (
-                    <tr key={summary.vehicle_id} className="hover:bg-zinc-50">
-                      <td className="px-4 py-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-lg flex items-center justify-center font-bold text-xs">
-                          {index + 1}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-zinc-900">{summary.make_model}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-zinc-500">
-                        {summary.vin_number ? `${truncateValue(summary.vin_number, 12)}...` : '-'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-md bg-blue-50 text-blue-700">
-                          {summary.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right text-zinc-600">£{(summary.purchase_price_gbp || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right font-bold text-green-600">${(summary.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Export Section */}
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 rounded-2xl text-white">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 className="text-xl font-bold mb-2">Export Comprehensive Reports</h3>
-                <p className="text-indigo-100">Download detailed analytics and reports for stakeholders</p>
-              </div>
-              {isExporting && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg">
-                  <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  <span className="text-sm font-semibold">Exporting...</span>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-3 flex-wrap">
-              <button
-                onClick={handleExportPDF}
-                disabled={isExporting}
-                className="px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export PDF Report
-              </button>
-              <button
-                onClick={handleExportCSV}
-                disabled={isExporting}
-                className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Export CSV Data
-              </button>
-              <button
-                onClick={handleAuditReport}
-                disabled={isExporting}
-                className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg border border-amber-400 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Audit Report
-              </button>
-            </div>
-            <p className="text-sm text-indigo-100 mt-4">
-              {(reportDateFrom || reportDateTo || reportVehicleFilter !== 'all')
-                ? '✓ Exports will include only filtered data'
-                : 'Exports include all data across the entire fleet'}
-            </p>
-          </div>
-        </div>
-      )}
+      {activeView === 'reports' && <ReportsTab />}
 
       {/* Clients View */}
       {activeView === 'clients' && (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-green-600 to-teal-600 p-8 rounded-3xl text-white">
-            <h3 className="text-2xl font-black mb-2">Client Management</h3>
-            <p className="text-green-100">Manage all your clients and contacts</p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg border border-zinc-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-zinc-50 border-b border-zinc-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Company</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Created</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-zinc-600 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200">
-                  {clients.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
-                        No clients yet. Click "Add Client" to get started.
-                      </td>
-                    </tr>
-                  ) : (
-                    clients.map((client) => (
-                      <tr key={client.id} className="hover:bg-zinc-50">
-                        <td className="px-6 py-4 font-semibold text-zinc-900">{client.name}</td>
-                        <td className="px-6 py-4 text-zinc-600">{client.email || '-'}</td>
-                        <td className="px-6 py-4 text-zinc-600">{client.phone || '-'}</td>
-                        <td className="px-6 py-4 text-zinc-600">{client.company || '-'}</td>
-                        <td className="px-6 py-4 text-zinc-600 text-sm">{new Date(client.created_at).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button
-                            onClick={() => {
-                              setEditingClient(client);
-                              setClientForm({
-                                name: client.name,
-                                email: client.email || '',
-                                phone: client.phone || '',
-                                address: client.address || '',
-                                company: client.company || '',
-                                notes: client.notes || ''
-                              });
-                              setShowClientModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-800 font-semibold"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClient(client.id)}
-                            className="text-red-600 hover:text-red-800 font-semibold"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <AdminClientsView
+          clients={clients}
+          onEditClient={(client) => {
+            setEditingClient(client);
+            setClientForm({
+              name: client.name,
+              email: client.email || '',
+              phone: client.phone || '',
+              address: client.address || '',
+              company: client.company || '',
+              notes: client.notes || '',
+            });
+            setShowClientModal(true);
+          }}
+          onDeleteClient={handleDeleteClient}
+        />
       )}
 
       {/* Employees View */}
       {activeView === 'employees' && (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-orange-600 to-red-600 p-8 rounded-3xl text-white">
-            <h3 className="text-2xl font-black mb-2">Employee Management</h3>
-            <p className="text-orange-100">Manage your team and their details</p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg border border-zinc-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-zinc-50 border-b border-zinc-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Employee #</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Position</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Base Pay</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-zinc-600 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200">
-                  {employees.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
-                        No employees yet. Click "Add Employee" to get started.
-                      </td>
-                    </tr>
-                  ) : (
-                    employees.map((employee) => (
-                      <tr key={employee.id} className="hover:bg-zinc-50">
-                        <td className="px-6 py-4 font-mono text-sm text-zinc-600">{employee.employee_number}</td>
-                        <td className="px-6 py-4 font-semibold text-zinc-900">{employee.name}</td>
-                        <td className="px-6 py-4 text-zinc-600">{employee.position}</td>
-                        <td className="px-6 py-4 text-zinc-900 font-semibold">${employee.base_pay_usd.toLocaleString()} {employee.currency}</td>
-                        <td className="px-6 py-4 text-zinc-600">{employee.employment_type}</td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md ${employee.status === 'Active' ? 'bg-green-100 text-green-700' :
-                            employee.status === 'On Leave' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>
-                            {employee.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button
-                            onClick={() => {
-                              setEditingEmployee(employee);
-                              setEmployeeForm({
-                                name: employee.name,
-                                email: employee.email || '',
-                                phone: employee.phone || '',
-                                department: employee.department || '',
-                                position: employee.position,
-                                base_pay_usd: employee.base_pay_usd.toString(),
-                                currency: employee.currency,
-                                employment_type: employee.employment_type,
-                                date_hired: employee.date_hired,
-                                national_id: employee.national_id || '',
-                                bank_account: employee.bank_account || '',
-                                bank_name: employee.bank_name || '',
-                                tax_number: employee.tax_number || ''
-                              });
-                              setShowEmployeeModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-800 font-semibold"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEmployee(employee.id)}
-                            className="text-red-600 hover:text-red-800 font-semibold"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <AdminEmployeesView
+          employees={employees}
+          onEditEmployee={(employee) => {
+            setEditingEmployee(employee);
+            setEmployeeForm({
+              name: employee.name,
+              email: employee.email || '',
+              phone: employee.phone || '',
+              department: employee.department || '',
+              position: employee.position,
+              base_pay_usd: employee.base_pay_usd.toString(),
+              currency: employee.currency,
+              employment_type: employee.employment_type,
+              date_hired: employee.date_hired,
+              national_id: employee.national_id || '',
+              bank_account: employee.bank_account || '',
+              bank_name: employee.bank_name || '',
+              tax_number: employee.tax_number || '',
+            });
+            setShowEmployeeModal(true);
+          }}
+          onDeleteEmployee={handleDeleteEmployee}
+        />
       )}
 
       {/* Payslips View */}
       {activeView === 'payslips' && (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-pink-600 to-purple-600 p-8 rounded-3xl text-white">
-            <h3 className="text-2xl font-black mb-2">Payslip Management</h3>
-            <p className="text-pink-100">Generate and manage employee payslips</p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg border border-zinc-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-zinc-50 border-b border-zinc-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Payslip #</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Employee</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Period</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Gross Pay</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Net Pay</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-zinc-600 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200">
-                  {payslips.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
-                        No payslips yet. Click "Generate Payslip" to get started.
-                      </td>
-                    </tr>
-                  ) : (
-                    payslips.map((payslip) => (
-                      <tr key={payslip.id} className="hover:bg-zinc-50">
-                        <td className="px-6 py-4 font-mono text-sm text-zinc-600">{payslip.payslip_number}</td>
-                        <td className="px-6 py-4 font-semibold text-zinc-900">{payslip.employee?.name || 'N/A'}</td>
-                        <td className="px-6 py-4 text-zinc-600">{new Date(payslip.year, payslip.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td>
-                        <td className="px-6 py-4 text-zinc-900 font-semibold">${payslip.gross_pay.toLocaleString()}</td>
-                        <td className="px-6 py-4 text-green-600 font-bold">${payslip.net_pay.toLocaleString()}</td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md ${payslip.status === 'Generated' ? 'bg-blue-100 text-blue-700' :
-                            payslip.status === 'Approved' ? 'bg-yellow-100 text-yellow-700' :
-                              payslip.status === 'Paid' ? 'bg-green-100 text-green-700' :
-                                'bg-red-100 text-red-700'
-                            }`}>
-                            {payslip.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {payslip.status === 'Generated' && (
-                              <button
-                                onClick={() => handleUpdatePayslipStatus(payslip.id, 'Approved')}
-                                className="text-yellow-600 hover:text-yellow-800 font-semibold text-sm"
-                              >
-                                Approve
-                              </button>
-                            )}
-                            {payslip.status === 'Approved' && (
-                              <button
-                                onClick={() => handleUpdatePayslipStatus(payslip.id, 'Paid')}
-                                className="text-green-600 hover:text-green-800 font-semibold text-sm"
-                              >
-                                Mark Paid
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDownloadPayslip(payslip)}
-                              className="text-purple-600 hover:text-purple-800 font-semibold text-sm flex items-center gap-1"
-                              title="Download PDF"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                              PDF
-                            </button>
-                            <button
-                              onClick={() => handleDeletePayslip(payslip.id)}
-                              className="text-red-600 hover:text-red-800 font-semibold text-sm"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <PayslipsListView
+          payslips={payslips}
+          onApprove={(id) => handleUpdatePayslipStatus(id, 'Approved')}
+          onMarkPaid={(id) => handleUpdatePayslipStatus(id, 'Paid')}
+          onDownload={handleDownloadPayslip}
+          onDelete={handleDeletePayslip}
+        />
       )}
 
       {/* Operating Funds View */}
       {activeView === 'funds' && (
-        <div className="space-y-6">
-          {/* Balance Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-3xl text-white shadow-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className="text-emerald-100 text-sm font-semibold uppercase tracking-wide">Funds Received</span>
-              </div>
-              <p className="text-3xl font-black">${fundsBalance.received.toLocaleString()}</p>
-            </div>
-            
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-3xl text-white shadow-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <span className="text-orange-100 text-sm font-semibold uppercase tracking-wide">Total Disbursed</span>
-              </div>
-              <p className="text-3xl font-black">${fundsBalance.disbursed.toLocaleString()}</p>
-            </div>
-            
-            <div className={`bg-gradient-to-br ${fundsBalance.balance >= 0 ? 'from-blue-500 to-blue-600' : 'from-red-500 to-red-600'} p-6 rounded-3xl text-white shadow-lg`}>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                  </svg>
-                </div>
-                <span className="text-blue-100 text-sm font-semibold uppercase tracking-wide">Current Balance</span>
-              </div>
-              <p className="text-3xl font-black">${fundsBalance.balance.toLocaleString()}</p>
-            </div>
-          </div>
-
-          {/* Transactions Table */}
-          <div className="bg-white rounded-2xl shadow-lg border border-zinc-200 overflow-hidden">
-            <div className="p-6 border-b border-zinc-200">
-              <h3 className="text-xl font-bold text-zinc-900">Transaction History</h3>
-              <p className="text-zinc-500 text-sm">Track all operating funds received and disbursed</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-zinc-50 border-b border-zinc-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Description</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Recipient</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Reference</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-zinc-600 uppercase tracking-wider">Amount</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-zinc-600 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200">
-                  {operatingFunds.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
-                        <div className="flex flex-col items-center gap-3">
-                          <svg className="w-12 h-12 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          <p>No transactions yet. Click "Record Transaction" to get started.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    operatingFunds.map((fund) => (
-                      <tr key={fund.id} className="hover:bg-zinc-50">
-                        <td className="px-6 py-4 text-sm text-zinc-600">
-                          {new Date(fund.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-md ${
-                            fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
-                          }`}>
-                            {fund.type === 'Received' ? (
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                              </svg>
-                            ) : (
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                              </svg>
-                            )}
-                            {fund.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 font-semibold text-zinc-900">{fund.description}</td>
-                        <td className="px-6 py-4 text-zinc-600">{fund.recipient || '-'}</td>
-                        <td className="px-6 py-4 text-zinc-500 text-sm">{fund.reference || '-'}</td>
-                        <td className={`px-6 py-4 text-right font-bold ${fund.type === 'Received' ? 'text-emerald-600' : 'text-orange-600'}`}>
-                          {fund.type === 'Received' ? '+' : '-'}${fund.amount.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => handleDeleteOperatingFund(fund.id)}
-                            className="text-red-600 hover:text-red-800 font-semibold text-sm"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <AdminFundsView
+          fundsBalance={fundsBalance}
+          operatingFunds={operatingFunds}
+          driverFundsReport={driverFundsReport}
+          onDeleteOperatingFund={handleDeleteOperatingFund}
+          onExportDriverFundsReport={handleExportDriverFundsReport}
+        />
       )}
 
       {/* Asset Register View */}
@@ -1661,161 +865,19 @@ export const AdminDashboard: React.FC = () => {
         <AssetRegister userRole={userRole} />
       )}
 
-      {/* Operating Funds Modal */}
-      {showFundsModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowFundsModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-zinc-900">Record Transaction</h3>
-              <button onClick={() => setShowFundsModal(false)} className="text-zinc-400 hover:text-zinc-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleAddOperatingFund} className="space-y-5">
-              {/* Transaction Type */}
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Transaction Type *</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setFundsForm({ ...fundsForm, type: 'Received' })}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      fundsForm.type === 'Received'
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : 'border-zinc-200 hover:border-zinc-300'
-                    }`}
-                  >
-                    <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                    <span className="font-bold">Received</span>
-                    <p className="text-xs text-zinc-500 mt-1">Money from office</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFundsForm({ ...fundsForm, type: 'Disbursed' })}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      fundsForm.type === 'Disbursed'
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-zinc-200 hover:border-zinc-300'
-                    }`}
-                  >
-                    <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                    <span className="font-bold">Disbursed</span>
-                    <p className="text-xs text-zinc-500 mt-1">Paid out to driver</p>
-                  </button>
-                </div>
-              </div>
-
-              {/* Amount & Currency */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={fundsForm.amount}
-                    onChange={(e) => setFundsForm({ ...fundsForm, amount: e.target.value })}
-                    required
-                    placeholder="0.00"
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency</label>
-                  <select
-                    value={fundsForm.currency}
-                    onChange={(e) => setFundsForm({ ...fundsForm, currency: e.target.value as any })}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  >
-                    <option value="USD">USD</option>
-                    <option value="NAD">NAD</option>
-                    <option value="GBP">GBP</option>
-                    <option value="BWP">BWP</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Description *</label>
-                <input
-                  type="text"
-                  value={fundsForm.description}
-                  onChange={(e) => setFundsForm({ ...fundsForm, description: e.target.value })}
-                  required
-                  placeholder={fundsForm.type === 'Received' ? 'e.g., Operating funds from HQ' : 'e.g., Trip expenses - Harare'}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
-              </div>
-
-              {/* Recipient (for disbursements) */}
-              {fundsForm.type === 'Disbursed' && (
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Recipient (Driver) *</label>
-                  <select
-                    value={fundsForm.recipient}
-                    onChange={(e) => setFundsForm({ ...fundsForm, recipient: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  >
-                    <option value="">-- Select Driver --</option>
-                    {drivers.map((driver) => (
-                      <option key={driver.id} value={driver.name}>{driver.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Reference & Date */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Reference</label>
-                  <input
-                    type="text"
-                    value={fundsForm.reference}
-                    onChange={(e) => setFundsForm({ ...fundsForm, reference: e.target.value })}
-                    placeholder="e.g., TRF-001"
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Date *</label>
-                  <input
-                    type="date"
-                    value={fundsForm.date}
-                    onChange={(e) => setFundsForm({ ...fundsForm, date: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowFundsModal(false)}
-                  className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className={`flex-1 ${fundsForm.type === 'Received' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-orange-600 hover:bg-orange-700'} text-white font-bold py-3 rounded-xl shadow-lg`}
-                >
-                  {fundsForm.type === 'Received' ? 'Record Receipt' : 'Record Disbursement'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <OperatingFundEntryModal
+        isOpen={showFundsModal}
+        title="Record Transaction"
+        onClose={() => setShowFundsModal(false)}
+        onSubmit={handleAddOperatingFund}
+        form={operatingFundFormValue}
+        onChange={handleOperatingFundFormChange}
+        drivers={drivers}
+        currencyOptions={['USD', 'NAD', 'GBP', 'BWP']}
+        accent="emerald"
+        typeSelectorVariant="cards"
+        submitLabel={(type) => (type === 'Received' ? 'Record Receipt' : 'Record Disbursement')}
+      />
 
       {/* Add Vehicle Modal */}
       {showAddModal && (
@@ -1909,171 +971,18 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Add Expense Modal */}
-      {showExpenseModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowExpenseModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-zinc-900">Add Expense</h3>
-              <button
-                onClick={() => setShowExpenseModal(false)}
-                className="text-zinc-400 hover:text-zinc-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleAddExpense} className="space-y-5">
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Vehicle Selection <span className="text-zinc-400 text-xs">(Optional)</span></label>
-                <select
-                  value={expenseVehicle}
-                  onChange={(e) => setExpenseVehicle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
-                >
-                  <option value="">None (General expense)</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={expenseAmount}
-                    onChange={(e) => setExpenseAmount(e.target.value)}
-                    required
-                    placeholder="0.00"
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency</label>
-                  <select
-                    value={expenseCurrency}
-                    onChange={(e) => setExpenseCurrency(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                  >
-                    <option value="NAD">NAD (Namibia)</option>
-                    <option value="GBP">GBP (UK)</option>
-                    <option value="USD">USD (General)</option>
-                    <option value="BWP">BWP (Botswana)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Category</label>
-                  <select
-                    value={expenseCategory}
-                    onChange={(e) => {
-                      setExpenseCategory(e.target.value as any);
-                      if (e.target.value !== 'Driver Disbursement') {
-                        setExpenseDriver('');
-                      }
-                    }}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                  >
-                    <option value="Fuel">Fuel</option>
-                    <option value="Tolls">Tolls</option>
-                    <option value="Food">Food</option>
-                    <option value="Repairs">Repairs</option>
-                    <option value="Duty">Duty</option>
-                    <option value="Shipping">Shipping</option>
-                    <option value="Driver Disbursement">💰 Driver Disbursement</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Location</label>
-                  <select
-                    value={expenseLocation}
-                    onChange={(e) => setExpenseLocation(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                  >
-                    <option value="UK">UK</option>
-                    <option value="Namibia">Namibia</option>
-                    <option value="Zimbabwe">Zimbabwe</option>
-                    <option value="Botswana">Botswana</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Driver Selection - Only shown for Driver Disbursement */}
-              {expenseCategory === 'Driver Disbursement' && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <label className="text-sm font-semibold text-amber-800 mb-2 block">
-                    Select Driver <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={expenseDriver}
-                    onChange={(e) => setExpenseDriver(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                  >
-                    <option value="">-- Select Driver --</option>
-                    {drivers.map((driver) => (
-                      <option key={driver.id} value={driver.name}>{driver.name}</option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    Money disbursed to this driver for trip expenses
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">
-                  Description {expenseCategory === 'Other' && <span className="text-red-500">*</span>}
-                </label>
-                <textarea
-                  value={expenseDesc}
-                  onChange={(e) => setExpenseDesc(e.target.value)}
-                  placeholder={expenseCategory === 'Other' ? "Please specify the type of expense" : "E.g. Full tank at Engen Windhoek"}
-                  rows={3}
-                  required={expenseCategory === 'Other'}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none"
-                />
-                {expenseCategory === 'Other' && (
-                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    Required: Please describe what this expense is for
-                  </p>
-                )}
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowExpenseModal(false)}
-                  className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200 transition-all"
-                >
-                  Add Expense
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ExpenseEntryModal
+        isOpen={showExpenseModal}
+        title="Add Expense"
+        submitLabel="Add Expense"
+        onClose={() => setShowExpenseModal(false)}
+        onSubmit={handleAddExpense}
+        vehicles={vehicles}
+        drivers={drivers}
+        form={expenseFormValue}
+        onChange={handleExpenseFormChange}
+        accent="green"
+      />
 
       {/* Client Modal */}
       {showClientModal && (
@@ -2187,7 +1096,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency</label>
-                  <select value={employeeForm.currency} onChange={(e) => setEmployeeForm({ ...employeeForm, currency: e.target.value as any })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none">
+                  <select value={employeeForm.currency} onChange={(e) => setEmployeeForm({ ...employeeForm, currency: e.target.value as Employee['currency'] })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none">
                     <option value="USD">USD</option>
                     <option value="NAD">NAD</option>
                     <option value="GBP">GBP</option>
@@ -2198,7 +1107,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-semibold text-zinc-700 mb-2 block">Employment Type</label>
-                  <select value={employeeForm.employment_type} onChange={(e) => setEmployeeForm({ ...employeeForm, employment_type: e.target.value as any })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none">
+                  <select value={employeeForm.employment_type} onChange={(e) => setEmployeeForm({ ...employeeForm, employment_type: e.target.value as Employee['employment_type'] })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none">
                     <option value="Full-time">Full-time</option>
                     <option value="Part-time">Part-time</option>
                     <option value="Contract">Contract</option>
@@ -2272,7 +1181,7 @@ export const AdminDashboard: React.FC = () => {
                   <label className="text-sm font-semibold text-zinc-700 mb-2 block">Month *</label>
                   <select value={payslipForm.month} onChange={(e) => setPayslipForm({ ...payslipForm, month: parseInt(e.target.value) })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none">
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                      <option key={m} value={m}>{new Date(2000, m - 1).toLocaleDateString('en-US', { month: 'long' })}</option>
+                      <option key={m} value={m}>{getMonthName(m)}</option>
                     ))}
                   </select>
                 </div>

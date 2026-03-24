@@ -1,26 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { LandedCostSummary, Currency, ExpenseCategory, VehicleStatus, AppUser } from '../../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { LandedCostSummary, Currency, ExpenseCategory, VehicleStatus, AppUser, Vehicle, Expense } from '../../types';
 import { supabase } from '../../services/supabaseService';
 import { useToast } from '../Toast';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell
-} from 'recharts';
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+import { Button, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
+import { toVehicleEditorRecord, type VehicleEditorRecord } from '../../utils/dashboardViewModels';
+import ExpenseEntryModal, { type ExpenseEntryFormValue } from '../shared/ExpenseEntryModal';
 
 export const VehiclesTab: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
 
   const [summaries, setSummaries] = useState<LandedCostSummary[]>([]);
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<AppUser[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Vehicle modal state
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingVehicle, setEditingVehicle] = useState<any | null>(null);
+  const [editingVehicle, setEditingVehicle] = useState<VehicleEditorRecord | null>(null);
   const [newVin, setNewVin] = useState('');
   const [newModel, setNewModel] = useState('');
   const [newPrice, setNewPrice] = useState('');
@@ -42,6 +39,26 @@ export const VehiclesTab: React.FC = () => {
   const notifySuccess = (msg: string) => showToast(msg, 'success');
   const notifyError = (msg: string) => showToast(msg, 'error');
   const notifyWarning = (msg: string) => showToast(msg, 'warning');
+
+  const expenseFormValue: ExpenseEntryFormValue = {
+    vehicleId: expenseVehicle,
+    amount: expenseAmount,
+    currency: expenseCurrency,
+    category: expenseCategory,
+    location: expenseLocation,
+    description: expenseDesc,
+    driverName: expenseDriver,
+  };
+
+  const handleExpenseFormChange = (updates: Partial<ExpenseEntryFormValue>) => {
+    if (updates.vehicleId !== undefined) setExpenseVehicle(updates.vehicleId);
+    if (updates.amount !== undefined) setExpenseAmount(updates.amount);
+    if (updates.currency !== undefined) setExpenseCurrency(updates.currency);
+    if (updates.category !== undefined) setExpenseCategory(updates.category);
+    if (updates.location !== undefined) setExpenseLocation(updates.location);
+    if (updates.description !== undefined) setExpenseDesc(updates.description);
+    if (updates.driverName !== undefined) setExpenseDriver(updates.driverName);
+  };
 
   const fetchData = async () => {
     try {
@@ -74,15 +91,16 @@ export const VehiclesTab: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const openEditVehicleModal = (vehicle: any) => {
-    setEditingVehicle(vehicle);
-    setNewVin(vehicle.vin_number);
-    setNewModel(vehicle.make_model);
-    setNewPrice(vehicle.purchase_price_gbp.toString());
+  const openEditVehicleModal = (vehicle: LandedCostSummary) => {
+    const vehicleRecord = toVehicleEditorRecord(vehicle);
+    setEditingVehicle(vehicleRecord);
+    setNewVin(vehicleRecord.vin_number);
+    setNewModel(vehicleRecord.make_model);
+    setNewPrice(vehicleRecord.purchase_price_gbp.toString());
     setShowAddModal(true);
   };
 
-  const openDeleteDialog = (vehicle: any) => {
+  const openDeleteDialog = (vehicle: LandedCostSummary) => {
     setVehicleToDelete({ id: vehicle.vehicle_id, make_model: vehicle.make_model, vin_number: vehicle.vin_number });
     setShowDeleteDialog(true);
   };
@@ -97,7 +115,7 @@ export const VehiclesTab: React.FC = () => {
         status: editingVehicle ? editingVehicle.status : 'UK'
       };
       if (editingVehicle) {
-        await supabase.updateVehicle(editingVehicle.vehicle_id || editingVehicle.id, payload);
+        await supabase.updateVehicle(editingVehicle.id, payload);
       } else {
         await supabase.addVehicle(payload);
       }
@@ -174,13 +192,13 @@ export const VehiclesTab: React.FC = () => {
 
   // ── Chart data ────────────────────────────────────────────────────────────
 
-  const statusData = [
+  const statusData = useMemo(() => ([
     { name: 'UK', value: summaries.filter(s => s.status === 'UK').length },
     { name: 'Namibia', value: summaries.filter(s => s.status === 'Namibia').length },
     { name: 'Zimbabwe', value: summaries.filter(s => s.status === 'Zimbabwe').length },
     { name: 'Botswana', value: summaries.filter(s => s.status === 'Botswana').length },
     { name: 'Sold', value: summaries.filter(s => s.status === 'Sold').length },
-  ];
+  ]), [summaries]);
 
   if (loading) {
     return (
@@ -195,22 +213,21 @@ export const VehiclesTab: React.FC = () => {
     <div className="space-y-8">
       {/* Action buttons */}
       <div className="flex items-center gap-2 flex-wrap">
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={() => setShowExpenseModal(true)}
-          className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-green-700 transition-all shadow-xl shadow-green-100 flex items-center gap-2"
+          leftIcon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           Add Expense
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={openAddVehicleModal}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center gap-2"
+          leftIcon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
           Add Vehicle
-        </button>
+        </Button>
       </div>
 
       {/* Analytics Cards */}
@@ -245,46 +262,43 @@ export const VehiclesTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Visual Analytics */}
+      {/* Carbon Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
-          <h3 className="text-xl font-black mb-8 text-zinc-900 tracking-tight">Landed Cost Breakdown</h3>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={summaries}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="vin_number" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
-                <Legend iconType="circle" />
-                <Bar dataKey="total_expenses_usd" name="Transit Expenses" fill="#3b82f6" stackId="a" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="total_landed_cost_usd" name="Base Purchase" fill="#f1f5f9" stackId="a" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <InsightPanel
+          title="Landed Cost Breakdown"
+          subtitle="Top vehicles ranked by total landed cost, with transit spend called out."
+        >
+          <RankedMetricList
+            items={[...summaries]
+              .sort((a, b) => (b.total_landed_cost_usd || 0) - (a.total_landed_cost_usd || 0))
+              .slice(0, 6)
+              .map((summary) => ({
+                label: summary.make_model,
+                value: `$${(summary.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+                helper: `${summary.vin_number} • transit $${(summary.total_expenses_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+                tone: 'blue',
+              }))}
+            emptyMessage="No landed-cost data available yet."
+          />
+        </InsightPanel>
 
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
-          <h3 className="text-xl font-black mb-8 text-zinc-900 tracking-tight">Geographic Distribution</h3>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={statusData} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={8} dataKey="value">
-                  {statusData.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={8} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-6">
-            {statusData.map((s, i) => (
-              <div key={s.name} className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i] }}></div>
-                <span className="text-xs font-black uppercase tracking-widest text-zinc-500">{s.name} ({s.value})</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <InsightPanel
+          title="Geographic Distribution"
+          subtitle="A cleaner Carbon view of fleet concentration by operating status."
+        >
+          <MetricBarList
+            items={statusData
+              .filter((item) => item.value > 0)
+              .map((item) => ({
+                label: item.name,
+                value: `${item.value} vehicles`,
+                helper: summaries.length > 0 ? `${((item.value / summaries.length) * 100).toFixed(1)}% of fleet` : '0% of fleet',
+                percent: summaries.length > 0 ? (item.value / summaries.length) * 100 : 0,
+                tone: item.name === 'Sold' ? 'red' : item.name === 'Namibia' ? 'green' : item.name === 'Zimbabwe' ? 'teal' : item.name === 'Botswana' ? 'purple' : 'blue',
+              }))}
+            emptyMessage="No distribution data available yet."
+          />
+        </InsightPanel>
       </div>
 
       {/* Inventory Table */}
@@ -416,93 +430,18 @@ export const VehiclesTab: React.FC = () => {
         </div>
       )}
 
-      {/* Expense Modal */}
-      {showExpenseModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowExpenseModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-zinc-900">Add Expense</h3>
-              <button type="button" onClick={() => setShowExpenseModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-            <form onSubmit={handleAddExpense} className="space-y-5">
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Vehicle Selection <span className="text-zinc-400 text-xs">(Optional)</span></label>
-                <select value={expenseVehicle} onChange={(e) => setExpenseVehicle(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none">
-                  <option value="">None (General expense)</option>
-                  {vehicles.map((v) => <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount</label>
-                  <input type="number" step="0.01" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} required placeholder="0.00" className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency</label>
-                  <select value={expenseCurrency} onChange={(e) => setExpenseCurrency(e.target.value as Currency)} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
-                    <option value="NAD">NAD (Namibia)</option>
-                    <option value="GBP">GBP (UK)</option>
-                    <option value="USD">USD (General)</option>
-                    <option value="BWP">BWP (Botswana)</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Category</label>
-                  <select value={expenseCategory} onChange={(e) => { setExpenseCategory(e.target.value as ExpenseCategory); if (e.target.value !== 'Driver Disbursement') setExpenseDriver(''); }} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
-                    <option value="Fuel">Fuel</option>
-                    <option value="Tolls">Tolls</option>
-                    <option value="Food">Food</option>
-                    <option value="Repairs">Repairs</option>
-                    <option value="Duty">Duty</option>
-                    <option value="Shipping">Shipping</option>
-                    <option value="Driver Disbursement">💰 Driver Disbursement</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Location</label>
-                  <select value={expenseLocation} onChange={(e) => setExpenseLocation(e.target.value as VehicleStatus)} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
-                    <option value="UK">UK</option>
-                    <option value="Namibia">Namibia</option>
-                    <option value="Zimbabwe">Zimbabwe</option>
-                    <option value="Botswana">Botswana</option>
-                  </select>
-                </div>
-              </div>
-              {expenseCategory === 'Driver Disbursement' && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <label className="text-sm font-semibold text-amber-800 mb-2 block">Select Driver <span className="text-red-500">*</span></label>
-                  <select value={expenseDriver} onChange={(e) => setExpenseDriver(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none">
-                    <option value="">-- Select Driver --</option>
-                    {drivers.map((driver) => (
-                      <option key={driver.id} value={driver.name}>{driver.name}</option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-                    Money disbursed to this driver for trip expenses
-                  </p>
-                </div>
-              )}
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">
-                  Description {expenseCategory === 'Other' && <span className="text-red-500">*</span>}
-                </label>
-                <textarea value={expenseDesc} onChange={(e) => setExpenseDesc(e.target.value)} placeholder={expenseCategory === 'Other' ? 'Please specify the type of expense' : 'E.g. Full tank at Engen Windhoek'} rows={3} required={expenseCategory === 'Other'} className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none" />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowExpenseModal(false)} className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors">Cancel</button>
-                <button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200 transition-all">Add Expense</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ExpenseEntryModal
+        isOpen={showExpenseModal}
+        title="Add Expense"
+        submitLabel="Add Expense"
+        onClose={() => setShowExpenseModal(false)}
+        onSubmit={handleAddExpense}
+        vehicles={vehicles}
+        drivers={drivers}
+        form={expenseFormValue}
+        onChange={handleExpenseFormChange}
+        accent="green"
+      />
 
       {/* Delete Vehicle Confirmation Dialog */}
       {showDeleteDialog && vehicleToDelete && (

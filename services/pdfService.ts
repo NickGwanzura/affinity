@@ -1,7 +1,8 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense, Asset, LandedCostSummary } from '../types';
+import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense, Asset, LandedCostSummary, OperatingFund, AppUser } from '../types';
 import affinityLogoUrl from '../assets/affinity-logo.svg';
+import { buildDriverFundsReportData } from '../utils/driverFunds';
 
 // ============================================================================
 // CONSTANTS
@@ -1047,6 +1048,10 @@ class PDFBuilder {
     return this.doc;
   }
 
+  getContentStartY(): number {
+    return Math.max(this.metadataBottomY, this.clientBottomY) + 15;
+  }
+
   // -------------------------------------------------------------------------
   // Generate Output
   // -------------------------------------------------------------------------
@@ -2027,11 +2032,10 @@ export const generateExpensesReportPDF = async (
         String(sanitizedExpenses.length),
         formatCurrencyAmount(totalUsd, 'USD'),
       ],
-      125,
-      65
+      125
     );
 
-  const tableStartY = 120;
+  const tableStartY = builder.getContentStartY();
 
   if (sanitizedExpenses.length > 0) {
     autoTable(doc, {
@@ -2271,11 +2275,10 @@ export const generateAssetRegisterReportPDF = async (
         String(statusCounts.find(s => s.status === 'Available')?.count ?? 0),
         String(statusCounts.find(s => s.status === 'Borrowed')?.count ?? 0),
       ],
-      125,
-      65
+      125
     );
 
-  const tableStartY = 120;
+  const tableStartY = builder.getContentStartY();
 
   if (sanitizedAssets.length > 0) {
     autoTable(doc, {
@@ -2413,11 +2416,10 @@ export const generateFleetReportPDF = async (
         String(summaries.length),
         String(expenses.length),
       ],
-      125,
-      65
+      125
     );
 
-  let currentY = 120;
+  let currentY = builder.getContentStartY();
 
   // ── Executive Summary Box ────────────────────────────────────────────────
   currentY = builder.ensureContentSpace(38, currentY);
@@ -2617,6 +2619,191 @@ export const generateFleetReportPDFAndDownload = async (
 };
 
 // ============================================================================
+// DRIVER FUNDS REPORT PDF
+// ============================================================================
+
+export const generateDriverFundsReportPDF = async (
+  expenses: Expense[],
+  operatingFunds: OperatingFund[],
+  drivers: AppUser[],
+  vehicles: Vehicle[],
+  company: CompanyDetails,
+  options?: { dateFrom?: string; dateTo?: string; vehicleFilter?: string }
+): Promise<Blob> => {
+  const sanitizedCompany = sanitizeCompany(company);
+  const dateStr = new Date().toISOString().split('T')[0];
+  const builder = new PDFBuilder(sanitizedCompany, `Driver_Funds_Report_${dateStr}.pdf`);
+  const doc = builder.getDocument();
+  const report = buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles);
+
+  const periodLabel = options?.dateFrom || options?.dateTo
+    ? `${options.dateFrom || 'Beginning'} – ${options.dateTo || 'Present'}`
+    : 'All time';
+
+  await builder.addLogoWatermark();
+  (await builder.addHeader())
+    .addTitle('DRIVER FUNDS REPORT')
+    .addMetadataSection(
+      ['Report Date:', 'Period:', 'Drivers Funded:', 'Vehicle Filter:'],
+      [
+        new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        periodLabel,
+        String(report.totals.fundedDrivers),
+        options?.vehicleFilter || 'All vehicles',
+      ],
+      125
+    );
+
+  let currentY = builder.getContentStartY();
+
+  currentY = builder.ensureContentSpace(38, currentY);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 32, 3, 3, 'F');
+  doc.setDrawColor(...COLORS.BORDER_GRAY);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 32, 3, 3, 'S');
+
+  const summaryItems = [
+    { label: 'ALLOCATED', value: formatCurrencyAmount(report.totals.allocatedUsd, 'USD') },
+    { label: 'SPENT', value: formatCurrencyAmount(report.totals.spentUsd, 'USD') },
+    { label: 'BALANCE', value: formatCurrencyAmount(report.totals.balanceUsd, 'USD') },
+    { label: 'FUNDED DRIVERS', value: String(report.totals.fundedDrivers) },
+  ];
+
+  summaryItems.forEach((item, index) => {
+    const x = LAYOUT.MARGIN_LEFT + 5 + index * 45;
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.LIGHT_GRAY);
+    doc.text(item.label, x, currentY + 10);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text(item.value, x, currentY + 22);
+  });
+  currentY += 42;
+
+  if (report.summaries.length > 0) {
+    currentY = builder.ensureContentSpace(30, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('DRIVER ALLOCATION SUMMARY', LAYOUT.MARGIN_LEFT, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['DRIVER', 'ALLOCATED (USD)', 'SPENT (USD)', 'BALANCE (USD)', 'ALLOCATIONS', 'SPENDS']],
+      body: report.summaries.map((summary) => [
+        summary.driverName,
+        formatCurrencyAmount(summary.allocatedUsd, 'USD'),
+        formatCurrencyAmount(summary.spentUsd, 'USD'),
+        formatCurrencyAmount(summary.balanceUsd, 'USD'),
+        String(summary.allocationCount),
+        String(summary.spendCount),
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: { fillColor: TABLE_STYLES.HEAD_FILL, textColor: COLORS.PRIMARY_DARK, fontStyle: 'bold', fontSize: FONT_SIZES.XSMALL, cellPadding: TABLE_STYLES.HEAD_PADDING },
+      styles: { fontSize: FONT_SIZES.XSMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
+      columnStyles: {
+        0: { cellWidth: 48 },
+        1: { cellWidth: 30, halign: 'right', fontStyle: 'bold' },
+        2: { cellWidth: 28, halign: 'right' },
+        3: { cellWidth: 28, halign: 'right' },
+        4: { cellWidth: 20, halign: 'center' },
+        5: { cellWidth: 20, halign: 'center' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+    currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 14;
+  }
+
+  if (report.allocationRows.length > 0) {
+    currentY = builder.ensureContentSpace(30, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('ALLOCATION LEDGER', LAYOUT.MARGIN_LEFT, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['DATE', 'DRIVER', 'SOURCE', 'DESCRIPTION', 'VEHICLE', 'USD']],
+      body: report.allocationRows.map((row) => [
+        new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        row.driverName,
+        row.source,
+        sanitizeText(row.description) || '—',
+        row.vehicleLabel,
+        formatCurrencyAmount(row.amountUsd, 'USD'),
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: { fillColor: TABLE_STYLES.HEAD_FILL, textColor: COLORS.PRIMARY_DARK, fontStyle: 'bold', fontSize: FONT_SIZES.XSMALL, cellPadding: TABLE_STYLES.HEAD_PADDING },
+      styles: { fontSize: FONT_SIZES.XXSMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 24 },
+        3: { cellWidth: 56 },
+        4: { cellWidth: 28 },
+        5: { cellWidth: 22, halign: 'right', fontStyle: 'bold' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+    currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 14;
+  }
+
+  if (report.spendRows.length > 0) {
+    currentY = builder.ensureContentSpace(30, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('SPEND LEDGER', LAYOUT.MARGIN_LEFT, currentY);
+
+    autoTable(doc, {
+      startY: currentY + 6,
+      head: [['DATE', 'DRIVER', 'CATEGORY', 'DESCRIPTION', 'VEHICLE', 'USD']],
+      body: report.spendRows.map((row) => [
+        new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        row.driverName,
+        row.source,
+        sanitizeText(row.description) || '—',
+        row.vehicleLabel,
+        formatCurrencyAmount(row.amountUsd, 'USD'),
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: { fillColor: TABLE_STYLES.HEAD_FILL, textColor: COLORS.PRIMARY_DARK, fontStyle: 'bold', fontSize: FONT_SIZES.XSMALL, cellPadding: TABLE_STYLES.HEAD_PADDING },
+      styles: { fontSize: FONT_SIZES.XXSMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 24 },
+        3: { cellWidth: 56 },
+        4: { cellWidth: 28 },
+        5: { cellWidth: 22, halign: 'right', fontStyle: 'bold' },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+    });
+  }
+
+  builder.addFooter({ additionalText: `Driver Funds Report — ${new Date().toLocaleDateString()}`, fontSize: FONT_SIZES.XXSMALL });
+  return builder.generate();
+};
+
+export const generateDriverFundsReportPDFAndDownload = async (
+  expenses: Expense[],
+  operatingFunds: OperatingFund[],
+  drivers: AppUser[],
+  vehicles: Vehicle[],
+  company: CompanyDetails,
+  options?: { dateFrom?: string; dateTo?: string; vehicleFilter?: string }
+): Promise<void> => {
+  const blob = await generateDriverFundsReportPDF(expenses, operatingFunds, drivers, vehicles, company, options);
+  downloadBlob(blob, `Driver_Funds_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+};
+
+// ============================================================================
 // AUDIT REPORT PDF
 // ============================================================================
 
@@ -2649,11 +2836,10 @@ export const generateAuditReportPDF = async (
         String(summaries.length),
         String(expenses.length),
       ],
-      125,
-      65
+      125
     );
 
-  let currentY = 120;
+  let currentY = builder.getContentStartY();
 
   // ── KPI Summary Box ──────────────────────────────────────────────────────
   currentY = builder.ensureContentSpace(38, currentY);

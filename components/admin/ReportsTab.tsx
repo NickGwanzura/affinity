@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Asset, CompanyDetails, LandedCostSummary } from '../../types';
+import { Asset, CompanyDetails, LandedCostSummary, OperatingFund, AppUser } from '../../types';
 import { supabase } from '../../services/supabaseService';
-import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload } from '../../services/pdfService';
+import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload, generateDriverFundsReportPDFAndDownload } from '../../services/pdfService';
 import { useToast } from '../Toast';
+import { Button, DriverFundsSnapshotPanel, DriverFundsSummaryPanel, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
+import { buildDriverFundsReportData } from '../../utils/driverFunds';
 
 export const ReportsTab: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
@@ -10,6 +12,8 @@ export const ReportsTab: React.FC = () => {
   const [summaries, setSummaries] = useState<LandedCostSummary[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
+  const [drivers, setDrivers] = useState<AppUser[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [company, setCompany] = useState<CompanyDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,16 +31,20 @@ export const ReportsTab: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [summaryData, vehicleData, expenseData, companyData] = await Promise.all([
+        const [summaryData, vehicleData, expenseData, companyData, fundData, userData] = await Promise.all([
           supabase.getLandedCostSummaries(),
           supabase.getVehicles(),
           supabase.getExpenses(),
           supabase.getCompanyDetails(),
+          supabase.getOperatingFunds().catch(() => [] as OperatingFund[]),
+          supabase.getUsers(),
         ]);
         setSummaries(summaryData);
         setVehicles(vehicleData);
         setExpenses(expenseData);
         setCompany(companyData);
+        setOperatingFunds(fundData);
+        setDrivers(userData.filter((user) => user.role === 'Driver' && user.status === 'Active'));
 
         try {
           const token = localStorage.getItem('affinity_auth_token');
@@ -76,6 +84,18 @@ export const ReportsTab: React.FC = () => {
     }
     return summaries;
   }, [summaries, reportVehicleFilter]);
+
+  const filteredOperatingFunds = useMemo(() => {
+    let filtered = [...operatingFunds];
+    if (reportDateFrom) filtered = filtered.filter(f => new Date(f.date) >= new Date(reportDateFrom));
+    if (reportDateTo) filtered = filtered.filter(f => new Date(f.date) <= new Date(reportDateTo));
+    return filtered;
+  }, [operatingFunds, reportDateFrom, reportDateTo]);
+
+  const driverFundsReport = useMemo(
+    () => buildDriverFundsReportData(filteredExpenses, filteredOperatingFunds, drivers, vehicles),
+    [filteredExpenses, filteredOperatingFunds, drivers, vehicles],
+  );
 
   const truncateValue = (value: string | null | undefined, length: number) =>
     value ? value.slice(0, length) : '-';
@@ -190,6 +210,31 @@ export const ReportsTab: React.FC = () => {
     }
   };
 
+  const handleDriverFundsReportPDF = async () => {
+    if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
+    setIsExporting(true);
+    try {
+      await generateDriverFundsReportPDFAndDownload(
+        filteredExpenses,
+        filteredOperatingFunds,
+        drivers,
+        vehicles,
+        company,
+        {
+          dateFrom: reportDateFrom || undefined,
+          dateTo: reportDateTo || undefined,
+          vehicleFilter: reportVehicleFilter !== 'all' ? (vehicles.find(v => v.id === reportVehicleFilter)?.make_model || reportVehicleFilter) : undefined,
+        },
+      );
+      notifySuccess('Driver funds report PDF downloaded!');
+    } catch (err) {
+      console.error('[ReportsTab] handleDriverFundsReportPDF error:', err);
+      notifyError('Failed to generate driver funds PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -209,12 +254,9 @@ export const ReportsTab: React.FC = () => {
         </div>
         <h3 className="text-lg font-bold text-zinc-900">Unable to Load Reports</h3>
         <p className="text-zinc-500 text-center max-w-md">{loadError}</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-6 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700"
-        >
+        <Button onClick={() => window.location.reload()} className="mt-4">
           Retry
-        </button>
+        </Button>
       </div>
     );
   }
@@ -315,6 +357,25 @@ export const ReportsTab: React.FC = () => {
           </p>
           <p className="text-xs text-zinc-500 mt-2">Expenses to value</p>
         </div>
+      </div>
+
+      {/* Driver Funds */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
+        <DriverFundsSummaryPanel
+          report={driverFundsReport}
+          subtitle="See what was allocated, what has already been spent, and what remains available by driver."
+          emptyMessage="No driver-specific disbursements found for the current filter."
+          helperFormatter={(summary, formatValue) => `${summary.allocationCount} allocations • ${formatValue(summary.spentUsd)} spent`}
+          action={<Button size="sm" onClick={handleDriverFundsReportPDF} disabled={isExporting}>Export Driver Funds PDF</Button>}
+        />
+
+        <DriverFundsSnapshotPanel
+          report={driverFundsReport}
+          subtitle="Carbon-style operational view of the disbursement cycle."
+          balanceLabel="Remaining balance"
+          spentHelper="{count} spend entries"
+          balanceHelper="Outstanding drawdown capacity still in the field"
+        />
       </div>
 
       {/* Detailed Reports */}
@@ -429,26 +490,26 @@ export const ReportsTab: React.FC = () => {
           )}
         </div>
         <div className="flex gap-3 flex-wrap">
-          <button onClick={handleExportPDF} disabled={isExporting} className="px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+          <Button onClick={handleExportPDF} disabled={isExporting}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             Export PDF Report
-          </button>
-          <button onClick={handleExportCSV} disabled={isExporting} className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed">
+          </Button>
+          <Button onClick={handleExportCSV} disabled={isExporting} variant="secondary">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
             Export CSV Data
-          </button>
-          <button onClick={handleAuditReport} disabled={isExporting} className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg border border-amber-400 disabled:opacity-50 disabled:cursor-not-allowed">
+          </Button>
+          <Button onClick={handleAuditReport} disabled={isExporting} variant="warning">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             Audit Report
-          </button>
-          <button onClick={handleExpensesReportPDF} disabled={isExporting} className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+          </Button>
+          <Button onClick={handleExpensesReportPDF} disabled={isExporting} variant="secondary">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
             Expenses Report PDF
-          </button>
-          <button onClick={handleAssetRegisterReportPDF} disabled={isExporting} className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+          </Button>
+          <Button onClick={handleAssetRegisterReportPDF} disabled={isExporting} variant="secondary">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
             Asset Register PDF
-          </button>
+          </Button>
         </div>
         <p className="text-sm text-indigo-100 mt-4">
           {(reportDateFrom || reportDateTo || reportVehicleFilter !== 'all')
