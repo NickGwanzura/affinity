@@ -42,10 +42,20 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
   const notifySuccess = (message: string) => showToast(message, 'success');
   const notifyError = (message: string) => showToast(message, 'error');
 
+  const getAuthHeaders = (headers: Record<string, string> = {}) => {
+    const token = localStorage.getItem('affinity_auth_token');
+    return token
+      ? { ...headers, Authorization: `Bearer ${token}` }
+      : headers;
+  };
+
   // Fetch assets
   const fetchAssets = async () => {
     try {
-      const res = await fetch(API_URL, { credentials: 'include' });
+      const res = await fetch(API_URL, {
+        credentials: 'include',
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Failed to fetch assets');
       const data = await res.json();
       setAssets(data);
@@ -58,7 +68,10 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
   // Fetch asset requests
   const fetchRequests = async () => {
     try {
-      const res = await fetch(`${API_URL}/requests`, { credentials: 'include' });
+      const res = await fetch(`${API_URL}/requests`, {
+        credentials: 'include',
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Failed to fetch requests');
       const data = await res.json();
       setRequests(data);
@@ -97,7 +110,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body),
         credentials: 'include',
       });
@@ -134,7 +147,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(requestForm),
         credentials: 'include',
       });
@@ -184,7 +197,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
       const res = await fetch(`${API_URL}/requests?id=${request.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(updates),
         credentials: 'include',
       });
@@ -214,6 +227,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
     try {
       const res = await fetch(`${API_URL}?id=${asset.id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete asset');
@@ -237,6 +251,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
     try {
       const res = await fetch(`${API_URL}/requests?id=${request.id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete request');

@@ -21,6 +21,9 @@ import { sql } from './_db';
 
 // Auto-create tables if they don't exist
 async function ensureTablesExist() {
+  // Required by the UUID defaults below on some Postgres setups.
+  await sql`CREATE EXTENSION IF NOT EXISTS pgcrypto`;
+
   // Create assets table if not exists
   await sql`
     CREATE TABLE IF NOT EXISTS public.assets (
@@ -133,15 +136,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
+  const user = await authenticate(req);
+  if (!user) return json(res, 401, { error: 'Unauthorized' });
+
   // Ensure tables exist
   try {
     await ensureTablesExist();
   } catch (err) {
-    console.error('Error creating tables:', err);
+    console.error('[api/assets] Error creating tables:', err);
   }
-
-  const user = await authenticate(req);
-  if (!user) return json(res, 401, { error: 'Unauthorized' });
 
   const { method, query, body } = req;
   const id = typeof query.id === 'string' ? query.id : undefined;
@@ -178,7 +181,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!name || !category) {
         return json(res, 400, { error: 'name and category are required' });
       }
-      const [row] = await sql`
+      const [row] = (await sql`
         INSERT INTO assets (name, description, category, serial_number, status, location, purchase_date, purchase_value, condition, created_at, updated_at)
         VALUES (
           ${String(name)},
@@ -194,7 +197,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           NOW()
         )
         RETURNING id, name, description, category, serial_number, status, location, purchase_date, purchase_value, condition, created_at, updated_at
-      `;
+      `) as Record<string, unknown>[];
       return json(res, 201, row);
     }
 
@@ -206,7 +209,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!id) return json(res, 400, { error: 'id query parameter is required' });
 
       const { name, description, category, serial_number, status, location, purchase_date, purchase_value, condition } = body as Record<string, unknown>;
-      const [row] = await sql`
+      const [row] = (await sql`
         UPDATE assets SET
           name            = COALESCE(${name != null ? String(name) : null}, name),
           description     = COALESCE(${description != null ? String(description) : null}, description),
@@ -220,7 +223,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           updated_at      = NOW()
         WHERE id = ${id}
         RETURNING id, name, description, category, serial_number, status, location, purchase_date, purchase_value, condition, created_at, updated_at
-      `;
+      `) as Record<string, unknown>[];
       if (!row) return json(res, 404, { error: 'Asset not found' });
       return json(res, 200, row);
     }
@@ -239,6 +242,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return json(res, 405, { error: 'Method not allowed' });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error';
+    console.error('[api/assets] Handler error:', err);
     return json(res, 500, { error: message });
   }
 }
@@ -287,7 +291,7 @@ async function handleAssetRequests(
       return json(res, 400, { error: 'asset_id and requested_by are required' });
     }
     
-    const [row] = await sql`
+    const [row] = (await sql`
       INSERT INTO asset_requests (
         asset_id, requested_by, requester_email, requester_department,
         request_date, requested_take_date, approved_by, approval_date,
@@ -317,8 +321,8 @@ async function handleAssetRequests(
                 request_date, requested_take_date, approved_by, approval_date,
                 actual_take_date, expected_return_date, actual_return_date,
                 status, rejection_reason, purpose, notes, created_at, updated_at
-    `;
-    
+    `) as Record<string, unknown>[];
+
     // If status is 'Taken', update the asset status to 'Borrowed'
     if (status === 'Taken' && asset_id) {
       await sql`UPDATE assets SET status = 'Borrowed', updated_at = NOW() WHERE id = ${String(asset_id)}`;
@@ -342,15 +346,15 @@ async function handleAssetRequests(
     } = body as Record<string, unknown>;
     
     // First get the current request to check status changes
-    const [currentRequest] = await sql`
+    const [currentRequest] = (await sql`
       SELECT asset_id, status FROM asset_requests WHERE id = ${id}
-    `;
+    `) as Record<string, unknown>[];
     
     if (!currentRequest) {
       return json(res, 404, { error: 'Asset request not found' });
     }
     
-    const [row] = await sql`
+    const [row] = (await sql`
       UPDATE asset_requests SET
         asset_id             = COALESCE(${asset_id != null ? String(asset_id) : null}, asset_id),
         requested_by         = COALESCE(${requested_by != null ? String(requested_by) : null}, requested_by),
@@ -372,8 +376,8 @@ async function handleAssetRequests(
                 request_date, requested_take_date, approved_by, approval_date,
                 actual_take_date, expected_return_date, actual_return_date,
                 status, rejection_reason, purpose, notes, created_at, updated_at
-    `;
-    
+    `) as Record<string, unknown>[];
+
     // Handle status changes
     if (status) {
       const newStatus = String(status);
@@ -405,9 +409,9 @@ async function handleAssetRequests(
     if (!id) return json(res, 400, { error: 'id query parameter is required' });
 
     // First check if the asset was borrowed and needs to be returned
-    const [request] = await sql`
+    const [request] = (await sql`
       SELECT asset_id, status FROM asset_requests WHERE id = ${id}
-    `;
+    `) as Record<string, unknown>[];
     
     if (request && request.status === 'Taken') {
       // Return the asset to available
