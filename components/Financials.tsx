@@ -11,6 +11,7 @@ import {
 } from '../services/pdfService';
 import { useConfirm } from './ConfirmModal';
 import { useToast } from './Toast';
+import { ClientFormModal, type ClientFormValue } from './shared/ClientFormModal';
 
 type PaymentAllocationDraft = {
   invoice_id: string;
@@ -119,6 +120,7 @@ export const Financials: React.FC = () => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showClientModal, setShowClientModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState('');
   const [selectedClient, setSelectedClient] = useState('');
@@ -128,6 +130,15 @@ export const Financials: React.FC = () => {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [clientModalTarget, setClientModalTarget] = useState<'quote' | 'invoice'>('quote');
+  const [clientForm, setClientForm] = useState<ClientFormValue>({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    company: '',
+    notes: '',
+  });
 
   const [quoteForm, setQuoteForm] = useState({
     vehicle_id: '',
@@ -417,6 +428,71 @@ export const Financials: React.FC = () => {
     }
     setPreviewUrl(null);
     setPreviewTitle('');
+  };
+
+  const openClientModal = (target: 'quote' | 'invoice') => {
+    setClientModalTarget(target);
+    const source = target === 'quote'
+      ? quoteForm
+      : {
+          client_name: invoiceForm.client_name,
+          client_email: invoiceForm.client_email,
+          client_address: invoiceForm.client_address,
+        };
+
+    setClientForm({
+      name: source.client_name || '',
+      email: source.client_email || '',
+      phone: '',
+      address: source.client_address || '',
+      company: '',
+      notes: '',
+    });
+    setShowClientModal(true);
+  };
+
+  const closeClientModal = () => {
+    setShowClientModal(false);
+    setClientForm({
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+      company: '',
+      notes: '',
+    });
+  };
+
+  const handleSaveClient = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    try {
+      const createdClient = await supabase.createClient(clientForm);
+      const nextClients = [...clients, createdClient].sort((a, b) => a.name.localeCompare(b.name));
+      setClients(nextClients);
+
+      if (clientModalTarget === 'quote') {
+        setQuoteForm((current) => ({
+          ...current,
+          client_name: createdClient.name,
+          client_email: createdClient.email || '',
+          client_address: createdClient.address || '',
+        }));
+      } else {
+        setInvoiceForm((current) => ({
+          ...current,
+          client_name: createdClient.name,
+          client_email: createdClient.email || '',
+          client_address: createdClient.address || '',
+        }));
+      }
+
+      closeClientModal();
+      showToast('Client created and selected.', 'success');
+    } catch (error: any) {
+      console.error('[Financials] handleSaveClient failed:', error);
+      showToast(error?.message || 'Failed to create client.', 'error');
+    }
   };
 
   const buildReceiptItemsSnapshot = (
@@ -1208,6 +1284,16 @@ export const Financials: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-zinc-700">Client *</label>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <span className="text-xs text-zinc-500">Choose an existing client or add a new one.</span>
+                    <button
+                      type="button"
+                      onClick={() => openClientModal('quote')}
+                      className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-50"
+                    >
+                      + Add Client
+                    </button>
+                  </div>
                   <select
                     required
                     value={clients.find(c => c.name === quoteForm.client_name)?.id ?? ''}
@@ -1479,6 +1565,16 @@ export const Financials: React.FC = () => {
                 </div>
                 <div className="col-span-1 sm:col-span-1">
                   <label className="text-sm font-semibold text-zinc-700">Client *</label>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <span className="text-xs text-zinc-500">Choose an existing client or add a new one.</span>
+                    <button
+                      type="button"
+                      onClick={() => openClientModal('invoice')}
+                      className="rounded-lg border border-green-200 px-3 py-1.5 text-xs font-bold text-green-700 hover:bg-green-50"
+                    >
+                      + Add Client
+                    </button>
+                  </div>
                   <select
                     required
                     value={clients.find(c => c.name === invoiceForm.client_name)?.id ?? ''}
@@ -2015,6 +2111,16 @@ export const Financials: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ClientFormModal
+        isOpen={showClientModal}
+        title={clientModalTarget === 'quote' ? 'Add Client for Quote' : 'Add Client for Invoice'}
+        onClose={closeClientModal}
+        onSubmit={handleSaveClient}
+        form={clientForm}
+        onChange={(updates) => setClientForm((current) => ({ ...current, ...updates }))}
+        submitLabel="Create Client"
+      />
 
       {previewUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
