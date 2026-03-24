@@ -10,10 +10,12 @@ import AdminFundsView from './admin/AdminFundsView';
 import AdminClientsView from './admin/AdminClientsView';
 import AdminEmployeesView from './admin/AdminEmployeesView';
 import AdminOverviewView from './admin/AdminOverviewView';
+import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
 import ReportsTab from './admin/ReportsTab';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
 import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
 import PayslipsListView from './shared/PayslipsListView';
+import VehicleFormModal, { type VehicleFormValue } from './shared/VehicleFormModal';
 import { buildDriverFundsReportData } from '../utils/driverFunds';
 import { toVehicleEditorRecord, type VehicleEditorRecord } from '../utils/dashboardViewModels';
 import { getMonthName } from '../utils/formatters';
@@ -122,6 +124,22 @@ export const AdminDashboard: React.FC = () => {
   const operatingFundFormValue: OperatingFundFormValue = { ...fundsForm };
   const handleOperatingFundFormChange = (updates: Partial<OperatingFundFormValue>) => {
     setFundsForm((prev) => ({ ...prev, ...updates }));
+  };
+
+  const clientFormValue: ClientFormValue = { ...clientForm };
+  const handleClientFormChange = (updates: Partial<ClientFormValue>) => {
+    setClientForm((prev) => ({ ...prev, ...updates }));
+  };
+
+  const vehicleFormValue: VehicleFormValue = {
+    vin: newVin,
+    model: newModel,
+    price: newPrice,
+  };
+  const handleVehicleFormChange = (updates: Partial<VehicleFormValue>) => {
+    if (updates.vin !== undefined) setNewVin(updates.vin);
+    if (updates.model !== undefined) setNewModel(updates.model);
+    if (updates.price !== undefined) setNewPrice(updates.price);
   };
 
   // FIX: fetchData now throws errors instead of swallowing them silently
@@ -879,97 +897,17 @@ export const AdminDashboard: React.FC = () => {
         submitLabel={(type) => (type === 'Received' ? 'Record Receipt' : 'Record Disbursement')}
       />
 
-      {/* Add Vehicle Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowAddModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-zinc-900">{editingVehicle ? 'Edit Vehicle' : 'Add Vehicle'}</h3>
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setEditingVehicle(null);
-                }}
-                className="text-zinc-400 hover:text-zinc-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveVehicle} className="space-y-5">
-
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">VIN Number *</label>
-                <input
-                  type="text"
-                  value={newVin}
-                  onChange={(e) => setNewVin(e.target.value)}
-                  required
-                  placeholder="Enter VIN number"
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                />
-                <p className="text-xs text-zinc-400 mt-1">Unique vehicle identification number</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Make & Model *</label>
-                <input
-                  type="text"
-                  value={newModel}
-                  onChange={(e) => setNewModel(e.target.value)}
-                  required
-                  placeholder="e.g. Toyota Land Cruiser V8"
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Purchase Price (GBP) *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={newPrice}
-                  onChange={(e) => setNewPrice(e.target.value)}
-                  required
-                  placeholder="0.00"
-                  min="0"
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                />
-                <p className="text-xs text-zinc-400 mt-1">Purchase price in British Pounds</p>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <p className="text-sm text-blue-800 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>New vehicles are set to "UK" status by default. You can update the status later.</span>
-                </p>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className={`flex-1 ${editingVehicle ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'} text-white font-bold py-3 rounded-xl shadow-lg transition-all`}
-                >
-                  {editingVehicle ? 'Save Changes' : 'Add Vehicle'}
-                </button>
-
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <VehicleFormModal
+        isOpen={showAddModal}
+        isEditing={Boolean(editingVehicle)}
+        onClose={() => {
+          setShowAddModal(false);
+          setEditingVehicle(null);
+        }}
+        onSubmit={handleSaveVehicle}
+        form={vehicleFormValue}
+        onChange={handleVehicleFormChange}
+      />
 
       <ExpenseEntryModal
         isOpen={showExpenseModal}
@@ -984,79 +922,14 @@ export const AdminDashboard: React.FC = () => {
         accent="green"
       />
 
-      {/* Client Modal */}
-      {showClientModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowClientModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-2xl font-bold text-zinc-900 mb-6">{editingClient ? 'Edit Client' : 'Add New Client'}</h3>
-            <form onSubmit={handleSaveClient} className="space-y-4">
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Name *</label>
-                <input
-                  type="text"
-                  value={clientForm.name}
-                  onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Email *</label>
-                  <input
-                    type="email"
-                    value={clientForm.email}
-                    onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Phone</label>
-                  <input
-                    type="tel"
-                    value={clientForm.phone}
-                    onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Company</label>
-                <input
-                  type="text"
-                  value={clientForm.company}
-                  onChange={(e) => setClientForm({ ...clientForm, company: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Address</label>
-                <input
-                  type="text"
-                  value={clientForm.address}
-                  onChange={(e) => setClientForm({ ...clientForm, address: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Notes</label>
-                <textarea
-                  value={clientForm.notes}
-                  onChange={(e) => setClientForm({ ...clientForm, notes: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none resize-none"
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowClientModal(false)} className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50">Cancel</button>
-                <button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg">Save Client</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ClientFormModal
+        isOpen={showClientModal}
+        title={editingClient ? 'Edit Client' : 'Add New Client'}
+        onClose={() => setShowClientModal(false)}
+        onSubmit={handleSaveClient}
+        form={clientFormValue}
+        onChange={handleClientFormChange}
+      />
 
       {/* Employee Modal */}
       {showEmployeeModal && (

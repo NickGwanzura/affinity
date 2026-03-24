@@ -4,6 +4,7 @@ import { AssetRegister } from './AssetRegister';
 import AccountantClientsView from './accountant/AccountantClientsView';
 import OperatingFundsView from './accountant/OperatingFundsView';
 import ReportsOverviewView from './accountant/ReportsOverviewView';
+import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
 import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
 import PayslipsListView from './shared/PayslipsListView';
@@ -119,6 +120,11 @@ export const AccountantDashboard: React.FC = () => {
   const operatingFundFormValue: OperatingFundFormValue = { ...fundForm };
   const handleOperatingFundFormChange = (updates: Partial<OperatingFundFormValue>) => {
     setFundForm((prev) => ({ ...prev, ...updates }));
+  };
+
+  const clientFormValue: ClientFormValue = { ...clientForm };
+  const handleClientFormChange = (updates: Partial<ClientFormValue>) => {
+    setClientForm((prev) => ({ ...prev, ...updates }));
   };
 
   const handleAddFund = async (e: React.FormEvent) => {
@@ -1323,23 +1329,14 @@ export const AccountantDashboard: React.FC = () => {
         disbursedDescriptionPlaceholder="e.g. Driver trip float"
       />
 
-      {/* Client Modal - Reusing AdminDashboard modal structure */}
-      {showClientModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowClientModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-2xl font-bold text-zinc-900 mb-6">{editingClient ? 'Edit Client' : 'Add New Client'}</h3>
-            <form onSubmit={handleSaveClient} className="space-y-4">
-              <div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Name *</label><input type="text" value={clientForm.name} onChange={(e) => setClientForm({...clientForm, name: e.target.value})} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-500 outline-none" /></div>
-              <div className="grid grid-cols-2 gap-4"><div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Email *</label><input type="email" value={clientForm.email} onChange={(e) => setClientForm({...clientForm, email: e.target.value})} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Phone</label><input type="tel" value={clientForm.phone} onChange={(e) => setClientForm({...clientForm, phone: e.target.value})} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-500 outline-none" /></div></div>
-              <div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Company</label><input type="text" value={clientForm.company} onChange={(e) => setClientForm({...clientForm, company: e.target.value})} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-500 outline-none" /></div>
-              <div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Address</label><input type="text" value={clientForm.address} onChange={(e) => setClientForm({...clientForm, address: e.target.value})} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-500 outline-none" /></div>
-              <div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Notes</label><textarea value={clientForm.notes} onChange={(e) => setClientForm({...clientForm, notes: e.target.value})} rows={3} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-500 outline-none resize-none" /></div>
-              <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowClientModal(false)} className="flex-1 px-6 py-3 rounded-xl border text-zinc-700 font-semibold hover:bg-zinc-50">Cancel</button><button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl">Save Client</button></div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ClientFormModal
+        isOpen={showClientModal}
+        title={editingClient ? 'Edit Client' : 'Add New Client'}
+        onClose={() => setShowClientModal(false)}
+        onSubmit={handleSaveClient}
+        form={clientFormValue}
+        onChange={handleClientFormChange}
+      />
 
       {/* Payslip Modal - Compact version */}
       {showPayslipModal && (

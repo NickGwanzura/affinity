@@ -5,6 +5,7 @@ import { useToast } from '../Toast';
 import { Button, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
 import { toVehicleEditorRecord, type VehicleEditorRecord } from '../../utils/dashboardViewModels';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from '../shared/ExpenseEntryModal';
+import VehicleFormModal, { type VehicleFormValue } from '../shared/VehicleFormModal';
 
 export const VehiclesTab: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
@@ -58,6 +59,18 @@ export const VehiclesTab: React.FC = () => {
     if (updates.location !== undefined) setExpenseLocation(updates.location);
     if (updates.description !== undefined) setExpenseDesc(updates.description);
     if (updates.driverName !== undefined) setExpenseDriver(updates.driverName);
+  };
+
+  const vehicleFormValue: VehicleFormValue = {
+    vin: newVin,
+    model: newModel,
+    price: newPrice,
+  };
+
+  const handleVehicleFormChange = (updates: Partial<VehicleFormValue>) => {
+    if (updates.vin !== undefined) setNewVin(updates.vin);
+    if (updates.model !== undefined) setNewModel(updates.model);
+    if (updates.price !== undefined) setNewPrice(updates.price);
   };
 
   const fetchData = async () => {
@@ -385,50 +398,17 @@ export const VehiclesTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Add/Edit Vehicle Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowAddModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-zinc-900">{editingVehicle ? 'Edit Vehicle' : 'Add Vehicle'}</h3>
-              <button type="button" onClick={() => { setShowAddModal(false); setEditingVehicle(null); }} className="text-zinc-400 hover:text-zinc-600 transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-            <form onSubmit={handleSaveVehicle} className="space-y-5">
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">VIN Number *</label>
-                <input type="text" value={newVin} onChange={(e) => setNewVin(e.target.value)} required placeholder="Enter VIN number" className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none" />
-                <p className="text-xs text-zinc-400 mt-1">Unique vehicle identification number</p>
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Make & Model *</label>
-                <input type="text" value={newModel} onChange={(e) => setNewModel(e.target.value)} required placeholder="e.g. Toyota Land Cruiser V8" className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none" />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Purchase Price (GBP) *</label>
-                <input type="number" step="0.01" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} required placeholder="0.00" min="0" className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none" />
-                <p className="text-xs text-zinc-400 mt-1">Purchase price in British Pounds</p>
-              </div>
-              {!editingVehicle && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                  <p className="text-sm text-blue-800 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span>New vehicles are set to &quot;UK&quot; status by default. You can update the status later.</span>
-                  </p>
-                </div>
-              )}
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors">Cancel</button>
-                <button type="submit" className={`flex-1 ${editingVehicle ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'} text-white font-bold py-3 rounded-xl shadow-lg transition-all`}>
-                  {editingVehicle ? 'Save Changes' : 'Add Vehicle'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <VehicleFormModal
+        isOpen={showAddModal}
+        isEditing={Boolean(editingVehicle)}
+        onClose={() => {
+          setShowAddModal(false);
+          setEditingVehicle(null);
+        }}
+        onSubmit={handleSaveVehicle}
+        form={vehicleFormValue}
+        onChange={handleVehicleFormChange}
+      />
 
       <ExpenseEntryModal
         isOpen={showExpenseModal}
