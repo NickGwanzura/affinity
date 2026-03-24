@@ -317,6 +317,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
   const availableAssets = assets.filter(a => a.status === 'Available').length;
   const borrowedAssets = assets.filter(a => a.status === 'Borrowed').length;
   const pendingRequests = requests.filter(r => r.status === 'Pending').length;
+  const activeTabLabel = activeTab === 'assets' ? 'Assets' : 'Requests';
 
   if (loading) {
     return (
@@ -342,16 +343,30 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard title="Total" value={totalAssets.toString()} />
         <StatCard title="Available" value={availableAssets.toString()} className="bg-green-50" />
         <StatCard title="Borrowed" value={borrowedAssets.toString()} className="bg-blue-50" />
         <StatCard title="Pending" value={pendingRequests.toString()} className="bg-yellow-50" />
       </div>
 
-      {/* Tabs - scrollable on mobile */}
+      <div className="sm:hidden">
+        <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-gray-500">View</label>
+        <select
+          value={activeTab}
+          onChange={(event) => setActiveTab(event.target.value as 'assets' | 'requests')}
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          aria-label="Select asset register section"
+        >
+          <option value="assets">Assets</option>
+          <option value="requests">Requests</option>
+        </select>
+        <p className="mt-2 text-sm text-gray-500">Currently viewing {activeTabLabel.toLowerCase()}.</p>
+      </div>
+
+      {/* Tabs - desktop */}
       <div className="border-b border-gray-200 -mx-3 px-3 sm:mx-0 sm:px-0">
-        <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
+        <nav className="-mb-px hidden sm:flex space-x-4 sm:space-x-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('assets')}
             className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
@@ -393,7 +408,42 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
               icon={defaultIcons.folder}
             />
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              <div className="space-y-3 md:hidden">
+                {assets.map((asset) => (
+                  <div key={asset.id} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-base font-semibold text-gray-900">{asset.name}</p>
+                        <p className="mt-1 text-sm text-gray-500">{asset.category}</p>
+                        {asset.description && <p className="mt-2 text-sm text-gray-600">{asset.description}</p>}
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusColor(asset.status)}`}>
+                        {asset.status}
+                      </span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-gray-600">
+                      <p><span className="font-semibold text-gray-900">Serial:</span> {asset.serial_number || '-'}</p>
+                      <p><span className="font-semibold text-gray-900">Location:</span> {asset.location || '-'}</p>
+                      <p><span className="font-semibold text-gray-900">Condition:</span> {asset.condition}</p>
+                    </div>
+                    {canEdit && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button size="sm" variant="secondary" onClick={() => handleEditAsset(asset)}>
+                          Edit
+                        </Button>
+                        {isAdmin && (
+                          <Button size="sm" variant="danger" onClick={() => handleDeleteAsset(asset)}>
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -444,7 +494,8 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -467,7 +518,61 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
               icon={defaultIcons.folder}
             />
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              <div className="space-y-3 md:hidden">
+                {requests.map((request) => (
+                  <div key={request.id} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-base font-semibold text-gray-900">{request.asset_name || 'Unknown'}</p>
+                        <p className="mt-1 text-sm text-gray-500">{request.asset_category || 'Asset request'}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusColor(request.status)}`}>
+                        {request.status}
+                      </span>
+                    </div>
+                    <div className="mt-4 space-y-2 text-sm text-gray-600">
+                      <p><span className="font-semibold text-gray-900">Requested by:</span> {request.requested_by}</p>
+                      <p><span className="font-semibold text-gray-900">Department:</span> {request.requester_department || '-'}</p>
+                      <p><span className="font-semibold text-gray-900">Request date:</span> {request.request_date ? new Date(request.request_date).toLocaleDateString() : '-'}</p>
+                      <p><span className="font-semibold text-gray-900">Take date:</span> {request.requested_take_date || '-'}</p>
+                      <p><span className="font-semibold text-gray-900">Return date:</span> {request.expected_return_date || '-'}</p>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {canEdit && request.status === 'Pending' && (
+                        <>
+                          <Button size="sm" onClick={() => handleRequestAction(request, 'approve')}>
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="danger" onClick={() => handleRequestAction(request, 'reject')}>
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                      {canEdit && request.status === 'Approved' && (
+                        <Button size="sm" onClick={() => handleRequestAction(request, 'take')}>
+                          Mark Taken
+                        </Button>
+                      )}
+                      {canEdit && request.status === 'Taken' && (
+                        <Button size="sm" onClick={() => handleRequestAction(request, 'return')}>
+                          Mark Returned
+                        </Button>
+                      )}
+                      <Button size="sm" variant="secondary" onClick={() => handleEditRequest(request)}>
+                        Edit
+                      </Button>
+                      {isAdmin && (
+                        <Button size="sm" variant="danger" onClick={() => handleDeleteRequest(request)}>
+                          Delete
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -559,7 +664,8 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -619,7 +725,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700">Status</label>
                   <select
@@ -656,7 +762,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Purchase Date</label>
                   <input
@@ -725,7 +831,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700">Email</label>
                   <input
@@ -745,7 +851,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Requested Take Date</label>
                   <input

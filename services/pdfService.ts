@@ -74,6 +74,7 @@ const FOOTER_BOTTOM_MARGIN = 12;
 const FOOTER_CONTENT_MAX_WIDTH = 176;
 const FOOTER_DISCLAIMER_MAX_WIDTH = 180;
 const TITLE_BLOCK_MAX_WIDTH = 78;
+const CENTERED_TITLE_MAX_WIDTH = 120;
 const HARDCODED_PDF_LOGO_URL = affinityLogoUrl;
 const LIABILITY_DISCLAIMER =
   'Liability Disclaimer: Affinity Logistics acts as a logistics and facilitation service provider for the transportation of vehicles, goods, and cargo. While we take all reasonable care in handling and coordinating shipments, Affinity Logistics shall not be held liable for any loss, damage, or deterioration of goods or vehicles during transit, shipping, handling, storage, or customs processes. Clients are strongly encouraged to obtain appropriate transit or marine insurance for their cargo or vehicles where possible. Any claims relating to damage, loss, or delays must be directed to the relevant shipping line or insurance provider where coverage exists.';
@@ -540,22 +541,38 @@ class PDFBuilder {
   // Title & Separator
   // -------------------------------------------------------------------------
 
-  addTitle(text: string): this {
+  addTitle(
+    text: string,
+    options?: {
+      align?: 'center' | 'right';
+      maxWidth?: number;
+      fontSize?: number;
+      charSpace?: number;
+      lineHeight?: number;
+      topY?: number;
+    }
+  ): this {
     const { doc } = this;
+    const align = options?.align || 'center';
+    const maxWidth = options?.maxWidth || (align === 'center' ? CENTERED_TITLE_MAX_WIDTH : TITLE_BLOCK_MAX_WIDTH);
     const isCompactTitle = text.length > 16;
-    const titleFontSize = isCompactTitle ? 19 : FONT_SIZES.XXLARGE;
-    const titleCharSpace = isCompactTitle ? 0.8 : 2.0;
-    const titleLineHeight = isCompactTitle ? 7.4 : 8.2;
-    const titleLines = doc.splitTextToSize(text, TITLE_BLOCK_MAX_WIDTH);
-    const titleTopY = 24;
+    const defaultFontSize = align === 'center'
+      ? (isCompactTitle ? 16 : 18)
+      : (isCompactTitle ? 19 : FONT_SIZES.XXLARGE);
+    const titleFontSize = options?.fontSize || defaultFontSize;
+    const titleCharSpace = options?.charSpace ?? (align === 'center' ? (isCompactTitle ? 0.2 : 0.6) : (isCompactTitle ? 0.8 : 2.0));
+    const titleLineHeight = options?.lineHeight || (align === 'center' ? (isCompactTitle ? 6.3 : 6.9) : (isCompactTitle ? 7.4 : 8.2));
+    const titleTopY = options?.topY || (align === 'center' ? Math.max(this.headerBottomY + 6, 30) : 24);
+    const titleLines = doc.splitTextToSize(text, maxWidth);
     const titleBottomY = titleTopY + (titleLines.length - 1) * titleLineHeight;
     const separatorY = Math.max(this.headerBottomY + 4, titleBottomY + 7, LAYOUT.SEPARATOR_Y);
+    const titleX = align === 'center' ? LAYOUT.PAGE_WIDTH / 2 : LAYOUT.MARGIN_RIGHT;
 
     doc.setFontSize(titleFontSize);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.setCharSpace(titleCharSpace);
-    doc.text(titleLines, LAYOUT.MARGIN_RIGHT, titleTopY, { align: 'right', maxWidth: TITLE_BLOCK_MAX_WIDTH });
+    doc.text(titleLines, titleX, titleTopY, { align, maxWidth });
     doc.setCharSpace(0);
 
     // Separator line
@@ -1105,7 +1122,7 @@ export const generateQuotePDF = async (
     // Build PDF
     await builder.addLogoWatermark();
     (await builder.addHeader())
-      .addTitle('QUOTATION')
+      .addTitle('QUOTATION', { align: 'right' })
       .addMetadataSection(
         ['Quote Number:', 'Issue Date:', 'Valid Until:', 'Currency:', 'Status:'],
         [
@@ -1196,7 +1213,7 @@ export const generateInvoicePDF = async (
     // Build PDF
     await builder.addLogoWatermark();
     (await builder.addHeader())
-      .addTitle('INVOICE')
+      .addTitle('INVOICE', { align: 'right' })
       .addInvoiceBanner(sanitizedInvoice)
       .addMetadataSection(
         ['Invoice Number:', 'Invoice Type:', 'Issue Date:', 'Due Date:', 'Currency:', 'Status:', ...(sanitizedInvoice.batch ? ['Batch:'] : [])],

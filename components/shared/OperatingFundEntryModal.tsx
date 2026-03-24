@@ -87,7 +87,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           {typeSelectorVariant === 'cards' ? (
             <div>
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Transaction Type *</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => onChange({ type: 'Received' })}
@@ -117,7 +117,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-zinc-700 mb-2 block">Type *</label>
                 <select
@@ -147,7 +147,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'cards' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount *</label>
                 <input
@@ -179,7 +179,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'select' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount *</label>
                 <input
@@ -277,7 +277,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'select' && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-zinc-700 mb-2 block">Reference</label>
                 <input

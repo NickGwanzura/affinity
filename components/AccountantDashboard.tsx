@@ -307,6 +307,22 @@ export const AccountantDashboard: React.FC = () => {
     [drivers, expenses, operatingFunds, vehicles],
   );
 
+  const accountantTabOptions: Array<{
+    id: 'overview' | 'invoices' | 'expenses' | 'payments' | 'reports' | 'clients' | 'payslips' | 'operating-funds' | 'expense-reports' | 'assets';
+    label: string;
+  }> = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'invoices', label: 'Invoices' },
+    { id: 'expenses', label: 'Expenses' },
+    { id: 'payments', label: 'Payments' },
+    { id: 'reports', label: 'Reports' },
+    { id: 'clients', label: 'Clients' },
+    { id: 'payslips', label: 'Payslips' },
+    { id: 'operating-funds', label: 'Operating Funds' },
+    { id: 'expense-reports', label: 'Expense Reports' },
+    { id: 'assets', label: 'Asset Register' },
+  ];
+
   // Merged client list: DB clients + unique clients extracted from invoices
   const mergedClients = useMemo(() => {
     const dbClientNames = new Set(clients.map(c => c.name.toLowerCase().trim()));
@@ -795,18 +811,31 @@ export const AccountantDashboard: React.FC = () => {
       {/* Tabs */}
       <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
         <div className="border-b border-zinc-200 bg-zinc-50">
-          <div className="flex gap-1 p-2 flex-wrap">
-            {(['overview', 'invoices', 'expenses', 'payments', 'reports', 'clients', 'payslips', 'operating-funds', 'expense-reports', 'assets'] as const).map((tab) => (
+          <div className="p-3 sm:hidden">
+            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">Section</label>
+            <select
+              value={activeTab}
+              onChange={(event) => setActiveTab(event.target.value as typeof activeTab)}
+              className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              aria-label="Select accountant dashboard section"
+            >
+              {accountantTabOptions.map((tab) => (
+                <option key={tab.id} value={tab.id}>{tab.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="hidden gap-1 p-2 flex-wrap sm:flex">
+            {accountantTabOptions.map((tab) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
                 className={`px-6 py-3 rounded-xl text-sm font-bold capitalize transition-all ${
-                  activeTab === tab
+                  activeTab === tab.id
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-zinc-500 hover:text-zinc-900'
                 }`}
               >
-                {tab === 'operating-funds' ? 'Operating Funds' : tab === 'expense-reports' ? 'Expense Reports' : tab === 'assets' ? 'Asset Register' : tab}
+                {tab.label}
               </button>
             ))}
           </div>

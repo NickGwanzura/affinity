@@ -91,7 +91,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
             </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Amount</label>
               <input
@@ -119,7 +119,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Category</label>
               <select

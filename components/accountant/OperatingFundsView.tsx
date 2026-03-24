@@ -27,19 +27,19 @@ export const OperatingFundsView: React.FC<OperatingFundsViewProps> = ({
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex justify-between items-center flex-wrap gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-bold text-zinc-900">Operating Funds</h3>
-        <div className="flex items-center gap-3 flex-wrap">
-          <Button size="sm" variant="secondary" onClick={onExportDriverFundsReport}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+          <Button size="sm" variant="secondary" onClick={onExportDriverFundsReport} className="w-full sm:w-auto">
             Export Driver Funds PDF
           </Button>
-          <Button size="sm" onClick={onOpenFundModal}>
+          <Button size="sm" onClick={onOpenFundModal} className="w-full sm:w-auto">
             Add Entry
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
           <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Total Received</p>
           <p className="text-2xl font-black text-emerald-700 mt-1">${totalReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>

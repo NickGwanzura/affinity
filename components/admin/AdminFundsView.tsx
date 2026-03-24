@@ -20,7 +20,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
   onExportDriverFundsReport,
 }) => (
   <div className="space-y-6">
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-3xl text-white shadow-lg">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -64,9 +64,9 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
         subtitle="Keep a live view of what each driver has received, spent, and still has available."
         emptyMessage="No driver allocations have been recorded yet."
         action={(
-          <Button size="sm" onClick={onExportDriverFundsReport}>
-            Export Driver Funds PDF
-          </Button>
+            <Button size="sm" onClick={onExportDriverFundsReport} className="w-full sm:w-auto">
+              Export Driver Funds PDF
+            </Button>
         )}
       />
 

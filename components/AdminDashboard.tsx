@@ -606,6 +606,56 @@ export const AdminDashboard: React.FC = () => {
     );
   }
 
+  const adminViewOptions: Array<{
+    id: 'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'assets';
+    label: string;
+    activeClasses: string;
+    icon: React.ReactNode;
+  }> = [
+    {
+      id: 'dashboard',
+      label: 'Fleet',
+      activeClasses: 'bg-blue-600 text-white',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
+    },
+    {
+      id: 'reports',
+      label: 'Reports',
+      activeClasses: 'bg-purple-600 text-white',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+    },
+    {
+      id: 'clients',
+      label: 'Clients',
+      activeClasses: 'bg-green-600 text-white',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+    },
+    {
+      id: 'employees',
+      label: 'Employees',
+      activeClasses: 'bg-orange-600 text-white',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+    },
+    {
+      id: 'payslips',
+      label: 'Payslips',
+      activeClasses: 'bg-pink-600 text-white',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+    },
+    {
+      id: 'funds',
+      label: 'Operating Funds',
+      activeClasses: 'bg-emerald-600 text-white',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+    },
+    {
+      id: 'assets',
+      label: 'Asset Register',
+      activeClasses: 'bg-purple-600 text-white',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>,
+    },
+  ];
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700 font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -613,56 +663,32 @@ export const AdminDashboard: React.FC = () => {
           <h2 className="text-3xl font-black text-zinc-900 tracking-tight">Admin Dashboard</h2>
           <p className="text-zinc-500 font-medium">Fleet, clients, employees & payroll management</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap overflow-x-auto pb-2">
-          <button
-            onClick={() => setActiveView('dashboard')}
-            className={`${activeView === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-            Fleet
-          </button>
-          <button
-            onClick={() => setActiveView('reports')}
-            className={`${activeView === 'reports' ? 'bg-purple-600 text-white' : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            Reports
-          </button>
-          <button
-            onClick={() => setActiveView('clients')}
-            className={`${activeView === 'clients' ? 'bg-green-600 text-white' : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-            Clients
-          </button>
-          <button
-            onClick={() => setActiveView('employees')}
-            className={`${activeView === 'employees' ? 'bg-orange-600 text-white' : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-            Employees
-          </button>
-          <button
-            onClick={() => setActiveView('payslips')}
-            className={`${activeView === 'payslips' ? 'bg-pink-600 text-white' : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            Payslips
-          </button>
-          <button
-            onClick={() => setActiveView('funds')}
-            className={`${activeView === 'funds' ? 'bg-emerald-600 text-white' : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-            Operating Funds
-          </button>
-          <button
-            onClick={() => setActiveView('assets')}
-            className={`${activeView === 'assets' ? 'bg-purple-600 text-white' : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-            Asset Register
-          </button>
+        <div className="w-full md:w-auto">
+          <div className="md:hidden">
+            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">Section</label>
+            <select
+              value={activeView}
+              onChange={(event) => setActiveView(event.target.value as typeof activeView)}
+              className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              aria-label="Select admin dashboard section"
+            >
+              {adminViewOptions.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="hidden items-center gap-2 flex-wrap overflow-x-auto pb-2 md:flex">
+            {adminViewOptions.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => setActiveView(option.id)}
+                className={`${activeView === option.id ? option.activeClasses : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
+              >
+                {option.icon}
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

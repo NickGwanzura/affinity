@@ -93,12 +93,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
           isActive={isSideNavExpanded}
           aria-expanded={isSideNavExpanded}
         />
-        <HeaderName href="#" prefix="" onClick={e => e.preventDefault()} style={{ fontWeight: 700, letterSpacing: '0.02em' }}>
+        <HeaderName
+          href="#"
+          prefix=""
+          onClick={e => e.preventDefault()}
+          style={{ fontWeight: 700, letterSpacing: '0.02em', maxWidth: 'calc(100vw - 9.5rem)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >
           Affinity&nbsp;<span style={{ color: 'var(--cds-link-inverse, #78a9ff)', fontWeight: 400 }}>Logistics</span>
         </HeaderName>
 
         {/* Desktop navigation */}
-        <HeaderNavigation aria-label="Affinity Logistics navigation">
+        <HeaderNavigation aria-label="Affinity Logistics navigation" className="hidden lg:flex">
           {visible.map(({ id, label }) => (
             <HeaderMenuItem
               key={id}
@@ -114,7 +119,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
         <HeaderGlobalBar>
           {/* User identity chip */}
           <div
-            className="hidden lg:flex"
+            className="hidden xl:flex"
             style={{
               alignItems: 'center',
               gap: '0.5rem',
@@ -146,6 +151,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
             aria-label={isLoggingOut ? 'Signing out…' : 'Logout'}
             onClick={handleLogout}
             disabled={isLoggingOut}
+            className="hidden md:flex"
           >
             <Logout size={20} />
           </HeaderGlobalAction>
@@ -157,16 +163,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
             ref={userPanelRef}
             role="dialog"
             aria-label="Account details"
+            className="fixed left-2 right-2 top-14 sm:left-auto sm:right-2"
             style={{
-              position: 'fixed',
-              top: '3.5rem',
-              right: '0.5rem',
-              width: 'min(280px, calc(100vw - 1rem))',
+              width: 'min(320px, calc(100vw - 1rem))',
               background: 'var(--cds-layer-01, #f4f4f4)',
               border: '1px solid var(--cds-border-subtle, #e0e0e0)',
               zIndex: 8000,
               padding: '1rem',
               boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+              borderRadius: '0.75rem',
             }}
           >
             <p style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -182,6 +187,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
               <Tag type={roleTagType[user.role] || 'gray'}>{user.role}</Tag>
               <Tag type={user.status === 'Active' ? 'green' : 'gray'}>{user.status}</Tag>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-md border border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer,#fff)] px-4 py-3 text-sm font-semibold text-[var(--cds-text-primary,#161616)] transition-colors hover:bg-[var(--cds-layer-hover,#e8e8e8)] md:hidden"
+            >
+              {isLoggingOut ? 'Signing out…' : 'Sign out'}
+            </button>
           </div>
         )}
 
@@ -193,6 +206,18 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
           isPersistent={false}
         >
           <SideNavItems>
+            <div className="border-b border-[var(--cds-border-subtle,#393939)] px-4 py-4 text-[var(--cds-text-on-color,#fff)] lg:hidden">
+              <p className="text-xs uppercase tracking-[0.12em]" style={{ color: 'rgba(244, 244, 244, 0.7)' }}>Signed in as</p>
+              <p className="mt-2 text-sm font-semibold">{user.name}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Tag type={roleTagType[user.role] || 'gray'} size="sm">
+                  {user.role}
+                </Tag>
+                <Tag type={user.status === 'Active' ? 'green' : 'gray'} size="sm">
+                  {user.status}
+                </Tag>
+              </div>
+            </div>
             {visible.map(({ id, label, Icon }) => (
               <SideNavLink
                 key={id}
