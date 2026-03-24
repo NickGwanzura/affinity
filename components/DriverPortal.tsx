@@ -15,6 +15,7 @@ import { EXCHANGE_RATES } from '../constants';
 import { supabase } from '../services/supabaseService';
 import { supabaseClient } from '../services/supabaseClient';
 import { Button, StatCard } from './ui';
+import { getDriverIdentityAliases } from '../utils/driverIdentity';
 
 type DriverLedgerEntry = {
   id: string;
@@ -63,25 +64,46 @@ export const DriverPortal: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const uniqueById = <T extends { id: string }>(items: T[]) => {
+    const seen = new Set<string>();
+    return items.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  };
+
   const loadPortalData = async () => {
     try {
       setLoading(true);
       setUploadError('');
 
       const session = await supabase.getSession();
-      const driverName = session?.user?.name?.trim();
+      const driverAliases = getDriverIdentityAliases(session?.user);
+      const driverName = session?.user?.name?.trim() || driverAliases[0];
 
-      if (!driverName) {
+      if (!driverName || driverAliases.length === 0) {
         throw new Error('Unable to load your driver profile. Please sign in again.');
       }
 
       setCurrentDriver(driverName);
 
-      const [vehicleData, expenseData, fundData] = await Promise.all([
+      const [vehicleData, expenseDataGroups, fundDataGroups] = await Promise.all([
         supabase.getVehicles(),
-        supabase.getExpensesByDriver(driverName),
-        supabase.getOperatingFundsByRecipient(driverName).catch(() => [] as OperatingFund[]),
+        Promise.all(
+          driverAliases.map((alias) =>
+            supabase.getExpensesByDriver(alias).catch(() => [] as Expense[]),
+          ),
+        ),
+        Promise.all(
+          driverAliases.map((alias) =>
+            supabase.getOperatingFundsByRecipient(alias).catch(() => [] as OperatingFund[]),
+          ),
+        ),
       ]);
+
+      const expenseData = uniqueById(expenseDataGroups.flat());
+      const fundData = uniqueById(fundDataGroups.flat());
 
       setVehicles(vehicleData);
       setDriverExpenses(expenseData);

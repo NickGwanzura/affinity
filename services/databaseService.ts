@@ -390,7 +390,7 @@ export async function getExpensesByDriver(driverName: string): Promise<Expense[]
     const rows = await sql`
       SELECT *
       FROM expenses
-      WHERE LOWER(COALESCE(driver_name, '')) = LOWER(${driverName})
+      WHERE LOWER(TRIM(COALESCE(driver_name, ''))) = LOWER(TRIM(${driverName}))
       ORDER BY created_at DESC
     `;
     return rows as Expense[];
@@ -2651,7 +2651,7 @@ export async function getOperatingFundsByRecipient(recipient: string): Promise<O
     const rows = await sql`
       SELECT id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
       FROM operating_funds
-      WHERE LOWER(COALESCE(recipient, '')) = LOWER(${recipient})
+      WHERE LOWER(TRIM(COALESCE(recipient, ''))) = LOWER(TRIM(${recipient}))
       ORDER BY date DESC, created_at DESC
     `;
     return (rows || []) as OperatingFund[];

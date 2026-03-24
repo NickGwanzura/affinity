@@ -1,5 +1,6 @@
 import type { AppUser, Currency, Expense, OperatingFund, Vehicle } from '../types';
 import { EXCHANGE_RATES } from '../constants';
+import { createDriverIdentityNameMap, normalizeDriverIdentity } from './driverIdentity';
 
 export interface DriverFundRow {
   id: string;
@@ -35,23 +36,13 @@ export interface DriverFundsReportData {
   };
 }
 
-const normalizeName = (value?: string | null) => (value || '').trim().toLowerCase();
-
 export function buildDriverFundsReportData(
   expenses: Expense[],
   operatingFunds: OperatingFund[],
   drivers: AppUser[] = [],
   vehicles: Vehicle[] = [],
 ): DriverFundsReportData {
-  const driverNameMap = new Map<string, string>();
-  drivers
-    .filter((driver) => driver.role === 'Driver')
-    .forEach((driver) => {
-      const normalized = normalizeName(driver.name);
-      if (normalized) {
-        driverNameMap.set(normalized, driver.name.trim());
-      }
-    });
+  const driverNameMap = createDriverIdentityNameMap(drivers);
 
   const vehicleLabelMap = new Map(
     vehicles.map((vehicle) => [vehicle.id, `${vehicle.make_model} (${vehicle.vin_number})`]),
@@ -60,7 +51,7 @@ export function buildDriverFundsReportData(
   const canonicalDriverName = (value?: string | null) => {
     const trimmed = (value || '').trim();
     if (!trimmed) return '';
-    return driverNameMap.get(normalizeName(trimmed)) || trimmed;
+    return driverNameMap.get(normalizeDriverIdentity(trimmed)) || trimmed;
   };
 
   const allocationRows: DriverFundRow[] = [];
