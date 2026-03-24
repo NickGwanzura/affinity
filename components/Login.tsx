@@ -4,29 +4,24 @@ import {
   Form,
   TextInput,
   PasswordInput,
-  Select,
-  SelectItem,
   InlineNotification,
   Stack,
   Tag,
 } from '@carbon/react';
-import { Login as LoginIcon, Email, ArrowRight, Warning } from '@carbon/icons-react';
+import { Login as LoginIcon, Email } from '@carbon/icons-react';
 import { authService } from '../services/authService';
-import { supabase } from '../services/supabaseService';
-import { AuthSession, UserRole } from '../types';
+import { AuthSession } from '../types';
 
 interface LoginProps {
   onLogin: (session: AuthSession) => void;
 }
 
-type Mode = 'login' | 'register' | 'forgot';
+type Mode = 'login' | 'forgot';
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [mode, setMode]         = useState<Mode>('login');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName]         = useState('');
-  const [role, setRole]         = useState<UserRole>('Driver');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const [success, setSuccess]   = useState('');
@@ -51,25 +46,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      await supabase.createRegistrationRequest({ name, email, role });
-      setSuccess('Access request submitted. An administrator will approve it and send you an invite.');
-      setName('');
-      setEmail('');
-      setRole('Driver');
-      setTimeout(() => reset('login'), 3500);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -88,20 +64,25 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const modeTitle: Record<Mode, string> = {
     login:    'Sign in',
-    register: 'Request access',
     forgot:   'Reset password',
   };
 
   const submitLabel: Record<Mode, string> = {
     login:    loading ? 'Signing in…' : 'Sign in',
-    register: loading ? 'Submitting…' : 'Submit request',
     forgot:   loading ? 'Sending…'    : 'Send reset email',
   };
 
-  const onSubmit = mode === 'login' ? handleLogin : mode === 'forgot' ? handleForgot : handleRegister;
+  const onSubmit = mode === 'login' ? handleLogin : handleForgot;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'IBM Plex Sans, sans-serif' }}>
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '100dvh',
+        fontFamily: 'IBM Plex Sans, sans-serif',
+        background: 'var(--cds-background, #f4f4f4)',
+      }}
+    >
       {/* ── Left: Branding panel ── */}
       <div
         style={{
@@ -184,18 +165,49 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--cds-background, #f4f4f4)',
-        padding: '2rem',
+        padding: '1rem',
       }}>
-        <div style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{ width: '100%', maxWidth: '26rem' }}>
+          {/* Mobile brand card */}
+          <div
+            className="md:hidden"
+            style={{
+              marginBottom: '1rem',
+              background: 'linear-gradient(160deg, #001141 0%, #0043ce 60%, #0f62fe 100%)',
+              padding: '1.25rem',
+              color: '#fff',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.75rem', letterSpacing: '0.18em', color: '#a6c8ff', textTransform: 'uppercase' }}>
+                  Affinity Logistics
+                </div>
+                <h2 style={{ fontSize: '1.375rem', fontWeight: 700, margin: '0.5rem 0 0', lineHeight: 1.2 }}>
+                  Fleet access for every trip.
+                </h2>
+              </div>
+              <Tag type="blue">Carbon UI</Tag>
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: 'var(--cds-layer, #ffffff)',
+              padding: '1.25rem',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
+            }}
+          >
           {/* Mode tabs */}
-          <div style={{ display: 'flex', gap: '0', marginBottom: '2rem', borderBottom: '1px solid var(--cds-border-subtle-01, #e0e0e0)' }}>
-            {(['login', 'register', 'forgot'] as Mode[]).map(m => (
+          <div style={{ display: 'flex', gap: '0', marginBottom: '1.5rem', borderBottom: '1px solid var(--cds-border-subtle-01, #e0e0e0)' }}>
+            {(['login', 'forgot'] as Mode[]).map(m => (
               <button
                 key={m}
                 type="button"
                 onClick={() => reset(m)}
                 style={{
-                  padding: '0.75rem 1rem',
+                  flex: 1,
+                  padding: '0.875rem 0.75rem',
                   fontSize: '0.875rem',
                   fontWeight: mode === m ? 600 : 400,
                   color: mode === m ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-text-secondary, #525252)',
@@ -209,7 +221,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   fontFamily: 'IBM Plex Sans, sans-serif',
                 }}
               >
-                {m === 'login' ? 'Sign in' : m === 'register' ? 'Request access' : 'Reset password'}
+                {m === 'login' ? 'Sign in' : 'Reset password'}
               </button>
             ))}
           </div>
@@ -218,11 +230,22 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             fontSize: '1.75rem',
             fontWeight: 300,
             color: 'var(--cds-text-primary, #161616)',
-            marginBottom: '1.75rem',
+            marginBottom: '1.25rem',
             lineHeight: 1.25,
           }}>
             {modeTitle[mode]}
           </h3>
+
+          <p style={{
+            fontSize: '0.875rem',
+            color: 'var(--cds-text-secondary, #525252)',
+            marginBottom: '1.5rem',
+            lineHeight: 1.55,
+          }}>
+            {mode === 'login'
+              ? 'Sign in with your approved company account to access the logistics workspace.'
+              : 'We will send reset instructions to your email address if an account exists.'}
+          </p>
 
           {/* Notifications */}
           {error && (
@@ -252,30 +275,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
           <Form onSubmit={onSubmit}>
             <Stack gap={6}>
-              {mode === 'register' && (
-                <TextInput
-                  id="login-name"
-                  labelText="Full name"
-                  placeholder="John Smith"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  required
-                />
-              )}
-
-              {mode === 'register' && (
-                <Select
-                  id="login-role"
-                  labelText="Role"
-                  value={role}
-                  onChange={e => setRole(e.target.value as UserRole)}
-                >
-                  <SelectItem value="Driver"     text="Driver" />
-                  <SelectItem value="Manager"    text="Manager" />
-                  <SelectItem value="Accountant" text="Accountant" />
-                </Select>
-              )}
-
               <TextInput
                 id="login-email"
                 labelText="Work email"
@@ -305,16 +304,10 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 </p>
               )}
 
-              {mode === 'register' && (
-                <p style={{ fontSize: '0.875rem', color: 'var(--cds-text-secondary, #525252)', lineHeight: 1.5 }}>
-                  Your request will be reviewed by an administrator who will send you an invite link to set your password.
-                </p>
-              )}
-
               <Button
                 type="submit"
                 disabled={loading}
-                renderIcon={mode === 'login' ? LoginIcon : mode === 'forgot' ? Email : ArrowRight}
+                renderIcon={mode === 'login' ? LoginIcon : Email}
                 size="lg"
                 style={{ width: '100%', maxWidth: '100%' }}
               >
@@ -341,6 +334,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               )}
             </Stack>
           </Form>
+          </div>
         </div>
       </div>
     </div>
