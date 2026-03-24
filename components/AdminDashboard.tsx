@@ -11,14 +11,15 @@ import AdminClientsView from './admin/AdminClientsView';
 import AdminEmployeesView from './admin/AdminEmployeesView';
 import AdminOverviewView from './admin/AdminOverviewView';
 import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
+import EmployeeFormModal, { createEmptyEmployeeForm, toEmployeeFormValue, type EmployeeFormValue } from './shared/EmployeeFormModal';
 import ReportsTab from './admin/ReportsTab';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
 import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
+import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from './shared/PayslipFormModal';
 import PayslipsListView from './shared/PayslipsListView';
 import VehicleFormModal, { type VehicleFormValue } from './shared/VehicleFormModal';
 import { buildDriverFundsReportData } from '../utils/driverFunds';
 import { toVehicleEditorRecord, type VehicleEditorRecord } from '../utils/dashboardViewModels';
-import { getMonthName } from '../utils/formatters';
 
 export const AdminDashboard: React.FC = () => {
   const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
@@ -48,22 +49,12 @@ export const AdminDashboard: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [employeeForm, setEmployeeForm] = useState({
-    name: '', email: '', phone: '', department: '', position: '',
-    base_pay_usd: '', currency: 'USD' as 'USD' | 'NAD' | 'GBP' | 'BWP',
-    employment_type: 'Full-time' as 'Full-time' | 'Part-time' | 'Contract' | 'Intern',
-    date_hired: '', national_id: '', bank_account: '', bank_name: '', tax_number: ''
-  });
+  const [employeeForm, setEmployeeForm] = useState<EmployeeFormValue>(createEmptyEmployeeForm());
 
   // Payslips state
   const [payslips, setPayslips] = useState<Payslip[]>([]);
   const [showPayslipModal, setShowPayslipModal] = useState(false);
-  const [payslipForm, setPayslipForm] = useState({
-    employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(),
-    base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '',
-    tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '',
-    payment_date: '', payment_method: 'Bank Transfer' as string, notes: ''
-  });
+  const [payslipForm, setPayslipForm] = useState<PayslipFormValue>(createEmptyPayslipForm());
 
   // Operating Funds state - Track money received from office and disbursements
   const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
@@ -129,6 +120,14 @@ export const AdminDashboard: React.FC = () => {
   const clientFormValue: ClientFormValue = { ...clientForm };
   const handleClientFormChange = (updates: Partial<ClientFormValue>) => {
     setClientForm((prev) => ({ ...prev, ...updates }));
+  };
+
+  const handleEmployeeFormChange = (updates: Partial<EmployeeFormValue>) => {
+    setEmployeeForm((prev) => ({ ...prev, ...updates }));
+  };
+
+  const handlePayslipFormChange = (updates: Partial<PayslipFormValue>) => {
+    setPayslipForm((prev) => ({ ...prev, ...updates }));
   };
 
   const vehicleFormValue: VehicleFormValue = {
@@ -378,12 +377,7 @@ export const AdminDashboard: React.FC = () => {
       }
       setShowEmployeeModal(false);
       setEditingEmployee(null);
-      setEmployeeForm({
-        name: '', email: '', phone: '', department: '', position: '',
-        base_pay_usd: '', currency: 'USD',
-        employment_type: 'Full-time',
-        date_hired: '', national_id: '', bank_account: '', bank_name: '', tax_number: ''
-      });
+      setEmployeeForm(createEmptyEmployeeForm());
       
       // FIX: Await fetchData and handle refresh errors
       try {
@@ -444,12 +438,7 @@ export const AdminDashboard: React.FC = () => {
       const newPayslip = await supabase.generatePayslip(payload);
       
       setShowPayslipModal(false);
-      setPayslipForm({
-        employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(),
-        base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '',
-        tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '',
-        payment_date: '', payment_method: 'Bank Transfer', notes: ''
-      });
+      setPayslipForm(createEmptyPayslipForm());
       
       // FIX: Await fetchData and handle refresh errors
       try {
@@ -506,26 +495,6 @@ export const AdminDashboard: React.FC = () => {
       console.error('Error generating payslip PDF:', error);
       notifyError('Failed to generate PDF');
     }
-  };
-
-  // Calculate real-time payslip totals
-  const calculatePayslipTotals = () => {
-    const basePay = parseFloat(payslipForm.base_pay) || 0;
-    const overtimePay = (parseFloat(payslipForm.overtime_hours) || 0) * (parseFloat(payslipForm.overtime_rate) || 0);
-    const bonus = parseFloat(payslipForm.bonus) || 0;
-    const allowances = parseFloat(payslipForm.allowances) || 0;
-    const commission = parseFloat(payslipForm.commission) || 0;
-    const grossPay = basePay + overtimePay + bonus + allowances + commission;
-
-    const tax = parseFloat(payslipForm.tax_deduction) || 0;
-    const pension = parseFloat(payslipForm.pension_deduction) || 0;
-    const health = parseFloat(payslipForm.health_insurance) || 0;
-    const otherDeductions = parseFloat(payslipForm.other_deductions) || 0;
-    const totalDeductions = tax + pension + health + otherDeductions;
-
-    const netPay = grossPay - totalDeductions;
-
-    return { grossPay, totalDeductions, netPay, overtimePay };
   };
 
   // Operating Funds handlers
@@ -739,12 +708,7 @@ export const AdminDashboard: React.FC = () => {
           <button
             onClick={() => {
               setEditingEmployee(null);
-              setEmployeeForm({
-                name: '', email: '', phone: '', department: '', position: '',
-                base_pay_usd: '', currency: 'USD',
-                employment_type: 'Full-time',
-                date_hired: '', national_id: '', bank_account: '', bank_name: '', tax_number: ''
-              });
+              setEmployeeForm(createEmptyEmployeeForm());
               setShowEmployeeModal(true);
             }}
             className="bg-orange-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-orange-700 transition-all shadow-xl shadow-orange-100 flex items-center gap-2"
@@ -759,12 +723,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              setPayslipForm({
-                employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(),
-                base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '',
-                tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '',
-                payment_date: '', payment_method: 'Bank Transfer', notes: ''
-              });
+              setPayslipForm(createEmptyPayslipForm());
               setShowPayslipModal(true);
             }}
             className="bg-pink-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-pink-700 transition-all shadow-xl shadow-pink-100 flex items-center gap-2"
@@ -835,21 +794,7 @@ export const AdminDashboard: React.FC = () => {
           employees={employees}
           onEditEmployee={(employee) => {
             setEditingEmployee(employee);
-            setEmployeeForm({
-              name: employee.name,
-              email: employee.email || '',
-              phone: employee.phone || '',
-              department: employee.department || '',
-              position: employee.position,
-              base_pay_usd: employee.base_pay_usd.toString(),
-              currency: employee.currency,
-              employment_type: employee.employment_type,
-              date_hired: employee.date_hired,
-              national_id: employee.national_id || '',
-              bank_account: employee.bank_account || '',
-              bank_name: employee.bank_name || '',
-              tax_number: employee.tax_number || '',
-            });
+            setEmployeeForm(toEmployeeFormValue(employee));
             setShowEmployeeModal(true);
           }}
           onDeleteEmployee={handleDeleteEmployee}
@@ -931,243 +876,24 @@ export const AdminDashboard: React.FC = () => {
         onChange={handleClientFormChange}
       />
 
-      {/* Employee Modal */}
-      {showEmployeeModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowEmployeeModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-3xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-2xl font-bold text-zinc-900 mb-6">{editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h3>
-            <form onSubmit={handleSaveEmployee} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Full Name *</label>
-                  <input type="text" value={employeeForm.name} onChange={(e) => setEmployeeForm({ ...employeeForm, name: e.target.value })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Email *</label>
-                  <input type="email" value={employeeForm.email} onChange={(e) => setEmployeeForm({ ...employeeForm, email: e.target.value })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Phone</label>
-                  <input type="tel" value={employeeForm.phone} onChange={(e) => setEmployeeForm({ ...employeeForm, phone: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Department</label>
-                  <input type="text" value={employeeForm.department} onChange={(e) => setEmployeeForm({ ...employeeForm, department: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Position *</label>
-                  <input type="text" value={employeeForm.position} onChange={(e) => setEmployeeForm({ ...employeeForm, position: e.target.value })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Base Pay (USD) *</label>
-                  <input type="number" step="0.01" value={employeeForm.base_pay_usd} onChange={(e) => setEmployeeForm({ ...employeeForm, base_pay_usd: e.target.value })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Currency</label>
-                  <select value={employeeForm.currency} onChange={(e) => setEmployeeForm({ ...employeeForm, currency: e.target.value as Employee['currency'] })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none">
-                    <option value="USD">USD</option>
-                    <option value="NAD">NAD</option>
-                    <option value="GBP">GBP</option>
-                    <option value="BWP">BWP</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Employment Type</label>
-                  <select value={employeeForm.employment_type} onChange={(e) => setEmployeeForm({ ...employeeForm, employment_type: e.target.value as Employee['employment_type'] })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none">
-                    <option value="Full-time">Full-time</option>
-                    <option value="Part-time">Part-time</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Intern">Intern</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Date Hired *</label>
-                  <input type="date" value={employeeForm.date_hired} onChange={(e) => setEmployeeForm({ ...employeeForm, date_hired: e.target.value })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                </div>
-              </div>
-              <div className="border-t border-zinc-200 pt-4 mt-4">
-                <h4 className="text-sm font-bold text-zinc-700 mb-3">Optional Banking & Tax Details</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold text-zinc-700 mb-2 block">National ID</label>
-                    <input type="text" value={employeeForm.national_id} onChange={(e) => setEmployeeForm({ ...employeeForm, national_id: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-zinc-700 mb-2 block">Tax Number</label>
-                    <input type="text" value={employeeForm.tax_number} onChange={(e) => setEmployeeForm({ ...employeeForm, tax_number: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <label className="text-sm font-semibold text-zinc-700 mb-2 block">Bank Name</label>
-                    <input type="text" value={employeeForm.bank_name} onChange={(e) => setEmployeeForm({ ...employeeForm, bank_name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-zinc-700 mb-2 block">Bank Account</label>
-                    <input type="text" value={employeeForm.bank_account} onChange={(e) => setEmployeeForm({ ...employeeForm, bank_account: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-orange-500 outline-none" />
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowEmployeeModal(false)} className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50">Cancel</button>
-                <button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl shadow-lg">Save Employee</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <EmployeeFormModal
+        isOpen={showEmployeeModal}
+        title={editingEmployee ? 'Edit Employee' : 'Add New Employee'}
+        onClose={() => setShowEmployeeModal(false)}
+        onSubmit={handleSaveEmployee}
+        form={employeeForm}
+        onChange={handleEmployeeFormChange}
+      />
 
-      {/* Payslip Modal */}
-      {showPayslipModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowPayslipModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-2xl font-bold text-zinc-900 mb-6">Generate Payslip</h3>
-            <form onSubmit={handleGeneratePayslip} className="space-y-6">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-3 md:col-span-1">
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Employee *</label>
-                  <select
-                    value={payslipForm.employee_id}
-                    onChange={(e) => {
-                      const empId = e.target.value;
-                      const emp = employees.find(e => e.id === empId);
-                      setPayslipForm({ ...payslipForm, employee_id: empId, base_pay: emp ? emp.base_pay_usd.toString() : '' });
-                    }}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none"
-                  >
-                    <option value="">Select Employee</option>
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.id}>{emp.name} - {emp.position}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Month *</label>
-                  <select value={payslipForm.month} onChange={(e) => setPayslipForm({ ...payslipForm, month: parseInt(e.target.value) })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none">
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                      <option key={m} value={m}>{getMonthName(m)}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Year *</label>
-                  <input type="number" value={payslipForm.year} onChange={(e) => setPayslipForm({ ...payslipForm, year: parseInt(e.target.value) })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none" />
-                </div>
-              </div>
-
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
-                <h4 className="text-sm font-bold text-green-800 mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  Earnings
-                </h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">Base Pay *</label>
-                    <input type="number" step="0.01" value={payslipForm.base_pay} onChange={(e) => setPayslipForm({ ...payslipForm, base_pay: e.target.value })} required className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">OT Hours</label>
-                    <input type="number" step="0.01" value={payslipForm.overtime_hours} onChange={(e) => setPayslipForm({ ...payslipForm, overtime_hours: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">OT Rate</label>
-                    <input type="number" step="0.01" value={payslipForm.overtime_rate} onChange={(e) => setPayslipForm({ ...payslipForm, overtime_rate: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">Bonus</label>
-                    <input type="number" step="0.01" value={payslipForm.bonus} onChange={(e) => setPayslipForm({ ...payslipForm, bonus: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">Allowances</label>
-                    <input type="number" step="0.01" value={payslipForm.allowances} onChange={(e) => setPayslipForm({ ...payslipForm, allowances: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">Commission</label>
-                    <input type="number" step="0.01" value={payslipForm.commission} onChange={(e) => setPayslipForm({ ...payslipForm, commission: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-                <h4 className="text-sm font-bold text-red-800 mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
-                  Deductions
-                </h4>
-                <div className="grid grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">Tax</label>
-                    <input type="number" step="0.01" value={payslipForm.tax_deduction} onChange={(e) => setPayslipForm({ ...payslipForm, tax_deduction: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">Pension</label>
-                    <input type="number" step="0.01" value={payslipForm.pension_deduction} onChange={(e) => setPayslipForm({ ...payslipForm, pension_deduction: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">Health Insurance</label>
-                    <input type="number" step="0.01" value={payslipForm.health_insurance} onChange={(e) => setPayslipForm({ ...payslipForm, health_insurance: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-600 mb-1 block">Other</label>
-                    <input type="number" step="0.01" value={payslipForm.other_deductions} onChange={(e) => setPayslipForm({ ...payslipForm, other_deductions: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
-                <div className="grid grid-cols-3 gap-6 text-center">
-                  <div>
-                    <p className="text-xs text-blue-200 mb-1 uppercase tracking-wide font-semibold">Gross Pay</p>
-                    <p className="text-2xl font-black">${calculatePayslipTotals().grossPay.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-200 mb-1 uppercase tracking-wide font-semibold">Deductions</p>
-                    <p className="text-2xl font-black">-${calculatePayslipTotals().totalDeductions.toLocaleString()}</p>
-                  </div>
-                  <div className="border-l-2 border-white/30 pl-6">
-                    <p className="text-xs text-blue-200 mb-1 uppercase tracking-wide font-semibold">Net Pay</p>
-                    <p className="text-3xl font-black">${calculatePayslipTotals().netPay.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Payment Date</label>
-                  <input type="date" value={payslipForm.payment_date} onChange={(e) => setPayslipForm({ ...payslipForm, payment_date: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Payment Method</label>
-                  <select value={payslipForm.payment_method} onChange={(e) => setPayslipForm({ ...payslipForm, payment_method: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none">
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Cheque">Cheque</option>
-                    <option value="Mobile Money">Mobile Money</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Notes</label>
-                <textarea value={payslipForm.notes} onChange={(e) => setPayslipForm({ ...payslipForm, notes: e.target.value })} rows={2} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none resize-none" />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowPayslipModal(false)} className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50">Cancel</button>
-                <button type="submit" className="flex-1 bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-xl shadow-lg">Generate Payslip</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <PayslipFormModal
+        isOpen={showPayslipModal}
+        title="Generate Payslip"
+        onClose={() => setShowPayslipModal(false)}
+        onSubmit={handleGeneratePayslip}
+        form={payslipForm}
+        onChange={handlePayslipFormChange}
+        employees={employees}
+      />
 
       {/* Delete Vehicle Confirmation Dialog */}
       {showDeleteVehicleDialog && vehicleToDelete && (

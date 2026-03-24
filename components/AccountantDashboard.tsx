@@ -7,6 +7,7 @@ import ReportsOverviewView from './accountant/ReportsOverviewView';
 import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
 import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
+import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from './shared/PayslipFormModal';
 import PayslipsListView from './shared/PayslipsListView';
 import { supabase } from '../services/supabaseService';
 import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
@@ -14,7 +15,7 @@ import { Button, StatCard, StatusBadge, SkeletonStatCards, SkeletonTable } from 
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 import { buildDriverFundsReportData } from '../utils/driverFunds';
-import { formatCurrency as formatMoney, formatDate as formatDateValue, getMonthName } from '../utils/formatters';
+import { formatCurrency as formatMoney, formatDate as formatDateValue } from '../utils/formatters';
 
 export const AccountantDashboard: React.FC = () => {
   const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
@@ -47,12 +48,7 @@ export const AccountantDashboard: React.FC = () => {
   const [clientForm, setClientForm] = useState({
     name: '', email: '', phone: '', address: '', company: '', notes: ''
   });
-  const [payslipForm, setPayslipForm] = useState({
-    employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(),
-    base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '',
-    tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '',
-    payment_date: '', payment_method: 'Bank Transfer' as string, notes: ''
-  });
+  const [payslipForm, setPayslipForm] = useState<PayslipFormValue>(createEmptyPayslipForm());
   
   // Expense Form State
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -125,6 +121,10 @@ export const AccountantDashboard: React.FC = () => {
   const clientFormValue: ClientFormValue = { ...clientForm };
   const handleClientFormChange = (updates: Partial<ClientFormValue>) => {
     setClientForm((prev) => ({ ...prev, ...updates }));
+  };
+
+  const handlePayslipFormChange = (updates: Partial<PayslipFormValue>) => {
+    setPayslipForm((prev) => ({ ...prev, ...updates }));
   };
 
   const handleAddFund = async (e: React.FormEvent) => {
@@ -568,12 +568,7 @@ export const AccountantDashboard: React.FC = () => {
       const newPayslip = await supabase.generatePayslip(payload);
       
       setShowPayslipModal(false);
-      setPayslipForm({
-        employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(),
-        base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '',
-        tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '',
-        payment_date: '', payment_method: 'Bank Transfer', notes: ''
-      });
+      setPayslipForm(createEmptyPayslipForm());
       
       // FIX: Refresh all data and handle errors
       try {
@@ -631,26 +626,6 @@ export const AccountantDashboard: React.FC = () => {
       console.error('Error generating payslip PDF:', error);
       notifyError('Failed to generate PDF');
     }
-  };
-
-  // Calculate real-time payslip totals
-  const calculatePayslipTotals = () => {
-    const basePay = parseFloat(payslipForm.base_pay) || 0;
-    const overtimePay = (parseFloat(payslipForm.overtime_hours) || 0) * (parseFloat(payslipForm.overtime_rate) || 0);
-    const bonus = parseFloat(payslipForm.bonus) || 0;
-    const allowances = parseFloat(payslipForm.allowances) || 0;
-    const commission = parseFloat(payslipForm.commission) || 0;
-    const grossPay = basePay + overtimePay + bonus + allowances + commission;
-
-    const tax = parseFloat(payslipForm.tax_deduction) || 0;
-    const pension = parseFloat(payslipForm.pension_deduction) || 0;
-    const health = parseFloat(payslipForm.health_insurance) || 0;
-    const otherDeductions = parseFloat(payslipForm.other_deductions) || 0;
-    const totalDeductions = tax + pension + health + otherDeductions;
-
-    const netPay = grossPay - totalDeductions;
-
-    return { grossPay, totalDeductions, netPay, overtimePay };
   };
 
   const handleExportPDF = async () => {
@@ -1126,7 +1101,7 @@ export const AccountantDashboard: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-bold text-zinc-900">Payslips</h3>
-                <button onClick={() => { setPayslipForm({ employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(), base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '', tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '', payment_date: '', payment_method: 'Bank Transfer', notes: '' }); setShowPayslipModal(true); }} className="bg-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-pink-700 flex items-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg> Generate Payslip</button>
+                <button onClick={() => { setPayslipForm(createEmptyPayslipForm()); setShowPayslipModal(true); }} className="bg-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-pink-700 flex items-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg> Generate Payslip</button>
               </div>
               <PayslipsListView
                 payslips={payslips}
@@ -1338,27 +1313,15 @@ export const AccountantDashboard: React.FC = () => {
         onChange={handleClientFormChange}
       />
 
-      {/* Payslip Modal - Compact version */}
-      {showPayslipModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowPayslipModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-2xl font-bold text-zinc-900 mb-6">Generate Payslip</h3>
-            <form onSubmit={handleGeneratePayslip} className="space-y-6">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-3 md:col-span-1"><label className="text-sm font-semibold text-zinc-700 mb-2 block">Employee *</label><select value={payslipForm.employee_id} onChange={(e) => { const empId = e.target.value; const emp = employees.find(e => e.id === empId); setPayslipForm({...payslipForm, employee_id: empId, base_pay: emp ? emp.base_pay_usd.toString() : ''}); }} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-pink-500 outline-none"><option value="">Select Employee</option>{employees.map(emp => (<option key={emp.id} value={emp.id}>{emp.name} - {emp.position}</option>))}</select></div>
-                <div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Month *</label><select value={payslipForm.month} onChange={(e) => setPayslipForm({...payslipForm, month: parseInt(e.target.value)})} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-pink-500 outline-none">{Array.from({length: 12}, (_, i) => i + 1).map(m => (<option key={m} value={m}>{getMonthName(m)}</option>))}</select></div>
-                <div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Year *</label><input type="number" value={payslipForm.year} onChange={(e) => setPayslipForm({...payslipForm, year: parseInt(e.target.value)})} required className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-pink-500 outline-none" /></div>
-              </div>
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-4"><h4 className="text-sm font-bold text-green-800 mb-3">Earnings</h4><div className="grid grid-cols-3 gap-4"><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Base Pay *</label><input type="number" step="0.01" value={payslipForm.base_pay} onChange={(e) => setPayslipForm({...payslipForm, base_pay: e.target.value})} required className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">OT Hours</label><input type="number" step="0.01" value={payslipForm.overtime_hours} onChange={(e) => setPayslipForm({...payslipForm, overtime_hours: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">OT Rate</label><input type="number" step="0.01" value={payslipForm.overtime_rate} onChange={(e) => setPayslipForm({...payslipForm, overtime_rate: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Bonus</label><input type="number" step="0.01" value={payslipForm.bonus} onChange={(e) => setPayslipForm({...payslipForm, bonus: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Allowances</label><input type="number" step="0.01" value={payslipForm.allowances} onChange={(e) => setPayslipForm({...payslipForm, allowances: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Commission</label><input type="number" step="0.01" value={payslipForm.commission} onChange={(e) => setPayslipForm({...payslipForm, commission: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div></div></div>
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-4"><h4 className="text-sm font-bold text-red-800 mb-3">Deductions</h4><div className="grid grid-cols-4 gap-4"><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Tax</label><input type="number" step="0.01" value={payslipForm.tax_deduction} onChange={(e) => setPayslipForm({...payslipForm, tax_deduction: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Pension</label><input type="number" step="0.01" value={payslipForm.pension_deduction} onChange={(e) => setPayslipForm({...payslipForm, pension_deduction: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Health Insurance</label><input type="number" step="0.01" value={payslipForm.health_insurance} onChange={(e) => setPayslipForm({...payslipForm, health_insurance: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" /></div><div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Other</label><input type="number" step="0.01" value={payslipForm.other_deductions} onChange={(e) => setPayslipForm({...payslipForm, other_deductions: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" /></div></div></div>
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white"><div className="grid grid-cols-3 gap-6 text-center"><div><p className="text-xs text-blue-200 mb-1 uppercase font-semibold">Gross Pay</p><p className="text-2xl font-black">${calculatePayslipTotals().grossPay.toLocaleString()}</p></div><div><p className="text-xs text-blue-200 mb-1 uppercase font-semibold">Deductions</p><p className="text-2xl font-black">-${calculatePayslipTotals().totalDeductions.toLocaleString()}</p></div><div className="border-l-2 border-white/30 pl-6"><p className="text-xs text-blue-200 mb-1 uppercase font-semibold">Net Pay</p><p className="text-3xl font-black">${calculatePayslipTotals().netPay.toLocaleString()}</p></div></div></div>
-              <div className="grid grid-cols-2 gap-4"><div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Payment Date</label><input type="date" value={payslipForm.payment_date} onChange={(e) => setPayslipForm({...payslipForm, payment_date: e.target.value})} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-pink-500 outline-none" /></div><div><label className="text-sm font-semibold text-zinc-700 mb-2 block">Payment Method</label><select value={payslipForm.payment_method} onChange={(e) => setPayslipForm({...payslipForm, payment_method: e.target.value})} className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-pink-500 outline-none"><option value="Bank Transfer">Bank Transfer</option><option value="Cash">Cash</option><option value="Cheque">Cheque</option><option value="Mobile Money">Mobile Money</option></select></div></div>
-              <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowPayslipModal(false)} className="flex-1 px-6 py-3 rounded-xl border text-zinc-700 font-semibold hover:bg-zinc-50">Cancel</button><button type="submit" className="flex-1 bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-xl">Generate Payslip</button></div>
-            </form>
-          </div>
-        </div>
-      )}
+      <PayslipFormModal
+        isOpen={showPayslipModal}
+        title="Generate Payslip"
+        onClose={() => setShowPayslipModal(false)}
+        onSubmit={handleGeneratePayslip}
+        form={payslipForm}
+        onChange={handlePayslipFormChange}
+        employees={employees}
+      />
 
       <ExpenseEntryModal
         isOpen={showExpenseModal}

@@ -4,6 +4,7 @@ import { supabase } from '../../services/supabaseService';
 import { generatePayslipPDFAndDownload } from '../../services/pdfService';
 import { useToast } from '../Toast';
 import { useConfirm } from '../ConfirmModal';
+import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from '../shared/PayslipFormModal';
 
 export const PayslipsTab: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
@@ -15,16 +16,14 @@ export const PayslipsTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const [showPayslipModal, setShowPayslipModal] = useState(false);
-  const [payslipForm, setPayslipForm] = useState({
-    employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(),
-    base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '',
-    tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '',
-    payment_date: '', payment_method: 'Bank Transfer' as string, notes: ''
-  });
+  const [payslipForm, setPayslipForm] = useState<PayslipFormValue>(createEmptyPayslipForm());
 
   const notifySuccess = (msg: string) => showToast(msg, 'success');
   const notifyError = (msg: string) => showToast(msg, 'error');
   const notifyWarning = (msg: string) => showToast(msg, 'warning');
+  const handlePayslipFormChange = (updates: Partial<PayslipFormValue>) => {
+    setPayslipForm((prev) => ({ ...prev, ...updates }));
+  };
 
   const fetchData = async () => {
     try {
@@ -45,30 +44,8 @@ export const PayslipsTab: React.FC = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const calculatePayslipTotals = () => {
-    const basePay = parseFloat(payslipForm.base_pay) || 0;
-    const overtimePay = (parseFloat(payslipForm.overtime_hours) || 0) * (parseFloat(payslipForm.overtime_rate) || 0);
-    const bonus = parseFloat(payslipForm.bonus) || 0;
-    const allowances = parseFloat(payslipForm.allowances) || 0;
-    const commission = parseFloat(payslipForm.commission) || 0;
-    const grossPay = basePay + overtimePay + bonus + allowances + commission;
-
-    const tax = parseFloat(payslipForm.tax_deduction) || 0;
-    const pension = parseFloat(payslipForm.pension_deduction) || 0;
-    const health = parseFloat(payslipForm.health_insurance) || 0;
-    const otherDeductions = parseFloat(payslipForm.other_deductions) || 0;
-    const totalDeductions = tax + pension + health + otherDeductions;
-
-    return { grossPay, totalDeductions, netPay: grossPay - totalDeductions };
-  };
-
   const openGenerateModal = () => {
-    setPayslipForm({
-      employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(),
-      base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '',
-      tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '',
-      payment_date: '', payment_method: 'Bank Transfer', notes: ''
-    });
+    setPayslipForm(createEmptyPayslipForm());
     setShowPayslipModal(true);
   };
 
@@ -95,12 +72,7 @@ export const PayslipsTab: React.FC = () => {
       };
       await supabase.generatePayslip(payload);
       setShowPayslipModal(false);
-      setPayslipForm({
-        employee_id: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(),
-        base_pay: '', overtime_hours: '', overtime_rate: '', bonus: '', allowances: '', commission: '',
-        tax_deduction: '', pension_deduction: '', health_insurance: '', other_deductions: '',
-        payment_date: '', payment_method: 'Bank Transfer', notes: ''
-      });
+      setPayslipForm(createEmptyPayslipForm());
       try {
         await fetchData();
         notifySuccess('Payslip generated successfully!');
@@ -162,8 +134,6 @@ export const PayslipsTab: React.FC = () => {
       </div>
     );
   }
-
-  const { grossPay, totalDeductions, netPay } = calculatePayslipTotals();
 
   return (
     <div className="space-y-6">
@@ -251,123 +221,15 @@ export const PayslipsTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Generate Payslip Modal */}
-      {showPayslipModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowPayslipModal(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-2xl font-bold text-zinc-900 mb-6">Generate Payslip</h3>
-            <form onSubmit={handleGeneratePayslip} className="space-y-6">
-              {/* Employee, Month, Year */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-3 md:col-span-1">
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Employee *</label>
-                  <select
-                    value={payslipForm.employee_id}
-                    onChange={(e) => {
-                      const empId = e.target.value;
-                      const emp = employees.find(emp => emp.id === empId);
-                      setPayslipForm({ ...payslipForm, employee_id: empId, base_pay: emp ? emp.base_pay_usd.toString() : '' });
-                    }}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none"
-                  >
-                    <option value="">Select Employee</option>
-                    {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name} - {emp.position}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Month *</label>
-                  <select value={payslipForm.month} onChange={(e) => setPayslipForm({ ...payslipForm, month: parseInt(e.target.value) })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none">
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                      <option key={m} value={m}>{new Date(2000, m - 1).toLocaleDateString('en-US', { month: 'long' })}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Year *</label>
-                  <input type="number" value={payslipForm.year} onChange={(e) => setPayslipForm({ ...payslipForm, year: parseInt(e.target.value) })} required className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none" />
-                </div>
-              </div>
-
-              {/* Earnings */}
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
-                <h4 className="text-sm font-bold text-green-800 mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  Earnings
-                </h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Base Pay *</label><input type="number" step="0.01" value={payslipForm.base_pay} onChange={(e) => setPayslipForm({ ...payslipForm, base_pay: e.target.value })} required className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div>
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">OT Hours</label><input type="number" step="0.01" value={payslipForm.overtime_hours} onChange={(e) => setPayslipForm({ ...payslipForm, overtime_hours: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div>
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">OT Rate</label><input type="number" step="0.01" value={payslipForm.overtime_rate} onChange={(e) => setPayslipForm({ ...payslipForm, overtime_rate: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div>
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Bonus</label><input type="number" step="0.01" value={payslipForm.bonus} onChange={(e) => setPayslipForm({ ...payslipForm, bonus: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div>
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Allowances</label><input type="number" step="0.01" value={payslipForm.allowances} onChange={(e) => setPayslipForm({ ...payslipForm, allowances: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div>
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Commission</label><input type="number" step="0.01" value={payslipForm.commission} onChange={(e) => setPayslipForm({ ...payslipForm, commission: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none" /></div>
-                </div>
-              </div>
-
-              {/* Deductions */}
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-                <h4 className="text-sm font-bold text-red-800 mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
-                  Deductions
-                </h4>
-                <div className="grid grid-cols-4 gap-4">
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Tax</label><input type="number" step="0.01" value={payslipForm.tax_deduction} onChange={(e) => setPayslipForm({ ...payslipForm, tax_deduction: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" /></div>
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Pension</label><input type="number" step="0.01" value={payslipForm.pension_deduction} onChange={(e) => setPayslipForm({ ...payslipForm, pension_deduction: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" /></div>
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Health Insurance</label><input type="number" step="0.01" value={payslipForm.health_insurance} onChange={(e) => setPayslipForm({ ...payslipForm, health_insurance: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" /></div>
-                  <div><label className="text-xs font-semibold text-zinc-600 mb-1 block">Other</label><input type="number" step="0.01" value={payslipForm.other_deductions} onChange={(e) => setPayslipForm({ ...payslipForm, other_deductions: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none" /></div>
-                </div>
-              </div>
-
-              {/* Live Totals */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
-                <div className="grid grid-cols-3 gap-6 text-center">
-                  <div>
-                    <p className="text-xs text-blue-200 mb-1 uppercase tracking-wide font-semibold">Gross Pay</p>
-                    <p className="text-2xl font-black">${grossPay.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-200 mb-1 uppercase tracking-wide font-semibold">Deductions</p>
-                    <p className="text-2xl font-black">-${totalDeductions.toLocaleString()}</p>
-                  </div>
-                  <div className="border-l-2 border-white/30 pl-6">
-                    <p className="text-xs text-blue-200 mb-1 uppercase tracking-wide font-semibold">Net Pay</p>
-                    <p className="text-3xl font-black">${netPay.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Details */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Payment Date</label>
-                  <input type="date" value={payslipForm.payment_date} onChange={(e) => setPayslipForm({ ...payslipForm, payment_date: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-zinc-700 mb-2 block">Payment Method</label>
-                  <select value={payslipForm.payment_method} onChange={(e) => setPayslipForm({ ...payslipForm, payment_method: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none">
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Cheque">Cheque</option>
-                    <option value="Mobile Money">Mobile Money</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-zinc-700 mb-2 block">Notes</label>
-                <textarea value={payslipForm.notes} onChange={(e) => setPayslipForm({ ...payslipForm, notes: e.target.value })} rows={2} className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none resize-none" />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowPayslipModal(false)} className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50">Cancel</button>
-                <button type="submit" className="flex-1 bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-xl shadow-lg">Generate Payslip</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <PayslipFormModal
+        isOpen={showPayslipModal}
+        title="Generate Payslip"
+        onClose={() => setShowPayslipModal(false)}
+        onSubmit={handleGeneratePayslip}
+        form={payslipForm}
+        onChange={handlePayslipFormChange}
+        employees={employees}
+      />
 
       <ToastContainer />
       <ConfirmDialog />

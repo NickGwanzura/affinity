@@ -1,9 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  InlineLoading,
+  InlineNotification,
+  Link,
+  Select,
+  SelectItem,
+  Tag,
+  TextArea,
+  TextInput,
+  Tile,
+} from '@carbon/react';
 import { Currency, Expense, ExpenseCategory, OperatingFund, Vehicle, VehicleStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
 import { supabase } from '../services/supabaseService';
 import { supabaseClient } from '../services/supabaseClient';
-import { Button } from './ui';
+import { Button, StatCard } from './ui';
 
 type DriverLedgerEntry = {
   id: string;
@@ -246,6 +257,10 @@ export const DriverPortal: React.FC = () => {
     }
   };
 
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -306,277 +321,339 @@ export const DriverPortal: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="bg-white border border-zinc-200 rounded-3xl shadow-sm p-10 text-center">
-          <div className="w-10 h-10 mx-auto mb-4 rounded-full border-2 border-zinc-300 border-t-zinc-900 animate-spin" />
-          <p className="text-zinc-600 font-medium">Loading your funds and drawdowns...</p>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+        <Tile style={{ padding: '2rem' }}>
+          <div className="flex justify-center">
+            <InlineLoading description="Loading your funds and drawdowns..." status="active" />
+          </div>
+        </Tile>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <section className="bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_35%),linear-gradient(135deg,#111827_0%,#0f172a_45%,#164e63_100%)] rounded-[2rem] p-8 text-white shadow-2xl">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-emerald-200 text-sm uppercase tracking-[0.28em] font-semibold">Driver Funds</p>
-            <h2 className="text-4xl font-black mt-3">Welcome back, {currentDriver}</h2>
-            <p className="text-slate-300 mt-3 max-w-2xl">
-              View every allocation made by admin or accounting, track what you have already spent, and submit the next drawdown from the balance available to you.
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <Tile
+        className="overflow-hidden"
+        style={{
+          padding: '1.5rem',
+          background:
+            'radial-gradient(circle at top left, rgba(69,137,255,0.2), transparent 34%), linear-gradient(135deg, #161616 0%, #262626 48%, #0f62fe 100%)',
+          color: '#ffffff',
+        }}
+      >
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Tag type="blue">Driver Funds</Tag>
+              <Tag type={availableUsd > 0 ? 'green' : 'red'}>
+                {availableUsd > 0 ? 'Ready To Draw' : 'Awaiting Allocation'}
+              </Tag>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black mt-4 break-words">Welcome back, {currentDriver}</h2>
+            <p className="text-sm sm:text-base text-slate-200 mt-3 max-w-3xl leading-6">
+              View every driver-specific allocation from admin or accounting, track what has already been spent, and submit the next drawdown directly from your available balance.
             </p>
           </div>
-          <div className="bg-white/10 border border-white/15 rounded-3xl px-6 py-5 backdrop-blur-sm">
-            <p className="text-slate-300 text-xs uppercase tracking-[0.25em] font-semibold">Available To Draw</p>
-            <p className={`text-4xl font-black mt-2 ${availableUsd >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+
+          <div className="border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4 w-full lg:max-w-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-200">Available To Draw</p>
+            <p className={`text-3xl sm:text-4xl font-black mt-3 ${availableUsd >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
               {formatUsd(availableUsd)}
             </p>
-            <p className="text-slate-300 text-sm mt-2">
-              {availableUsd > 0 ? 'You can submit expenses against this balance now.' : 'No available balance right now. Ask admin or accounting to top up your funds.'}
+            <p className="text-sm text-slate-200 mt-3 leading-5">
+              {availableUsd > 0
+                ? 'You can submit expenses against this balance now.'
+                : 'No balance is available right now. Ask admin or accounting to top up your driver funds.'}
             </p>
           </div>
         </div>
-      </section>
+      </Tile>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <div className="bg-white rounded-3xl border border-zinc-200 p-6 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-zinc-400">Allocated</p>
-          <p className="text-3xl font-black text-zinc-900 mt-3">{formatUsd(allocatedUsd)}</p>
-          <p className="text-sm text-zinc-500 mt-2">
-            {expenseDisbursements.length + driverFunds.length} allocation{expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded for you
-          </p>
-        </div>
-        <div className="bg-white rounded-3xl border border-zinc-200 p-6 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-zinc-400">Spent</p>
-          <p className="text-3xl font-black text-zinc-900 mt-3">{formatUsd(spentUsd)}</p>
-          <p className="text-sm text-zinc-500 mt-2">
-            {drawdowns.length} drawdown{drawdowns.length === 1 ? '' : 's'} submitted from the app
-          </p>
-        </div>
-        <div className="bg-white rounded-3xl border border-zinc-200 p-6 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-zinc-400">Allocations Mix</p>
-          <p className="text-3xl font-black text-zinc-900 mt-3">{formatUsd(allocatedFromExpenseUsd)}</p>
-          <p className="text-sm text-zinc-500 mt-2">
-            Trip-specific disbursements plus {formatUsd(allocatedFromFundsUsd)} from operating fund top-ups
-          </p>
-        </div>
+        <StatCard
+          title="Allocated"
+          value={formatUsd(allocatedUsd)}
+          subtitle={`${expenseDisbursements.length + driverFunds.length} allocation${expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded`}
+          color="blue"
+        />
+        <StatCard
+          title="Spent"
+          value={formatUsd(spentUsd)}
+          subtitle={`${drawdowns.length} drawdown${drawdowns.length === 1 ? '' : 's'} submitted`}
+          color="red"
+        />
+        <StatCard
+          title="Allocation Mix"
+          value={formatUsd(allocatedFromExpenseUsd)}
+          subtitle={`Operating fund top-ups: ${formatUsd(allocatedFromFundsUsd)}`}
+          color="green"
+        />
       </section>
 
-      <section className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-6 border-b border-zinc-200 bg-zinc-50/80">
-            <h3 className="text-2xl font-black text-zinc-900">Submit Drawdown</h3>
-            <p className="text-zinc-500 mt-2">
-              Every expense submitted here is tagged to your driver profile and deducted from your available funds.
-            </p>
-          </div>
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+        <Tile style={{ padding: '1.5rem' }}>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-2xl font-black text-zinc-900">Submit Drawdown</h3>
+              <p className="text-zinc-600 mt-2 leading-6">
+                Every expense submitted here is tagged to your driver profile and deducted from your available funds.
+              </p>
+            </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {success && (
-              <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl border border-emerald-200 font-medium">
-                Expense logged successfully and your drawdown balance has been refreshed.
-              </div>
+              <InlineNotification
+                kind="success"
+                lowContrast
+                hideCloseButton={false}
+                title="Success"
+                subtitle="Expense logged successfully and your drawdown balance has been refreshed."
+                onClose={() => setSuccess(false)}
+              />
             )}
 
             {uploadError && (
-              <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl border border-rose-200 font-medium">
-                {uploadError}
-              </div>
-            )}
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="vehicle-select" className="text-sm font-semibold text-zinc-700 block mb-2">
-                  Vehicle <span className="text-zinc-400 text-xs">(Optional)</span>
-                </label>
-                <select
-                  id="vehicle-select"
-                  value={selectedVehicle}
-                  onChange={(e) => setSelectedVehicle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                >
-                  <option value="">General drawdown</option>
-                  {vehicles.map((vehicle) => (
-                    <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.make_model} ({vehicle.vin_number})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="category-select" className="text-sm font-semibold text-zinc-700 block mb-2">Category</label>
-                <select
-                  id="category-select"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as Exclude<ExpenseCategory, 'Driver Disbursement'>)}
-                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                >
-                  <option value="Fuel">Fuel</option>
-                  <option value="Tolls">Tolls</option>
-                  <option value="Food">Food</option>
-                  <option value="Repairs">Repairs</option>
-                  <option value="Duty">Duty</option>
-                  <option value="Shipping">Shipping</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="md:col-span-2">
-                <label htmlFor="amount-input" className="text-sm font-semibold text-zinc-700 block mb-2">Amount</label>
-                <input
-                  id="amount-input"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  placeholder="0.00"
-                  autoComplete="off"
-                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                />
-              </div>
-              <div>
-                <label htmlFor="currency-select" className="text-sm font-semibold text-zinc-700 block mb-2">Currency</label>
-                <select
-                  id="currency-select"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value as Currency)}
-                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                >
-                  <option value="NAD">NAD</option>
-                  <option value="USD">USD</option>
-                  <option value="GBP">GBP</option>
-                  <option value="BWP">BWP</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="location-select" className="text-sm font-semibold text-zinc-700 block mb-2">Location</label>
-                <select
-                  id="location-select"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value as VehicleStatus)}
-                  className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"
-                >
-                  <option value="UK">UK</option>
-                  <option value="Namibia">Namibia</option>
-                  <option value="Zimbabwe">Zimbabwe</option>
-                  <option value="Botswana">Botswana</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="receipt-input" className="text-sm font-semibold text-zinc-700 block mb-2">
-                  Receipt <span className="text-zinc-400 text-xs">(Optional)</span>
-                </label>
-                <input
-                  id="receipt-input"
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="w-full px-4 py-[0.8rem] rounded-2xl border border-zinc-200 bg-white text-sm file:mr-4 file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:rounded-xl file:font-semibold"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="description-input" className="text-sm font-semibold text-zinc-700 block mb-2">Description</label>
-              <textarea
-                id="description-input"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                placeholder="What is this expense for?"
-                className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none resize-none"
+              <InlineNotification
+                kind="error"
+                lowContrast
+                hideCloseButton={false}
+                title="Could not complete request"
+                subtitle={uploadError}
+                onClose={() => setUploadError('')}
               />
-            </div>
-
-            {previewUrl && (
-              <div className="rounded-3xl border border-zinc-200 p-4 bg-zinc-50">
-                <div className="flex items-center justify-between gap-4 mb-3">
-                  <p className="text-sm font-semibold text-zinc-700">Receipt preview</p>
-                  <Button type="button" variant="danger" size="sm" onClick={clearReceipt}>
-                    Remove
-                  </Button>
-                </div>
-                <img src={previewUrl} alt="Receipt preview" className="max-h-72 rounded-2xl object-contain bg-white border border-zinc-200" />
-              </div>
             )}
 
-            <Button
-              type="submit"
-              fullWidth
-              isLoading={submitting || uploading}
-              disabled={availableUsd <= 0}
-              className="w-full"
-            >
-              Submit Drawdown
-            </Button>
-          </form>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-zinc-200">
-              <h3 className="text-xl font-black text-zinc-900">Latest Activity</h3>
-              <p className="text-zinc-500 mt-1">Allocations and drawdowns tied to your profile</p>
-            </div>
-
-            <div className="divide-y divide-zinc-200">
-              {ledger.length === 0 ? (
-                <div className="p-6 text-zinc-500">
-                  No funds or drawdowns are attached to your profile yet.
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Select
+                    id="vehicle-select"
+                    labelText="Vehicle (Optional)"
+                    value={selectedVehicle}
+                    onChange={(event) => setSelectedVehicle(event.target.value)}
+                  >
+                    <SelectItem value="" text="General drawdown" />
+                    {vehicles.map((vehicle) => (
+                      <SelectItem
+                        key={vehicle.id}
+                        value={vehicle.id}
+                        text={`${vehicle.make_model} (${vehicle.vin_number})`}
+                      />
+                    ))}
+                  </Select>
                 </div>
-              ) : (
-                ledger.slice(0, 8).map((entry) => (
-                  <div key={entry.id} className="p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-black text-zinc-900">{entry.title}</p>
-                        <p className="text-sm text-zinc-600 mt-1">{entry.subtitle}</p>
-                        <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-zinc-500">
-                          <span>{new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                          <span className="w-1 h-1 rounded-full bg-zinc-300" />
-                          <span>{entry.vehicleLabel}</span>
-                          {entry.receiptUrl && (
-                            <>
-                              <span className="w-1 h-1 rounded-full bg-zinc-300" />
-                              <a href={entry.receiptUrl} target="_blank" rel="noreferrer" className="font-semibold text-cyan-700 hover:text-cyan-800">
-                                Receipt
-                              </a>
-                            </>
-                          )}
-                        </div>
-                      </div>
 
-                      <div className="text-right">
-                        <p className={`text-sm font-black ${entry.isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {entry.isCredit ? '+' : '-'}{formatMoney(entry.amount, entry.currency)}
-                        </p>
-                        <p className="text-xs text-zinc-500 mt-1">{formatUsd(entry.amountUsd)}</p>
-                      </div>
+                <div>
+                  <Select
+                    id="category-select"
+                    labelText="Category"
+                    value={category}
+                    onChange={(event) => setCategory(event.target.value as Exclude<ExpenseCategory, 'Driver Disbursement'>)}
+                  >
+                    <SelectItem value="Fuel" text="Fuel" />
+                    <SelectItem value="Tolls" text="Tolls" />
+                    <SelectItem value="Food" text="Food" />
+                    <SelectItem value="Repairs" text="Repairs" />
+                    <SelectItem value="Duty" text="Duty" />
+                    <SelectItem value="Shipping" text="Shipping" />
+                    <SelectItem value="Other" text="Other" />
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="md:col-span-2">
+                  <TextInput
+                    id="amount-input"
+                    labelText="Amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    required
+                    autoComplete="off"
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-zinc-500 mt-2">
+                    Available balance: {formatUsd(availableUsd)}
+                  </p>
+                </div>
+
+                <div>
+                  <Select
+                    id="currency-select"
+                    labelText="Currency"
+                    value={currency}
+                    onChange={(event) => setCurrency(event.target.value as Currency)}
+                  >
+                    <SelectItem value="NAD" text="NAD" />
+                    <SelectItem value="USD" text="USD" />
+                    <SelectItem value="GBP" text="GBP" />
+                    <SelectItem value="BWP" text="BWP" />
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Select
+                    id="location-select"
+                    labelText="Location"
+                    value={location}
+                    onChange={(event) => setLocation(event.target.value as VehicleStatus)}
+                  >
+                    <SelectItem value="UK" text="UK" />
+                    <SelectItem value="Namibia" text="Namibia" />
+                    <SelectItem value="Zimbabwe" text="Zimbabwe" />
+                    <SelectItem value="Botswana" text="Botswana" />
+                  </Select>
+                </div>
+
+                <div className="space-y-3">
+                  <label htmlFor="receipt-input" className="block text-sm font-medium text-zinc-700">
+                    Receipt (Optional)
+                  </label>
+                  <input
+                    id="receipt-input"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col gap-3 rounded-sm border border-dashed border-zinc-300 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-zinc-800">
+                        {selectedFile ? selectedFile.name : 'No receipt selected'}
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-1">Upload a photo of the receipt if you have one.</p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Button type="button" variant="secondary" size="sm" onClick={openFilePicker}>
+                        {selectedFile ? 'Replace Receipt' : 'Choose Receipt'}
+                      </Button>
+                      {selectedFile && (
+                        <Button type="button" variant="ghost" size="sm" onClick={clearReceipt}>
+                          Remove
+                        </Button>
+                      )}
                     </div>
                   </div>
-                ))
+                </div>
+              </div>
+
+              <TextArea
+                id="description-input"
+                labelText="Description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={4}
+                placeholder="What is this expense for?"
+              />
+
+              {previewUrl && (
+                <Tile style={{ padding: '1rem' }}>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-zinc-900">Receipt preview</p>
+                        <p className="text-xs text-zinc-500 mt-1">Double-check the image before you submit.</p>
+                      </div>
+                      <Tag type="gray">{selectedFile?.type || 'image'}</Tag>
+                    </div>
+                    <img
+                      src={previewUrl}
+                      alt="Receipt preview"
+                      className="w-full max-h-80 object-contain border border-zinc-200 bg-white"
+                    />
+                  </div>
+                </Tile>
+              )}
+
+              <Button
+                type="submit"
+                fullWidth
+                isLoading={submitting || uploading}
+                disabled={availableUsd <= 0}
+              >
+                Submit Drawdown
+              </Button>
+            </form>
+          </div>
+        </Tile>
+
+        <div className="space-y-6">
+          <Tile style={{ padding: '1.5rem' }}>
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-xl font-black text-zinc-900">Latest Activity</h3>
+                <p className="text-zinc-600 mt-2">Allocations and drawdowns linked to your profile</p>
+              </div>
+
+              {ledger.length === 0 ? (
+                <InlineNotification
+                  kind="info"
+                  lowContrast
+                  hideCloseButton
+                  title="No activity yet"
+                  subtitle="No funds or drawdowns are attached to your profile yet."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {ledger.slice(0, 8).map((entry) => (
+                    <Tile key={entry.id} style={{ padding: '1rem' }}>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-zinc-900 break-words">{entry.title}</p>
+                            <Tag type={entry.isCredit ? 'green' : 'red'}>
+                              {entry.isCredit ? 'Allocation' : 'Spend'}
+                            </Tag>
+                          </div>
+                          <p className="text-sm text-zinc-600 break-words">{entry.subtitle}</p>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                            <span>{new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <span className="hidden sm:inline">•</span>
+                            <span>{entry.vehicleLabel}</span>
+                            {entry.receiptUrl && (
+                              <>
+                                <span className="hidden sm:inline">•</span>
+                                <Link href={entry.receiptUrl} target="_blank" rel="noreferrer">
+                                  Receipt
+                                </Link>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="sm:text-right">
+                          <p className={`text-sm font-bold ${entry.isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {entry.isCredit ? '+' : '-'}{formatMoney(entry.amount, entry.currency)}
+                          </p>
+                          <p className="text-xs text-zinc-500 mt-1">{formatUsd(entry.amountUsd)}</p>
+                        </div>
+                      </div>
+                    </Tile>
+                  ))}
+                </div>
               )}
             </div>
-          </div>
+          </Tile>
 
-          <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6">
-            <h3 className="text-xl font-black text-zinc-900">How It Works</h3>
-            <div className="space-y-3 mt-4 text-sm text-zinc-600">
-              <p>Funds become available here when an admin or accountant records a driver disbursement for your profile.</p>
-              <p>Those allocations can be general or attached to a vehicle, and both show up in your activity feed.</p>
-              <p>Every expense you submit from this portal is tagged to you and deducted from the available balance shown above.</p>
+          <Tile style={{ padding: '1.5rem' }}>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-black text-zinc-900">How It Works</h3>
+                <p className="text-zinc-600 mt-2">A quick guide to how allocations and spend tracking work in the portal.</p>
+              </div>
+              <ol className="space-y-3 text-sm text-zinc-700 leading-6">
+                <li>Admin or accounting records a driver-specific disbursement for your profile.</li>
+                <li>The allocation appears here immediately, whether it is vehicle-specific or a general top-up.</li>
+                <li>Every expense you submit reduces the available balance shown above.</li>
+              </ol>
             </div>
-          </div>
+          </Tile>
         </div>
       </section>
     </div>

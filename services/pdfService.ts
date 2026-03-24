@@ -72,6 +72,8 @@ const MAX_TEXT_LENGTH = 5000;
 const MAX_NOTES_LENGTH = 2000;
 const FOOTER_BOTTOM_MARGIN = 12;
 const FOOTER_CONTENT_MAX_WIDTH = 176;
+const FOOTER_DISCLAIMER_MAX_WIDTH = 180;
+const TITLE_BLOCK_MAX_WIDTH = 78;
 const HARDCODED_PDF_LOGO_URL = affinityLogoUrl;
 const LIABILITY_DISCLAIMER =
   'Liability Disclaimer: Affinity Logistics acts as a logistics and facilitation service provider for the transportation of vehicles, goods, and cargo. While we take all reasonable care in handling and coordinating shipments, Affinity Logistics shall not be held liable for any loss, damage, or deterioration of goods or vehicles during transit, shipping, handling, storage, or customs processes. Clients are strongly encouraged to obtain appropriate transit or marine insurance for their cargo or vehicles where possible. Any claims relating to damage, loss, or delays must be directed to the relevant shipping line or insurance provider where coverage exists.';
@@ -299,7 +301,7 @@ class PDFBuilder {
 
   private getFooterLines(options?: { additionalText?: string }): string[][] {
     const { doc, company } = this;
-    const disclaimerLines = doc.splitTextToSize(LIABILITY_DISCLAIMER, FOOTER_CONTENT_MAX_WIDTH);
+    const disclaimerLines = doc.splitTextToSize(LIABILITY_DISCLAIMER, FOOTER_DISCLAIMER_MAX_WIDTH);
     const taglineLines = doc.splitTextToSize('Delivery is our DNA - Titumei Tinosvitsa', 150);
     const companyNameLines = doc.splitTextToSize(company.name, 150);
     const contactInfo = `${company.contact_email}${company.phone ? ` | ${company.phone}` : ''} | Generated: ${new Date().toLocaleDateString()}`;
@@ -492,6 +494,7 @@ class PDFBuilder {
     const [disclaimerLines, taglineLines, companyNameLines, contactLines, additionalLines] = this.getFooterLines(options);
     const disclaimerStartY = this.getFooterStartY(options);
     const disclaimerLineHeight = 3.3;
+    const centerX = LAYOUT.PAGE_WIDTH / 2;
 
     doc.setDrawColor(...COLORS.BORDER_GRAY);
     doc.setLineWidth(LAYOUT.LINE_WIDTH_THIN);
@@ -500,9 +503,11 @@ class PDFBuilder {
     doc.setFontSize(FONT_SIZES.XXSMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
-    doc.text(disclaimerLines, LAYOUT.MARGIN_LEFT, disclaimerStartY);
+    doc.text(disclaimerLines, centerX, disclaimerStartY, {
+      align: 'center',
+      maxWidth: FOOTER_DISCLAIMER_MAX_WIDTH,
+    });
 
-    const centerX = LAYOUT.PAGE_WIDTH / 2;
     let yPos = disclaimerStartY + disclaimerLines.length * disclaimerLineHeight + 3;
 
     doc.setFontSize(FONT_SIZES.XSMALL);
@@ -537,13 +542,20 @@ class PDFBuilder {
 
   addTitle(text: string): this {
     const { doc } = this;
-    const separatorY = Math.max(this.headerBottomY + 4, LAYOUT.SEPARATOR_Y);
+    const isCompactTitle = text.length > 16;
+    const titleFontSize = isCompactTitle ? 19 : FONT_SIZES.XXLARGE;
+    const titleCharSpace = isCompactTitle ? 0.8 : 2.0;
+    const titleLineHeight = isCompactTitle ? 7.4 : 8.2;
+    const titleLines = doc.splitTextToSize(text, TITLE_BLOCK_MAX_WIDTH);
+    const titleTopY = 24;
+    const titleBottomY = titleTopY + (titleLines.length - 1) * titleLineHeight;
+    const separatorY = Math.max(this.headerBottomY + 4, titleBottomY + 7, LAYOUT.SEPARATOR_Y);
 
-    doc.setFontSize(FONT_SIZES.XXLARGE);
+    doc.setFontSize(titleFontSize);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
-    doc.setCharSpace(2.0);
-    doc.text(text, LAYOUT.MARGIN_RIGHT, 25, { align: 'right' });
+    doc.setCharSpace(titleCharSpace);
+    doc.text(titleLines, LAYOUT.MARGIN_RIGHT, titleTopY, { align: 'right', maxWidth: TITLE_BLOCK_MAX_WIDTH });
     doc.setCharSpace(0);
 
     // Separator line
@@ -600,7 +612,7 @@ class PDFBuilder {
     startY: number = this.sectionTopY
   ): this {
     const { doc } = this;
-    let currentY = startY;
+    let currentY = Math.max(startY, this.sectionTopY);
     const valueWidth = 52;
 
     labels.forEach((label, index) => {
@@ -635,23 +647,24 @@ class PDFBuilder {
     startY: number = this.sectionTopY
   ): this {
     const { doc } = this;
+    const safeStartY = Math.max(startY, this.sectionTopY);
 
     doc.setFontSize(FONT_SIZES.XSMALL);
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
-    doc.text(title, LAYOUT.MARGIN_LEFT, startY);
+    doc.text(title, LAYOUT.MARGIN_LEFT, safeStartY);
 
     doc.setFontSize(FONT_SIZES.REGULAR);
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     const nameLines = doc.splitTextToSize(name, 78);
-    doc.text(nameLines, LAYOUT.MARGIN_LEFT, startY + 8);
+    doc.text(nameLines, LAYOUT.MARGIN_LEFT, safeStartY + 8);
 
     doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
 
-    let yPos = startY + 8 + nameLines.length * 4.8 + 2;
+    let yPos = safeStartY + 8 + nameLines.length * 4.8 + 2;
     const contentWidth = 78;
     const lineHeight = 4.5;
 
