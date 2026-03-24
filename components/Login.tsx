@@ -75,81 +75,49 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const onSubmit = mode === 'login' ? handleLogin : handleForgot;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '100dvh',
-        fontFamily: 'IBM Plex Sans, sans-serif',
-        background: 'var(--cds-background, #f4f4f4)',
-      }}
-    >
-      {/* ── Left: Branding panel ── */}
-      <div
-        style={{
-          flex: '0 0 45%',
-          background: 'linear-gradient(160deg, #001141 0%, #0043ce 60%, #0f62fe 100%)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          padding: '4rem 3.5rem',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-        className="hidden md:flex"
-      >
+    <div className="login-shell">
+      <div className="login-shell__brand">
         {/* Background grid decoration */}
-        <div style={{
-          position: 'absolute', inset: 0, opacity: 0.05,
-          backgroundImage: 'linear-gradient(var(--cds-border-inverse,#fff) 1px, transparent 1px), linear-gradient(90deg, var(--cds-border-inverse,#fff) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }} />
+        <div className="login-shell__brand-grid" />
 
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        <div className="login-shell__brand-content">
           {/* Logo mark */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3rem' }}>
-            <div style={{
-              width: 48, height: 48,
-              background: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
+          <div className="login-shell__brand-lockup">
+            <div className="login-shell__logo-mark">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f62fe" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.25rem', letterSpacing: '0.05em', lineHeight: 1 }}>
+              <div className="login-shell__brand-name">
                 AFFINITY
               </div>
-              <div style={{ color: '#78a9ff', fontSize: '0.75rem', letterSpacing: '0.2em', marginTop: '0.2rem' }}>
+              <div className="login-shell__brand-subtitle">
                 LOGISTICS
               </div>
             </div>
           </div>
 
-          <h2 style={{ color: '#fff', fontSize: '2.5rem', fontWeight: 300, lineHeight: 1.2, marginBottom: '1.5rem' }}>
+          <h2 className="login-shell__headline">
             Global Logistics,<br />
-            <strong style={{ fontWeight: 700 }}>Intelligent Transit.</strong>
+            <strong>Intelligent Transit.</strong>
           </h2>
-          <p style={{ color: '#a6c8ff', fontSize: '1rem', lineHeight: 1.6, marginBottom: '3rem', maxWidth: '360px' }}>
+          <p className="login-shell__headline-copy">
             The all-in-one platform for cross-border vehicle logistics, landed cost tracking,
             and driver management across the SADC region.
           </p>
 
           {/* Stat chips */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', maxWidth: '380px' }}>
+          <div className="login-shell__stats">
             {[
               { value: '100%', label: 'Transit Visibility' },
               { value: 'Zero', label: 'Audit Gaps' },
               { value: 'Live', label: 'Cost Tracking' },
               { value: 'Multi', label: 'Currency Support' },
             ].map(stat => (
-              <div key={stat.label} style={{
-                background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                padding: '1rem',
-              }}>
-                <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.5rem' }}>{stat.value}</div>
-                <div style={{ color: '#78a9ff', fontSize: '0.75rem', letterSpacing: '0.1em', marginTop: '0.25rem' }}>
+              <div key={stat.label} className="login-shell__stat">
+                <div className="login-shell__stat-value">{stat.value}</div>
+                <div className="login-shell__stat-label">
                   {stat.label.toUpperCase()}
                 </div>
               </div>
@@ -159,97 +127,55 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       </div>
 
       {/* ── Right: Auth form ── */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--cds-background, #f4f4f4)',
-        padding: '1rem',
-      }}>
-        <div style={{ width: '100%', maxWidth: '26rem' }}>
+      <div className="login-shell__panel">
+        <div className="login-shell__panel-inner">
           {/* Mobile brand card */}
-          <div
-            className="md:hidden"
-            style={{
-              marginBottom: '1rem',
-              background: 'linear-gradient(160deg, #001141 0%, #0043ce 60%, #0f62fe 100%)',
-              padding: '1.25rem',
-              color: '#fff',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: '0.75rem', letterSpacing: '0.18em', color: '#a6c8ff', textTransform: 'uppercase' }}>
+          <div className="login-shell__mobile-brand">
+            <div className="login-shell__mobile-brand-row">
+              <div className="login-shell__mobile-copy">
+                <div className="login-shell__mobile-eyebrow">
                   Affinity Logistics
                 </div>
-                <h2 style={{ fontSize: '1.375rem', fontWeight: 700, margin: '0.5rem 0 0', lineHeight: 1.2 }}>
+                <h2 className="login-shell__mobile-title">
                   Fleet access for every trip.
                 </h2>
+                <p className="login-shell__mobile-text">
+                  Sign in, review trip operations, and move through the platform cleanly from any device.
+                </p>
               </div>
               <Tag type="blue">Carbon UI</Tag>
             </div>
           </div>
 
-          <div
-            style={{
-              background: 'var(--cds-layer, #ffffff)',
-              padding: '1.25rem',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
-            }}
-          >
+          <div className="login-shell__card">
           {/* Mode tabs */}
-          <div style={{ display: 'flex', gap: '0', marginBottom: '1.5rem', borderBottom: '1px solid var(--cds-border-subtle-01, #e0e0e0)' }}>
+          <div className="login-shell__tabs" role="tablist" aria-label="Authentication options">
             {(['login', 'forgot'] as Mode[]).map(m => (
               <button
                 key={m}
                 type="button"
                 onClick={() => reset(m)}
-                style={{
-                  flex: 1,
-                  padding: '0.875rem 0.75rem',
-                  fontSize: '0.875rem',
-                  fontWeight: mode === m ? 600 : 400,
-                  color: mode === m ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-text-secondary, #525252)',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: mode === m ? '2px solid var(--cds-interactive, #0f62fe)' : '2px solid transparent',
-                  cursor: 'pointer',
-                  letterSpacing: '0.01em',
-                  marginBottom: '-1px',
-                  transition: 'all 0.1s',
-                  fontFamily: 'IBM Plex Sans, sans-serif',
-                }}
+                role="tab"
+                aria-selected={mode === m}
+                className={`login-shell__tab ${mode === m ? 'is-active' : ''}`}
               >
                 {m === 'login' ? 'Sign in' : 'Reset password'}
               </button>
             ))}
           </div>
 
-          <h3 style={{
-            fontSize: '1.75rem',
-            fontWeight: 300,
-            color: 'var(--cds-text-primary, #161616)',
-            marginBottom: '1.25rem',
-            lineHeight: 1.25,
-          }}>
-            {modeTitle[mode]}
-          </h3>
-
-          <p style={{
-            fontSize: '0.875rem',
-            color: 'var(--cds-text-secondary, #525252)',
-            marginBottom: '1.5rem',
-            lineHeight: 1.55,
-          }}>
-            {mode === 'login'
-              ? 'Sign in with your approved company account to access the logistics workspace.'
-              : 'We will send reset instructions to your email address if an account exists.'}
-          </p>
+          <div className="login-shell__intro">
+            <h3 className="login-shell__title">{modeTitle[mode]}</h3>
+            <p className="login-shell__description">
+              {mode === 'login'
+                ? 'Sign in with your approved company account to access the logistics workspace.'
+                : 'We will send reset instructions to your email address if an account exists.'}
+            </p>
+          </div>
 
           {/* Notifications */}
           {error && (
-            <div style={{ marginBottom: '1rem' }}>
+            <div className="login-shell__notice">
               <InlineNotification
                 kind="error"
                 title="Error:"
@@ -261,7 +187,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
           )}
           {success && (
-            <div style={{ marginBottom: '1rem' }}>
+            <div className="login-shell__notice">
               <InlineNotification
                 kind="success"
                 title="Success:"
@@ -280,6 +206,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 labelText="Work email"
                 type="email"
                 placeholder="email@affinity-logistics.com"
+                autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -290,6 +217,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   id="login-password"
                   labelText="Password"
                   placeholder="••••••••"
+                  autoComplete="current-password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
@@ -299,7 +227,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               )}
 
               {mode === 'forgot' && (
-                <p style={{ fontSize: '0.875rem', color: 'var(--cds-text-secondary, #525252)', lineHeight: 1.5 }}>
+                <p className="login-shell__helper-text">
                   We'll send reset instructions to your email address if an account exists.
                 </p>
               )}
@@ -318,16 +246,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   type="button"
                   onClick={() => reset('forgot')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--cds-link-primary, #0f62fe)',
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    padding: 0,
-                    fontFamily: 'IBM Plex Sans, sans-serif',
-                    textDecoration: 'underline',
-                  }}
+                  className="login-shell__link"
                 >
                   Forgot your password?
                 </button>
