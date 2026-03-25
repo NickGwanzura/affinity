@@ -17,7 +17,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql } from './_db';
+import { sql } from './_db.js';
 
 // Auto-create tables if they don't exist
 async function ensureTablesExist() {

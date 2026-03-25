@@ -5,4 +5,4 @@
  * Vercel routes /api/assets/requests here; the handler checks req.url and
  * routes to handleAssetRequests() automatically.
  */
-export { default } from '../assets';
+export { default } from '../assets.js';
