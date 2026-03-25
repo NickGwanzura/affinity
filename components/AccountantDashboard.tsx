@@ -36,7 +36,7 @@ export const AccountantDashboard: React.FC = () => {
   const [userRole, setUserRole] = useState<UserRole>('Accountant');
   const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
   const [showFundModal, setShowFundModal] = useState(false);
-  const [fundForm, setFundForm] = useState<{ type: OperatingFundType; amount: string; currency: 'USD' | 'GBP'; description: string; reference: string; recipient: string; approved_by: string; date: string }>({
+  const [fundForm, setFundForm] = useState<{ type: OperatingFundType; amount: string; currency: Currency; description: string; reference: string; recipient: string; approved_by: string; date: string }>({
     type: 'Received', amount: '', currency: 'USD', description: '', reference: '', recipient: '', approved_by: '', date: new Date().toISOString().split('T')[0],
   });
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -1322,7 +1322,7 @@ export const AccountantDashboard: React.FC = () => {
         form={operatingFundFormValue}
         onChange={handleOperatingFundFormChange}
         drivers={drivers}
-        currencyOptions={['USD', 'GBP']}
+        currencyOptions={['USD', 'NAD', 'GBP', 'BWP', 'ZAR']}
         accent="indigo"
         typeSelectorVariant="select"
         showApprovedBy

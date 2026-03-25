@@ -2,6 +2,14 @@ import React from 'react';
 import type { AppUser, Currency, OperatingFundType } from '../../types';
 import { Button } from '../ui';
 
+const CURRENCY_LABELS: Record<Currency, string> = {
+  NAD: 'Namibian Dollars (NAD)',
+  ZAR: 'Rands (ZAR)',
+  BWP: 'Pulas (BWP)',
+  USD: 'US Dollars (USD)',
+  GBP: 'British Pounds (GBP)',
+};
+
 export interface OperatingFundFormValue {
   type: OperatingFundType;
   amount: string;
@@ -138,7 +146,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 >
                   {currencyOptions.map((currency) => (
                     <option key={currency} value={currency}>
-                      {currency}
+                      {CURRENCY_LABELS[currency]}
                     </option>
                   ))}
                 </select>
@@ -170,7 +178,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 >
                   {currencyOptions.map((currency) => (
                     <option key={currency} value={currency}>
-                      {currency}
+                      {CURRENCY_LABELS[currency]}
                     </option>
                   ))}
                 </select>
