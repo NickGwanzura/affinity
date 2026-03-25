@@ -509,10 +509,11 @@ export const DriverPortal: React.FC = () => {
                     value={currency}
                     onChange={(event) => setCurrency(event.target.value as Currency)}
                   >
-                    <SelectItem value="NAD" text="NAD" />
-                    <SelectItem value="USD" text="USD" />
-                    <SelectItem value="GBP" text="GBP" />
-                    <SelectItem value="BWP" text="BWP" />
+                    <SelectItem value="NAD" text="Namibian Dollars (NAD)" />
+                    <SelectItem value="ZAR" text="Rands (ZAR)" />
+                    <SelectItem value="BWP" text="Pulas (BWP)" />
+                    <SelectItem value="USD" text="US Dollars (USD)" />
+                    <SelectItem value="GBP" text="British Pounds (GBP)" />
                   </Select>
                 </div>
               </div>

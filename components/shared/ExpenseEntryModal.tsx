@@ -37,6 +37,14 @@ const DEFAULT_CATEGORY_OPTIONS: ExpenseCategory[] = [
   'Other',
 ];
 
+const CURRENCY_OPTIONS: Array<{ value: Currency; label: string }> = [
+  { value: 'NAD', label: 'Namibian Dollars (NAD)' },
+  { value: 'ZAR', label: 'Rands (ZAR)' },
+  { value: 'BWP', label: 'Pulas (BWP)' },
+  { value: 'USD', label: 'US Dollars (USD)' },
+  { value: 'GBP', label: 'British Pounds (GBP)' },
+];
+
 export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
   isOpen,
   title,
@@ -111,10 +119,11 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
                 onChange={(event) => onChange({ currency: event.target.value as Currency })}
                 className={`w-full px-4 py-3 text-base rounded-xl border ${accentBorder} ${focusTone} focus:border-transparent outline-none`}
               >
-                <option value="NAD">NAD (Namibia)</option>
-                <option value="GBP">GBP (UK)</option>
-                <option value="USD">USD (General)</option>
-                <option value="BWP">BWP (Botswana)</option>
+                {CURRENCY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

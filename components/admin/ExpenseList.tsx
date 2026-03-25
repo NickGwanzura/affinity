@@ -81,7 +81,9 @@ const formatAmount = (amount: number, currency: Currency): string => {
   const symbols: Record<Currency, string> = {
     [CURRENCIES.GBP]: '£',
     [CURRENCIES.NAD]: 'N$',
-    [CURRENCIES.USD]: '$'
+    [CURRENCIES.USD]: '$',
+    [CURRENCIES.BWP]: 'P',
+    [CURRENCIES.ZAR]: 'R',
   };
   return `${symbols[currency]}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };

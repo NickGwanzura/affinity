@@ -1,5 +1,5 @@
 
-export type Currency = 'GBP' | 'NAD' | 'USD' | 'BWP';
+export type Currency = 'GBP' | 'NAD' | 'USD' | 'BWP' | 'ZAR';
 export type VehicleStatus = 'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana' | 'Sold';
 export type ExpenseCategory = 'Shipping' | 'Fuel' | 'Tolls' | 'Duty' | 'Food' | 'Repairs' | 'Driver Disbursement' | 'Other';
 export type UserRole = 'Admin' | 'Driver' | 'Manager' | 'Accountant';

@@ -49,6 +49,7 @@ export const CURRENCIES = {
   NAD: 'NAD',
   USD: 'USD',
   BWP: 'BWP', // Botswana Pula
+  ZAR: 'ZAR', // South African Rand
 } as const;
 
 export type CurrencyValue = typeof CURRENCIES[keyof typeof CURRENCIES];
@@ -127,6 +128,7 @@ export const EXCHANGE_RATES = {
   NAD: 0.055, // 1 NAD = 0.055 USD (approx)
   USD: 1.0,
   BWP: 0.074, // 1 BWP = 0.074 USD (Botswana Pula)
+  ZAR: 0.055, // 1 ZAR = 0.055 USD (approx)
 } as const;
 
 // App Views
