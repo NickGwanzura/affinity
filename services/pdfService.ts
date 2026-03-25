@@ -550,6 +550,7 @@ class PDFBuilder {
       charSpace?: number;
       lineHeight?: number;
       topY?: number;
+      headerGap?: number;
     }
   ): this {
     const { doc } = this;
@@ -562,7 +563,7 @@ class PDFBuilder {
     const titleFontSize = options?.fontSize || defaultFontSize;
     const titleCharSpace = options?.charSpace ?? (align === 'center' ? (isCompactTitle ? 0.2 : 0.6) : (isCompactTitle ? 0.8 : 2.0));
     const titleLineHeight = options?.lineHeight || (align === 'center' ? (isCompactTitle ? 6.3 : 6.9) : (isCompactTitle ? 7.4 : 8.2));
-    const titleTopY = options?.topY || (align === 'center' ? Math.max(this.headerBottomY + 6, 30) : 24);
+    const titleTopY = options?.topY || (align === 'center' ? Math.max(this.headerBottomY + (options?.headerGap ?? 6), 30) : 24);
     const titleLines = doc.splitTextToSize(text, maxWidth);
     const titleBottomY = titleTopY + (titleLines.length - 1) * titleLineHeight;
     const separatorY = Math.max(this.headerBottomY + 4, titleBottomY + 7, LAYOUT.SEPARATOR_Y);
@@ -1490,7 +1491,12 @@ export const generateVehicleStatementPDF = async (
 
   await builder.addLogoWatermark();
   (await builder.addHeader())
-    .addTitle('VEHICLE STATEMENT')
+    .addTitle('VEHICLE STATEMENT', {
+      fontSize: 15,
+      charSpace: 0.15,
+      lineHeight: 6.1,
+      headerGap: 8,
+    })
     .addMetadataSection(
       ['Statement Date:', 'Expense Count:', 'Purchase Price:', 'Total Expenses:', 'Total Landed Cost:'],
       [
@@ -2053,7 +2059,12 @@ export const generateExpensesReportPDF = async (
 
   await builder.addLogoWatermark();
   (await builder.addHeader())
-    .addTitle('EXPENSES REPORT')
+    .addTitle('EXPENSES REPORT', {
+      fontSize: 15,
+      charSpace: 0.15,
+      lineHeight: 6.1,
+      headerGap: 10,
+    })
     .addMetadataSection(
       ['Report Date:', 'Period:', 'Total Transactions:', 'Total (USD):'],
       [
@@ -2437,7 +2448,12 @@ export const generateFleetReportPDF = async (
 
   await builder.addLogoWatermark();
   (await builder.addHeader())
-    .addTitle('FLEET ANALYTICS REPORT')
+    .addTitle('FLEET ANALYTICS REPORT', {
+      fontSize: 15,
+      charSpace: 0.15,
+      lineHeight: 6.1,
+      headerGap: 10,
+    })
     .addMetadataSection(
       ['Report Date:', 'Period:', 'Total Vehicles:', 'Total Transactions:'],
       [
@@ -2672,7 +2688,12 @@ export const generateDriverFundsReportPDF = async (
 
   await builder.addLogoWatermark();
   (await builder.addHeader())
-    .addTitle('DRIVER FUNDS REPORT')
+    .addTitle('DRIVER FUNDS REPORT', {
+      fontSize: 15,
+      charSpace: 0.15,
+      lineHeight: 6.1,
+      headerGap: 10,
+    })
     .addMetadataSection(
       ['Report Date:', 'Period:', 'Drivers Funded:', 'Vehicle Filter:'],
       [
@@ -2857,7 +2878,12 @@ export const generateAuditReportPDF = async (
 
   await builder.addLogoWatermark();
   (await builder.addHeader())
-    .addTitle('FLEET AUDIT REPORT')
+    .addTitle('FLEET AUDIT REPORT', {
+      fontSize: 15,
+      charSpace: 0.15,
+      lineHeight: 6.1,
+      headerGap: 10,
+    })
     .addMetadataSection(
       ['Report Date:', 'Period:', 'Total Vehicles:', 'Expense Transactions:'],
       [
