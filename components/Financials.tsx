@@ -263,10 +263,19 @@ export const Financials: React.FC = () => {
         ? quote.items.map(item => normalizeLineItemForForm(item))
         : [normalizeLineItemForForm({ ...createEmptyLineItem(), description: quote.description || '', unit_price: quote.amount_usd || 0 })];
 
+    // Fallback: if client_id is missing, try to find client by name
+    let clientId = quote.client_id || '';
+    if (!clientId && quote.client_name) {
+      const matchedClient = clients.find(c => 
+        c.name.trim().toLowerCase() === quote.client_name.trim().toLowerCase()
+      );
+      clientId = matchedClient?.id || '';
+    }
+
     setEditingQuote(quote);
     setQuoteForm({
       vehicle_id: quote.vehicle_id || '',
-      client_id: quote.client_id || '',
+      client_id: clientId,
       client_name: quote.client_name || '',
       client_email: quote.client_email || '',
       client_address: quote.client_address || '',
@@ -285,11 +294,20 @@ export const Financials: React.FC = () => {
         ? quote.items.map(item => normalizeLineItemForForm(item))
         : [normalizeLineItemForForm({ ...createEmptyLineItem(), description: quote.description || '', unit_price: quote.amount_usd || 0 })];
 
+    // Fallback: if client_id is missing, try to find client by name
+    let clientId = quote.client_id || '';
+    if (!clientId && quote.client_name) {
+      const matchedClient = clients.find(c => 
+        c.name.trim().toLowerCase() === quote.client_name.trim().toLowerCase()
+      );
+      clientId = matchedClient?.id || '';
+    }
+
     setEditingInvoice(null);
     setInvoiceForm({
       invoice_kind: 'Standard',
       vehicle_id: quote.vehicle_id || '',
-      client_id: quote.client_id || '',
+      client_id: clientId,
       client_name: quote.client_name || '',
       client_email: quote.client_email || '',
       client_address: quote.client_address || '',
@@ -365,11 +383,20 @@ export const Financials: React.FC = () => {
             }),
           ];
 
+    // Fallback: if client_id is missing, try to find client by name
+    let clientId = invoice.client_id || '';
+    if (!clientId && invoice.client_name) {
+      const matchedClient = clients.find(c => 
+        c.name.trim().toLowerCase() === invoice.client_name.trim().toLowerCase()
+      );
+      clientId = matchedClient?.id || '';
+    }
+
     setEditingInvoice(invoice);
     setInvoiceForm({
       invoice_kind: invoice.invoice_kind || 'Standard',
       vehicle_id: invoice.vehicle_id || '',
-      client_id: invoice.client_id || '',
+      client_id: clientId,
       client_name: invoice.client_name || '',
       client_email: invoice.client_email || '',
       client_address: invoice.client_address || '',
