@@ -575,12 +575,13 @@ export async function createQuote(quoteData: Omit<Quote, 'id' | 'created_at' | '
 
     const rows = await sql`
       INSERT INTO quotes (
-        quote_number, vehicle_id, client_name, client_email, client_address, 
+        quote_number, vehicle_id, client_id, client_name, client_email, client_address, 
         amount_usd, currency, status, description, valid_until, items
       )
       VALUES (
         ${quote_number},
         ${quoteData.vehicle_id || null}::uuid,
+        ${quoteData.client_id || null}::uuid,
         ${quoteData.client_name},
         ${quoteData.client_email || null},
         ${quoteData.client_address || null},
@@ -644,6 +645,7 @@ export async function updateQuote(quoteId: string, updates: Partial<Omit<Quote, 
       UPDATE quotes
       SET 
         vehicle_id = COALESCE(${updates.vehicle_id || null}::uuid, vehicle_id),
+        client_id = COALESCE(${updates.client_id || null}::uuid, client_id),
         client_name = COALESCE(${updates.client_name || null}, client_name),
         client_email = COALESCE(${updates.client_email}, client_email),
         client_address = COALESCE(${updates.client_address}, client_address),
@@ -820,7 +822,7 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_a
     try {
       rows = await sql`
         INSERT INTO public.invoices (
-          invoice_number, invoice_kind, quote_id, vehicle_id, client_name, client_email, client_address,
+          invoice_number, invoice_kind, quote_id, vehicle_id, client_id, client_name, client_email, client_address,
           amount_usd, currency, status, description, notes, terms_and_conditions, due_date, items, batch
         )
         VALUES (
@@ -828,6 +830,7 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_a
           ${invoiceData.invoice_kind || 'Standard'},
           ${invoiceData.quote_id || null}::uuid,
           ${invoiceData.vehicle_id || null}::uuid,
+          ${invoiceData.client_id || null}::uuid,
           ${invoiceData.client_name},
           ${invoiceData.client_email || null},
           ${invoiceData.client_address || null},
@@ -854,13 +857,14 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'created_a
 
       rows = await sql`
         INSERT INTO public.invoices (
-          invoice_number, quote_id, vehicle_id, client_name, client_email, client_address, 
+          invoice_number, quote_id, vehicle_id, client_id, client_name, client_email, client_address, 
           amount_usd, status, description, notes, terms_and_conditions, due_date, items
         )
         VALUES (
           ${invoice_number},
           ${invoiceData.quote_id || null}::uuid,
           ${invoiceData.vehicle_id || null}::uuid,
+          ${invoiceData.client_id || null}::uuid,
           ${invoiceData.client_name},
           ${invoiceData.client_email || null},
           ${invoiceData.client_address || null},
@@ -932,6 +936,7 @@ export async function updateInvoice(invoiceId: string, updates: Partial<Omit<Inv
           invoice_kind = COALESCE(${updates.invoice_kind || null}, invoice_kind),
           quote_id = COALESCE(${updates.quote_id || null}::uuid, quote_id),
           vehicle_id = COALESCE(${updates.vehicle_id || null}::uuid, vehicle_id),
+          client_id = COALESCE(${updates.client_id || null}::uuid, client_id),
           client_name = COALESCE(${updates.client_name || null}, client_name),
           client_email = COALESCE(${updates.client_email}, client_email),
           client_address = COALESCE(${updates.client_address}, client_address),
@@ -961,6 +966,7 @@ export async function updateInvoice(invoiceId: string, updates: Partial<Omit<Inv
         SET
           quote_id = COALESCE(${updates.quote_id || null}::uuid, quote_id),
           vehicle_id = COALESCE(${updates.vehicle_id || null}::uuid, vehicle_id),
+          client_id = COALESCE(${updates.client_id || null}::uuid, client_id),
           client_name = COALESCE(${updates.client_name || null}, client_name),
           client_email = COALESCE(${updates.client_email}, client_email),
           client_address = COALESCE(${updates.client_address}, client_address),
