@@ -400,7 +400,10 @@ export async function getExpensesByDriver(driverName: string): Promise<Expense[]
 export async function addExpense(expense: Omit<Expense, 'id' | 'created_at' | 'exchange_rate_to_usd'>): Promise<Expense> {
   if (!sql) throw new Error('Database not connected');
   
-  const exchange_rate_to_usd = EXCHANGE_RATES[expense.currency] || 1;
+  // Driver disbursements are allocated in the issued currency (no conversion)
+  const exchange_rate_to_usd = expense.category === 'Driver Disbursement' 
+    ? 1 
+    : (EXCHANGE_RATES[expense.currency] || 1);
   
   return executeQuery(async () => {
     // Try with driver_name columns first, fall back to basic insert if columns don't exist
@@ -461,7 +464,12 @@ export async function updateExpense(expenseId: string, updates: Partial<Omit<Exp
   if (!sql) throw new Error('Database not connected');
   
   // Recalculate exchange rate if currency changed
-  const exchange_rate_to_usd = updates.currency ? (EXCHANGE_RATES[updates.currency] || 1) : undefined;
+  // Driver disbursements are allocated in the issued currency (no conversion)
+  const exchange_rate_to_usd = updates.currency 
+    ? (updates.category === 'Driver Disbursement' || (updates.category === undefined && updates.driver_name !== undefined) 
+        ? 1 
+        : (EXCHANGE_RATES[updates.currency] || 1))
+    : undefined;
   
   return executeQuery(async () => {
     const rows = await sql`
