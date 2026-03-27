@@ -372,6 +372,8 @@ export const Financials: React.FC = () => {
   };
 
   const openEditInvoiceModal = (invoice: Invoice) => {
+    console.log('[DEBUG] Opening invoice:', invoice);
+    console.log('[DEBUG] Available clients:', clients);
     const normalizedItems =
       invoice.items && invoice.items.length > 0
         ? invoice.items.map(item => normalizeLineItemForForm(item))
@@ -390,7 +392,9 @@ export const Financials: React.FC = () => {
         c.name.trim().toLowerCase() === invoice.client_name.trim().toLowerCase()
       );
       clientId = matchedClient?.id || '';
+      console.log('[DEBUG] Matched client by name:', matchedClient);
     }
+    console.log('[DEBUG] Final clientId:', clientId);
 
     setEditingInvoice(invoice);
     setInvoiceForm({
@@ -1616,9 +1620,10 @@ export const Financials: React.FC = () => {
                   </div>
                   <select
                     required
-                    value={invoiceForm.client_id}
+                    value={invoiceForm.client_id || ''}
                     onChange={e => {
                       const client = clients.find(c => c.id === e.target.value);
+                      console.log('[DEBUG] Client selected:', client);
                       setInvoiceForm({
                         ...invoiceForm,
                         client_id: client?.id ?? '',
@@ -1629,7 +1634,7 @@ export const Financials: React.FC = () => {
                     }}
                     className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
                   >
-                    <option value="">Select…</option>
+                    <option value="">{clients.length === 0 ? 'Loading clients...' : 'Select a client...'}</option>
                     {clients.map(c => (
                       <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
                     ))}
