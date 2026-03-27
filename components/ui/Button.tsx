@@ -18,7 +18,7 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
 // Map our variant names → Carbon Button kinds
 const kindMap: Record<ButtonVariant, 'primary' | 'secondary' | 'danger' | 'ghost' | 'tertiary'> = {
   primary:   'primary',
-  secondary: 'secondary',
+  secondary: 'primary',   // Use primary instead of secondary to avoid faded look
   danger:    'danger',
   success:   'primary',   // Carbon has no "success" kind; use primary (icon conveys success)
   ghost:     'ghost',
@@ -111,7 +111,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
       <span style={{ display: 'inline-flex', alignItems: 'center' }}>{icon}</span>
     ))}
     disabled={isLoading || disabled}
-    className={className}
+    className={`min-w-[44px] min-h-[44px] ${className}`}
     {...(props as Record<string, unknown>)}
   />
 );

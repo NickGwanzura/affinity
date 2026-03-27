@@ -744,7 +744,7 @@ export const AccountantDashboard: React.FC = () => {
         </div>
         <button 
           onClick={() => setShowExpenseModal(true)}
-          className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-green-700 transition-all shadow-xl shadow-green-100 flex items-center gap-2"
+          className="bg-green-600 text-white px-4 sm:px-6 py-3 sm:py-2.5 rounded-xl font-bold text-sm hover:bg-green-700 transition-all shadow-xl shadow-green-100 flex items-center gap-2 min-h-[48px]"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           Add Expense
@@ -829,10 +829,10 @@ export const AccountantDashboard: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-3 rounded-xl text-sm font-bold capitalize transition-all ${
+                className={`px-4 lg:px-6 py-3 rounded-xl text-sm font-bold capitalize transition-all min-h-[44px] ${
                   activeTab === tab.id
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-zinc-500 hover:text-zinc-900'
+                    ? 'bg-white text-blue-600 shadow-sm ring-1 ring-blue-100'
+                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
                 }`}
               >
                 {tab.label}

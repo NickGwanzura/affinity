@@ -60,6 +60,20 @@
       .cds--header ~ .cds--content {
         margin-top: 3rem;
       }
+
+      /* Hide scrollbar for mobile tabs - cross-browser */
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Touch manipulation for better mobile response */
+      .touch-manipulation {
+        touch-action: manipulation;
+      }
     </style>
 </head>
 <body>

@@ -2162,12 +2162,29 @@ export const Financials: React.FC = () => {
       )}
 
       <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
-        <div className="flex border-b border-zinc-100 bg-zinc-50/50 p-2">
+        {/* Mobile: Horizontal scrollable tabs */}
+        <div className="sm:hidden border-b border-zinc-100 bg-zinc-50/50">
+          <div className="flex overflow-x-auto scrollbar-hide p-2 gap-1">
+            {['quotes', 'invoices', 'payments', 'receipts', 'statements'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as typeof activeTab)}
+                className={`flex-shrink-0 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest transition-all min-h-[44px] ${
+                  activeTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 bg-zinc-100/50'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Desktop: Flex tabs */}
+        <div className="hidden sm:flex border-b border-zinc-100 bg-zinc-50/50 p-2">
           {['quotes', 'invoices', 'payments', 'receipts', 'statements'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as typeof activeTab)}
-              className={`flex-1 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${
+              className={`flex-1 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest transition-all min-h-[44px] ${
                 activeTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400 hover:text-zinc-600'
               }`}
             >
