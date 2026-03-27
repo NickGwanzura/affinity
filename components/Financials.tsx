@@ -142,6 +142,7 @@ export const Financials: React.FC = () => {
 
   const [quoteForm, setQuoteForm] = useState({
     vehicle_id: '',
+    client_id: '',
     client_name: '',
     client_email: '',
     client_address: '',
@@ -155,6 +156,7 @@ export const Financials: React.FC = () => {
   const [invoiceForm, setInvoiceForm] = useState({
     invoice_kind: 'Standard' as 'Standard' | 'Deposit' | 'Final',
     vehicle_id: '',
+    client_id: '',
     client_name: '',
     client_email: '',
     client_address: '',
@@ -237,6 +239,7 @@ export const Financials: React.FC = () => {
   const resetQuoteForm = () => {
     setQuoteForm({
       vehicle_id: '',
+      client_id: '',
       client_name: '',
       client_email: '',
       client_address: '',
@@ -263,6 +266,7 @@ export const Financials: React.FC = () => {
     setEditingQuote(quote);
     setQuoteForm({
       vehicle_id: quote.vehicle_id || '',
+      client_id: quote.client_id || '',
       client_name: quote.client_name || '',
       client_email: quote.client_email || '',
       client_address: quote.client_address || '',
@@ -285,6 +289,7 @@ export const Financials: React.FC = () => {
     setInvoiceForm({
       invoice_kind: 'Standard',
       vehicle_id: quote.vehicle_id || '',
+      client_id: quote.client_id || '',
       client_name: quote.client_name || '',
       client_email: quote.client_email || '',
       client_address: quote.client_address || '',
@@ -304,6 +309,7 @@ export const Financials: React.FC = () => {
     setInvoiceForm({
       invoice_kind: 'Standard',
       vehicle_id: '',
+      client_id: '',
       client_name: '',
       client_email: '',
       client_address: '',
@@ -363,6 +369,7 @@ export const Financials: React.FC = () => {
     setInvoiceForm({
       invoice_kind: invoice.invoice_kind || 'Standard',
       vehicle_id: invoice.vehicle_id || '',
+      client_id: invoice.client_id || '',
       client_name: invoice.client_name || '',
       client_email: invoice.client_email || '',
       client_address: invoice.client_address || '',
@@ -474,6 +481,7 @@ export const Financials: React.FC = () => {
       if (clientModalTarget === 'quote') {
         setQuoteForm((current) => ({
           ...current,
+          client_id: createdClient.id,
           client_name: createdClient.name,
           client_email: createdClient.email || '',
           client_address: createdClient.address || '',
@@ -481,6 +489,7 @@ export const Financials: React.FC = () => {
       } else {
         setInvoiceForm((current) => ({
           ...current,
+          client_id: createdClient.id,
           client_name: createdClient.name,
           client_email: createdClient.email || '',
           client_address: createdClient.address || '',
@@ -619,6 +628,7 @@ export const Financials: React.FC = () => {
     try {
       const payload = {
         vehicle_id: quoteForm.vehicle_id || undefined,
+        client_id: quoteForm.client_id || undefined,
         client_name: quoteForm.client_name,
         client_email: quoteForm.client_email,
         client_address: quoteForm.client_address,
@@ -660,6 +670,7 @@ export const Financials: React.FC = () => {
       const payload = {
         invoice_kind: invoiceForm.invoice_kind,
         vehicle_id: invoiceForm.vehicle_id || undefined,
+        client_id: invoiceForm.client_id || undefined,
         client_name: invoiceForm.client_name,
         client_email: invoiceForm.client_email,
         client_address: invoiceForm.client_address,
@@ -1296,11 +1307,12 @@ export const Financials: React.FC = () => {
                   </div>
                   <select
                     required
-                    value={clients.find(c => c.name === quoteForm.client_name)?.id ?? ''}
+                    value={quoteForm.client_id}
                     onChange={e => {
                       const client = clients.find(c => c.id === e.target.value);
                       setQuoteForm({
                         ...quoteForm,
+                        client_id: client?.id ?? '',
                         client_name: client?.name ?? '',
                         client_email: client?.email ?? '',
                         client_address: client?.address ?? '',
@@ -1577,11 +1589,12 @@ export const Financials: React.FC = () => {
                   </div>
                   <select
                     required
-                    value={clients.find(c => c.name === invoiceForm.client_name)?.id ?? ''}
+                    value={invoiceForm.client_id}
                     onChange={e => {
                       const client = clients.find(c => c.id === e.target.value);
                       setInvoiceForm({
                         ...invoiceForm,
+                        client_id: client?.id ?? '',
                         client_name: client?.name ?? '',
                         client_email: client?.email ?? '',
                         client_address: client?.address ?? '',
