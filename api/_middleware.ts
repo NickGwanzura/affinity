@@ -10,10 +10,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
+function getJwtSecret(): string | null {
+  return process.env.JWT_SECRET || null;
 }
 
 export interface AuthenticatedRequest extends VercelRequest {
@@ -28,6 +26,12 @@ export interface AuthenticatedRequest extends VercelRequest {
  */
 export function verifyToken(req: AuthenticatedRequest, res: VercelResponse): boolean {
   const authHeader = req.headers.authorization;
+  const secret = getJwtSecret();
+
+  if (!secret) {
+    res.status(500).json({ error: 'Server authentication misconfigured (missing JWT_SECRET)' });
+    return false;
+  }
   
   if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Missing or invalid authorization header' });
@@ -37,7 +41,7 @@ export function verifyToken(req: AuthenticatedRequest, res: VercelResponse): boo
   const token = authHeader.substring(7);
   
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { sub?: string; role?: string };
+    const decoded = jwt.verify(token, secret) as { sub?: string; role?: string };
     if (typeof decoded.sub !== 'string' || typeof decoded.role !== 'string') {
       res.status(401).json({ error: 'Invalid or expired token' });
       return false;

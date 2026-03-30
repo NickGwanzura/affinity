@@ -104,7 +104,8 @@ async function login(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error) {
     if (error instanceof Error) {
-      return apiError(res, 400, error.message);
+      const status = error.message.includes('JWT_SECRET') ? 500 : 400;
+      return apiError(res, status, error.message);
     }
     apiError(res, 400, 'Invalid login data', error);
   }

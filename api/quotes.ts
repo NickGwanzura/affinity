@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { PoolClient } from '@neondatabase/serverless';
+import { ZodError } from 'zod';
 import { 
   AuthenticatedRequest, 
   verifyToken, 
@@ -59,6 +60,47 @@ const buildQuoteItemsSnapshot = (items: QuoteLineItemInput[]): QuoteItem[] =>
 
 const calculateQuoteTotal = (items: QuoteLineItemInput[]): number =>
   items.reduce((sum, item) => sum + computeQuoteLineItemAmounts(item).total, 0);
+
+const getQuoteInputErrorMessage = (error: unknown, fallbackMessage: string): { status: number; message: string } => {
+  if (error instanceof ZodError) {
+    const firstIssue = error.issues[0];
+    return {
+      status: 400,
+      message: firstIssue?.message || fallbackMessage,
+    };
+  }
+
+  const databaseError = error as {
+    code?: string;
+    constraint?: string;
+  };
+
+  if (databaseError.code === '22P02') {
+    return {
+      status: 400,
+      message: 'One of the selected client or vehicle references is invalid.',
+    };
+  }
+
+  if (databaseError.code === '23503') {
+    return {
+      status: 400,
+      message: 'The selected client or vehicle no longer exists. Refresh and try again.',
+    };
+  }
+
+  if (databaseError.code === '23505' && databaseError.constraint === 'quotes_quote_number_key') {
+    return {
+      status: 409,
+      message: 'Quote number collision detected. Please try again.',
+    };
+  }
+
+  return {
+    status: 500,
+    message: fallbackMessage,
+  };
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);
@@ -158,8 +200,28 @@ async function getQuote(req: AuthenticatedRequest, res: VercelResponse) {
 
 async function generateQuoteNumber(client: PoolClient): Promise<string> {
   const year = new Date().getFullYear();
-  const result = await client.query<{ next_value: string }>("SELECT nextval('public.quote_number_seq')::text AS next_value");
-  const nextValue = parseInt(result.rows[0]?.next_value || '0', 10);
+  const sequenceCheck = await client.query<{ sequence_name: string | null }>(
+    "SELECT to_regclass('public.quote_number_seq')::text AS sequence_name",
+  );
+
+  if (sequenceCheck.rows[0]?.sequence_name) {
+    const result = await client.query<{ next_value: string }>("SELECT nextval('public.quote_number_seq')::text AS next_value");
+    const nextValue = parseInt(result.rows[0]?.next_value || '0', 10);
+    return `QT-${year}-${String(nextValue).padStart(4, '0')}`;
+  }
+
+  // Fallback for environments where the sequence migration has not run yet.
+  await client.query('SELECT pg_advisory_xact_lock($1)', [2026033002]);
+  const fallbackResult = await client.query<{ max_value: string }>(
+    `
+      SELECT COALESCE(MAX((regexp_match(quote_number, $1))[1]::BIGINT), 0)::text AS max_value
+      FROM quotes
+      WHERE quote_number ~ $2
+    `,
+    [`^QT-${year}-(\\d+)$`, `^QT-${year}-\\d+$`],
+  );
+  const nextValue = parseInt(fallbackResult.rows[0]?.max_value || '0', 10) + 1;
+
   return `QT-${year}-${String(nextValue).padStart(4, '0')}`;
 }
 
@@ -237,7 +299,8 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
     
     res.status(201).json(result);
   } catch (error) {
-    apiError(res, 400, 'Invalid quote data', error);
+    const { status, message } = getQuoteInputErrorMessage(error, 'Failed to create quote');
+    apiError(res, status, message, error);
   }
 }
 
@@ -305,7 +368,8 @@ async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
     if (error instanceof Error && error.message === 'Quote not found') {
       return apiError(res, 404, error.message);
     }
-    apiError(res, 400, 'Invalid quote data', error);
+    const { status, message } = getQuoteInputErrorMessage(error, 'Failed to update quote');
+    apiError(res, status, message, error);
   }
 }
 

@@ -158,7 +158,7 @@ export const TripStatusSchema = z.enum([
   'Cancelled',
 ]);
 
-export const TripSchema = z.object({
+const TripSchemaBase = z.object({
   title: z.string().min(1).max(200),
   status: TripStatusSchema.default('Planned'),
   assigned_driver_id: z.string().uuid().optional().nullable(),
@@ -171,17 +171,31 @@ export const TripSchema = z.object({
   actual_departure_at: DateLikeSchema.optional().nullable(),
   actual_arrival_at: DateLikeSchema.optional().nullable(),
   notes: z.string().max(4000).optional().nullable(),
-}).superRefine((value, ctx) => {
-  if (new Date(value.eta_date).getTime() < new Date(value.departure_date).getTime()) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['eta_date'],
-      message: 'ETA must be after the departure date',
-    });
-  }
 });
 
-export const TripUpdateSchema = TripSchema.partial();
+const withTripDateValidation = <T extends z.ZodTypeAny>(schema: T) =>
+  schema.superRefine((value: z.infer<T>, ctx) => {
+    const tripValue = value as {
+      departure_date?: string;
+      eta_date?: string;
+    };
+
+    if (!tripValue.departure_date || !tripValue.eta_date) {
+      return;
+    }
+
+    if (new Date(tripValue.eta_date).getTime() < new Date(tripValue.departure_date).getTime()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['eta_date'],
+        message: 'ETA must be after the departure date',
+      });
+    }
+  });
+
+export const TripSchema = withTripDateValidation(TripSchemaBase);
+
+export const TripUpdateSchema = withTripDateValidation(TripSchemaBase.partial());
 
 // Auth schemas
 export const LoginSchema = z.object({

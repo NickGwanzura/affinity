@@ -20,7 +20,11 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
-import { sql } from './_db.js';
+import { sql } from './_db';
+
+function getJwtSecret(): string | null {
+  return process.env.JWT_SECRET || null;
+}
 
 // Auto-create tables if they don't exist
 async function ensureTablesExist() {
@@ -84,12 +88,11 @@ async function ensureTablesExist() {
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
 async function verifyJWT(token: string): Promise<{ userId: string; role: string } | null> {
-  if (!JWT_SECRET) return null;
+  const secret = getJwtSecret();
+  if (!secret) return null;
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { sub?: string; role?: string };
+    const decoded = jwt.verify(token, secret) as { sub?: string; role?: string };
     if (typeof decoded.sub !== 'string' || typeof decoded.role !== 'string') {
       return null;
     }

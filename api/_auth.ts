@@ -7,14 +7,20 @@
  */
 
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { sql } from './_db';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRY = '24h';
+const LEGACY_HASH_ALGORITHM = 'sha256';
+const LEGACY_HASH_ITERATIONS = 100000;
 
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return secret;
 }
 
 export interface JWTPayload {
@@ -39,13 +45,47 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
+function isBcryptHash(hash: string | null | undefined): boolean {
+  return typeof hash === 'string' && hash.startsWith('$2');
+}
+
+function isLegacyHash(hash: string | null | undefined, salt: string | null | undefined): boolean {
+  return typeof hash === 'string' && hash.length === 64 && typeof salt === 'string' && salt.length === 32;
+}
+
+function hashLegacyPassword(password: string, salt: string): string {
+  let hash = crypto.createHash(LEGACY_HASH_ALGORITHM).update(Buffer.from(password + salt, 'utf8')).digest();
+
+  for (let i = 0; i < LEGACY_HASH_ITERATIONS; i++) {
+    hash = crypto.createHash(LEGACY_HASH_ALGORITHM).update(hash).digest();
+  }
+
+  return hash.toString('hex');
+}
+
+async function verifyStoredPassword(password: string, hash: string | null, salt: string | null): Promise<boolean> {
+  if (!hash) {
+    return false;
+  }
+
+  if (isBcryptHash(hash)) {
+    return verifyPassword(password, hash);
+  }
+
+  if (isLegacyHash(hash, salt)) {
+    return hashLegacyPassword(password, salt) === hash;
+  }
+
+  return false;
+}
+
 /**
  * Generate JWT token
  */
 export function generateToken(userId: string, role: string): string {
   return jwt.sign(
     { sub: userId, role },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: JWT_EXPIRY }
   );
 }
@@ -54,7 +94,7 @@ export function generateToken(userId: string, role: string): string {
  * Verify JWT token
  */
 export function verifyToken(token: string): JWTPayload {
-  return jwt.verify(token, JWT_SECRET) as JWTPayload;
+  return jwt.verify(token, getJwtSecret()) as JWTPayload;
 }
 
 /**
@@ -63,7 +103,7 @@ export function verifyToken(token: string): JWTPayload {
 export async function authenticateUser(email: string, password: string): Promise<{ token: string; user: any } | null> {
   // Get user from database
   const rows = await sql`
-    SELECT id, name, email, role, status, password_hash
+    SELECT id, name, email, role, status, password_hash, password_salt
     FROM user_profiles
     WHERE email = ${email.toLowerCase()}
   `;
@@ -80,9 +120,21 @@ export async function authenticateUser(email: string, password: string): Promise
   }
   
   // Verify password
-  const isValid = await verifyPassword(password, user.password_hash);
+  const isValid = await verifyStoredPassword(password, user.password_hash, user.password_salt ?? null);
   if (!isValid) {
     return null;
+  }
+
+  // Upgrade legacy hashes in-place after a successful login.
+  if (!isBcryptHash(user.password_hash)) {
+    const upgradedHash = await hashPassword(password);
+    await sql`
+      UPDATE user_profiles
+      SET password_hash = ${upgradedHash}, password_salt = NULL, updated_at = NOW()
+      WHERE id = ${user.id}::uuid
+    `;
+    user.password_hash = upgradedHash;
+    user.password_salt = null;
   }
   
   // Generate token
@@ -91,6 +143,7 @@ export async function authenticateUser(email: string, password: string): Promise
   // Return user without password_hash
   const userWithoutPassword = { ...user };
   delete userWithoutPassword.password_hash;
+  delete userWithoutPassword.password_salt;
   
   return { token, user: userWithoutPassword };
 }
@@ -132,7 +185,7 @@ export async function createUser(
 export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
   // Get current password hash
   const rows = await sql`
-    SELECT password_hash FROM user_profiles WHERE id = ${userId}::uuid
+    SELECT password_hash, password_salt FROM user_profiles WHERE id = ${userId}::uuid
   `;
   
   if (rows.length === 0) {
@@ -140,7 +193,11 @@ export async function changePassword(userId: string, currentPassword: string, ne
   }
   
   // Verify current password
-  const isValid = await verifyPassword(currentPassword, rows[0].password_hash);
+  const isValid = await verifyStoredPassword(
+    currentPassword,
+    rows[0].password_hash ?? null,
+    rows[0].password_salt ?? null,
+  );
   if (!isValid) {
     throw new Error('Current password is incorrect');
   }
@@ -150,7 +207,7 @@ export async function changePassword(userId: string, currentPassword: string, ne
   
   await sql`
     UPDATE user_profiles 
-    SET password_hash = ${newHash}, updated_at = NOW()
+    SET password_hash = ${newHash}, password_salt = NULL, updated_at = NOW()
     WHERE id = ${userId}::uuid
   `;
 }
@@ -204,7 +261,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
   
   await sql`
     UPDATE user_profiles 
-    SET password_hash = ${newHash}, updated_at = NOW()
+    SET password_hash = ${newHash}, password_salt = NULL, updated_at = NOW()
     WHERE id = ${userId}::uuid
   `;
   
