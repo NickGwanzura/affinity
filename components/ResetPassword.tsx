@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '../services/authService';
+import { useToast } from './Toast';
+import { getFirstValidationMessage, passwordResetFormSchema } from '../utils/clientValidation';
+import { ZodError } from 'zod';
 
 interface ResetPasswordProps {
   onComplete: () => void;
 }
 
 export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
+  const { showToast } = useToast();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,19 +38,6 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
     setError('');
     setLoading(true);
 
-    // Validation
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
-    }
-
-    if (validationErrors.length > 0) {
-      setError('Please fix password requirements');
-      setLoading(false);
-      return;
-    }
-
     // Get token from URL or manual input
     let token = manualToken.trim();
     
@@ -65,21 +56,30 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
     }
     
     if (!token) {
-      setError('Invalid or missing reset token. Please check your email link or enter the token manually below.');
+      const message = 'Invalid or missing reset token. Please check your email link or enter the token manually below.';
+      setError(message);
+      showToast(message, 'warning');
       setShowManualInput(true);
       setLoading(false);
       return;
     }
     
     try {
+      passwordResetFormSchema.parse({ token, newPassword, confirmPassword });
       await authService.updatePassword(token, newPassword);
       setSuccess(true);
+      showToast('Password reset successfully. Redirecting to sign in.', 'success');
       setTimeout(() => {
         onComplete();
       }, 2000);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to reset password';
+      const message = err instanceof ZodError
+        ? getFirstValidationMessage(err)
+        : err instanceof Error
+          ? err.message
+          : 'Failed to reset password';
       setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }

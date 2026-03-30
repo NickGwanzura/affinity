@@ -2,14 +2,22 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails, OperatingFund, OperatingFundType, UserRole, AppUser, Employee, Vehicle, Currency, ExpenseCategory, VehicleStatus } from '../types';
 import { AssetRegister } from './AssetRegister';
 import AccountantClientsView from './accountant/AccountantClientsView';
+import {
+  AccountantExpenseReportsSection,
+  AccountantExpensesSection,
+  AccountantInvoicesSection,
+  AccountantOverviewSection,
+  AccountantPaymentsSection,
+} from './accountant/AccountantSections';
 import OperatingFundsView from './accountant/OperatingFundsView';
 import ReportsOverviewView from './accountant/ReportsOverviewView';
 import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
+import DashboardSectionSwitcher from './shared/DashboardSectionSwitcher';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
 import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
 import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from './shared/PayslipFormModal';
 import PayslipsListView from './shared/PayslipsListView';
-import { supabase } from '../services/supabaseService';
+import { dataService } from '../services/dataService';
 import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
 import { Button, StatCard, StatusBadge, SkeletonStatCards, SkeletonTable } from './ui';
 import { useToast } from './Toast';
@@ -132,7 +140,7 @@ export const AccountantDashboard: React.FC = () => {
     if (!fundForm.amount || parseFloat(fundForm.amount) <= 0) { notifyWarning('Enter a valid amount'); return; }
     if (fundForm.type === 'Disbursed' && !fundForm.recipient) { notifyWarning('Please select the driver receiving this disbursement'); return; }
     try {
-      await supabase.addOperatingFund({
+      await dataService.addOperatingFund({
         type: fundForm.type,
         amount: parseFloat(fundForm.amount),
         currency: fundForm.currency,
@@ -153,7 +161,7 @@ export const AccountantDashboard: React.FC = () => {
     const ok = await confirm({ title: 'Delete Entry', message: 'Remove this operating fund entry? This cannot be undone.', confirmLabel: 'Delete', isDangerous: true });
     if (!ok) return;
     try {
-      await supabase.deleteOperatingFund(id);
+      await dataService.deleteOperatingFund(id);
       await loadData();
       notifySuccess('Entry deleted');
     } catch (err: any) { notifyError(err?.message || 'Failed to delete entry'); }
@@ -163,18 +171,18 @@ export const AccountantDashboard: React.FC = () => {
   const loadData = async (throwOnError = false) => {
     try {
       const [inv, pay, exp, quo, sum, veh, cli, psl, emp, comp, funds, users] = await Promise.all([
-        supabase.getInvoices(),
-        supabase.getPayments(),
-        supabase.getExpenses(),
-        supabase.getQuotes(),
-        supabase.getLandedCostSummaries(),
-        supabase.getVehicles(),
-        supabase.getClients(),
-        supabase.getPayslips(),
-        supabase.getEmployees(),
-        supabase.getCompanyDetails(),
-        supabase.getOperatingFunds().catch(() => [] as import('../types').OperatingFund[]),
-        supabase.getUsers(),
+        dataService.getInvoices(),
+        dataService.getPayments(),
+        dataService.getExpenses(),
+        dataService.getQuotes(),
+        dataService.getLandedCostSummaries(),
+        dataService.getVehicles(),
+        dataService.getClients(),
+        dataService.getPayslips(),
+        dataService.getEmployees(),
+        dataService.getCompanyDetails(),
+        dataService.getOperatingFunds().catch(() => [] as import('../types').OperatingFund[]),
+        dataService.getUsers(),
       ]);
       setInvoices(Array.isArray(inv) ? inv : []);
       setPayments(Array.isArray(pay) ? pay : []);
@@ -199,7 +207,7 @@ export const AccountantDashboard: React.FC = () => {
   useEffect(() => {
     loadData();
     // Get current user role
-    supabase.getSession().then(session => {
+    dataService.getSession().then(session => {
       if (session?.user?.role) {
         setUserRole(session.user.role);
       }
@@ -434,7 +442,7 @@ export const AccountantDashboard: React.FC = () => {
     }
 
     try {
-      const newExpense = await supabase.addExpense({
+      const newExpense = await dataService.addExpense({
         vehicle_id: expenseVehicle || undefined,
         description: expenseDriver 
           ? `Driver Disbursement - ${expenseDriver}: ${expenseDesc || 'Trip funds'}`
@@ -443,6 +451,7 @@ export const AccountantDashboard: React.FC = () => {
         currency: expenseCurrency,
         category: expenseCategory,
         location: expenseLocation,
+        exchange_rate_to_usd: expenseCurrency === 'USD' ? 1 : undefined,
         receipt_url: 'https://picsum.photos/400/600',
         driver_name: expenseDriver || undefined
       });
@@ -489,7 +498,7 @@ export const AccountantDashboard: React.FC = () => {
     if (!editingExpense || !editExpenseAmount) return;
 
     try {
-      await supabase.updateExpense(editingExpense.id, {
+      await dataService.updateExpense(editingExpense.id, {
         vehicle_id: editExpenseVehicle || undefined,
         description: editExpenseDesc,
         amount: parseFloat(editExpenseAmount),
@@ -515,10 +524,10 @@ export const AccountantDashboard: React.FC = () => {
     e.preventDefault();
     try {
       if (editingClient && !editingClient.id.startsWith('__invoice__')) {
-        await supabase.updateClient(editingClient.id, clientForm);
+        await dataService.updateClient(editingClient.id, clientForm);
       } else {
         // Virtual (invoice-sourced) clients or new clients → create in DB
-        await supabase.createClient(clientForm);
+        await dataService.createClient(clientForm);
       }
       
       setShowClientModal(false);
@@ -550,7 +559,7 @@ export const AccountantDashboard: React.FC = () => {
     if (!approved) return;
 
     try {
-      await supabase.deleteClient(id);
+      await dataService.deleteClient(id);
       await loadData(true);
       notifySuccess('Client deleted successfully.');
     } catch (error: any) {
@@ -581,7 +590,7 @@ export const AccountantDashboard: React.FC = () => {
         payment_method: payslipForm.payment_method,
         notes: payslipForm.notes
       };
-      const newPayslip = await supabase.generatePayslip(payload);
+      const newPayslip = await dataService.generatePayslip(payload);
       
       setShowPayslipModal(false);
       setPayslipForm(createEmptyPayslipForm());
@@ -602,7 +611,7 @@ export const AccountantDashboard: React.FC = () => {
 
   const handleUpdatePayslipStatus = async (id: string, status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled') => {
     try {
-      await supabase.updatePayslipStatus(id, status);
+      await dataService.updatePayslipStatus(id, status);
       await loadData(true);
     } catch (error: any) {
       console.error('Error updating payslip status:', error);
@@ -621,8 +630,8 @@ export const AccountantDashboard: React.FC = () => {
     if (!approved) return;
 
     try {
-      await supabase.deletePayslip(id);
-      const updatedPayslips = await supabase.getPayslips();
+      await dataService.deletePayslip(id);
+      const updatedPayslips = await dataService.getPayslips();
       setPayslips(updatedPayslips);
       notifySuccess('Payslip deleted successfully.');
     } catch (error) {
@@ -715,17 +724,6 @@ export const AccountantDashboard: React.FC = () => {
       year: 'numeric',
     });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Paid': return 'bg-green-100 text-green-700';
-      case 'Sent': return 'bg-blue-100 text-blue-700';
-      case 'Overdue': return 'bg-red-100 text-red-700';
-      case 'Draft': return 'bg-zinc-100 text-zinc-700';
-      case 'Cancelled': return 'bg-zinc-100 text-zinc-500';
-      default: return 'bg-zinc-100 text-zinc-700';
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -811,261 +809,57 @@ export const AccountantDashboard: React.FC = () => {
       {/* Tabs */}
       <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
         <div className="border-b border-zinc-200 bg-zinc-50">
-          <div className="p-3 sm:hidden">
-            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">Section</label>
-            <select
+          <div className="p-3">
+            <DashboardSectionSwitcher
               value={activeTab}
-              onChange={(event) => setActiveTab(event.target.value as typeof activeTab)}
-              className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-              aria-label="Select accountant dashboard section"
-            >
-              {accountantTabOptions.map((tab) => (
-                <option key={tab.id} value={tab.id}>{tab.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="hidden gap-1 p-2 flex-wrap sm:flex">
-            {accountantTabOptions.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 lg:px-6 py-3 rounded-xl text-sm font-bold capitalize transition-all min-h-[44px] ${
-                  activeTab === tab.id
-                    ? 'bg-white text-blue-600 shadow-sm ring-1 ring-blue-100'
-                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+              onChange={setActiveTab}
+              label="Section"
+              options={accountantTabOptions}
+            />
           </div>
         </div>
 
         <div className="p-6">
           {activeTab === 'overview' && (
-            <div className="space-y-6">
-              {/* Overview Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard 
-                  title="Total Revenue" 
-                  value={formatCurrency(totalRevenue)} 
-                  trend="neutral"
-                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                />
-                <StatCard 
-                  title="Total Expenses" 
-                  value={formatCurrency(totalExpenses)} 
-                  trend="neutral"
-                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                />
-                <StatCard 
-                  title="Net Profit" 
-                  value={formatCurrency(netProfit)} 
-                  trend={netProfit >= 0 ? 'up' : 'down'}
-                  trendValue={netProfit >= 0 ? 'Profitable' : 'Loss'}
-                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
-                />
-                <StatCard 
-                  title="Pending Amount" 
-                  value={formatCurrency(totalPending)} 
-                  trend="neutral"
-                  trendValue={`${pendingInvoices.length} invoices`}
-                  icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Invoices */}
-                <div>
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4">Recent Invoices</h3>
-                  <div className="space-y-2">
-                    {invoices.slice(0, 5).map((invoice) => (
-                      <div key={invoice.id} className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
-                        <div>
-                          <p className="font-semibold text-zinc-900 text-sm">{invoice.invoice_number}</p>
-                          <p className="text-xs text-zinc-500">{formatDate(invoice.created_at)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-zinc-900">{formatCurrency(invoice.amount_usd, (invoice.currency as 'USD' | 'GBP') || 'USD')}</p>
-                          <StatusBadge status={invoice.status} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Recent Payments */}
-                <div>
-                  <h3 className="text-lg font-bold text-zinc-900 mb-4">Recent Payments</h3>
-                  <div className="space-y-2">
-                    {payments.slice(0, 5).map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
-                        <div>
-                          <p className="font-semibold text-zinc-900 text-sm">{payment.method}</p>
-                          <p className="text-xs text-zinc-500">{formatDate(payment.date)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className={`font-bold ${payment.type === 'Inbound' ? 'text-green-600' : 'text-red-600'}`}>
-                            {payment.type === 'Inbound' ? '+' : '-'}{formatCurrency(payment.amount_usd)}
-                          </p>
-                          <p className="text-xs text-zinc-500">{payment.type}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Vehicle Cost Summary */}
-              <div>
-                <h3 className="text-lg font-bold text-zinc-900 mb-4">Vehicle Landed Costs</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-zinc-50 border-b border-zinc-200">
-                      <tr>
-                        <th className="px-4 py-3 text-left font-semibold text-zinc-700">VIN</th>
-                        <th className="px-4 py-3 text-left font-semibold text-zinc-700">Model</th>
-                        <th className="px-4 py-3 text-right font-semibold text-zinc-700">Purchase (GBP)</th>
-                        <th className="px-4 py-3 text-right font-semibold text-zinc-700">Expenses (USD)</th>
-                        <th className="px-4 py-3 text-right font-semibold text-zinc-700">Total Cost (USD)</th>
-                        <th className="px-4 py-3 text-center font-semibold text-zinc-700">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                      {summaries.map((summary) => (
-                        <tr key={summary.vehicle_id} className="hover:bg-zinc-50">
-                          <td className="px-4 py-3 font-mono text-xs">{summary.vin_number}</td>
-                          <td className="px-4 py-3 font-medium">{summary.make_model}</td>
-                          <td className="px-4 py-3 text-right">£{summary.purchase_price_gbp.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-right">{formatCurrency(summary.total_expenses_usd)}</td>
-                          <td className="px-4 py-3 text-right font-bold">{formatCurrency(summary.total_landed_cost_usd)}</td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded-md bg-zinc-100 text-zinc-700">
-                              {summary.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <AccountantOverviewSection
+              totalRevenue={totalRevenue}
+              totalExpenses={totalExpenses}
+              netProfit={netProfit}
+              totalPending={totalPending}
+              pendingInvoiceCount={pendingInvoices.length}
+              invoices={invoices}
+              payments={payments}
+              summaries={summaries}
+              formatCurrency={formatCurrency}
+              formatDate={formatDate}
+            />
           )}
 
           {activeTab === 'invoices' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-zinc-50 border-b border-zinc-200">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Invoice #</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Vehicle ID</th>
-                    <th className="px-4 py-3 text-right font-semibold text-zinc-700">Amount</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Status</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Due Date</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Created</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {invoices.map((invoice) => (
-                    <tr key={invoice.id} className="hover:bg-zinc-50">
-                      <td className="px-4 py-3 font-mono text-xs">{invoice.invoice_number}</td>
-                      <td className="px-4 py-3 font-mono text-xs">{truncateValue(invoice.vehicle_id, 8)}</td>
-                      <td className="px-4 py-3 text-right font-bold">{formatCurrency(invoice.amount_usd, (invoice.currency as 'USD' | 'GBP') || 'USD')}</td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={invoice.status} />
-                      </td>
-                      <td className="px-4 py-3">{formatDate(invoice.due_date)}</td>
-                      <td className="px-4 py-3">{formatDate(invoice.created_at)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AccountantInvoicesSection
+              invoices={invoices}
+              formatCurrency={formatCurrency}
+              formatDate={formatDate}
+              truncateValue={truncateValue}
+            />
           )}
 
           {activeTab === 'expenses' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-zinc-50 border-b border-zinc-200">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Description</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Category</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Location</th>
-                    <th className="px-4 py-3 text-right font-semibold text-zinc-700">Amount</th>
-                    <th className="px-4 py-3 text-right font-semibold text-zinc-700">USD Value</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Date</th>
-                    <th className="px-4 py-3 text-center font-semibold text-zinc-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {expenses.map((expense) => (
-                    <tr key={expense.id} className="hover:bg-zinc-50">
-                      <td className="px-4 py-3">{expense.description}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-md bg-zinc-100 text-zinc-700">
-                          {expense.category}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">{expense.location}</td>
-                      <td className="px-4 py-3 text-right font-medium">
-                        {expense.currency} {expense.amount.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold">
-                        {formatCurrency(expense.amount * expense.exchange_rate_to_usd)}
-                      </td>
-                      <td className="px-4 py-3">{formatDate(expense.created_at)}</td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => openEditExpenseModal(expense)}
-                          className="text-blue-600 hover:text-blue-800 font-semibold text-xs px-2 py-1 rounded hover:bg-blue-50 transition-colors"
-                          title="Edit expense"
-                        >
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AccountantExpensesSection
+              expenses={expenses}
+              formatCurrency={formatCurrency}
+              formatDate={formatDate}
+              onEditExpense={openEditExpenseModal}
+            />
           )}
 
           {activeTab === 'payments' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-zinc-50 border-b border-zinc-200">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Reference ID</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Type</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Method</th>
-                    <th className="px-4 py-3 text-right font-semibold text-zinc-700">Amount</th>
-                    <th className="px-4 py-3 text-left font-semibold text-zinc-700">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {payments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-zinc-50">
-                      <td className="px-4 py-3 font-mono text-xs">{truncateValue(payment.reference_id, 12)}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md ${
-                          payment.type === 'Inbound' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {payment.type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">{payment.method}</td>
-                      <td className={`px-4 py-3 text-right font-bold ${
-                        payment.type === 'Inbound' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {payment.type === 'Inbound' ? '+' : '-'}{formatCurrency(payment.amount_usd)}
-                      </td>
-                      <td className="px-4 py-3">{formatDate(payment.date)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AccountantPaymentsSection
+              payments={payments}
+              formatCurrency={formatCurrency}
+              formatDate={formatDate}
+              truncateValue={truncateValue}
+            />
           )}
 
           {activeTab === 'reports' && (
@@ -1153,158 +947,33 @@ export const AccountantDashboard: React.FC = () => {
             />
           )}
           {activeTab === 'expense-reports' && (
-            <div className="space-y-6">
-              {/* Filters */}
-              <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4">
-                <h3 className="text-sm font-bold text-zinc-700 mb-3 uppercase tracking-wide">Filters</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">From</label>
-                    <input type="date" value={erDateFrom} onChange={e => setErDateFrom(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">To</label>
-                    <input type="date" value={erDateTo} onChange={e => setErDateTo(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">Category</label>
-                    <select value={erCategory} onChange={e => setErCategory(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                      <option value="">All Categories</option>
-                      {['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Driver Disbursement', 'Other'].map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">Location</label>
-                    <select value={erLocation} onChange={e => setErLocation(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                      <option value="">All Locations</option>
-                      {['UK', 'Namibia', 'Zimbabwe', 'Botswana'].map(l => <option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-500 mb-1 block">Vehicle</label>
-                    <select value={erVehicle} onChange={e => setErVehicle(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                      <option value="">All Vehicles</option>
-                      {vehicles.map(v => <option key={v.id} value={v.id}>{v.make_model} — {v.vin_number}</option>)}
-                    </select>
-                  </div>
-                </div>
-                {(erDateFrom || erDateTo || erCategory || erLocation || erVehicle) && (
-                  <button onClick={() => { setErDateFrom(''); setErDateTo(''); setErCategory(''); setErLocation(''); setErVehicle(''); }} className="mt-3 text-xs text-blue-600 font-semibold hover:underline">
-                    Clear filters
-                  </button>
-                )}
-              </div>
-
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white border border-zinc-200 rounded-2xl p-5">
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wide mb-1">Total Entries</p>
-                  <p className="text-3xl font-black text-zinc-900">{filteredExpensesForReport.length}</p>
-                </div>
-                <div className="bg-white border border-zinc-200 rounded-2xl p-5">
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wide mb-1">Total (USD)</p>
-                  <p className="text-3xl font-black text-red-600">{formatCurrency(expenseReportTotal)}</p>
-                </div>
-                <div className="bg-white border border-zinc-200 rounded-2xl p-5">
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wide mb-1">Top Category</p>
-                  <p className="text-2xl font-black text-zinc-900">{expenseReportByCategory[0]?.category || '—'}</p>
-                  {expenseReportByCategory[0] && <p className="text-xs text-zinc-500 mt-1">{formatCurrency(expenseReportByCategory[0].totalUsd)}</p>}
-                </div>
-              </div>
-
-              {/* Category Breakdown */}
-              <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-                  <h3 className="font-bold text-zinc-900">Breakdown by Category</h3>
-                  <div className="flex gap-2">
-                    <button onClick={handleExportExpenseReportPDF} className="flex items-center gap-2 bg-emerald-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-emerald-700 transition-all">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                      Export PDF
-                    </button>
-                    <button onClick={handleExportExpenseReportCSV} className="flex items-center gap-2 bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                      Export CSV
-                    </button>
-                  </div>
-                </div>
-                <table className="w-full text-sm">
-                  <thead className="bg-zinc-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Category</th>
-                      <th className="px-6 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Entries</th>
-                      <th className="px-6 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Total (USD)</th>
-                      <th className="px-6 py-3 text-right text-xs font-bold text-zinc-600 uppercase">% of Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100">
-                    {expenseReportByCategory.length === 0 ? (
-                      <tr><td colSpan={4} className="px-6 py-8 text-center text-zinc-400">No expenses match the selected filters</td></tr>
-                    ) : expenseReportByCategory.map(row => (
-                      <tr key={row.category} className="hover:bg-zinc-50">
-                        <td className="px-6 py-3 font-semibold text-zinc-900">{row.category}</td>
-                        <td className="px-6 py-3 text-right text-zinc-600">{row.count}</td>
-                        <td className="px-6 py-3 text-right font-bold text-zinc-900">{formatCurrency(row.totalUsd)}</td>
-                        <td className="px-6 py-3 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <div className="w-16 bg-zinc-100 rounded-full h-1.5">
-                              <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${expenseReportTotal > 0 ? (row.totalUsd / expenseReportTotal) * 100 : 0}%` }} />
-                            </div>
-                            <span className="text-xs text-zinc-500 w-10 text-right">{expenseReportTotal > 0 ? ((row.totalUsd / expenseReportTotal) * 100).toFixed(1) : 0}%</span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {expenseReportByCategory.length > 0 && (
-                      <tr className="bg-zinc-50 font-bold">
-                        <td className="px-6 py-3 text-zinc-900">Total</td>
-                        <td className="px-6 py-3 text-right text-zinc-900">{filteredExpensesForReport.length}</td>
-                        <td className="px-6 py-3 text-right text-zinc-900">{formatCurrency(expenseReportTotal)}</td>
-                        <td className="px-6 py-3 text-right text-zinc-500">100%</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Detail Table */}
-              <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-zinc-100">
-                  <h3 className="font-bold text-zinc-900">All Entries <span className="text-zinc-400 font-normal text-sm">({filteredExpensesForReport.length})</span></h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-zinc-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Category</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Description</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Location</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-zinc-600 uppercase">Driver</th>
-                        <th className="px-4 py-3 text-right text-xs font-bold text-zinc-600 uppercase">Amount</th>
-                        <th className="px-4 py-3 text-right text-xs font-bold text-zinc-600 uppercase">USD Value</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                      {filteredExpensesForReport.length === 0 ? (
-                        <tr><td colSpan={7} className="px-6 py-8 text-center text-zinc-400">No expenses match the selected filters</td></tr>
-                      ) : filteredExpensesForReport.map(exp => (
-                        <tr key={exp.id} className="hover:bg-zinc-50">
-                          <td className="px-4 py-3 text-zinc-500 text-xs">{formatDate(exp.created_at)}</td>
-                          <td className="px-4 py-3">
-                            <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-semibold">{exp.category}</span>
-                          </td>
-                          <td className="px-4 py-3 text-zinc-700 max-w-[200px] truncate">{exp.description}</td>
-                          <td className="px-4 py-3 text-zinc-500 text-xs">{exp.location}</td>
-                          <td className="px-4 py-3 text-zinc-500 text-xs">{exp.driver_name || '—'}</td>
-                          <td className="px-4 py-3 text-right font-medium">{exp.amount.toLocaleString()} {exp.currency}</td>
-                          <td className="px-4 py-3 text-right font-bold text-zinc-900">{formatCurrency((exp.amount || 0) * (exp.exchange_rate_to_usd || 1))}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <AccountantExpenseReportsSection
+              erDateFrom={erDateFrom}
+              erDateTo={erDateTo}
+              erCategory={erCategory}
+              erLocation={erLocation}
+              erVehicle={erVehicle}
+              vehicles={vehicles}
+              filteredExpensesForReport={filteredExpensesForReport}
+              expenseReportTotal={expenseReportTotal}
+              expenseReportByCategory={expenseReportByCategory}
+              formatCurrency={formatCurrency}
+              formatDate={formatDate}
+              onDateFromChange={setErDateFrom}
+              onDateToChange={setErDateTo}
+              onCategoryChange={setErCategory}
+              onLocationChange={setErLocation}
+              onVehicleChange={setErVehicle}
+              onClearFilters={() => {
+                setErDateFrom('');
+                setErDateTo('');
+                setErCategory('');
+                setErLocation('');
+                setErVehicle('');
+              }}
+              onExportPDF={handleExportExpenseReportPDF}
+              onExportCSV={handleExportExpenseReportCSV}
+            />
           )}
 
           {/* Asset Register Tab */}

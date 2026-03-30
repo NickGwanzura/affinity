@@ -233,7 +233,33 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
         </SideNav>
       </Header>
 
-      <Content id="main-content">
+      <div className="fixed inset-x-0 bottom-0 z-[7000] border-t border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-01,#f4f4f4)]/95 backdrop-blur md:hidden">
+        <nav aria-label="Primary mobile navigation" className="overflow-x-auto px-2 py-2">
+          <div className="flex min-w-max items-stretch gap-2">
+            {visible.map(({ id, label, Icon }) => {
+              const isActive = currentView === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => navigate(id)}
+                  className={`inline-flex min-h-[52px] min-w-[88px] flex-col items-center justify-center rounded-xl px-3 py-2 text-[11px] font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-[var(--cds-layer-selected,#d0e2ff)] text-[var(--cds-text-primary,#161616)]'
+                      : 'bg-transparent text-[var(--cds-text-secondary,#525252)]'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon size={18} />
+                  <span className="mt-1 whitespace-nowrap">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
+
+      <Content id="main-content" className="pb-24 md:pb-0">
         {children}
       </Content>
     </>

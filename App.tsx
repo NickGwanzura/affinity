@@ -5,6 +5,7 @@ import { Login } from './components/Login';
 import { AcceptInvite } from './components/AcceptInvite';
 import { ResetPassword } from './components/ResetPassword';
 import { Layout, AppView } from './components/Layout';
+import { ToastViewport } from './components/Toast';
 import { AuthSession } from './types';
 import { authService } from './services/authService';
 
@@ -121,30 +122,26 @@ export default function App() {
     }
   };
 
+  let content: React.ReactNode;
+
   if (loading) {
-    return (
+    content = (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--cds-background, #f4f4f4)' }}>
         <Loading description="Initializing Affinity Logistics..." withOverlay={false} />
       </div>
     );
-  }
-
-  if (!session) {
-    // Show password reset page
+  } else if (!session) {
     if (isResetPassword) {
-      return (
-        <ResetPassword 
+      content = (
+        <ResetPassword
           onComplete={() => {
             setIsResetPassword(false);
-            // Clear the hash from URL
             window.history.replaceState({}, document.title, window.location.pathname);
-          }} 
+          }}
         />
       );
-    }
-
-    if (inviteToken) {
-      return (
+    } else if (inviteToken) {
+      content = (
         <AcceptInvite
           token={inviteToken}
           onSuccess={handleLogin}
@@ -154,20 +151,28 @@ export default function App() {
           }}
         />
       );
+    } else {
+      content = <Login onLogin={handleLogin} />;
     }
-    return <Login onLogin={handleLogin} />;
+  } else {
+    content = (
+      <Layout
+        currentView={currentView}
+        onNavigate={setCurrentView}
+        user={session.user}
+        onLogout={handleLogout}
+      >
+        <Suspense fallback={<ScreenLoader />}>
+          {renderCurrentView()}
+        </Suspense>
+      </Layout>
+    );
   }
 
   return (
-    <Layout
-      currentView={currentView}
-      onNavigate={setCurrentView}
-      user={session.user}
-      onLogout={handleLogout}
-    >
-      <Suspense fallback={<ScreenLoader />}>
-        {renderCurrentView()}
-      </Suspense>
-    </Layout>
+    <>
+      <ToastViewport />
+      {content}
+    </>
   );
 }

@@ -1,25 +1,114 @@
 /**
- * Server-side Neon client for Vercel Serverless Functions.
- *
- * Uses process.env.NEON_DATABASE_URL (no VITE_ prefix — never exposed to
- * the browser). Add this variable to your Vercel project environment settings
- * as well as your local .env file.
+ * Server-Side Database Service
+ * 
+ * This module ONLY runs server-side in API routes.
+ * Database credentials are never exposed to the browser.
  */
 
-import { neon } from '@neondatabase/serverless';
+import { neon, Pool } from '@neondatabase/serverless';
 
-const connectionString =
-  process.env.NEON_DATABASE_URL ||
-  process.env.DATABASE_URL ||
-  process.env.VITE_NEON_DATABASE_URL;
+const databaseUrl = process.env.NEON_DATABASE_URL;
 
-if (!connectionString) {
-  // Log on cold-start but don't throw — the API handler will return 503
-  console.error('[_db] Database URL is not set. Add NEON_DATABASE_URL, DATABASE_URL, or VITE_NEON_DATABASE_URL to Vercel environment variables.');
+if (!databaseUrl) {
+  throw new Error('NEON_DATABASE_URL environment variable is required');
 }
 
-// If the connection string is missing, sql() will throw when called.
-// The try/catch in the API handler will catch it and return a proper error response.
-export const sql = connectionString
-  ? neon(connectionString)
-  : (() => { throw new Error('Database URL is not set — add NEON_DATABASE_URL, DATABASE_URL, or VITE_NEON_DATABASE_URL to Vercel environment variables'); }) as unknown as ReturnType<typeof neon>;
+// Create SQL client - server-side only
+export const sql = neon(databaseUrl);
+
+// Connection check
+export async function checkConnection(): Promise<boolean> {
+  try {
+    const result = await sql`SELECT 1 as health_check, NOW() as server_time`;
+    return result.length > 0;
+  } catch (error) {
+    console.error('[DB] Connection check failed:', error);
+    return false;
+  }
+}
+
+// Column validation for ORDER BY clauses
+const ALLOWED_COLUMNS: Record<string, string[]> = {
+  vehicles: ['id', 'vin_number', 'make_model', 'purchase_price_gbp', 'status', 'created_at'],
+  expenses: ['id', 'vehicle_id', 'description', 'amount', 'currency', 'category', 'created_at'],
+  quotes: ['id', 'quote_number', 'client_name', 'amount_usd', 'status', 'created_at'],
+  invoices: ['id', 'invoice_number', 'client_name', 'amount_usd', 'status', 'due_date', 'created_at'],
+  payments: ['id', 'reference_id', 'client_name', 'amount_usd', 'date', 'created_at'],
+  clients: ['id', 'name', 'email', 'company', 'created_at'],
+  employees: ['id', 'employee_number', 'name', 'department', 'status', 'created_at'],
+  user_profiles: ['id', 'name', 'email', 'role', 'status', 'created_at'],
+  trips: ['id', 'trip_number', 'title', 'status', 'route_origin', 'route_destination', 'departure_date', 'eta_date', 'created_at'],
+};
+
+export function validateOrderColumn(table: string, column: string): string | null {
+  const allowed = ALLOWED_COLUMNS[table];
+  if (!allowed) return null;
+  return allowed.includes(column) ? column : null;
+}
+
+// Transaction helper
+export async function withTransaction<T>(
+  operations: (client: import('@neondatabase/serverless').PoolClient) => Promise<T>,
+): Promise<T> {
+  const pool = new Pool({ connectionString: databaseUrl });
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    const result = await operations(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+// Query helpers with authorization
+export async function queryWithAuth(
+  userId: string, 
+  userRole: string, 
+  queryFn: () => Promise<any>
+): Promise<any> {
+  // Admin can access everything
+  if (userRole === 'Admin') {
+    return queryFn();
+  }
+  
+  // Other roles have filtered access
+  // This is where row-level filtering would be applied
+  return queryFn();
+}
+
+// Rate limiting (simple in-memory - use Redis in production)
+const rateLimits = new Map<string, { count: number; resetTime: number }>();
+
+export function checkRateLimit(identifier: string, maxRequests: number = 100, windowMs: number = 60000): boolean {
+  const now = Date.now();
+  const record = rateLimits.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    rateLimits.set(identifier, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+  
+  if (record.count >= maxRequests) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+}
+
+// Clean up old rate limit entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimits.entries()) {
+    if (now > record.resetTime) {
+      rateLimits.delete(key);
+    }
+  }
+}, 60000);

@@ -10,12 +10,14 @@ import {
   TextInput,
   Tile,
 } from '@carbon/react';
-import { Currency, Expense, ExpenseCategory, OperatingFund, Vehicle, VehicleStatus } from '../types';
+import { Currency, Expense, ExpenseCategory, OperatingFund, Trip, Vehicle, VehicleStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
-import { supabase } from '../services/supabaseService';
-import { supabaseClient } from '../services/supabaseClient';
+import { dataService } from '../services/dataService';
 import { Button, StatCard } from './ui';
 import { getDriverIdentityAliases } from '../utils/driverIdentity';
+import { useToast } from './Toast';
+import { driverDrawdownSchema, getFirstValidationMessage } from '../utils/clientValidation';
+import { ZodError } from 'zod';
 
 type DriverLedgerEntry = {
   id: string;
@@ -29,6 +31,8 @@ type DriverLedgerEntry = {
   amountUsd: number;
   receiptUrl?: string;
 };
+
+type CurrencyTotals = Partial<Record<Currency, number>>;
 
 const formatUsd = (value: number) =>
   new Intl.NumberFormat('en-US', {
@@ -44,17 +48,36 @@ const formatMoney = (value: number, currency: Currency) =>
     maximumFractionDigits: 2,
   }).format(value || 0);
 
+const summarizeCurrencyTotals = (entries: Array<{ amount: number; currency: Currency }>): CurrencyTotals =>
+  entries.reduce<CurrencyTotals>((totals, entry) => {
+    totals[entry.currency] = (totals[entry.currency] || 0) + (entry.amount || 0);
+    return totals;
+  }, {});
+
+const getNonZeroCurrencies = (totals: CurrencyTotals): Currency[] =>
+  (Object.entries(totals) as Array<[Currency, number | undefined]>)
+    .filter(([, amount]) => (amount || 0) > 0)
+    .map(([currency]) => currency);
+
+const formatCurrencyBreakdown = (totals: CurrencyTotals): string =>
+  getNonZeroCurrencies(totals)
+    .map((currency) => formatMoney(totals[currency] || 0, currency))
+    .join(' • ');
+
 export const DriverPortal: React.FC = () => {
+  const { showToast } = useToast();
   const [currentDriver, setCurrentDriver] = useState('');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [driverExpenses, setDriverExpenses] = useState<Expense[]>([]);
   const [driverFunds, setDriverFunds] = useState<OperatingFund[]>([]);
+  const [assignedTrips, setAssignedTrips] = useState<Trip[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<Currency>('NAD');
   const [category, setCategory] = useState<Exclude<ExpenseCategory, 'Driver Disbursement'>>('Fuel');
   const [location, setLocation] = useState<VehicleStatus>('Namibia');
+  const [tripReference, setTripReference] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -78,7 +101,7 @@ export const DriverPortal: React.FC = () => {
       setLoading(true);
       setUploadError('');
 
-      const session = await supabase.getSession();
+      const session = await dataService.getSession();
       const driverAliases = getDriverIdentityAliases(session?.user);
       const driverName = session?.user?.name?.trim() || driverAliases[0];
 
@@ -88,18 +111,19 @@ export const DriverPortal: React.FC = () => {
 
       setCurrentDriver(driverName);
 
-      const [vehicleData, expenseDataGroups, fundDataGroups] = await Promise.all([
-        supabase.getVehicles(),
+      const [vehicleData, expenseDataGroups, fundDataGroups, tripData] = await Promise.all([
+        dataService.getVehicles(),
         Promise.all(
           driverAliases.map((alias) =>
-            supabase.getExpensesByDriver(alias).catch(() => [] as Expense[]),
+            dataService.getExpensesByDriver(alias).catch(() => [] as Expense[]),
           ),
         ),
         Promise.all(
           driverAliases.map((alias) =>
-            supabase.getOperatingFundsByRecipient(alias).catch(() => [] as OperatingFund[]),
+            dataService.getOperatingFundsByRecipient(alias).catch(() => [] as OperatingFund[]),
           ),
         ),
+        dataService.getTrips({ upcomingOnly: true }).catch(() => [] as Trip[]),
       ]);
 
       const expenseData = uniqueById(expenseDataGroups.flat());
@@ -108,8 +132,11 @@ export const DriverPortal: React.FC = () => {
       setVehicles(vehicleData);
       setDriverExpenses(expenseData);
       setDriverFunds((fundData || []).filter((fund) => fund.type === 'Disbursed'));
+      setAssignedTrips(tripData);
     } catch (error: any) {
-      setUploadError(error?.message || 'Failed to load your driver funds. Please refresh the page.');
+      const message = error?.message || 'Failed to load your driver funds. Please refresh the page.';
+      setUploadError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -159,6 +186,55 @@ export const DriverPortal: React.FC = () => {
   const allocatedUsd = allocatedFromExpenseUsd + allocatedFromFundsUsd;
   const availableUsd = allocatedUsd - spentUsd;
 
+  const allocationCurrencyTotals = useMemo(
+    () => summarizeCurrencyTotals([
+      ...expenseDisbursements.map((expense) => ({ amount: expense.amount, currency: expense.currency })),
+      ...driverFunds.map((fund) => ({ amount: fund.amount, currency: fund.currency })),
+    ]),
+    [driverFunds, expenseDisbursements],
+  );
+
+  const spentCurrencyTotals = useMemo(
+    () => summarizeCurrencyTotals(drawdowns.map((expense) => ({ amount: expense.amount, currency: expense.currency }))),
+    [drawdowns],
+  );
+
+  const expenseAllocationCurrencyTotals = useMemo(
+    () => summarizeCurrencyTotals(expenseDisbursements.map((expense) => ({ amount: expense.amount, currency: expense.currency }))),
+    [expenseDisbursements],
+  );
+
+  const fundAllocationCurrencyTotals = useMemo(
+    () => summarizeCurrencyTotals(driverFunds.map((fund) => ({ amount: fund.amount, currency: fund.currency }))),
+    [driverFunds],
+  );
+
+  const allocationBreakdown = useMemo(
+    () => formatCurrencyBreakdown(allocationCurrencyTotals),
+    [allocationCurrencyTotals],
+  );
+
+  const balanceCurrency = useMemo(() => {
+    const uniqueCurrencies = new Set<Currency>([
+      ...getNonZeroCurrencies(allocationCurrencyTotals),
+      ...getNonZeroCurrencies(spentCurrencyTotals),
+    ]);
+    return uniqueCurrencies.size === 1 ? Array.from(uniqueCurrencies)[0] : null;
+  }, [allocationCurrencyTotals, spentCurrencyTotals]);
+
+  const formatPreferredDisplay = (usdAmount: number, totals: CurrencyTotals): string => {
+    const currencies = getNonZeroCurrencies(totals);
+    if (currencies.length === 1) {
+      const currency = currencies[0];
+      return formatMoney(totals[currency] || 0, currency);
+    }
+    return formatUsd(usdAmount);
+  };
+
+  const availableBalanceDisplay = balanceCurrency
+    ? formatMoney(availableUsd / (EXCHANGE_RATES[balanceCurrency] || 1), balanceCurrency)
+    : formatUsd(availableUsd);
+
   const ledger = useMemo<DriverLedgerEntry[]>(() => {
     const allocationEntries: DriverLedgerEntry[] = expenseDisbursements.map((expense) => ({
       id: `expense-disbursement-${expense.id}`,
@@ -202,17 +278,46 @@ export const DriverPortal: React.FC = () => {
     );
   }, [drawdowns, driverFunds, expenseDisbursements, vehicleNames]);
 
+  const upcomingTrips = useMemo(
+    () => assignedTrips
+      .filter((trip) => trip.status !== 'Completed' && trip.status !== 'Cancelled')
+      .sort((left, right) => new Date(left.departure_date).getTime() - new Date(right.departure_date).getTime())
+      .slice(0, 6),
+    [assignedTrips],
+  );
+
+  const calendarDays = useMemo(() => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(startOfToday);
+      date.setDate(startOfToday.getDate() + index);
+      const isoDate = date.toISOString().split('T')[0];
+      const events = upcomingTrips.filter((event) => event.departure_date.slice(0, 10) === isoDate);
+
+      return {
+        isoDate,
+        label: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        dayNumber: date.getDate(),
+        events,
+      };
+    });
+  }, [upcomingTrips]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       setUploadError('Please select an image file');
+      showToast('Please select an image file.', 'warning');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
       setUploadError('File size must be less than 10MB');
+      showToast('Receipt images must be 10MB or smaller.', 'warning');
       return;
     }
 
@@ -229,6 +334,7 @@ export const DriverPortal: React.FC = () => {
     };
     reader.onerror = () => {
       setUploadError('Failed to read file. Please try again.');
+      showToast('Failed to read the selected receipt.', 'error');
     };
     reader.readAsDataURL(file);
   };
@@ -237,31 +343,21 @@ export const DriverPortal: React.FC = () => {
     try {
       setUploading(true);
       setUploadError('');
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `receipts/${fileName}`;
-
-      const { error } = await supabaseClient.storage
-        .from('receipts')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      const { data: urlData } = supabaseClient.storage.from('receipts').getPublicUrl(filePath);
-
-      if (!urlData?.publicUrl) {
-        throw new Error('Failed to get public URL');
-      }
-
-      return urlData.publicUrl;
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string' && reader.result.length > 0) {
+            resolve(reader.result);
+            return;
+          }
+          reject(new Error('Failed to encode receipt image'));
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
     } catch (error: any) {
       setUploadError(error.message || 'Failed to upload receipt. Please try again.');
+      showToast(error.message || 'Failed to upload receipt. Please try again.', 'error');
       return null;
     } finally {
       setUploading(false);
@@ -287,19 +383,28 @@ export const DriverPortal: React.FC = () => {
     e.preventDefault();
 
     if (!currentDriver) {
-      setUploadError('Your driver profile is not available right now. Please sign in again.');
+      const message = 'Your driver profile is not available right now. Please sign in again.';
+      setUploadError(message);
+      showToast(message, 'error');
+      return;
+    }
+
+    try {
+      driverDrawdownSchema.parse({ amount, description, currency, category, location });
+    } catch (error) {
+      const message = error instanceof ZodError ? getFirstValidationMessage(error) : 'Please review the drawdown form.';
+      setUploadError(message);
+      showToast(message, 'warning');
       return;
     }
 
     const parsedAmount = parseFloat(amount);
-    if (!parsedAmount || parsedAmount <= 0) {
-      setUploadError('Enter a valid amount to draw down.');
-      return;
-    }
 
     const amountUsd = parsedAmount * (EXCHANGE_RATES[currency] || 1);
     if (amountUsd > availableUsd + 0.001) {
-      setUploadError(`This drawdown exceeds your available balance of ${formatUsd(availableUsd)}.`);
+      const message = `This drawdown exceeds your available balance of ${formatUsd(availableUsd)}.`;
+      setUploadError(message);
+      showToast(message, 'warning');
       return;
     }
 
@@ -313,29 +418,36 @@ export const DriverPortal: React.FC = () => {
         receiptUrl = await uploadReceipt(selectedFile) || undefined;
         if (!receiptUrl) {
           setUploadError('Receipt upload failed, continuing without receipt. You may want to retry.');
+          showToast('Receipt upload failed, continuing without the receipt.', 'warning');
         }
       }
 
-      await supabase.addExpense({
+      await dataService.addExpense({
         vehicle_id: selectedVehicle || undefined,
         description,
         amount: parsedAmount,
         currency,
         category,
         location,
+        exchange_rate_to_usd: EXCHANGE_RATES[currency] || 1,
         receipt_url: receiptUrl,
         driver_name: currentDriver,
+        trip_reference: tripReference || undefined,
       });
 
       await loadPortalData();
       setSuccess(true);
+      showToast('Expense logged successfully and your drawdown balance has been refreshed.', 'success');
       setTimeout(() => setSuccess(false), 3000);
 
       setDescription('');
       setAmount('');
+      setTripReference('');
       clearReceipt();
     } catch (error: any) {
-      setUploadError(error.message || 'Failed to submit expense. Please try again.');
+      const message = error.message || 'Failed to submit expense. Please try again.';
+      setUploadError(message);
+      showToast(message, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -381,7 +493,14 @@ export const DriverPortal: React.FC = () => {
           <div className="border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4 w-full lg:max-w-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-200">Available To Draw</p>
             <p className={`text-3xl sm:text-4xl font-black mt-3 ${availableUsd >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-              {formatUsd(availableUsd)}
+              {availableBalanceDisplay}
+            </p>
+            <p className="mt-2 text-xs text-slate-200/80">
+              {balanceCurrency
+                ? `USD equivalent: ${formatUsd(availableUsd)}`
+                : allocationBreakdown
+                  ? `Assigned natively: ${allocationBreakdown}`
+                  : 'No driver-specific allocation recorded yet.'}
             </p>
             <p className="text-sm text-slate-200 mt-3 leading-5">
               {availableUsd > 0
@@ -395,20 +514,24 @@ export const DriverPortal: React.FC = () => {
       <section className="grid gap-4 md:grid-cols-3">
         <StatCard
           title="Allocated"
-          value={formatUsd(allocatedUsd)}
-          subtitle={`${expenseDisbursements.length + driverFunds.length} allocation${expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded`}
+          value={formatPreferredDisplay(allocatedUsd, allocationCurrencyTotals)}
+          subtitle={
+            getNonZeroCurrencies(allocationCurrencyTotals).length > 1
+              ? `${allocationBreakdown} assigned`
+              : `${expenseDisbursements.length + driverFunds.length} allocation${expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded`
+          }
           color="blue"
         />
         <StatCard
           title="Spent"
-          value={formatUsd(spentUsd)}
+          value={formatPreferredDisplay(spentUsd, spentCurrencyTotals)}
           subtitle={`${drawdowns.length} drawdown${drawdowns.length === 1 ? '' : 's'} submitted`}
           color="red"
         />
         <StatCard
           title="Allocation Mix"
-          value={formatUsd(allocatedFromExpenseUsd)}
-          subtitle={`Operating fund top-ups: ${formatUsd(allocatedFromFundsUsd)}`}
+          value={formatPreferredDisplay(allocatedFromExpenseUsd, expenseAllocationCurrencyTotals)}
+          subtitle={`Operating fund top-ups: ${formatPreferredDisplay(allocatedFromFundsUsd, fundAllocationCurrencyTotals)}`}
           color="green"
         />
       </section>
@@ -456,11 +579,12 @@ export const DriverPortal: React.FC = () => {
                   >
                     <SelectItem value="" text="General drawdown" />
                     {vehicles.map((vehicle) => (
-                      <SelectItem
-                        key={vehicle.id}
-                        value={vehicle.id}
-                        text={`${vehicle.make_model} (${vehicle.vin_number})`}
-                      />
+                      <React.Fragment key={vehicle.id}>
+                        <SelectItem
+                          value={vehicle.id}
+                          text={`${vehicle.make_model} (${vehicle.vin_number})`}
+                        />
+                      </React.Fragment>
                     ))}
                   </Select>
                 </div>
@@ -498,7 +622,7 @@ export const DriverPortal: React.FC = () => {
                     placeholder="0.00"
                   />
                   <p className="text-xs text-zinc-500 mt-2">
-                    Available balance: {formatUsd(availableUsd)}
+                    Available balance: {availableBalanceDisplay}
                   </p>
                 </div>
 
@@ -566,6 +690,15 @@ export const DriverPortal: React.FC = () => {
                 </div>
               </div>
 
+              <TextInput
+                id="trip-reference-input"
+                labelText="Trip Reference (Optional)"
+                value={tripReference}
+                onChange={(event) => setTripReference(event.target.value)}
+                placeholder="e.g. Windhoek delivery - April run"
+                autoComplete="off"
+              />
+
               <TextArea
                 id="description-input"
                 labelText="Description"
@@ -594,19 +727,93 @@ export const DriverPortal: React.FC = () => {
                 </Tile>
               )}
 
-              <Button
-                type="submit"
-                fullWidth
-                isLoading={submitting || uploading}
-                disabled={availableUsd <= 0}
-              >
-                Submit Drawdown
-              </Button>
+              <div className="sticky bottom-3 z-10 rounded-2xl border border-zinc-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+                <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-semibold text-zinc-900">Ready to submit</p>
+                  <p className="text-xs text-zinc-500">Available balance: {availableBalanceDisplay}</p>
+                </div>
+                <Button
+                  type="submit"
+                  fullWidth
+                  isLoading={submitting || uploading}
+                  disabled={availableUsd <= 0}
+                >
+                  Submit Drawdown
+                </Button>
+              </div>
             </form>
           </div>
         </Tile>
 
         <div className="space-y-6">
+          <Tile style={{ padding: '1.5rem' }}>
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-xl font-black text-zinc-900">Upcoming Schedule</h3>
+                <p className="mt-2 text-zinc-600">
+                  Your assigned trips now come from the dedicated planner, with real route, status, and ETA data.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+                {calendarDays.map((day) => (
+                  <div
+                    key={day.isoDate}
+                    className={`rounded-2xl border p-3 ${
+                      day.events.length > 0
+                        ? 'border-blue-200 bg-blue-50'
+                        : 'border-zinc-200 bg-zinc-50'
+                    }`}
+                  >
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">{day.label}</p>
+                    <p className="mt-2 text-2xl font-black text-zinc-900">{day.dayNumber}</p>
+                    <p className="mt-2 text-xs text-zinc-600">
+                      {day.events.length > 0 ? `${day.events.length} trip item${day.events.length === 1 ? '' : 's'}` : 'Open'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {upcomingTrips.length === 0 ? (
+                <InlineNotification
+                  kind="info"
+                  lowContrast
+                  hideCloseButton
+                  title="No trip date recorded yet"
+                  subtitle="Once operations records a dated driver allocation, your next trip will appear here."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {upcomingTrips.slice(0, 3).map((trip) => (
+                    <Tile key={trip.id} style={{ padding: '1rem' }}>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-zinc-900">{trip.title}</p>
+                            <Tag type={trip.status === 'Delayed' ? 'red' : trip.status === 'Completed' ? 'green' : 'blue'}>{trip.status}</Tag>
+                          </div>
+                          <p className="mt-2 text-sm text-zinc-600">
+                            {trip.route_origin} to {trip.route_destination}
+                          </p>
+                          <p className="mt-2 text-xs text-zinc-500">
+                            Vehicle: {trip.assigned_vehicle_label || 'Unassigned'}
+                          </p>
+                          <p className="mt-2 text-xs text-zinc-500">
+                            Departure {new Date(trip.departure_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          </p>
+                          <p className="mt-1 text-xs text-zinc-500">
+                            ETA {new Date(trip.eta_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <div className="text-sm font-bold text-blue-700">{trip.trip_number}</div>
+                      </div>
+                    </Tile>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Tile>
+
           <Tile style={{ padding: '1.5rem' }}>
             <div className="space-y-5">
               <div>
@@ -654,7 +861,7 @@ export const DriverPortal: React.FC = () => {
                           <p className={`text-sm font-bold ${entry.isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {entry.isCredit ? '+' : '-'}{formatMoney(entry.amount, entry.currency)}
                           </p>
-                          <p className="text-xs text-zinc-500 mt-1">{formatUsd(entry.amountUsd)}</p>
+                          <p className="text-xs text-zinc-500 mt-1">USD eq. {formatUsd(entry.amountUsd)}</p>
                         </div>
                       </div>
                     </Tile>

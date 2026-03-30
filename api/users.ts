@@ -1,0 +1,177 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import {
+  AuthenticatedRequest,
+  apiError,
+  handleCors,
+  requireRole,
+  setSecurityHeaders,
+  verifyToken,
+} from './_middleware';
+import { sql } from './_db';
+import { logAuditEvent } from './_audit';
+import { hashPassword } from './_auth';
+import { AdminSetPasswordSchema, UserSchema, UserUpdateSchema } from './_schemas';
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  setSecurityHeaders(res);
+  if (handleCors(req, res)) return;
+
+  const authReq = req as AuthenticatedRequest;
+  if (!verifyToken(authReq, res)) return;
+  if (!requireRole(authReq, res, ['Admin'])) return;
+
+  try {
+    const action = typeof req.query.action === 'string' ? req.query.action : '';
+    if (action === 'set-password' && req.method === 'POST') {
+      return await adminSetPassword(req, res);
+    }
+
+    switch (req.method) {
+      case 'GET':
+        return await listUsers(res);
+      case 'POST':
+        return await createUser(req, res);
+      case 'PUT':
+        return await updateUser(req, res);
+      case 'DELETE':
+        return await deleteUser(req, res);
+      default:
+        return apiError(res, 405, 'Method not allowed');
+    }
+  } catch (error) {
+    return apiError(res, 500, 'Internal server error', error);
+  }
+}
+
+async function countAdmins(): Promise<number> {
+  const rows = await sql`SELECT COUNT(*) AS count FROM user_profiles WHERE role = 'Admin'`;
+  return parseInt(String(rows[0]?.count || '0'), 10);
+}
+
+async function listUsers(res: VercelResponse) {
+  const rows = await sql`
+    SELECT id, name, email, role, status, created_at
+    FROM user_profiles
+    ORDER BY created_at DESC
+  `;
+  return res.status(200).json(rows);
+}
+
+async function createUser(req: VercelRequest, res: VercelResponse) {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const data = UserSchema.parse(req.body);
+    const existing = await sql`SELECT id FROM user_profiles WHERE LOWER(email) = ${data.email.toLowerCase()}`;
+    if (existing.length > 0) return apiError(res, 409, 'Email already registered');
+
+    const passwordHash = await hashPassword(data.password);
+    const rows = await sql`
+      INSERT INTO user_profiles (name, email, role, status, password_hash)
+      VALUES (${data.name}, ${data.email.toLowerCase()}, ${data.role}, ${data.status}, ${passwordHash})
+      RETURNING id, name, email, role, status, created_at
+    `;
+
+    await logAuditEvent({
+      req,
+      userId: authReq.user?.id || null,
+      action: 'users.created',
+      tableName: 'user_profiles',
+      recordId: rows[0].id,
+      newData: rows[0],
+    });
+
+    return res.status(201).json(rows[0]);
+  } catch (error) {
+    return apiError(res, 400, 'Invalid user data', error);
+  }
+}
+
+async function updateUser(req: VercelRequest, res: VercelResponse) {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const data = UserUpdateSchema.parse(req.body);
+    const userRows = await sql`
+      SELECT id, name, email, role, status, created_at
+      FROM user_profiles
+      WHERE id = ${req.query.id}::uuid
+    `;
+    if (userRows.length === 0) return apiError(res, 404, 'User not found');
+
+    const currentUser = userRows[0];
+    if (currentUser.role === 'Admin' && data.role && data.role !== 'Admin' && await countAdmins() <= 1) {
+      return apiError(res, 400, 'Cannot demote the last admin');
+    }
+
+    const rows = await sql`
+      UPDATE user_profiles
+      SET
+        name = COALESCE(${data.name || null}, name),
+        email = COALESCE(${data.email?.toLowerCase() || null}, email),
+        role = COALESCE(${data.role || null}, role),
+        status = COALESCE(${data.status || null}, status),
+        updated_at = NOW()
+      WHERE id = ${req.query.id}::uuid
+      RETURNING id, name, email, role, status, created_at
+    `;
+
+    await logAuditEvent({
+      req,
+      userId: authReq.user?.id || null,
+      action: 'users.updated',
+      tableName: 'user_profiles',
+      recordId: rows[0].id,
+      oldData: currentUser,
+      newData: rows[0],
+    });
+
+    return res.status(200).json(rows[0]);
+  } catch (error) {
+    return apiError(res, 400, 'Invalid user update', error);
+  }
+}
+
+async function deleteUser(req: VercelRequest, res: VercelResponse) {
+  const authReq = req as AuthenticatedRequest;
+  const userRows = await sql`SELECT id, role FROM user_profiles WHERE id = ${req.query.id}::uuid`;
+  if (userRows.length === 0) return apiError(res, 404, 'User not found');
+  if (userRows[0].role === 'Admin' && await countAdmins() <= 1) {
+    return apiError(res, 400, 'Cannot delete the last admin');
+  }
+
+  await logAuditEvent({
+    req,
+    userId: authReq.user?.id || null,
+    action: 'users.deleted',
+    tableName: 'user_profiles',
+    recordId: userRows[0].id,
+    oldData: userRows[0],
+  });
+  await sql`DELETE FROM user_profiles WHERE id = ${req.query.id}::uuid`;
+  return res.status(204).end();
+}
+
+async function adminSetPassword(req: VercelRequest, res: VercelResponse) {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const data = AdminSetPasswordSchema.parse(req.body);
+    const passwordHash = await hashPassword(data.newPassword);
+    const rows = await sql`
+      UPDATE user_profiles
+      SET password_hash = ${passwordHash}, updated_at = NOW()
+      WHERE id = ${data.id}::uuid
+      RETURNING id
+    `;
+    if (rows.length === 0) return apiError(res, 404, 'User not found');
+
+    await logAuditEvent({
+      req,
+      userId: authReq.user?.id || null,
+      action: 'users.password_set',
+      tableName: 'user_profiles',
+      recordId: data.id,
+    });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return apiError(res, 400, 'Invalid password update', error);
+  }
+}

@@ -5,26 +5,40 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "vercel dev",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,js,json,css}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,css}\"",
+    "deploy": "vercel --prod",
+    "db:migrate": "psql $NEON_DATABASE_URL -f API_SECURITY_MIGRATION.sql"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.76.0",
     "@carbon/react": "^1.103.0",
     "@google/genai": "^1.37.0",
     "@neondatabase/serverless": "^1.0.2",
-    "@supabase/supabase-js": "^2.90.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
+    "nodemailer": "^8.0.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-is": "^19.2.4"
+    "react-is": "^19.2.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.14.0",
     "@typescript-eslint/eslint-plugin": "^8.57.0",
     "@typescript-eslint/parser": "^8.57.0",

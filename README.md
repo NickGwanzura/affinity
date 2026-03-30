@@ -5,9 +5,10 @@ Affinity is an internal logistics and finance operations app for vehicle movemen
 ## Current Stack
 
 - React 19 + TypeScript + Vite
+- Vercel serverless API routes
 - Neon PostgreSQL for operational data
+- JWT authentication handled server-side
 - Browser-side PDF generation with `jspdf`
-- A mixed auth layer that is being consolidated around the in-app auth service
 
 ## Core Product Areas
 
@@ -28,6 +29,7 @@ Install and start:
 ```bash
 npm install
 npm run dev
+npm run dev:api
 ```
 
 Production build:
@@ -38,20 +40,26 @@ npm run build
 
 ## Environment
 
-The app expects a Neon connection string in the client environment:
+Server runtime:
 
-- `VITE_NEON_DATABASE_URL`
+- `NEON_DATABASE_URL`
+- `JWT_SECRET`
+- `APP_BASE_URL` for invite and password reset links
 
-The current auth flow also uses:
+Password reset email delivery:
 
-- `VITE_JWT_SECRET`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM`
+- `SMTP_REPLY_TO` optional
 
-Some legacy service paths still reference Supabase client configuration, so keep these available until the auth layer is fully unified:
+Client runtime:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `VITE_API_URL` optional, defaults to `/api`
 
 ## Notes
 
-- PDF branding and finance flows depend on the SQL migrations in the repo being applied to the active Neon database.
+- Apply the SQL migrations in the repo, including `API_SECURITY_MIGRATION.sql` and `REGISTRATION_REQUESTS_MIGRATION.sql`, to the active Neon database.
 - There is currently no automated test suite wired into `package.json`, so `npm run build` is the main repo-level verification step.

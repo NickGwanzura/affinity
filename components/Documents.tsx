@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Expense, Vehicle, CompanyDetails, UserRole } from '../types';
-import { supabase } from '../services/supabaseService';
+import { dataService } from '../services/dataService';
 import { generateVehicleStatementPDFAndDownload } from '../services/pdfService';
 import { useToast } from '../components/Toast';
 import { getDriverIdentityAliases } from '../utils/driverIdentity';
@@ -30,7 +30,7 @@ export const Documents: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const session = await supabase.getSession();
+        const session = await dataService.getSession();
         const role = session?.user?.role || null;
         setViewerRole(role);
 
@@ -38,13 +38,13 @@ export const Documents: React.FC = () => {
 
         const [expenseGroups, v, c] = await Promise.all([
           role === 'Driver'
-            ? Promise.all(driverAliases.map((alias) => supabase.getExpensesByDriver(alias).catch(() => [] as Expense[])))
-            : Promise.resolve([await supabase.getExpenses()]),
-          supabase.getVehicles(),
-          supabase.getCompanyDetails()
+            ? Promise.all(driverAliases.map((alias) => dataService.getExpensesByDriver(alias).catch(() => [] as Expense[])))
+            : Promise.resolve([await dataService.getExpenses()]),
+          dataService.getVehicles(),
+          dataService.getCompanyDetails()
         ]);
 
-        const scopedExpenses = uniqueById(expenseGroups.flat());
+        const scopedExpenses: Expense[] = uniqueById(expenseGroups.flat());
         const scopedVehicles =
           role === 'Driver'
             ? v.filter((vehicle) => scopedExpenses.some((expense) => expense.vehicle_id === vehicle.id))
@@ -121,12 +121,12 @@ export const Documents: React.FC = () => {
         </p>
       </div>
 
-      <div className="flex gap-1 bg-zinc-100 p-1.5 rounded-2xl w-fit">
+      <div className="flex w-full gap-1 rounded-2xl bg-zinc-100 p-1.5 sm:w-fit">
         <button 
           onClick={() => setActiveTab('receipts')}
           aria-label="View Digital Receipts"
           aria-pressed={activeTab === 'receipts'}
-          className={`px-8 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'receipts' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
+          className={`min-h-[44px] flex-1 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'receipts' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
         >
           Digital Receipts
         </button>
@@ -134,14 +134,14 @@ export const Documents: React.FC = () => {
           onClick={() => setActiveTab('statements')}
           aria-label="View Fleet Statements"
           aria-pressed={activeTab === 'statements'}
-          className={`px-8 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'statements' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
+          className={`min-h-[44px] flex-1 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'statements' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
         >
           Fleet Statements
         </button>
       </div>
 
       {activeTab === 'receipts' ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
           {expenses.length === 0 ? (
             <div className="col-span-full text-center py-20">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-zinc-100 rounded-2xl mb-4">

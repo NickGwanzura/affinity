@@ -1,18 +1,35 @@
 #!/bin/bash
-# Script to add environment variables to Vercel
+set -euo pipefail
 
-echo "Adding environment variables to Vercel..."
+echo "Adding current server environment variables to Vercel production..."
 
-# Check if logged in
-npx vercel whoami || { echo "Please login first: npx vercel login"; exit 1; }
+npx vercel whoami >/dev/null
 
-# Add environment variables
-echo "Adding VITE_SUPABASE_URL..."
-echo "https://bujvjyucylvdwgdkcxvj.supabase.co" | npx vercel env add VITE_SUPABASE_URL production
+add_env() {
+  local name="$1"
+  local value="${!name:-}"
 
-echo "Adding VITE_SUPABASE_ANON_KEY..."
-echo "sb_publishable_BdlikUNCRQvOc_qN_j481Q_kBAzeXl5" | npx vercel env add VITE_SUPABASE_ANON_KEY production
+  if [ -z "$value" ]; then
+    echo "Skipping $name (not set locally)"
+    return 0
+  fi
 
-echo "✅ Environment variables added!"
-echo ""
-echo "Deploy with: npx vercel --prod"
+  printf '%s' "$value" | npx vercel env add "$name" production
+}
+
+for var in \
+  NEON_DATABASE_URL \
+  JWT_SECRET \
+  APP_BASE_URL \
+  SMTP_HOST \
+  SMTP_PORT \
+  SMTP_USER \
+  SMTP_PASS \
+  SMTP_FROM \
+  SMTP_REPLY_TO \
+  VITE_API_URL
+do
+  add_env "$var"
+done
+
+echo "Environment sync complete."

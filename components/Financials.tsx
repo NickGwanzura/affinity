@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Client, CompanyDetails, Invoice, LineItem, Payment, Quote, Receipt, ReceiptItem, Vehicle } from '../types';
-import { supabase } from '../services/supabaseService';
+import { dataService } from '../services/dataService';
 import {
   generateInvoicePDF,
   generateInvoicePDFAndDownload,
@@ -8,10 +8,19 @@ import {
   generateQuotePDFAndDownload,
   generateReceiptPDF,
   generateStatementPDF,
+  type StatementData,
 } from '../services/pdfService';
 import { useConfirm } from './ConfirmModal';
 import { useToast } from './Toast';
 import { ClientFormModal, type ClientFormValue } from './shared/ClientFormModal';
+import {
+  FinancialsTabBar,
+  InvoicesSection,
+  PaymentsSection,
+  QuotesSection,
+  ReceiptsSection,
+  StatementsSection,
+} from './financials/FinancialsSections';
 
 type PaymentAllocationDraft = {
   invoice_id: string;
@@ -49,7 +58,7 @@ const calculateLineAmount = (
   item: Pick<LineItem, 'quantity' | 'unit_price' | 'discount_percentage' | 'tax_rate'>
 ): number => calculateLineNetAmount(item) + calculateLineTaxAmount(item);
 
-const normalizeLineItemForForm = (item?: Partial<LineItem>): LineItem => {
+const normalizeLineItemForForm = (item?: Partial<LineItem & ReceiptItem>): LineItem => {
   const normalized: LineItem = {
     description: item?.description || '',
     quantity: Math.max(1, Number(item?.quantity) || 1),
@@ -198,13 +207,13 @@ export const Financials: React.FC = () => {
   const loadData = async (throwOnError = false) => {
     try {
       const [nextQuotes, nextInvoices, nextPayments, nextReceipts, nextVehicles, nextCompany, nextClients] = await Promise.all([
-        supabase.getQuotes(),
-        supabase.getInvoices(),
-        supabase.getPayments(),
-        supabase.getReceipts(),
-        supabase.getVehicles(),
-        supabase.getCompanyDetails(),
-        supabase.getClients(),
+        dataService.getQuotes(),
+        dataService.getInvoices(),
+        dataService.getPayments(),
+        dataService.getReceipts(),
+        dataService.getVehicles(),
+        dataService.getCompanyDetails(),
+        dataService.getClients(),
       ]);
 
       setQuotes(nextQuotes);
@@ -213,7 +222,15 @@ export const Financials: React.FC = () => {
       setReceipts(nextReceipts);
       setVehicles(nextVehicles);
       setCompany(nextCompany);
-      setClients(nextClients);
+      
+      // Ensure clients is always an array
+      const safeClients = Array.isArray(nextClients) ? nextClients : [];
+      if (!Array.isArray(nextClients)) {
+        console.error('[Financials] getClients returned non-array:', nextClients);
+      } else {
+        console.log('[Financials] Loaded clients:', safeClients.length, safeClients);
+      }
+      setClients(safeClients);
       setLoading(false);
     } catch (error) {
       console.error('[Financials] loadData failed:', error);
@@ -505,7 +522,7 @@ export const Financials: React.FC = () => {
     event.preventDefault();
 
     try {
-      const createdClient = await supabase.createClient(clientForm);
+      const createdClient = await dataService.createClient(clientForm);
       const nextClients = [...clients, createdClient].sort((a, b) => a.name.localeCompare(b.name));
       setClients(nextClients);
 
@@ -672,9 +689,9 @@ export const Financials: React.FC = () => {
       };
 
       if (editingQuote) {
-        await supabase.updateQuote(editingQuote.id, payload);
+        await dataService.updateQuote(editingQuote.id, payload);
       } else {
-        await supabase.createQuote(payload);
+        await dataService.createQuote(payload);
       }
 
       closeQuoteModal();
@@ -717,9 +734,9 @@ export const Financials: React.FC = () => {
       };
 
       if (editingInvoice) {
-        await supabase.updateInvoice(editingInvoice.id, payload);
+        await dataService.updateInvoice(editingInvoice.id, payload);
       } else {
-        await supabase.createInvoice(payload);
+        await dataService.createInvoice(payload);
       }
 
       closeInvoiceModal();
@@ -877,7 +894,7 @@ export const Financials: React.FC = () => {
 
     try {
       const payment = editingPayment
-        ? await supabase.updatePayment(editingPayment.id, {
+        ? await dataService.updatePayment(editingPayment.id, {
             reference_id: referenceId,
             client_name: primaryInvoice?.client_name || clientName,
             type: 'Inbound',
@@ -886,7 +903,7 @@ export const Financials: React.FC = () => {
             method,
             date: editingPayment.date,
           })
-        : await supabase.addPayment({
+        : await dataService.addPayment({
             reference_id: referenceId,
             client_name: primaryInvoice?.client_name || clientName,
             type: 'Inbound',
@@ -896,7 +913,7 @@ export const Financials: React.FC = () => {
             date: new Date().toISOString(),
           });
 
-      await supabase.replacePaymentAllocations(payment.id, mergedAllocations);
+      await dataService.replacePaymentAllocations(payment.id, mergedAllocations);
 
       const receiptItems = buildReceiptItemsSnapshot(
         allocatedInvoices,
@@ -936,8 +953,8 @@ export const Financials: React.FC = () => {
       };
 
       const receipt = linkedReceipt
-        ? await supabase.updateReceipt(linkedReceipt.id, receiptPayload)
-        : await supabase.createReceipt(receiptPayload);
+        ? await dataService.updateReceipt(linkedReceipt.id, receiptPayload)
+        : await dataService.createReceipt(receiptPayload);
 
       await loadData(true);
       closePaymentModal();
@@ -1012,8 +1029,8 @@ export const Financials: React.FC = () => {
         .map(receipt => receipt.reference_number)
         .filter(Boolean)
     );
-    const clientPayments = Array.from(
-      new Map(
+    const clientPayments: Payment[] = Array.from(
+      new Map<string, Payment>(
         payments
           .filter(
             payment =>
@@ -1039,7 +1056,7 @@ export const Financials: React.FC = () => {
           .filter(payment => payment.id && payment.currency)
           .map(payment => [payment.id, payment.currency as 'USD' | 'GBP'])
       );
-      const statementData = {
+      const statementData: StatementData = {
         client_name: clientInvoices[0]?.client_name || selectedClient,
         client_email: clientInvoices[0]?.client_email,
         client_address: clientInvoices[0]?.client_address,
@@ -1073,7 +1090,7 @@ export const Financials: React.FC = () => {
     const key = `quote:${quote.id}`;
     setDeletingKey(key);
     try {
-      await supabase.deleteQuote(quote.id);
+      await dataService.deleteQuote(quote.id);
       await loadData(true);
       showToast('Quote deleted successfully', 'success');
     } catch (error: any) {
@@ -1099,7 +1116,7 @@ export const Financials: React.FC = () => {
     const key = `invoice:${invoice.id}`;
     setDeletingKey(key);
     try {
-      await supabase.deleteInvoice(invoice.id);
+      await dataService.deleteInvoice(invoice.id);
       await loadData(true);
       showToast('Invoice deleted successfully', 'success');
     } catch (error: any) {
@@ -1125,7 +1142,7 @@ export const Financials: React.FC = () => {
     const key = `payment:${payment.id}`;
     setDeletingKey(key);
     try {
-      await supabase.deletePayment(payment.id);
+      await dataService.deletePayment(payment.id);
       await loadData(true);
       showToast('Payment deleted successfully', 'success');
     } catch (error: any) {
@@ -1177,7 +1194,7 @@ export const Financials: React.FC = () => {
       [...quotes.map(quote => quote.client_name), ...invoices.map(invoice => invoice.client_name), ...receipts.map(receipt => receipt.client_name)].filter(Boolean)
     )
   ).sort();
-  const receiptByPaymentId = new Map(
+  const receiptByPaymentId = new Map<string, Receipt>(
     receipts
       .filter(receipt => receipt.payment_id)
       .map(receipt => [receipt.payment_id as string, receipt])
@@ -1351,7 +1368,9 @@ export const Financials: React.FC = () => {
                     }}
                     className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Select…</option>
+                    <option value="">
+                      {clients.length === 0 ? 'No clients found - click "+ Add Client" to create one' : 'Select a client...'}
+                    </option>
                     {clients.map(c => (
                       <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
                     ))}
@@ -1623,7 +1642,7 @@ export const Financials: React.FC = () => {
                     value={invoiceForm.client_id || ''}
                     onChange={e => {
                       const client = clients.find(c => c.id === e.target.value);
-                      console.log('[DEBUG] Client selected:', client);
+                      console.log('[DEBUG] Client selected:', client, 'from', clients.length, 'clients');
                       setInvoiceForm({
                         ...invoiceForm,
                         client_id: client?.id ?? '',
@@ -1634,7 +1653,9 @@ export const Financials: React.FC = () => {
                     }}
                     className="w-full rounded-xl border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
                   >
-                    <option value="">{clients.length === 0 ? 'Loading clients...' : 'Select a client...'}</option>
+                    <option value="">
+                      {clients.length === 0 ? 'No clients found - click "+ Add Client" to create one' : 'Select a client...'}
+                    </option>
                     {clients.map(c => (
                       <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
                     ))}
@@ -2207,517 +2228,72 @@ export const Financials: React.FC = () => {
       )}
 
       <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
-        {/* Mobile: Horizontal scrollable tabs */}
-        <div className="sm:hidden border-b border-zinc-100 bg-zinc-50/50">
-          <div className="flex overflow-x-auto scrollbar-hide p-2 gap-1">
-            {['quotes', 'invoices', 'payments', 'receipts', 'statements'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as typeof activeTab)}
-                className={`flex-shrink-0 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest transition-all min-h-[44px] ${
-                  activeTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 bg-zinc-100/50'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-        {/* Desktop: Flex tabs */}
-        <div className="hidden sm:flex border-b border-zinc-100 bg-zinc-50/50 p-2">
-          {['quotes', 'invoices', 'payments', 'receipts', 'statements'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as typeof activeTab)}
-              className={`flex-1 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest transition-all min-h-[44px] ${
-                activeTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400 hover:text-zinc-600'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        <FinancialsTabBar activeTab={activeTab} onChange={setActiveTab} />
 
         <div className="overflow-x-auto">
           {activeTab === 'quotes' && (
-            <>
-              {/* Mobile cards */}
-              <div className="space-y-3 sm:hidden p-3">
-                {quotes.map(quote => (
-                  <div key={quote.id} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="font-mono text-xs font-bold text-blue-600">{quote.quote_number}</span>
-                      <span className="rounded-md bg-blue-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-blue-700">
-                        {quote.status}
-                      </span>
-                    </div>
-                    <div className="font-bold text-zinc-900 mb-1">{quote.client_name}</div>
-                    <div className="font-black text-zinc-900 mb-2">{formatMoney(quote.amount_usd, quote.currency || 'USD')}</div>
-                    <div className="text-xs text-zinc-400 mb-3">{new Date(quote.created_at).toLocaleDateString()}</div>
-                    <div className="flex flex-wrap gap-2 pt-3 border-t border-zinc-50">
-                      <button onClick={() => handlePreviewQuote(quote)} className="text-xs font-bold text-zinc-600 hover:text-zinc-900 px-2 py-1">
-                        Preview
-                      </button>
-                      <button onClick={() => handleDownloadQuote(quote)} className="text-xs font-bold text-blue-600 hover:text-blue-700 px-2 py-1">
-                        Download
-                      </button>
-                      <button onClick={() => openEditQuoteModal(quote)} className="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1">
-                        Edit
-                      </button>
-                      <button onClick={() => handleConvertToInvoice(quote)} className="text-xs font-bold text-emerald-600 hover:text-emerald-700 px-2 py-1">
-                        Convert
-                      </button>
-                      <button
-                        onClick={() => handleDeleteQuote(quote)}
-                        disabled={deletingKey === `quote:${quote.id}`}
-                        className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 px-2 py-1"
-                      >
-                        {deletingKey === `quote:${quote.id}` ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Desktop table */}
-              <table className="hidden sm:table w-full text-left text-sm">
-                <thead className="border-b border-zinc-100 bg-zinc-50">
-                  <tr>
-                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Quote #</th>
-                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
-                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Amount</th>
-                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Status</th>
-                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Created</th>
-                    <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {quotes.map(quote => (
-                    <tr key={quote.id} className="transition-colors hover:bg-zinc-50">
-                      <td className="px-8 py-4 font-mono text-xs font-bold text-blue-600">{quote.quote_number}</td>
-                      <td className="px-8 py-4 font-bold text-zinc-900">{quote.client_name}</td>
-                      <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(quote.amount_usd, quote.currency || 'USD')}</td>
-                      <td className="px-8 py-4">
-                        <span className="rounded-md bg-blue-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-blue-700">
-                          {quote.status}
-                        </span>
-                      </td>
-                      <td className="px-8 py-4 text-xs text-zinc-400">{new Date(quote.created_at).toLocaleDateString()}</td>
-                      <td className="px-8 py-4">
-                        <div className="flex items-center gap-4">
-                          <button onClick={() => handlePreviewQuote(quote)} className="text-xs font-bold text-zinc-600 hover:text-zinc-900">
-                            Preview
-                          </button>
-                          <button onClick={() => handleDownloadQuote(quote)} className="text-xs font-bold text-blue-600 hover:text-blue-700">
-                            Download
-                          </button>
-                          <button onClick={() => openEditQuoteModal(quote)} className="text-xs font-bold text-amber-600 hover:text-amber-700">
-                            Edit
-                          </button>
-                          <button onClick={() => handleConvertToInvoice(quote)} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">
-                            Convert to Invoice
-                          </button>
-                          <button
-                            onClick={() => handleDeleteQuote(quote)}
-                            disabled={deletingKey === `quote:${quote.id}`}
-                            className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {deletingKey === `quote:${quote.id}` ? 'Deleting...' : 'Delete'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
+            <QuotesSection
+              quotes={quotes}
+              deletingKey={deletingKey}
+              formatMoney={formatMoney}
+              onPreview={handlePreviewQuote}
+              onDownload={handleDownloadQuote}
+              onEdit={openEditQuoteModal}
+              onConvert={handleConvertToInvoice}
+              onDelete={handleDeleteQuote}
+            />
           )}
 
           {activeTab === 'invoices' && (
-            <>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 border-b border-zinc-100 px-4 sm:px-8 py-3">
-                <svg className="h-4 w-4 shrink-0 text-zinc-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm3 4a1 1 0 011-1h10a1 1 0 010 2H7a1 1 0 01-1-1zm4 4a1 1 0 011-1h2a1 1 0 010 2h-2a1 1 0 01-1-1z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Filter by batch code…"
-                  value={batchFilter}
-                  onChange={e => setBatchFilter(e.target.value)}
-                  className="w-full sm:w-52 rounded-lg border border-zinc-200 px-3 py-2 sm:py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-400"
-                />
-                {batchFilter && (
-                  <button onClick={() => setBatchFilter('')} className="text-xs font-bold text-zinc-400 hover:text-zinc-700">
-                    Clear
-                  </button>
-                )}
-                {batchFilter && (
-                  <span className="text-xs text-zinc-400">
-                    {invoices.filter(i => (i.batch || '').toLowerCase().includes(batchFilter.toLowerCase())).length} result(s)
-                  </span>
-                )}
-              </div>
-              {/* Mobile cards */}
-              <div className="sm:hidden space-y-3 p-3">
-                {invoices.filter(invoice => !batchFilter || (invoice.batch || '').toLowerCase().includes(batchFilter.toLowerCase())).map(invoice => (
-                  <div key={invoice.id} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="font-mono font-bold text-green-600">{invoice.invoice_number}</div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                          {invoice.invoice_kind || 'Standard'}
-                        </div>
-                      </div>
-                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-emerald-700">
-                        {invoice.status}
-                      </span>
-                    </div>
-                    <div className="font-bold text-zinc-900 mb-1">{invoice.client_name}</div>
-                    <div className="font-black text-zinc-900 mb-2">{formatMoney(invoice.amount_usd, invoice.currency || 'USD')}</div>
-                    <div className="flex items-center gap-2 mb-3">
-                      {invoice.batch ? (
-                        <span className="rounded-md bg-blue-50 px-2 py-0.5 font-mono text-[11px] font-bold text-blue-700">{invoice.batch}</span>
-                      ) : null}
-                      <span className="text-xs text-zinc-400">Due: {new Date(invoice.due_date).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 pt-3 border-t border-zinc-50">
-                      <button onClick={() => handlePreviewInvoice(invoice)} className="text-xs font-bold text-zinc-600 hover:text-zinc-900 px-2 py-1">
-                        Preview
-                      </button>
-                      <button onClick={() => openEditInvoiceModal(invoice)} className="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1">
-                        Edit
-                      </button>
-                      <button onClick={() => handleDownloadInvoice(invoice)} className="text-xs font-bold text-green-600 hover:text-green-700 px-2 py-1">
-                        Download
-                      </button>
-                      <button
-                        onClick={() => handleDeleteInvoice(invoice)}
-                        disabled={deletingKey === `invoice:${invoice.id}`}
-                        className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 px-2 py-1"
-                      >
-                        {deletingKey === `invoice:${invoice.id}` ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            <table className="hidden sm:table w-full text-left text-sm">
-              <thead className="border-b border-zinc-100 bg-zinc-50">
-                <tr>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Invoice #</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Batch</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Amount</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Status</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Due Date</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {invoices.filter(invoice => !batchFilter || (invoice.batch || '').toLowerCase().includes(batchFilter.toLowerCase())).map(invoice => (
-                  <tr key={invoice.id} className="transition-colors hover:bg-zinc-50">
-                    <td className="px-8 py-4">
-                      <div className="font-mono font-bold text-green-600">{invoice.invoice_number}</div>
-                      <div className="mt-1 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                        {invoice.invoice_kind || 'Standard'}
-                      </div>
-                    </td>
-                    <td className="px-8 py-4 font-bold text-zinc-900">{invoice.client_name}</td>
-                    <td className="px-8 py-4">
-                      {invoice.batch ? (
-                        <span className="rounded-md bg-blue-50 px-2 py-0.5 font-mono text-[11px] font-bold text-blue-700">{invoice.batch}</span>
-                      ) : (
-                        <span className="text-xs text-zinc-300">—</span>
-                      )}
-                    </td>
-                    <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(invoice.amount_usd, invoice.currency || 'USD')}</td>
-                    <td className="px-8 py-4">
-                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-emerald-700">
-                        {invoice.status}
-                      </span>
-                    </td>
-                    <td className="px-8 py-4 text-xs text-zinc-400">{new Date(invoice.due_date).toLocaleDateString()}</td>
-                    <td className="px-8 py-4">
-                      <div className="flex items-center gap-4">
-                        <button onClick={() => handlePreviewInvoice(invoice)} className="text-xs font-bold text-zinc-600 hover:text-zinc-900">
-                          Preview
-                        </button>
-                        <button onClick={() => openEditInvoiceModal(invoice)} className="text-xs font-bold text-amber-600 hover:text-amber-700">
-                          Edit
-                        </button>
-                        <button onClick={() => handleDownloadInvoice(invoice)} className="text-xs font-bold text-green-600 hover:text-green-700">
-                          Download
-                        </button>
-                        <button
-                          onClick={() => handleDeleteInvoice(invoice)}
-                          disabled={deletingKey === `invoice:${invoice.id}`}
-                          className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {deletingKey === `invoice:${invoice.id}` ? 'Deleting...' : 'Delete'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </>
+            <InvoicesSection
+              invoices={invoices}
+              batchFilter={batchFilter}
+              onBatchFilterChange={setBatchFilter}
+              onClearBatchFilter={() => setBatchFilter('')}
+              deletingKey={deletingKey}
+              formatMoney={formatMoney}
+              onPreview={handlePreviewInvoice}
+              onEdit={openEditInvoiceModal}
+              onDownload={handleDownloadInvoice}
+              onDelete={handleDeleteInvoice}
+            />
           )}
 
           {activeTab === 'payments' && (
-            <>
-              {/* Mobile cards */}
-              <div className="sm:hidden space-y-3 p-3">
-                {payments.map(payment => (
-                  <div key={payment.id} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="font-bold text-zinc-900">{payment.client_name}</div>
-                        <div className="text-xs font-mono text-zinc-500">{payment.reference_id}</div>
-                      </div>
-                      <span className="rounded-md bg-green-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-green-700">
-                        {payment.type}
-                      </span>
-                    </div>
-                    <div className="font-black text-zinc-900 mb-2">
-                      {formatMoney(payment.amount_usd, normalizeDocumentCurrency(payment.currency))}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-zinc-400 mb-3">
-                      <span className="rounded bg-zinc-100 px-2 py-0.5">{payment.method}</span>
-                      <span>{new Date(payment.date).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 pt-3 border-t border-zinc-50">
-                      <button onClick={() => openEditPaymentModal(payment)} className="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1">
-                        Edit
-                      </button>
-                      <button onClick={() => handleDeletePayment(payment)} disabled={deletingKey === `payment:${payment.id}`} className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 px-2 py-1">
-                        {deletingKey === `payment:${payment.id}` ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Desktop table */}
-            <table className="hidden sm:table w-full text-left text-sm">
-              <thead className="border-b border-zinc-100 bg-zinc-50">
-                <tr>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Reference</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Type</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Amount</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Currency</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Method</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Date</th>
-                  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {payments.map(payment => (
-                  <tr key={payment.id}>
-                    <td className="px-8 py-4 font-bold text-zinc-900">{getPaymentClientName(payment)}</td>
-                    <td className="px-8 py-4">
-                      <div className="font-mono text-xs font-bold text-zinc-600">{payment.reference_id}</div>
-                      {getPaymentAllocationSummary(payment) ? (
-                        <div className="mt-1 text-[11px] text-zinc-400">{getPaymentAllocationSummary(payment)}</div>
-                      ) : null}
-                    </td>
-                    <td className="px-8 py-4">
-                      <span className={`text-xs font-black uppercase ${payment.type === 'Inbound' ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {payment.type}
-                      </span>
-                    </td>
-                    <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(payment.amount_usd, getPaymentCurrency(payment))}</td>
-                    <td className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-500">{getPaymentCurrency(payment)}</td>
-                    <td className="px-8 py-4 font-medium text-zinc-500">{payment.method}</td>
-                    <td className="px-8 py-4 text-xs text-zinc-400">{new Date(payment.date).toLocaleDateString()}</td>
-                    <td className="px-8 py-4">
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={() => openEditPaymentModal(payment)}
-                          className="text-xs font-bold text-amber-600 hover:text-amber-700"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeletePayment(payment)}
-                          disabled={deletingKey === `payment:${payment.id}`}
-                          className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {deletingKey === `payment:${payment.id}` ? 'Deleting...' : 'Delete'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </>
+            <PaymentsSection
+              payments={payments}
+              deletingKey={deletingKey}
+              formatMoney={formatMoney}
+              getPaymentClientName={getPaymentClientName}
+              getPaymentCurrency={getPaymentCurrency}
+              getPaymentAllocationSummary={getPaymentAllocationSummary}
+              onEdit={openEditPaymentModal}
+              onDelete={handleDeletePayment}
+            />
           )}
 
           {activeTab === 'receipts' && (
-            <div className="p-3 sm:p-8">
-              {receipts.length === 0 ? (
-                <div className="mx-auto max-w-lg rounded-2xl bg-green-50 p-6 sm:p-8 text-center">
-                  <svg className="mx-auto mb-4 h-12 w-12 sm:h-16 sm:w-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <h3 className="mb-2 text-lg sm:text-xl font-black text-zinc-900">Receipts</h3>
-                  <p className="mb-4 text-sm sm:text-base text-zinc-500">Record payments and generate receipts for clients.</p>
-                  <button
-                    onClick={openPaymentModal}
-                    className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-700 touch-manipulation"
-                  >
-                    Record Payment
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <h3 className="text-lg sm:text-xl font-black text-zinc-900">All Receipts</h3>
-                    <button
-                      onClick={openPaymentModal}
-                      className="w-full sm:w-auto rounded-xl bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-700 touch-manipulation"
-                    >
-                      Record Payment
-                    </button>
-                  </div>
-                  {/* Mobile-first card layout */}
-                  <div className="space-y-3 sm:hidden">
-                    {receipts.map(receipt => (
-                      <div key={receipt.id} className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between mb-2">
-                          <span className="font-mono text-xs font-bold text-green-600">{receipt.receipt_number}</span>
-                          <span className="text-xs text-zinc-400">{new Date(receipt.payment_date).toLocaleDateString()}</span>
-                        </div>
-                        <div className="font-bold text-zinc-900 mb-1">{receipt.client_name}</div>
-                        <div className="font-black text-zinc-900 mb-3">{formatMoney(receipt.amount_received, receipt.currency)}</div>
-                        {receipt.batch && (
-                          <span className="inline-block rounded-md bg-blue-50 px-2 py-0.5 font-mono text-[11px] font-bold text-blue-700 mb-3">
-                            {receipt.batch}
-                          </span>
-                        )}
-                        <div className="flex gap-3 mt-2 pt-3 border-t border-zinc-50">
-                          <button onClick={() => handleDownloadReceipt(receipt)} className="flex-1 text-center text-xs font-bold text-blue-600 hover:text-blue-800 py-2">
-                            Preview PDF
-                          </button>
-                          <button onClick={() => handleReissueReceipt(receipt)} className="flex-1 text-center text-xs font-bold text-emerald-600 hover:text-emerald-800 py-2">
-                            Reissue
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Desktop table */}
-                  <table className="hidden sm:table w-full text-left text-sm">
-                    <thead className="border-b border-zinc-100 bg-zinc-50">
-                      <tr>
-                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Receipt #</th>
-                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
-                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Batch</th>
-                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Amount</th>
-                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Date</th>
-                        <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                      {receipts.map(receipt => (
-                        <tr key={receipt.id} className="transition-colors hover:bg-zinc-50">
-                          <td className="px-8 py-4 font-mono text-xs font-bold text-green-600">{receipt.receipt_number}</td>
-                          <td className="px-8 py-4 font-bold text-zinc-900">{receipt.client_name}</td>
-                          <td className="px-8 py-4">
-                            {receipt.batch ? (
-                              <span className="rounded-md bg-blue-50 px-2 py-0.5 font-mono text-[11px] font-bold text-blue-700">{receipt.batch}</span>
-                            ) : (
-                              <span className="text-xs text-zinc-300">—</span>
-                            )}
-                          </td>
-                          <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(receipt.amount_received, receipt.currency)}</td>
-                          <td className="px-8 py-4 text-xs text-zinc-400">{new Date(receipt.payment_date).toLocaleDateString()}</td>
-                          <td className="px-8 py-4">
-                            <div className="flex items-center gap-4">
-                              <button onClick={() => handleDownloadReceipt(receipt)} className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                                Preview PDF
-                              </button>
-                              <button onClick={() => handleReissueReceipt(receipt)} className="text-xs font-bold text-emerald-600 hover:text-emerald-800">
-                                Reissue
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
-            </div>
+            <ReceiptsSection
+              receipts={receipts}
+              formatMoney={formatMoney}
+              onRecordPayment={openPaymentModal}
+              onPreview={handleDownloadReceipt}
+              onReissue={handleReissueReceipt}
+            />
           )}
 
           {activeTab === 'statements' && (
-            <div className="p-8">
-              <div className="mx-auto max-w-lg rounded-2xl bg-blue-50 p-8 text-center">
-                <svg className="mx-auto mb-4 h-16 w-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <h3 className="mb-2 text-xl font-black text-zinc-900">Client Statements</h3>
-                <p className="mb-4 text-zinc-500">Generate a branded statement for one client using only that client&apos;s invoices and matching payments, optionally filtered by statement period.</p>
-                <div className="mb-3 grid gap-3 sm:grid-cols-2">
-                  <div className="text-left">
-                    <label className="mb-1 block text-xs font-black uppercase tracking-widest text-zinc-500">From</label>
-                    <input
-                      type="date"
-                      value={statementDateFrom}
-                      onChange={e => setStatementDateFrom(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-200 px-4 py-3"
-                    />
-                  </div>
-                  <div className="text-left">
-                    <label className="mb-1 block text-xs font-black uppercase tracking-widest text-zinc-500">To</label>
-                    <input
-                      type="date"
-                      value={statementDateTo}
-                      onChange={e => setStatementDateTo(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-200 px-4 py-3"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col justify-center gap-3 sm:flex-row">
-                  <select
-                    value={selectedClient}
-                    onChange={e => setSelectedClient(e.target.value)}
-                    className="rounded-xl border border-zinc-200 px-4 py-3"
-                  >
-                    <option value="">Select Client</option>
-                    {clientOptions.map(clientName => (
-                      <option key={clientName} value={clientName}>
-                        {clientName}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={handleGenerateStatement}
-                    className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
-                  >
-                    Generate
-                  </button>
-                  <button
-                    onClick={handleClearStatement}
-                    disabled={!selectedClient}
-                    className="rounded-xl border border-zinc-200 px-6 py-3 font-bold text-zinc-600 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-            </div>
+            <StatementsSection
+              selectedClient={selectedClient}
+              statementDateFrom={statementDateFrom}
+              statementDateTo={statementDateTo}
+              clientOptions={clientOptions}
+              onClientChange={setSelectedClient}
+              onDateFromChange={setStatementDateFrom}
+              onDateToChange={setStatementDateTo}
+              onGenerate={handleGenerateStatement}
+              onClear={handleClearStatement}
+            />
           )}
         </div>
       </div>

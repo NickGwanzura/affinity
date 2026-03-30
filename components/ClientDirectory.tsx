@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Client, Invoice, Quote, Payment } from '../types';
-import { supabase } from '../services/supabaseService';
+import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
 
 const formatMoney = (amount: number, currency = 'USD') => {
@@ -36,10 +36,10 @@ export const ClientDirectory: React.FC = () => {
     const load = async () => {
       try {
         const [cli, inv, quo, pay] = await Promise.all([
-          supabase.getClients(),
-          supabase.getInvoices(),
-          supabase.getQuotes(),
-          supabase.getPayments(),
+          dataService.getClients(),
+          dataService.getInvoices(),
+          dataService.getQuotes(),
+          dataService.getPayments(),
         ]);
         setClients(cli);
         setInvoices(inv);

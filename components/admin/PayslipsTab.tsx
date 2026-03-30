@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Employee, Payslip, CompanyDetails } from '../../types';
-import { supabase } from '../../services/supabaseService';
+import { dataService } from '../../services/dataService';
 import { generatePayslipPDFAndDownload } from '../../services/pdfService';
 import { useToast } from '../Toast';
 import { useConfirm } from '../ConfirmModal';
@@ -28,9 +28,9 @@ export const PayslipsTab: React.FC = () => {
   const fetchData = async () => {
     try {
       const [payslipData, employeeData, companyData] = await Promise.all([
-        supabase.getPayslips(),
-        supabase.getEmployees(),
-        supabase.getCompanyDetails(),
+        dataService.getPayslips(),
+        dataService.getEmployees(),
+        dataService.getCompanyDetails(),
       ]);
       setPayslips(payslipData);
       setEmployees(employeeData);
@@ -70,7 +70,7 @@ export const PayslipsTab: React.FC = () => {
         payment_method: payslipForm.payment_method,
         notes: payslipForm.notes
       };
-      await supabase.generatePayslip(payload);
+      await dataService.generatePayslip(payload);
       setShowPayslipModal(false);
       setPayslipForm(createEmptyPayslipForm());
       try {
@@ -87,7 +87,7 @@ export const PayslipsTab: React.FC = () => {
 
   const handleUpdatePayslipStatus = async (id: string, status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled') => {
     try {
-      await supabase.updatePayslipStatus(id, status);
+      await dataService.updatePayslipStatus(id, status);
       await fetchData();
     } catch (err: any) {
       console.error('[PayslipsTab] handleUpdatePayslipStatus error:', err);
@@ -104,7 +104,7 @@ export const PayslipsTab: React.FC = () => {
     });
     if (!approved) return;
     try {
-      await supabase.deletePayslip(id);
+      await dataService.deletePayslip(id);
       await fetchData();
       notifySuccess('Payslip deleted successfully.');
     } catch (err: any) {

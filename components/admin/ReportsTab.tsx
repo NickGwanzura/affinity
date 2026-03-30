@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Asset, CompanyDetails, LandedCostSummary, OperatingFund, AppUser } from '../../types';
-import { supabase } from '../../services/supabaseService';
+import { dataService } from '../../services/dataService';
 import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload, generateDriverFundsReportPDFAndDownload } from '../../services/pdfService';
 import { useToast } from '../Toast';
 import { Button, DriverFundsSnapshotPanel, DriverFundsSummaryPanel, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
@@ -32,12 +32,12 @@ export const ReportsTab: React.FC = () => {
     const load = async () => {
       try {
         const [summaryData, vehicleData, expenseData, companyData, fundData, userData] = await Promise.all([
-          supabase.getLandedCostSummaries(),
-          supabase.getVehicles(),
-          supabase.getExpenses(),
-          supabase.getCompanyDetails(),
-          supabase.getOperatingFunds().catch(() => [] as OperatingFund[]),
-          supabase.getUsers(),
+          dataService.getLandedCostSummaries(),
+          dataService.getVehicles(),
+          dataService.getExpenses(),
+          dataService.getCompanyDetails(),
+          dataService.getOperatingFunds().catch(() => [] as OperatingFund[]),
+          dataService.getUsers(),
         ]);
         setSummaries(summaryData);
         setVehicles(vehicleData);

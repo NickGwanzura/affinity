@@ -1,21 +1,26 @@
 
 import React, { useState, useEffect } from 'react';
-import { CompanyDetails, AppUser, UserRole, UserInvite, RegistrationRequest, Client } from '../types';
-import { supabase } from '../services/supabaseService';
+import { CompanyDetails, AppUser, UserRole, UserInvite, RegistrationRequest, Client, AuditLog } from '../types';
+import { dataService } from '../services/dataService';
 import { authService } from '../services/authService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
+import { companyDetailsFormSchema, getFirstValidationMessage, inviteFormSchema, setPasswordFormSchema, userCreateFormSchema, userEditFormSchema } from '../utils/clientValidation';
+import { ZodError } from 'zod';
+import ForensicLogPanel from './shared/ForensicLogPanel';
 
 
 export const Settings: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
-  const [activeTab, setActiveTab] = useState<'company' | 'users' | 'clients' | 'requests' | 'invites'>('company');
+  const [activeTab, setActiveTab] = useState<'company' | 'users' | 'forensics' | 'clients' | 'requests' | 'invites'>('company');
   const [company, setCompany] = useState<CompanyDetails | null>(null);
   const [users, setUsers] = useState<AppUser[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [invites, setInvites] = useState<UserInvite[]>([]);
   const [registrationRequests, setRegistrationRequests] = useState<RegistrationRequest[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>('');
 
@@ -57,7 +62,7 @@ export const Settings: React.FC = () => {
   // Dedicated function to load users - can be called for refresh
   const loadUsers = async () => {
     try {
-      const u = await supabase.getUsers();
+      const u = await dataService.getUsers();
       setUsers(u);
       return u;
     } catch (error: any) {
@@ -66,18 +71,39 @@ export const Settings: React.FC = () => {
     }
   };
 
+  const setStatusMessage = (message: string, toastType: Parameters<typeof showToast>[1] = 'success') => {
+    setSaveStatus(message);
+    showToast(message, toastType);
+    window.setTimeout(() => setSaveStatus(''), toastType === 'error' ? 5000 : 3500);
+  };
+
+  const loadAuditLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const nextLogs = await dataService.getAuditLogs(150);
+      setAuditLogs(nextLogs);
+    } catch (error: any) {
+      console.error('[Settings] getAuditLogs:', error);
+      showToast(error?.message || 'Failed to load forensic log.', 'error');
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const load = async () => {
       // Load each section independently so one failure doesn't blank the whole page
-      const [c, i, r] = await Promise.all([
-        supabase.getCompanyDetails().catch((e: unknown) => { console.error('[Settings] getCompanyDetails:', e); return null; }),
-        supabase.getInvites().catch((e: unknown) => { console.error('[Settings] getInvites:', e); return [] as UserInvite[]; }),
-        supabase.getRegistrationRequests().catch((e: unknown) => { console.error('[Settings] getRegistrationRequests:', e); return [] as RegistrationRequest[]; }),
+      const [c, i, r, logs] = await Promise.all([
+        dataService.getCompanyDetails().catch((e: unknown) => { console.error('[Settings] getCompanyDetails:', e); return null; }),
+        dataService.getInvites().catch((e: unknown) => { console.error('[Settings] getInvites:', e); return [] as UserInvite[]; }),
+        dataService.getRegistrationRequests().catch((e: unknown) => { console.error('[Settings] getRegistrationRequests:', e); return [] as RegistrationRequest[]; }),
+        dataService.getAuditLogs(150).catch((e: unknown) => { console.error('[Settings] getAuditLogs:', e); return [] as AuditLog[]; }),
       ]);
 
       setCompany(c);
       setInvites(Array.isArray(i) ? i : []);
       setRegistrationRequests(Array.isArray(r) ? r : []);
+      setAuditLogs(Array.isArray(logs) ? logs : []);
 
       try {
         await loadUsers();
@@ -93,29 +119,24 @@ export const Settings: React.FC = () => {
   const handleCompanySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!company) return;
-    setSaveStatus('Saving...');
     try {
-      await supabase.updateCompanyDetails(company);
-      setTimeout(() => setSaveStatus('All changes saved!'), 500);
-      setTimeout(() => setSaveStatus(''), 3000);
+      companyDetailsFormSchema.parse(company);
+      await dataService.updateCompanyDetails(company);
+      setStatusMessage('Business details saved.');
     } catch (error) {
       console.error('Error saving company details:', error);
-      setSaveStatus('Error saving. Please try again.');
-      setTimeout(() => setSaveStatus(''), 3000);
+      const message = error instanceof ZodError
+        ? getFirstValidationMessage(error)
+        : 'Error saving company details. Please try again.';
+      setStatusMessage(message, 'error');
     }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate password
-    if (!userForm.password || userForm.password.length < 8) {
-      showToast('Password must be at least 8 characters', 'warning');
-      return;
-    }
-    
+
     try {
-      // Use authService to create user with password
+      userCreateFormSchema.parse(userForm);
       const newUser = await authService.createUser({
         name: userForm.name,
         email: userForm.email,
@@ -125,11 +146,13 @@ export const Settings: React.FC = () => {
       setUsers([...users, newUser]);
       setShowUserModal(false);
       setUserForm({ name: '', email: '', password: '', role: 'Driver', status: 'Active' });
-      setSaveStatus('User created successfully!');
-      setTimeout(() => setSaveStatus(''), 3000);
+      setStatusMessage('User created successfully.');
     } catch (error: any) {
       console.error('Error creating user:', error);
-      showToast(error.message || 'Failed to create user. Please try again.', 'error');
+      const message = error instanceof ZodError
+        ? getFirstValidationMessage(error)
+        : error.message || 'Failed to create user. Please try again.';
+      showToast(message, 'error');
     }
   };
 
@@ -143,40 +166,30 @@ export const Settings: React.FC = () => {
     e.preventDefault();
     if (!userToSetPassword) return;
 
-    // Validate passwords match
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      showToast('Passwords do not match', 'warning');
-      return;
-    }
-
-    // Validate password length
-    if (passwordForm.newPassword.length < 8) {
-      showToast('Password must be at least 8 characters', 'warning');
-      return;
-    }
-
     try {
+      setPasswordFormSchema.parse(passwordForm);
       await authService.adminSetUserPassword(userToSetPassword.id, passwordForm.newPassword);
       setShowSetPasswordModal(false);
       setUserToSetPassword(null);
       setPasswordForm({ newPassword: '', confirmPassword: '' });
-      setSaveStatus(`Password updated for ${userToSetPassword.name}`);
-      setTimeout(() => setSaveStatus(''), 3000);
+      setStatusMessage(`Password updated for ${userToSetPassword.name}.`);
     } catch (error: any) {
       console.error('Error setting password:', error);
-      showToast(error.message || 'Failed to set password. Please try again.', 'error');
+      const message = error instanceof ZodError
+        ? getFirstValidationMessage(error)
+        : error.message || 'Failed to set password. Please try again.';
+      showToast(message, 'error');
     }
   };
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
     try {
-      await supabase.deleteUser(userToDelete.id);
+      await dataService.deleteUser(userToDelete.id);
       setUsers(users.filter(u => u.id !== userToDelete.id));
       setShowDeleteDialog(false);
       setUserToDelete(null);
-      setSaveStatus('User deleted successfully!');
-      setTimeout(() => setSaveStatus(''), 3000);
+      setStatusMessage('User deleted successfully.');
     } catch (error: any) {
       console.error('Error deleting user:', error);
       if (error.name === 'ValidationError') {
@@ -210,7 +223,8 @@ export const Settings: React.FC = () => {
     if (!userToEdit) return;
 
     try {
-      const updatedUser = await supabase.updateUser(userToEdit.id, editForm);
+      userEditFormSchema.parse(editForm);
+      const updatedUser = await dataService.updateUser(userToEdit.id, editForm);
       
       // Update local state with the returned user
       setUsers(users.map(u => u.id === userToEdit.id ? updatedUser : u));
@@ -222,14 +236,15 @@ export const Settings: React.FC = () => {
       const statusMsg = roleChanged 
         ? `User updated! Role changed from ${userToEdit.role} to ${editForm.role}. User will see new role on next login.`
         : 'User updated successfully!';
-      setSaveStatus(statusMsg);
-      setTimeout(() => setSaveStatus(''), 5000);
+      setStatusMessage(statusMsg);
       
       // Refresh users list to ensure we have latest data from database
       await loadUsers();
     } catch (error: any) {
       console.error('[Settings] Error updating user:', error);
-      if (error.name === 'ValidationError') {
+      if (error instanceof ZodError) {
+        showToast(getFirstValidationMessage(error), 'warning');
+      } else if (error.name === 'ValidationError') {
         showToast(`${error.field}: ${error.message}`, 'warning');
       } else {
         showToast(error.message || 'Failed to update user. Please try again.', 'error');
@@ -240,8 +255,9 @@ export const Settings: React.FC = () => {
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const currentUser = await supabase.getSession();
-      const invite = await supabase.createInvite(
+      inviteFormSchema.parse(inviteForm);
+      const currentUser = await dataService.getSession();
+      const invite = await dataService.createInvite(
         inviteForm.email,
         inviteForm.role,
         inviteForm.name,
@@ -250,11 +266,12 @@ export const Settings: React.FC = () => {
       setInvites([...invites, invite]);
       setShowInviteModal(false);
       setInviteForm({ name: '', email: '', role: 'Driver' });
-      setSaveStatus('Invite created successfully. Share the invite link from the Invitations tab.');
-      setTimeout(() => setSaveStatus(''), 5000);
+      setStatusMessage('Invite created successfully. Share the invite link from the Invitations tab.');
     } catch (error: any) {
       console.error('Error sending invite:', error);
-      if (error.name === 'ValidationError') {
+      if (error instanceof ZodError) {
+        showToast(getFirstValidationMessage(error), 'warning');
+      } else if (error.name === 'ValidationError') {
         showToast(`${error.field}: ${error.message}`, 'warning');
       } else {
         showToast('Failed to send invite. Please try again.', 'error');
@@ -264,10 +281,9 @@ export const Settings: React.FC = () => {
 
   const handleDeleteInvite = async (inviteId: string) => {
     try {
-      await supabase.deleteInvite(inviteId);
+      await dataService.deleteInvite(inviteId);
       setInvites(invites.filter(i => i.id !== inviteId));
-      setSaveStatus('Invite cancelled successfully!');
-      setTimeout(() => setSaveStatus(''), 3000);
+      setStatusMessage('Invite cancelled successfully.');
     } catch (error: any) {
       console.error('Error deleting invite:', error);
       showToast('Failed to cancel invite. Please try again.', 'error');
@@ -276,10 +292,9 @@ export const Settings: React.FC = () => {
 
   const handleResendInvite = async (inviteId: string) => {
     try {
-      const updatedInvite = await supabase.resendInvite(inviteId);
+      const updatedInvite = await dataService.resendInvite(inviteId);
       setInvites(invites.map(i => i.id === inviteId ? updatedInvite : i));
-      setSaveStatus('Invite refreshed successfully. Share the updated invite link from the Invitations tab.');
-      setTimeout(() => setSaveStatus(''), 5000);
+      setStatusMessage('Invite refreshed successfully. Share the updated invite link from the Invitations tab.');
     } catch (error: any) {
       console.error('Error resending invite:', error);
       showToast('Failed to resend invite. Please try again.', 'error');
@@ -290,8 +305,7 @@ export const Settings: React.FC = () => {
     const inviteUrl = `${window.location.origin}?token=${inviteToken}`;
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      setSaveStatus('Invite link copied to clipboard.');
-      setTimeout(() => setSaveStatus(''), 3000);
+      setStatusMessage('Invite link copied to clipboard.');
     } catch (error) {
       console.error('Error copying invite link:', error);
       showToast('Copy failed. Please try again.', 'warning');
@@ -300,19 +314,21 @@ export const Settings: React.FC = () => {
 
   const handleApproveRequest = async (requestId: string) => {
     try {
-      const currentUser = await supabase.getSession();
-      await supabase.approveRegistrationRequest(requestId, currentUser?.user?.id || 'admin');
+      const currentUser = await dataService.getSession();
+      await dataService.approveRegistrationRequest(requestId, currentUser?.user?.id || 'admin');
 
       // Refresh the lists
-      const [updatedRequests, updatedUsers] = await Promise.all([
-        supabase.getRegistrationRequests(),
-        supabase.getUsers()
+      const [updatedRequests, updatedUsers, updatedInvites] = await Promise.all([
+        dataService.getRegistrationRequests(),
+        dataService.getUsers(),
+        dataService.getInvites(),
       ]);
       setRegistrationRequests(updatedRequests);
       setUsers(updatedUsers);
+      setInvites(updatedInvites);
+      await loadAuditLogs();
 
-      setSaveStatus('Registration approved! An invite was created so the user can set their password.');
-      setTimeout(() => setSaveStatus(''), 3000);
+      setStatusMessage('Registration approved. An invite was created so the user can set a password.');
     } catch (error: any) {
       console.error('Error approving request:', error);
       const errorMessage = error.message || 'Unknown error';
@@ -322,14 +338,14 @@ export const Settings: React.FC = () => {
 
   const handleRejectRequest = async (requestId: string) => {
     try {
-      const currentUser = await supabase.getSession();
-      await supabase.rejectRegistrationRequest(requestId, currentUser?.user?.id || 'admin');
+      const currentUser = await dataService.getSession();
+      await dataService.rejectRegistrationRequest(requestId, currentUser?.user?.id || 'admin');
 
-      const updatedRequests = await supabase.getRegistrationRequests();
+      const updatedRequests = await dataService.getRegistrationRequests();
       setRegistrationRequests(updatedRequests);
+      await loadAuditLogs();
 
-      setSaveStatus('Registration request rejected.');
-      setTimeout(() => setSaveStatus(''), 3000);
+      setStatusMessage('Registration request rejected.');
     } catch (error: any) {
       console.error('Error rejecting request:', error);
       showToast('Failed to reject registration. Please try again.', 'error');
@@ -338,21 +354,21 @@ export const Settings: React.FC = () => {
 
   const handleResetPassword = async (userEmail: string) => {
     const confirmed = await confirm({
-      title: 'Send Password Reset',
-      message: `Send a password reset email to ${userEmail}?`,
-      confirmLabel: 'Send Email',
+      title: 'Create Password Reset',
+      message: `Create a server-side password reset request for ${userEmail}?`,
+      confirmLabel: 'Create Reset',
       cancelLabel: 'Cancel',
       confirmVariant: 'primary'
     });
     if (!confirmed) return;
 
     try {
-      await supabase.resetUserPassword(userEmail);
-      setSaveStatus(`Password reset email sent to ${userEmail}!`);
-      setTimeout(() => setSaveStatus(''), 5000);
+      await dataService.resetUserPassword(userEmail);
+      await loadAuditLogs();
+      setStatusMessage(`Password reset initiated for ${userEmail}.`);
     } catch (error: any) {
       console.error('Error sending password reset:', error);
-      showToast('Failed to send password reset email. Please try again.', 'error');
+      showToast('Failed to create password reset request. Please try again.', 'error');
     }
   };
 
@@ -361,10 +377,10 @@ export const Settings: React.FC = () => {
     try {
       // Optimistic UI update
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: nextStatus } : u));
-      const updatedUser = await supabase.updateUser(user.id, { status: nextStatus });
+      const updatedUser = await dataService.updateUser(user.id, { status: nextStatus });
       setUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u));
-      setSaveStatus(`User ${nextStatus === 'Active' ? 'activated' : 'deactivated'} successfully!`);
-      setTimeout(() => setSaveStatus(''), 3000);
+      await loadAuditLogs();
+      setStatusMessage(`User ${nextStatus === 'Active' ? 'activated' : 'deactivated'} successfully!`);
     } catch (error: any) {
       console.error('Error toggling user status:', error);
       // Revert optimistic update on failure
@@ -394,7 +410,7 @@ export const Settings: React.FC = () => {
       setUsers(prev => prev.map(u => ids.includes(u.id) ? { ...u, status } : u));
       const updates = ids.map(async (id) => {
         try {
-          return await supabase.updateUser(id, { status });
+          return await dataService.updateUser(id, { status });
         } catch (e) {
           return null;
         }
@@ -412,8 +428,8 @@ export const Settings: React.FC = () => {
         setUsers(prev => prev.map(u => failedIds.includes(u.id) ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' } : u));
         showToast(`Failed to update ${failedIds.length} user(s). Changes were reverted for them.`, 'warning');
       }
-      setSaveStatus(`Updated ${successfulUsers.length} user(s) to ${status}.`);
-      setTimeout(() => setSaveStatus(''), 3000);
+      await loadAuditLogs();
+      setStatusMessage(`Updated ${successfulUsers.length} user(s) to ${status}.`);
       setSelectedUserIds([]);
     } finally {
       setIsBulkUpdating(false);
@@ -462,6 +478,15 @@ export const Settings: React.FC = () => {
               }`}
           >
             User Management
+          </button>
+          <button
+            onClick={() => setActiveTab('forensics')}
+            className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'forensics'
+              ? 'border-blue-600 text-blue-600 bg-white'
+              : 'border-transparent text-zinc-500 hover:text-zinc-700'
+              }`}
+          >
+            Forensic Log
           </button>
           <button
             onClick={() => setActiveTab('requests')}
@@ -673,16 +698,16 @@ export const Settings: React.FC = () => {
                         setLoading(true);
                         try {
                           // Sync the current user's profile to Neon
-                          const syncedUser = await supabase.syncCurrentUser();
-                          const u = await supabase.getUsers();
+                          const syncedUser = await dataService.syncCurrentUser();
+                          const u = await dataService.getUsers();
                           setUsers(u);
                           setSelectedUserIds([]);
                           setBulkTargetStatus(null);
-                          setSaveStatus(`Synced! Found ${u.length} user${u.length !== 1 ? 's' : ''} in database.${syncedUser ? ' Your profile is synced.' : ''}`);
-                          setTimeout(() => setSaveStatus(''), 4000);
+                          await loadAuditLogs();
+                          setStatusMessage(`Synced. Found ${u.length} user${u.length !== 1 ? 's' : ''} in the database.${syncedUser ? ' Your profile is synced.' : ''}`);
                         } catch (error: any) {
                           console.error('[Settings] Refresh error:', error);
-                          alert('Error: ' + error.message);
+                          showToast(error?.message || 'Sync failed. Please try again.', 'error');
                         }
                         setLoading(false);
                       }}
@@ -747,15 +772,15 @@ export const Settings: React.FC = () => {
                           onClick={async () => {
                             setLoading(true);
                             try {
-                              const synced = await supabase.syncCurrentUser();
+                              const synced = await dataService.syncCurrentUser();
                               if (synced) {
                                 await loadUsers();
-                                setSaveStatus(`Your profile synced! You can now edit your role.`);
-                                setTimeout(() => setSaveStatus(''), 4000);
+                                await loadAuditLogs();
+                                setStatusMessage('Your profile synced. You can now edit your role.');
                               }
                             } catch (error: any) {
                               console.error('[Settings] Sync error:', error);
-                              alert('Error: ' + error.message);
+                              showToast(error?.message || 'Profile sync failed. Please try again.', 'error');
                             }
                             setLoading(false);
                           }}
@@ -1035,6 +1060,14 @@ export const Settings: React.FC = () => {
                 )}
               </div>
             </div>
+          )}
+
+          {activeTab === 'forensics' && (
+            <ForensicLogPanel
+              logs={auditLogs}
+              loading={logsLoading}
+              onRefresh={loadAuditLogs}
+            />
           )}
 
           {activeTab === 'requests' && (

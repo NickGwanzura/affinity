@@ -1996,7 +1996,8 @@ export const generateStatementPDF = async (
     doc.text(`Paid ${formatCurrencyAmount(row.totalPaid, row.currency)}`, 128, summaryY);
 
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
-    doc.setTextColor(...(row.balanceDue > 0 ? [220, 38, 38] : [16, 185, 129]));
+    const balanceColor: [number, number, number] = row.balanceDue > 0 ? [220, 38, 38] : [16, 185, 129];
+    doc.setTextColor(...balanceColor);
     doc.text(`Owing ${formatCurrencyAmount(row.balanceDue, row.currency)}`, LAYOUT.MARGIN_RIGHT - 5, summaryY, {
       align: 'right',
     });

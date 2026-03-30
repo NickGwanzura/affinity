@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Employee } from '../../types';
 import { getMonthName } from '../../utils/formatters';
+import CarbonFormModal from './CarbonFormModal';
 import { Button } from '../ui';
 
 export interface PayslipFormValue {
@@ -93,11 +94,14 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
   const deductionsInputClasses = 'w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none';
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={onClose} />
-      <div className="relative bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-2xl font-bold text-zinc-900 mb-6">{title}</h3>
-        <form onSubmit={onSubmit} className="space-y-6">
+    <CarbonFormModal
+      isOpen={isOpen}
+      title={title}
+      label="Payroll"
+      size="lg"
+      onClose={onClose}
+    >
+      <form onSubmit={onSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="md:col-span-3">
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Employee *</label>
@@ -253,17 +257,16 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="secondary" fullWidth onClick={onClose}>
+          <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" fullWidth>
+            <Button type="submit">
               {submitLabel}
             </Button>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </CarbonFormModal>
   );
 };
 

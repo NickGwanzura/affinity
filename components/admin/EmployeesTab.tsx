@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Employee } from '../../types';
-import { supabase } from '../../services/supabaseService';
+import { dataService } from '../../services/dataService';
 import { useToast } from '../Toast';
 import { useConfirm } from '../ConfirmModal';
 import EmployeeFormModal, { createEmptyEmployeeForm, toEmployeeFormValue, type EmployeeFormValue } from '../shared/EmployeeFormModal';
@@ -25,7 +25,7 @@ export const EmployeesTab: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const data = await supabase.getEmployees();
+      const data = await dataService.getEmployees();
       setEmployees(data);
     } catch (err) {
       console.error('[EmployeesTab] fetchData error:', err);
@@ -53,9 +53,9 @@ export const EmployeesTab: React.FC = () => {
     try {
       const payload = { ...employeeForm, base_pay_usd: parseFloat(employeeForm.base_pay_usd) || 0 };
       if (editingEmployee) {
-        await supabase.updateEmployee(editingEmployee.id, payload);
+        await dataService.updateEmployee(editingEmployee.id, payload);
       } else {
-        await supabase.createEmployee(payload);
+        await dataService.createEmployee(payload);
       }
       setShowEmployeeModal(false);
       setEditingEmployee(null);
@@ -81,7 +81,7 @@ export const EmployeesTab: React.FC = () => {
     });
     if (!approved) return;
     try {
-      await supabase.deleteEmployee(id);
+      await dataService.deleteEmployee(id);
       await fetchData();
       notifySuccess('Employee deleted successfully.');
     } catch (err: any) {

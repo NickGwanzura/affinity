@@ -9,7 +9,7 @@ interface UseAsyncState<T> {
 interface UseAsyncReturn<T> extends UseAsyncState<T> {
   execute: (...args: any[]) => Promise<T | null>;
   reset: () => void;
-  setData: (data: T) => void;
+  setData: (data: T | ((prev: T | null) => T | null)) => void;
 }
 
 export function useAsync<T>(
@@ -60,9 +60,12 @@ export function useAsync<T>(
     setState({ data: null, loading: false, error: null });
   }, []);
 
-  const setData = useCallback((data: T) => {
+  const setData = useCallback((data: T | ((prev: T | null) => T | null)) => {
     if (isMounted.current) {
-      setState((prev) => ({ ...prev, data }));
+      setState((prev) => ({
+        ...prev,
+        data: typeof data === 'function' ? (data as (value: T | null) => T | null)(prev.data) : data,
+      }));
     }
   }, []);
 

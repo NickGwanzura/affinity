@@ -3,6 +3,7 @@ import { Tag } from '@carbon/react';
 
 export type StatusType =
   | 'active' | 'inactive' | 'pending' | 'approved' | 'rejected'
+  | 'accepted'
   | 'paid' | 'overdue' | 'draft' | 'sent' | 'cancelled'
   | 'completed' | 'in-progress' | 'on-hold'
   | 'high' | 'medium' | 'low'
@@ -34,6 +35,7 @@ const statusMap: Record<string, { type: CarbonTagType; label: string }> = {
   cancelled:    { type: 'gray',      label: 'Cancelled' },
   // Request
   approved:     { type: 'green',     label: 'Approved' },
+  accepted:     { type: 'green',     label: 'Accepted' },
   rejected:     { type: 'red',       label: 'Rejected' },
   // Progress
   completed:    { type: 'teal',      label: 'Completed' },

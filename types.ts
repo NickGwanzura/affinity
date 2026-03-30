@@ -3,7 +3,9 @@ export type Currency = 'GBP' | 'NAD' | 'USD' | 'BWP' | 'ZAR';
 export type VehicleStatus = 'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana' | 'Sold';
 export type ExpenseCategory = 'Shipping' | 'Fuel' | 'Tolls' | 'Duty' | 'Food' | 'Repairs' | 'Driver Disbursement' | 'Other';
 export type UserRole = 'Admin' | 'Driver' | 'Manager' | 'Accountant';
-export type FinancialStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
+export type QuoteStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected';
+export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
+export type TripStatus = 'Planned' | 'Assigned' | 'In Transit' | 'Delayed' | 'Completed' | 'Cancelled';
 
 export interface Vehicle {
   id: string;
@@ -60,6 +62,7 @@ export interface AppUser {
 
 export interface AuthSession {
   user: AppUser;
+  token?: string;
 }
 
 export interface Client {
@@ -116,7 +119,7 @@ export interface Quote {
   client_address?: string;
   amount_usd: number;
   currency?: 'USD' | 'GBP';
-  status: FinancialStatus;
+  status: QuoteStatus;
   quote_number: string;
   description?: string;
   valid_until?: string;
@@ -136,7 +139,7 @@ export interface Invoice {
   client_address?: string;
   amount_usd: number;
   currency?: 'USD' | 'GBP';
-  status: FinancialStatus;
+  status: InvoiceStatus;
   description?: string;
   notes?: string;
   terms_and_conditions?: string;
@@ -209,10 +212,19 @@ export interface RegistrationRequest {
   reviewed_by?: string;
 }
 
-export interface SupabaseConfig {
-  url: string;
-  anonKey: string;
-  isConnected: boolean;
+export interface AuditLog {
+  id: string;
+  user_id?: string | null;
+  user_name?: string | null;
+  user_email?: string | null;
+  action: string;
+  table_name?: string | null;
+  record_id?: string | null;
+  old_data?: unknown;
+  new_data?: unknown;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  created_at: string;
 }
 
 export interface Employee {
@@ -250,6 +262,28 @@ export interface OperatingFund {
   approved_by?: string;
   date: string;
   created_at: string;
+}
+
+export interface Trip {
+  id: string;
+  trip_number: string;
+  title: string;
+  status: TripStatus;
+  assigned_driver_id?: string | null;
+  assigned_driver_name?: string | null;
+  assigned_vehicle_id?: string | null;
+  assigned_vehicle_label?: string | null;
+  route_origin: string;
+  route_destination: string;
+  route_waypoints?: string[];
+  departure_date: string;
+  eta_date: string;
+  actual_departure_at?: string | null;
+  actual_arrival_at?: string | null;
+  notes?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at?: string;
 }
 
 // Asset Register Types

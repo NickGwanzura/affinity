@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Vehicle, Expense, LandedCostSummary } from '../types';
-import { supabase as supabaseService } from '../services/supabaseService';
+import { dataService } from '../services/dataService';
 import { useAsync } from './useAsync';
 import { useToast } from '../components/Toast';
 
@@ -31,9 +31,9 @@ export function useVehicleData(): UseVehicleDataReturn {
   // Fetch all vehicle data (vehicles, expenses, summaries)
   const fetchVehicleData = useCallback(async (): Promise<VehicleData> => {
     const [vehicles, expenses, summaries] = await Promise.all([
-      supabaseService.getVehicles(),
-      supabaseService.getExpenses(),
-      supabaseService.getLandedCostSummaries(),
+      dataService.getVehicles(),
+      dataService.getExpenses(),
+      dataService.getLandedCostSummaries(),
     ]);
 
     return { vehicles, expenses, summaries };
@@ -57,7 +57,7 @@ export function useVehicleData(): UseVehicleDataReturn {
   const addVehicle = useCallback(
     async (vehicle: Omit<Vehicle, 'id' | 'created_at'>): Promise<void> => {
       try {
-        const newVehicle = await supabaseService.addVehicle(vehicle);
+        const newVehicle = await dataService.addVehicle(vehicle);
         
         // Optimistically update local state
         setData((prev) => {
@@ -85,7 +85,7 @@ export function useVehicleData(): UseVehicleDataReturn {
   const updateVehicle = useCallback(
     async (id: string, vehicle: Partial<Vehicle>): Promise<void> => {
       try {
-        const updatedVehicle = await supabaseService.updateVehicle(id, vehicle);
+        const updatedVehicle = await dataService.updateVehicle(id, vehicle);
 
         // Optimistically update local state
         setData((prev) => {
@@ -115,7 +115,7 @@ export function useVehicleData(): UseVehicleDataReturn {
   const deleteVehicle = useCallback(
     async (id: string): Promise<void> => {
       try {
-        await supabaseService.deleteVehicle(id);
+        await dataService.deleteVehicle(id);
 
         // Optimistically update local state
         setData((prev) => {
@@ -142,10 +142,10 @@ export function useVehicleData(): UseVehicleDataReturn {
   const addExpense = useCallback(
     async (expense: Omit<Expense, 'id' | 'created_at'>): Promise<void> => {
       try {
-        // Note: supabaseService.addExpense expects a slightly different type
+        // Note: dataService.addExpense expects a slightly different type
         // It doesn't require exchange_rate_to_usd as it's calculated server-side
         const { exchange_rate_to_usd, ...expenseData } = expense as any;
-        const newExpense = await supabaseService.addExpense(expenseData);
+        const newExpense = await dataService.addExpense(expenseData);
 
         // Optimistically update local state
         setData((prev) => {
@@ -174,7 +174,7 @@ export function useVehicleData(): UseVehicleDataReturn {
     async (id: string, expense: Partial<Expense>): Promise<void> => {
       try {
         const { exchange_rate_to_usd, ...expenseData } = expense as any;
-        const updatedExpense = await supabaseService.updateExpense(id, expenseData);
+        const updatedExpense = await dataService.updateExpense(id, expenseData);
 
         // Optimistically update local state
         setData((prev) => {
@@ -204,7 +204,7 @@ export function useVehicleData(): UseVehicleDataReturn {
   const deleteExpense = useCallback(
     async (id: string): Promise<void> => {
       try {
-        await supabaseService.deleteExpense(id);
+        await dataService.deleteExpense(id);
 
         // Optimistically update local state
         setData((prev) => {

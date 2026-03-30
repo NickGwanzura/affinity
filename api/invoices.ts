@@ -1,0 +1,336 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { PoolClient } from '@neondatabase/serverless';
+import { 
+  AuthenticatedRequest, 
+  verifyToken, 
+  requireRole, 
+  setSecurityHeaders, 
+  handleCors, 
+  apiError 
+} from './_middleware';
+import { sql, withTransaction, validateOrderColumn } from './_db';
+import { InvoiceSchema, InvoiceUpdateSchema, PaginationSchema } from './_schemas';
+import type { InvoiceItem } from '../types';
+
+type InvoiceLineItemInput = {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  discount_percentage?: number;
+  tax_rate?: number;
+  notes?: string;
+};
+
+const computeInvoiceLineItemAmounts = (item: InvoiceLineItemInput) => {
+  const subtotal = item.quantity * item.unit_price;
+  const discountPercentage = item.discount_percentage ?? 0;
+  const discountAmount = subtotal * (discountPercentage / 100);
+  const amount = subtotal - discountAmount;
+  const taxRate = item.tax_rate ?? 0;
+  const taxAmount = amount * (taxRate / 100);
+
+  return {
+    discountPercentage,
+    discountAmount,
+    amount,
+    taxRate,
+    taxAmount,
+    total: amount + taxAmount,
+  };
+};
+
+const buildInvoiceItemsSnapshot = (items: InvoiceLineItemInput[]): InvoiceItem[] =>
+  items.map((item, index) => {
+    const amounts = computeInvoiceLineItemAmounts(item);
+    return {
+      line_number: index + 1,
+      description: item.description,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      amount: amounts.amount,
+      discount_percentage: amounts.discountPercentage,
+      discount_amount: amounts.discountAmount,
+      tax_rate: amounts.taxRate,
+      tax_amount: amounts.taxAmount,
+      notes: item.notes,
+    };
+  });
+
+const calculateInvoiceTotal = (items: InvoiceLineItemInput[]): number =>
+  items.reduce((sum, item) => sum + computeInvoiceLineItemAmounts(item).total, 0);
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  setSecurityHeaders(res);
+  if (handleCors(req, res)) return;
+  
+  const authReq = req as AuthenticatedRequest;
+  
+  if (!verifyToken(authReq, res)) return;
+  
+  try {
+    switch (req.method) {
+      case 'GET':
+        if (req.query.id) {
+          return await getInvoice(authReq, res);
+        }
+        return await listInvoices(authReq, res);
+        
+      case 'POST':
+        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        return await createInvoice(authReq, res);
+        
+      case 'PUT':
+        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        return await updateInvoice(authReq, res);
+        
+      case 'DELETE':
+        if (!requireRole(authReq, res, ['Admin'])) return;
+        return await deleteInvoice(authReq, res);
+        
+      default:
+        apiError(res, 405, 'Method not allowed');
+    }
+  } catch (error) {
+    apiError(res, 500, 'Internal server error', error);
+  }
+}
+
+async function listInvoices(req: AuthenticatedRequest, res: VercelResponse) {
+  try {
+    const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
+    const offset = (page - 1) * limit;
+    
+    let orderColumn = 'created_at';
+    if (sortBy) {
+      const validated = validateOrderColumn('invoices', sortBy);
+      if (validated) orderColumn = validated;
+    }
+    const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    
+    const [countResult, rows] = await Promise.all([
+      sql`SELECT COUNT(*) as total FROM invoices`,
+      sql`
+        SELECT i.*,
+          COALESCE(
+            (SELECT jsonb_agg(to_jsonb(ii) ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
+            '[]'::jsonb
+          ) as items
+        FROM invoices i
+        ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    ]);
+    
+    const total = parseInt(countResult[0].total);
+    
+    res.status(200).json({
+      data: rows,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    apiError(res, 400, 'Invalid query parameters', error);
+  }
+}
+
+async function getInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+  const { id } = req.query;
+  
+  const rows = await sql`
+    SELECT i.*,
+      COALESCE(
+        (SELECT jsonb_agg(to_jsonb(ii) ORDER BY ii.line_number) FROM invoice_items ii WHERE ii.invoice_id = i.id),
+        '[]'::jsonb
+      ) as items
+    FROM invoices i
+    WHERE i.id = ${id}::uuid
+  `;
+  
+  if (rows.length === 0) {
+    return apiError(res, 404, 'Invoice not found');
+  }
+  
+  res.status(200).json(rows[0]);
+}
+
+async function generateInvoiceNumber(client: PoolClient): Promise<string> {
+  const year = new Date().getFullYear();
+  const result = await client.query<{ next_value: string }>("SELECT nextval('public.invoice_number_seq')::text AS next_value");
+  const nextValue = parseInt(result.rows[0]?.next_value || '0', 10);
+  return `INV-${year}-${String(nextValue).padStart(4, '0')}`;
+}
+
+async function insertInvoiceItems(client: PoolClient, invoiceId: string, items: InvoiceLineItemInput[]) {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const amounts = computeInvoiceLineItemAmounts(item);
+
+    await client.query(
+      `
+        INSERT INTO invoice_items (
+          invoice_id, line_number, description, quantity, unit_price,
+          amount, discount_percentage, discount_amount, tax_rate, tax_amount, notes
+        )
+        VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `,
+      [
+        invoiceId,
+        i + 1,
+        item.description,
+        item.quantity,
+        item.unit_price,
+        amounts.amount,
+        amounts.discountPercentage,
+        amounts.discountAmount,
+        amounts.taxRate,
+        amounts.taxAmount,
+        item.notes || null,
+      ],
+    );
+  }
+}
+
+async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+  try {
+    const data = InvoiceSchema.parse(req.body);
+
+    const totalAmount = calculateInvoiceTotal(data.items);
+    const itemsSnapshot = buildInvoiceItemsSnapshot(data.items);
+
+    const result = await withTransaction(async (client) => {
+      const invoiceNumber = await generateInvoiceNumber(client);
+      const invoiceResult = await client.query(
+        `
+          INSERT INTO invoices (
+            invoice_number, invoice_kind, quote_id, vehicle_id, client_id, client_name, client_email, client_address,
+            amount_usd, currency, status, description, notes, terms_and_conditions, due_date, items, batch
+          )
+          VALUES (
+            $1, $2, $3::uuid, $4::uuid, $5::uuid, $6, $7, $8,
+            $9, $10, $11, $12, $13, $14, $15, $16::jsonb, $17
+          )
+          RETURNING *
+        `,
+        [
+          invoiceNumber,
+          data.invoice_kind,
+          data.quote_id || null,
+          data.vehicle_id || null,
+          data.client_id || null,
+          data.client_name,
+          data.client_email || null,
+          data.client_address || null,
+          totalAmount,
+          data.currency,
+          data.status,
+          data.description || null,
+          data.notes || null,
+          data.terms_and_conditions || null,
+          data.due_date,
+          JSON.stringify(itemsSnapshot),
+          data.batch || null,
+        ],
+      );
+
+      const invoice = invoiceResult.rows[0];
+      await insertInvoiceItems(client, invoice.id, data.items);
+
+      return invoice;
+    });
+    
+    res.status(201).json(result);
+  } catch (error) {
+    apiError(res, 400, 'Invalid invoice data', error);
+  }
+}
+
+async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+  const { id } = req.query;
+  
+  try {
+    const data = InvoiceUpdateSchema.parse(req.body);
+    
+    const result = await withTransaction(async (client) => {
+      let totalAmount = undefined;
+      let itemsSnapshot: InvoiceItem[] | undefined;
+      if (data.items && data.items.length > 0) {
+        totalAmount = calculateInvoiceTotal(data.items);
+        itemsSnapshot = buildInvoiceItemsSnapshot(data.items);
+
+        await client.query('DELETE FROM invoice_items WHERE invoice_id = $1::uuid', [id]);
+        await insertInvoiceItems(client, String(id), data.items);
+      }
+
+      const rows = await client.query(
+        `
+          UPDATE invoices
+          SET
+            invoice_kind = COALESCE($1, invoice_kind),
+            quote_id = COALESCE($2::uuid, quote_id),
+            vehicle_id = COALESCE($3::uuid, vehicle_id),
+            client_id = COALESCE($4::uuid, client_id),
+            client_name = COALESCE($5, client_name),
+            client_email = COALESCE($6, client_email),
+            client_address = COALESCE($7, client_address),
+            amount_usd = COALESCE($8, amount_usd),
+            currency = COALESCE($9, currency),
+            status = COALESCE($10, status),
+            description = COALESCE($11, description),
+            notes = COALESCE($12, notes),
+            terms_and_conditions = COALESCE($13, terms_and_conditions),
+            due_date = COALESCE($14, due_date),
+            items = COALESCE($15::jsonb, items),
+            batch = COALESCE($16, batch),
+            updated_at = NOW()
+          WHERE id = $17::uuid
+          RETURNING *
+        `,
+        [
+          data.invoice_kind ?? null,
+          data.quote_id ?? null,
+          data.vehicle_id ?? null,
+          data.client_id ?? null,
+          data.client_name ?? null,
+          data.client_email ?? null,
+          data.client_address ?? null,
+          totalAmount ?? null,
+          data.currency ?? null,
+          data.status ?? null,
+          data.description ?? null,
+          data.notes ?? null,
+          data.terms_and_conditions ?? null,
+          data.due_date ?? null,
+          itemsSnapshot ? JSON.stringify(itemsSnapshot) : null,
+          data.batch ?? null,
+          id,
+        ],
+      );
+
+      if (rows.rows.length === 0) {
+        throw new Error('Invoice not found');
+      }
+
+      return rows.rows[0];
+    });
+    
+    res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Invoice not found') {
+      return apiError(res, 404, error.message);
+    }
+    apiError(res, 400, 'Invalid invoice data', error);
+  }
+}
+
+async function deleteInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+  const { id } = req.query;
+  
+  await withTransaction(async (client) => {
+    await client.query('DELETE FROM invoice_items WHERE invoice_id = $1::uuid', [id]);
+    await client.query('DELETE FROM invoices WHERE id = $1::uuid', [id]);
+  });
+  
+  res.status(204).end();
+}

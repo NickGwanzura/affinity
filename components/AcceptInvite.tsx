@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../services/supabaseService';
+import { dataService } from '../services/dataService';
 import { UserInvite, AuthSession } from '../types';
 
 interface AcceptInviteProps {
@@ -20,7 +20,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
     useEffect(() => {
         const verifyToken = async () => {
             try {
-                const data = await supabase.getInviteByToken(token);
+                const data = await dataService.getInviteByToken(token);
                 if (!data) {
                     setError('Invalid or expired invite token. Please contact your administrator.');
                 } else {
@@ -51,7 +51,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
 
         setSubmitting(true);
         try {
-            const session = await supabase.acceptInvite(token, password);
+            const session = await dataService.acceptInvite(token, password);
             onSuccess(session);
         } catch (err: any) {
             setError(err.message || 'Failed to accept invitation. Please try again.');

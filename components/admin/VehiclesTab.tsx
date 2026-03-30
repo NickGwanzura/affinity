@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LandedCostSummary, Currency, ExpenseCategory, VehicleStatus, AppUser, Vehicle, Expense } from '../../types';
-import { supabase } from '../../services/supabaseService';
+import { dataService } from '../../services/dataService';
 import { useToast } from '../Toast';
 import { Button, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
 import { toVehicleEditorRecord, type VehicleEditorRecord } from '../../utils/dashboardViewModels';
@@ -76,10 +76,10 @@ export const VehiclesTab: React.FC = () => {
   const fetchData = async () => {
     try {
       const [summaryData, vehicleData, expenseData, userData] = await Promise.all([
-        supabase.getLandedCostSummaries(),
-        supabase.getVehicles(),
-        supabase.getExpenses(),
-        supabase.getUsers(),
+        dataService.getLandedCostSummaries(),
+        dataService.getVehicles(),
+        dataService.getExpenses(),
+        dataService.getUsers(),
       ]);
       setSummaries(summaryData);
       setVehicles(vehicleData);
@@ -128,9 +128,9 @@ export const VehiclesTab: React.FC = () => {
         status: editingVehicle ? editingVehicle.status : 'UK'
       };
       if (editingVehicle) {
-        await supabase.updateVehicle(editingVehicle.id, payload);
+        await dataService.updateVehicle(editingVehicle.id, payload);
       } else {
-        await supabase.addVehicle(payload);
+        await dataService.addVehicle(payload);
       }
       setNewVin(''); setNewModel(''); setNewPrice('');
       setEditingVehicle(null);
@@ -150,7 +150,7 @@ export const VehiclesTab: React.FC = () => {
   const handleDeleteVehicle = async () => {
     if (!vehicleToDelete) return;
     try {
-      await supabase.deleteVehicle(vehicleToDelete.id);
+      await dataService.deleteVehicle(vehicleToDelete.id);
       setShowDeleteDialog(false);
       setVehicleToDelete(null);
       await fetchData();
@@ -177,7 +177,7 @@ export const VehiclesTab: React.FC = () => {
       return;
     }
     try {
-      await supabase.addExpense({
+      await dataService.addExpense({
         vehicle_id: expenseVehicle || undefined,
         description: expenseDriver
           ? `Driver Disbursement - ${expenseDriver}: ${expenseDesc || 'Trip funds'}`
@@ -186,6 +186,7 @@ export const VehiclesTab: React.FC = () => {
         currency: expenseCurrency,
         category: expenseCategory,
         location: expenseLocation,
+        exchange_rate_to_usd: expenseCurrency === 'USD' ? 1 : undefined,
         receipt_url: 'https://picsum.photos/400/600',
         driver_name: expenseDriver || undefined,
       });

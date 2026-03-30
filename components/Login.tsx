@@ -11,6 +11,9 @@ import {
 import { Login as LoginIcon, Email } from '@carbon/icons-react';
 import { authService } from '../services/authService';
 import { AuthSession } from '../types';
+import { useToast } from './Toast';
+import { forgotPasswordFormSchema, getFirstValidationMessage, loginFormSchema } from '../utils/clientValidation';
+import { ZodError } from 'zod';
 
 interface LoginProps {
   onLogin: (session: AuthSession) => void;
@@ -19,6 +22,7 @@ interface LoginProps {
 type Mode = 'login' | 'forgot';
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const { showToast } = useToast();
   const [mode, setMode]         = useState<Mode>('login');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -37,10 +41,18 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setLoading(true);
     setError('');
     try {
+      loginFormSchema.parse({ email, password });
       const session = await authService.login(email, password);
+      showToast(`Welcome back, ${session.user.name}.`, 'success');
       onLogin(session);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const message = err instanceof ZodError
+        ? getFirstValidationMessage(err)
+        : err instanceof Error
+          ? err.message
+          : 'Login failed';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -52,11 +64,20 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
     setSuccess('');
     try {
+      forgotPasswordFormSchema.parse({ email });
       await authService.resetPassword(email);
-      setSuccess('If an account exists with this email, you will receive reset instructions.');
+      const message = 'If an account exists with this email, you will receive reset instructions.';
+      setSuccess(message);
+      showToast(message, 'success');
       setTimeout(() => reset('login'), 3500);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to send reset email');
+      const message = err instanceof ZodError
+        ? getFirstValidationMessage(err)
+        : err instanceof Error
+          ? err.message
+          : 'Failed to send reset email';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }

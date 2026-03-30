@@ -1,7 +1,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { LandedCostSummary, VehicleStatus, Currency, Client, Employee, Payslip, CompanyDetails, OperatingFund, UserRole, AppUser, Expense, Vehicle, ExpenseCategory } from '../types';
-import { supabase } from '../services/supabaseService';
+import { LandedCostSummary, VehicleStatus, Currency, Client, Employee, Payslip, CompanyDetails, OperatingFund, UserRole, AppUser, Expense, Vehicle, ExpenseCategory, Trip } from '../types';
+import { dataService } from '../services/dataService';
 import { AssetRegister } from './AssetRegister';
 import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload } from '../services/pdfService';
 import { useToast } from './Toast';
@@ -11,15 +11,20 @@ import AdminClientsView from './admin/AdminClientsView';
 import AdminEmployeesView from './admin/AdminEmployeesView';
 import AdminOverviewView from './admin/AdminOverviewView';
 import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
+import DashboardSectionSwitcher from './shared/DashboardSectionSwitcher';
 import EmployeeFormModal, { createEmptyEmployeeForm, toEmployeeFormValue, type EmployeeFormValue } from './shared/EmployeeFormModal';
 import ReportsTab from './admin/ReportsTab';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
 import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
 import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from './shared/PayslipFormModal';
 import PayslipsListView from './shared/PayslipsListView';
+import TripPlannerModal, { createEmptyTripForm, type TripFormValue } from './shared/TripPlannerModal';
 import VehicleFormModal, { type VehicleFormValue } from './shared/VehicleFormModal';
+import AdminTripsView from './admin/AdminTripsView';
 import { buildDriverFundsReportData } from '../utils/driverFunds';
 import { toVehicleEditorRecord, type VehicleEditorRecord } from '../utils/dashboardViewModels';
+import { tripPlannerFormSchema, getFirstValidationMessage } from '../utils/clientValidation';
+import { ZodError } from 'zod';
 
 export const AdminDashboard: React.FC = () => {
   const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
@@ -33,7 +38,7 @@ export const AdminDashboard: React.FC = () => {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showDeleteVehicleDialog, setShowDeleteVehicleDialog] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<{ id: string; make_model: string; vin_number: string } | null>(null);
-  const [activeView, setActiveView] = useState<'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'assets'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'trips' | 'assets'>('dashboard');
   const [userRole, setUserRole] = useState<UserRole>('Admin');
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
@@ -87,6 +92,11 @@ export const AdminDashboard: React.FC = () => {
   const [expenseCategory, setExpenseCategory] = useState<ExpenseCategory>('Fuel');
   const [expenseLocation, setExpenseLocation] = useState<VehicleStatus>('Namibia');
   const [expenseDriver, setExpenseDriver] = useState<string>('');
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [showTripModal, setShowTripModal] = useState(false);
+  const [isSavingTrip, setIsSavingTrip] = useState(false);
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [tripForm, setTripForm] = useState<TripFormValue>(createEmptyTripForm());
 
   const notifySuccess = (message: string) => showToast(message, 'success');
   const notifyError = (message: string) => showToast(message, 'error');
@@ -141,21 +151,26 @@ export const AdminDashboard: React.FC = () => {
     if (updates.price !== undefined) setNewPrice(updates.price);
   };
 
+  const handleTripFormChange = (updates: Partial<TripFormValue>) => {
+    setTripForm((prev) => ({ ...prev, ...updates }));
+  };
+
   // FIX: fetchData now throws errors instead of swallowing them silently
   // This ensures callers can handle refresh failures appropriately
   const fetchData = async (throwOnError = false) => {
     try {
-      const [data, vehicleData, expenseData, clientData, employeeData, payslipData, companyData, fundsData, balanceData, userData] = await Promise.all([
-        supabase.getLandedCostSummaries(),
-        supabase.getVehicles(),
-        supabase.getExpenses(),
-        supabase.getClients(),
-        supabase.getEmployees(),
-        supabase.getPayslips(),
-        supabase.getCompanyDetails(),
-        supabase.getOperatingFunds(),
-        supabase.getOperatingFundsBalance(),
-        supabase.getUsers()
+      const [data, vehicleData, expenseData, clientData, employeeData, payslipData, companyData, fundsData, balanceData, userData, tripData] = await Promise.all([
+        dataService.getLandedCostSummaries(),
+        dataService.getVehicles(),
+        dataService.getExpenses(),
+        dataService.getClients(),
+        dataService.getEmployees(),
+        dataService.getPayslips(),
+        dataService.getCompanyDetails(),
+        dataService.getOperatingFunds(),
+        dataService.getOperatingFundsBalance(),
+        dataService.getUsers(),
+        dataService.getTrips()
       ]);
       setSummaries(data);
       setVehicles(vehicleData);
@@ -167,6 +182,7 @@ export const AdminDashboard: React.FC = () => {
       setOperatingFunds(fundsData);
       setFundsBalance(balanceData);
       setDrivers(userData.filter((user) => user.role === 'Driver' && user.status === 'Active'));
+      setTrips(tripData);
       setLoading(false);
     } catch (error: any) {
       console.error('[AdminDashboard] fetchData: FAILED to refresh data:', error?.message || error);
@@ -181,7 +197,7 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     fetchData();
     // Get current user role
-    supabase.getSession().then(session => {
+    dataService.getSession().then(session => {
       if (session?.user?.role) {
         setUserRole(session.user.role);
       }
@@ -199,9 +215,9 @@ export const AdminDashboard: React.FC = () => {
       };
 
       if (editingVehicle) {
-        await supabase.updateVehicle(editingVehicle.id, vehicleData);
+        await dataService.updateVehicle(editingVehicle.id, vehicleData);
       } else {
-        await supabase.addVehicle(vehicleData);
+        await dataService.addVehicle(vehicleData);
       }
 
       // Reset form state
@@ -235,6 +251,113 @@ export const AdminDashboard: React.FC = () => {
     setShowAddModal(true);
   };
 
+  const resetTripModal = () => {
+    setEditingTrip(null);
+    setTripForm(createEmptyTripForm());
+    setShowTripModal(false);
+  };
+
+  const populateTripForm = (trip: Trip): TripFormValue => {
+    const toInputValue = (value?: string | null) => {
+      if (!value) return '';
+      const date = new Date(value);
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return local.toISOString().slice(0, 16);
+    };
+
+    return {
+      title: trip.title,
+      status: trip.status,
+      assigned_driver_id: trip.assigned_driver_id || '',
+      assigned_vehicle_id: trip.assigned_vehicle_id || '',
+      route_origin: trip.route_origin,
+      route_destination: trip.route_destination,
+      route_waypoints: (trip.route_waypoints || []).join(', '),
+      departure_date: toInputValue(trip.departure_date),
+      eta_date: toInputValue(trip.eta_date),
+      actual_departure_at: toInputValue(trip.actual_departure_at),
+      actual_arrival_at: toInputValue(trip.actual_arrival_at),
+      notes: trip.notes || '',
+    };
+  };
+
+  const openCreateTripModal = () => {
+    setEditingTrip(null);
+    setTripForm(createEmptyTripForm());
+    setShowTripModal(true);
+  };
+
+  const openEditTripModal = (trip: Trip) => {
+    setEditingTrip(trip);
+    setTripForm(populateTripForm(trip));
+    setShowTripModal(true);
+  };
+
+  const handleSaveTrip = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsSavingTrip(true);
+    try {
+      tripPlannerFormSchema.parse(tripForm);
+
+      const payload = {
+        title: tripForm.title.trim(),
+        status: tripForm.status,
+        assigned_driver_id: tripForm.assigned_driver_id || null,
+        assigned_vehicle_id: tripForm.assigned_vehicle_id || null,
+        route_origin: tripForm.route_origin.trim(),
+        route_destination: tripForm.route_destination.trim(),
+        route_waypoints: tripForm.route_waypoints
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean),
+        departure_date: tripForm.departure_date,
+        eta_date: tripForm.eta_date,
+        actual_departure_at: tripForm.actual_departure_at || null,
+        actual_arrival_at: tripForm.actual_arrival_at || null,
+        notes: tripForm.notes.trim() || null,
+      };
+
+      if (editingTrip) {
+        await dataService.updateTrip(editingTrip.id, payload);
+      } else {
+        await dataService.createTrip(payload as any);
+      }
+
+      resetTripModal();
+      await fetchData(true);
+      notifySuccess(editingTrip ? 'Trip updated successfully!' : 'Trip created successfully!');
+    } catch (error: any) {
+      console.error('[AdminDashboard] handleSaveTrip error:', error);
+      if (error instanceof ZodError) {
+        notifyWarning(getFirstValidationMessage(error));
+      } else {
+        notifyError(error?.message || 'Failed to save trip. Please try again.');
+      }
+    } finally {
+      setIsSavingTrip(false);
+    }
+  };
+
+  const handleDeleteTrip = async (trip: Trip) => {
+    const confirmed = await confirm({
+      title: 'Delete Trip',
+      message: `Delete ${trip.trip_number} (${trip.title})? This cannot be undone.`,
+      confirmLabel: 'Delete Trip',
+      cancelLabel: 'Cancel',
+      confirmVariant: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      await dataService.deleteTrip(trip.id);
+      await fetchData(true);
+      notifySuccess('Trip deleted successfully.');
+    } catch (error: any) {
+      console.error('[AdminDashboard] handleDeleteTrip error:', error);
+      notifyError(error?.message || 'Failed to delete trip.');
+    }
+  };
+
   const openEditVehicleModal = (vehicle: LandedCostSummary) => {
     const vehicleRecord = toVehicleEditorRecord(vehicle);
     setEditingVehicle(vehicleRecord);
@@ -257,7 +380,7 @@ export const AdminDashboard: React.FC = () => {
   const handleDeleteVehicle = async () => {
     if (!vehicleToDelete) return;
     try {
-      await supabase.deleteVehicle(vehicleToDelete.id);
+      await dataService.deleteVehicle(vehicleToDelete.id);
       setShowDeleteVehicleDialog(false);
       setVehicleToDelete(null);
       fetchData();
@@ -285,7 +408,7 @@ export const AdminDashboard: React.FC = () => {
     }
 
     try {
-      await supabase.addExpense({
+      await dataService.addExpense({
         vehicle_id: expenseVehicle || undefined,
         description: expenseDriver 
           ? `Driver Disbursement - ${expenseDriver}: ${expenseDesc || 'Trip funds'}`
@@ -294,6 +417,7 @@ export const AdminDashboard: React.FC = () => {
         currency: expenseCurrency,
         category: expenseCategory,
         location: expenseLocation,
+        exchange_rate_to_usd: expenseCurrency === 'USD' ? 1 : undefined,
         receipt_url: 'https://picsum.photos/400/600',
         driver_name: expenseDriver || undefined
       });
@@ -320,9 +444,9 @@ export const AdminDashboard: React.FC = () => {
     e.preventDefault();
     try {
       if (editingClient) {
-        await supabase.updateClient(editingClient.id, clientForm);
+        await dataService.updateClient(editingClient.id, clientForm);
       } else {
-        const newClient = await supabase.createClient(clientForm);
+        const newClient = await dataService.createClient(clientForm);
       }
       setShowClientModal(false);
       setEditingClient(null);
@@ -353,7 +477,7 @@ export const AdminDashboard: React.FC = () => {
     if (!approved) return;
 
     try {
-      await supabase.deleteClient(id);
+      await dataService.deleteClient(id);
       await fetchData(true);
       notifySuccess('Client deleted successfully.');
     } catch (error: any) {
@@ -371,9 +495,9 @@ export const AdminDashboard: React.FC = () => {
         base_pay_usd: parseFloat(employeeForm.base_pay_usd) || 0
       };
       if (editingEmployee) {
-        await supabase.updateEmployee(editingEmployee.id, payload);
+        await dataService.updateEmployee(editingEmployee.id, payload);
       } else {
-        const newEmployee = await supabase.createEmployee(payload);
+        const newEmployee = await dataService.createEmployee(payload);
       }
       setShowEmployeeModal(false);
       setEditingEmployee(null);
@@ -404,7 +528,7 @@ export const AdminDashboard: React.FC = () => {
     if (!approved) return;
 
     try {
-      await supabase.deleteEmployee(id);
+      await dataService.deleteEmployee(id);
       await fetchData(true);
       notifySuccess('Employee deleted successfully.');
     } catch (error: any) {
@@ -435,7 +559,7 @@ export const AdminDashboard: React.FC = () => {
         payment_method: payslipForm.payment_method,
         notes: payslipForm.notes
       };
-      const newPayslip = await supabase.generatePayslip(payload);
+      const newPayslip = await dataService.generatePayslip(payload);
       
       setShowPayslipModal(false);
       setPayslipForm(createEmptyPayslipForm());
@@ -456,7 +580,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleUpdatePayslipStatus = async (id: string, status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled') => {
     try {
-      await supabase.updatePayslipStatus(id, status);
+      await dataService.updatePayslipStatus(id, status);
       await fetchData(true);
     } catch (error: any) {
       console.error('[AdminDashboard] handleUpdatePayslipStatus: Error updating payslip status:', error);
@@ -475,7 +599,7 @@ export const AdminDashboard: React.FC = () => {
     if (!approved) return;
 
     try {
-      await supabase.deletePayslip(id);
+      await dataService.deletePayslip(id);
       await fetchData(true);
       notifySuccess('Payslip deleted successfully.');
     } catch (error: any) {
@@ -515,7 +639,7 @@ export const AdminDashboard: React.FC = () => {
         date: fundsForm.date
       };
       
-      await supabase.addOperatingFund(payload);
+      await dataService.addOperatingFund(payload);
       
       setShowFundsModal(false);
       setFundsForm({
@@ -554,7 +678,7 @@ export const AdminDashboard: React.FC = () => {
     if (!approved) return;
 
     try {
-      await supabase.deleteOperatingFund(id);
+      await dataService.deleteOperatingFund(id);
       await fetchData(true);
       notifySuccess('Transaction deleted successfully!');
     } catch (error: any) {
@@ -607,7 +731,7 @@ export const AdminDashboard: React.FC = () => {
   }
 
   const adminViewOptions: Array<{
-    id: 'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'assets';
+    id: 'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'trips' | 'assets';
     label: string;
     activeClasses: string;
     icon: React.ReactNode;
@@ -649,6 +773,12 @@ export const AdminDashboard: React.FC = () => {
       icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
     },
     {
+      id: 'trips',
+      label: 'Trip Planner',
+      activeClasses: 'bg-indigo-600 text-white',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 01.553-.894L9 2m0 18l6-2m-6 2V2m6 16l5.447-2.724A1 1 0 0021 14.382V3.618a1 1 0 00-.553-.894L15 0m0 18V0m0 0L9 2" /></svg>,
+    },
+    {
       id: 'assets',
       label: 'Asset Register',
       activeClasses: 'bg-purple-600 text-white',
@@ -663,33 +793,12 @@ export const AdminDashboard: React.FC = () => {
           <h2 className="text-3xl font-black text-zinc-900 tracking-tight">Admin Dashboard</h2>
           <p className="text-zinc-500 font-medium">Fleet, clients, employees & payroll management</p>
         </div>
-        <div className="w-full md:w-auto">
-          <div className="md:hidden">
-            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">Section</label>
-            <select
-              value={activeView}
-              onChange={(event) => setActiveView(event.target.value as typeof activeView)}
-              className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-              aria-label="Select admin dashboard section"
-            >
-              {adminViewOptions.map((option) => (
-                <option key={option.id} value={option.id}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="hidden items-center gap-2 flex-wrap overflow-x-auto pb-2 md:flex">
-            {adminViewOptions.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => setActiveView(option.id)}
-                className={`${activeView === option.id ? option.activeClasses : 'bg-zinc-100 text-zinc-700'} px-4 py-2 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 whitespace-nowrap`}
-              >
-                {option.icon}
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <DashboardSectionSwitcher
+          value={activeView}
+          onChange={setActiveView}
+          label="Section"
+          options={adminViewOptions}
+        />
       </div>
 
       {/* Action buttons for active view */}
@@ -783,6 +892,18 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
+      {activeView === 'trips' && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={openCreateTripModal}
+            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
+            Create Trip
+          </button>
+        </div>
+      )}
+
       {activeView === 'dashboard' && (
         <AdminOverviewView
           summaries={summaries}
@@ -849,10 +970,30 @@ export const AdminDashboard: React.FC = () => {
         />
       )}
 
+      {activeView === 'trips' && (
+        <AdminTripsView
+          trips={trips}
+          onEditTrip={openEditTripModal}
+          onDeleteTrip={handleDeleteTrip}
+        />
+      )}
+
       {/* Asset Register View */}
       {activeView === 'assets' && (
         <AssetRegister userRole={userRole} />
       )}
+
+      <TripPlannerModal
+        isOpen={showTripModal}
+        mode={editingTrip ? 'edit' : 'create'}
+        form={tripForm}
+        drivers={drivers}
+        vehicles={vehicles}
+        isSubmitting={isSavingTrip}
+        onChange={handleTripFormChange}
+        onClose={resetTripModal}
+        onSubmit={handleSaveTrip}
+      />
 
       <OperatingFundEntryModal
         isOpen={showFundsModal}

@@ -1,3 +1,5 @@
+/* global process */
+
 /**
  * /api/assets — Vercel Serverless Function
  *
@@ -11,12 +13,13 @@
  * PUT    /api/assets/requests?id=<id> → update asset request
  *
  * Auth: expects Authorization: Bearer <jwt> header.
- * The JWT is verified server-side using VITE_JWT_SECRET.
+ * The JWT is verified server-side using JWT_SECRET.
  *
  * Tables are automatically created if they don't exist.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import jwt from 'jsonwebtoken';
 import { sql } from './_db.js';
 
 // Auto-create tables if they don't exist
@@ -81,28 +84,16 @@ async function ensureTablesExist() {
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
-const JWT_SECRET = process.env.VITE_JWT_SECRET;
-
-function base64UrlDecode(str: string): string {
-  const padding = '='.repeat((4 - (str.length % 4)) % 4);
-  return Buffer.from(str.replace(/-/g, '+').replace(/_/g, '/') + padding, 'base64').toString('utf8');
-}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 async function verifyJWT(token: string): Promise<{ userId: string; role: string } | null> {
   if (!JWT_SECRET) return null;
   try {
-    const [header, payload, signature] = token.split('.');
-    if (!header || !payload || !signature) return null;
-
-    const { createHmac } = await import('crypto');
-    const expected = createHmac('sha256', JWT_SECRET)
-      .update(`${header}.${payload}`)
-      .digest('base64url');
-    if (expected !== signature) return null;
-
-    const decoded = JSON.parse(base64UrlDecode(payload));
-    if (decoded.exp < Math.floor(Date.now() / 1000)) return null;
-    return { userId: decoded.userId, role: decoded.role };
+    const decoded = jwt.verify(token, JWT_SECRET) as { sub?: string; role?: string };
+    if (typeof decoded.sub !== 'string' || typeof decoded.role !== 'string') {
+      return null;
+    }
+    return { userId: decoded.sub, role: decoded.role };
   } catch {
     return null;
   }
