@@ -73,11 +73,22 @@ async function apiRequest<T>(
       return undefined as T;
     }
     
-    const data = await response.json();
+    // Get content type to determine how to parse response
+    const contentType = response.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+    
+    // Parse response based on content type
+    let data: any;
+    if (isJson) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { error: text || 'Unknown error' };
+    }
     
     if (!response.ok) {
       throw new APIError(
-        data.error || 'API request failed',
+        data.error || `HTTP ${response.status}: ${response.statusText}`,
         response.status,
         data
       );
