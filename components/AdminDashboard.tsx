@@ -1,11 +1,13 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { Money, Car, UserMultiple, User, Document, Map } from '@carbon/icons-react';
 import { LandedCostSummary, VehicleStatus, Currency, Client, Employee, Payslip, CompanyDetails, OperatingFund, UserRole, AppUser, Expense, Vehicle, ExpenseCategory, Trip } from '../types';
 import { dataService } from '../services/dataService';
 import { AssetRegister } from './AssetRegister';
 import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload } from '../services/pdfService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
+import { Button } from './ui';
 import AdminFundsView from './admin/AdminFundsView';
 import AdminClientsView from './admin/AdminClientsView';
 import AdminEmployeesView from './admin/AdminEmployeesView';
@@ -723,9 +725,9 @@ export const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 gap-4 font-sans">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-zinc-500 font-bold animate-pulse uppercase tracking-widest text-xs">Initializing Fleet Data</p>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '24rem', gap: '1rem' }}>
+        <div className="animate-spin" style={{ width: '3rem', height: '3rem', border: '2px solid var(--cds-interactive, #0f62fe)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+        <p style={{ color: 'var(--cds-text-secondary, #525252)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.75rem' }}>Initializing Fleet Data</p>
       </div>
     );
   }
@@ -733,65 +735,56 @@ export const AdminDashboard: React.FC = () => {
   const adminViewOptions: Array<{
     id: 'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'trips' | 'assets';
     label: string;
-    activeClasses: string;
     icon: React.ReactNode;
   }> = [
     {
       id: 'dashboard',
       label: 'Fleet',
-      activeClasses: 'bg-blue-600 text-white',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
+      icon: <Car size={16} />,
     },
     {
       id: 'reports',
       label: 'Reports',
-      activeClasses: 'bg-purple-600 text-white',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+      icon: <Document size={16} />,
     },
     {
       id: 'clients',
       label: 'Clients',
-      activeClasses: 'bg-green-600 text-white',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+      icon: <UserMultiple size={16} />,
     },
     {
       id: 'employees',
       label: 'Employees',
-      activeClasses: 'bg-orange-600 text-white',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+      icon: <User size={16} />,
     },
     {
       id: 'payslips',
       label: 'Payslips',
-      activeClasses: 'bg-pink-600 text-white',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+      icon: <Document size={16} />,
     },
     {
       id: 'funds',
       label: 'Operating Funds',
-      activeClasses: 'bg-emerald-600 text-white',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+      icon: <Money size={16} />,
     },
     {
       id: 'trips',
       label: 'Trip Planner',
-      activeClasses: 'bg-indigo-600 text-white',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 01.553-.894L9 2m0 18l6-2m-6 2V2m6 16l5.447-2.724A1 1 0 0021 14.382V3.618a1 1 0 00-.553-.894L15 0m0 18V0m0 0L9 2" /></svg>,
+      icon: <Map size={16} />,
     },
     {
       id: 'assets',
       label: 'Asset Register',
-      activeClasses: 'bg-purple-600 text-white',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>,
+      icon: <Car size={16} />,
     },
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 font-sans">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-3xl font-black text-zinc-900 tracking-tight">Admin Dashboard</h2>
-          <p className="text-zinc-500 font-medium">Fleet, clients, employees & payroll management</p>
+          <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: 'var(--cds-text-primary, #161616)', margin: 0 }}>Admin Dashboard</h2>
+          <p style={{ color: 'var(--cds-text-secondary, #525252)', margin: '0.25rem 0 0' }}>Fleet, clients, employees & payroll management</p>
         </div>
         <DashboardSectionSwitcher
           value={activeView}
@@ -803,75 +796,76 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Action buttons for active view */}
       {activeView === 'dashboard' && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Button
+            type="button"
+            variant="secondary"
             onClick={() => setShowExpenseModal(true)}
-            className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-green-700 transition-all shadow-xl shadow-green-100 flex items-center gap-2"
+            leftIcon={<Money size={20} />}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             Add Expense
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
             onClick={openAddVehicleModal}
-            className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center gap-2"
+            leftIcon={<Car size={20} />}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
             Add Vehicle
-          </button>
-
+          </Button>
         </div>
       )}
 
       {activeView === 'clients' && (
-        <div className="flex items-center gap-2">
-          <button
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Button
+            type="button"
             onClick={() => {
               setEditingClient(null);
               setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' });
               setShowClientModal(true);
             }}
-            className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-green-700 transition-all shadow-xl shadow-green-100 flex items-center gap-2"
+            leftIcon={<UserMultiple size={20} />}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
             Add Client
-          </button>
+          </Button>
         </div>
       )}
 
       {activeView === 'employees' && (
-        <div className="flex items-center gap-2">
-          <button
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Button
+            type="button"
             onClick={() => {
               setEditingEmployee(null);
               setEmployeeForm(createEmptyEmployeeForm());
               setShowEmployeeModal(true);
             }}
-            className="bg-orange-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-orange-700 transition-all shadow-xl shadow-orange-100 flex items-center gap-2"
+            leftIcon={<User size={20} />}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
             Add Employee
-          </button>
+          </Button>
         </div>
       )}
 
       {activeView === 'payslips' && (
-        <div className="flex items-center gap-2">
-          <button
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Button
+            type="button"
             onClick={() => {
               setPayslipForm(createEmptyPayslipForm());
               setShowPayslipModal(true);
             }}
-            className="bg-pink-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-pink-700 transition-all shadow-xl shadow-pink-100 flex items-center gap-2"
+            leftIcon={<Document size={20} />}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
             Generate Payslip
-          </button>
+          </Button>
         </div>
       )}
 
       {activeView === 'funds' && (
-        <div className="flex items-center gap-2">
-          <button
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Button
+            type="button"
             onClick={() => {
               setFundsForm({
                 type: 'Received',
@@ -884,23 +878,22 @@ export const AdminDashboard: React.FC = () => {
               });
               setShowFundsModal(true);
             }}
-            className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center gap-2"
+            leftIcon={<Money size={20} />}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
             Record Transaction
-          </button>
+          </Button>
         </div>
       )}
 
       {activeView === 'trips' && (
-        <div className="flex items-center gap-2">
-          <button
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Button
+            type="button"
             onClick={openCreateTripModal}
-            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 flex items-center gap-2"
+            leftIcon={<Map size={20} />}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
             Create Trip
-          </button>
+          </Button>
         </div>
       )}
 

@@ -1,5 +1,25 @@
 
 import React, { useState, useEffect } from 'react';
+import {
+  TextInput,
+  TextArea,
+  Button,
+  Tabs,
+  Tab,
+  Tag,
+  Tile,
+  Stack,
+  Checkbox,
+  InlineNotification,
+  DataTable,
+  Table,
+  TableHead,
+  TableRow,
+  TableHeader,
+  TableBody,
+  TableCell,
+} from '@carbon/react';
+import { Settings as SettingsIcon, User, DocumentSecurity, Email, Renew, Add } from '@carbon/icons-react';
 import { CompanyDetails, AppUser, UserRole, UserInvite, RegistrationRequest, Client, AuditLog } from '../types';
 import { dataService } from '../services/dataService';
 import { authService } from '../services/authService';
@@ -8,6 +28,7 @@ import { useConfirm } from './ConfirmModal';
 import { companyDetailsFormSchema, getFirstValidationMessage, inviteFormSchema, setPasswordFormSchema, userCreateFormSchema, userEditFormSchema } from '../utils/clientValidation';
 import { ZodError } from 'zod';
 import ForensicLogPanel from './shared/ForensicLogPanel';
+import { DashboardCard } from './ui';
 
 
 export const Settings: React.FC = () => {
@@ -518,106 +539,84 @@ export const Settings: React.FC = () => {
 
         <div className="p-8">
           {activeTab === 'company' && company && (
-            <form onSubmit={handleCompanySubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-zinc-700">Legal Company Name</label>
-                  <input
-                    type="text"
+            <form onSubmit={handleCompanySubmit}>
+              <Stack gap={6}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                  <TextInput
+                    id="company-name"
+                    labelText="Legal Company Name"
                     value={company.name}
                     onChange={(e) => setCompany({ ...company, name: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                   />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-zinc-700">Registration Number</label>
-                  <input
-                    type="text"
+                  <TextInput
+                    id="company-reg"
+                    labelText="Registration Number"
                     value={company.registration_no}
                     onChange={(e) => setCompany({ ...company, registration_no: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                   />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-zinc-700">Tax / VAT ID</label>
-                  <input
-                    type="text"
+                  <TextInput
+                    id="company-tax"
+                    labelText="Tax / VAT ID"
                     value={company.tax_id}
                     onChange={(e) => setCompany({ ...company, tax_id: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                   />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-zinc-700">HQ Contact Email</label>
-                  <input
+                  <TextInput
+                    id="company-email"
                     type="email"
+                    labelText="HQ Contact Email"
                     value={company.contact_email}
                     onChange={(e) => setCompany({ ...company, contact_email: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                   />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-zinc-700">Phone Number</label>
-                  <input
+                  <TextInput
+                    id="company-phone"
                     type="tel"
+                    labelText="Phone Number"
                     value={company.phone ?? ''}
                     onChange={(e) => setCompany({ ...company, phone: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                   />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-zinc-700">Website</label>
-                  <input
+                  <TextInput
+                    id="company-website"
                     type="url"
+                    labelText="Website"
+                    placeholder="https://example.com"
                     value={company.website ?? ''}
                     onChange={(e) => setCompany({ ...company, website: e.target.value })}
-                    placeholder="https://example.com"
-                    className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700">HQ Address</label>
-                <textarea
+                <TextArea
+                  id="company-address"
+                  labelText="HQ Address"
+                  rows={3}
                   value={company.address}
                   onChange={(e) => setCompany({ ...company, address: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                 />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700">Company Logo URL</label>
-                <input
+                <TextInput
+                  id="company-logo"
                   type="url"
+                  labelText="Company Logo URL"
+                  helperText="PDFs now use the built-in Affinity logo. This URL is optional for other branded surfaces."
+                  placeholder="https://example.com/logo.png"
                   value={company.logo_url ?? ''}
                   onChange={(e) => setCompany({ ...company, logo_url: e.target.value })}
-                  placeholder="https://example.com/logo.png"
-                  className="w-full px-4 py-2 rounded-lg border border-zinc-200 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                 />
-                <p className="text-xs text-zinc-500 mt-1">PDFs now use the built-in Affinity logo. This URL is optional for other branded surfaces.</p>
                 {company.logo_url && (
-                  <div className="mt-2 p-4 border border-zinc-200 rounded-lg bg-zinc-50">
-                    <p className="text-xs font-semibold text-zinc-600 mb-2">Logo Preview:</p>
+                  <Tile style={{ padding: '1rem', background: 'var(--cds-layer-02, #f4f4f4)' }}>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--cds-text-secondary, #525252)', marginBottom: '0.75rem' }}>Logo Preview:</p>
                     <img
                       src={company.logo_url}
                       alt="Company Logo"
-                      className="h-16 object-contain"
+                      style={{ height: '4rem', objectFit: 'contain' }}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="50"%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23999"%3EInvalid URL%3C/text%3E%3C/svg%3E';
                       }}
                     />
-                  </div>
+                  </Tile>
                 )}
-              </div>
-              <div className="pt-4 flex items-center justify-between">
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-2.5 rounded-lg transition-all shadow-md active:scale-95 font-sans"
-                >
-                  Save Business Details
-                </button>
-                {saveStatus && <span className="text-emerald-600 font-medium animate-fade-in">{saveStatus}</span>}
-              </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingTop: '1rem' }}>
+                  <Button type="submit" renderIcon={SettingsIcon}>Save Business Details</Button>
+                  {saveStatus && <InlineNotification kind="success" title="Saved" subtitle={saveStatus} hideCloseButton />}
+                </div>
+              </Stack>
             </form>
           )}
 

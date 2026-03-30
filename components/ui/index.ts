@@ -18,3 +18,5 @@ export {
   SkeletonStatCards,
   SkeletonChart 
 } from './Skeleton';
+
+export { DashboardCard } from './DashboardCard';
