@@ -5,22 +5,35 @@
  * Database credentials are never exposed to the browser.
  */
 
-import { neon, Pool } from '@neondatabase/serverless';
+import { neon, NeonQueryFunction } from '@neondatabase/serverless';
 
-const databaseUrl = process.env.NEON_DATABASE_URL;
+let sqlInstance: NeonQueryFunction<false, false> | null = null;
 
-if (!databaseUrl) {
-  throw new Error('NEON_DATABASE_URL environment variable is required');
+function getDatabaseUrl(): string {
+  const url = process.env.NEON_DATABASE_URL;
+  if (!url) {
+    throw new Error('NEON_DATABASE_URL environment variable is required');
+  }
+  return url;
 }
 
-// Create SQL client - server-side only
-export const sql = neon(databaseUrl);
+function getSql(): NeonQueryFunction<false, false> {
+  if (!sqlInstance) {
+    sqlInstance = neon(getDatabaseUrl());
+  }
+  return sqlInstance;
+}
+
+// SQL template tag function that lazy-initializes the connection
+export function sql(strings: TemplateStringsArray, ...values: any[]) {
+  return getSql()(strings, ...values);
+}
 
 // Connection check
 export async function checkConnection(): Promise<boolean> {
   try {
     const result = await sql`SELECT 1 as health_check, NOW() as server_time`;
-    return result.length > 0;
+    return Array.isArray(result) && result.length > 0;
   } catch (error) {
     console.error('[DB] Connection check failed:', error);
     return false;
