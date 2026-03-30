@@ -34,9 +34,5 @@
         }
       ]
     }
-  ],
-  "env": {
-    "NEON_DATABASE_URL": "@neon_database_url",
-    "JWT_SECRET": "@jwt_secret"
-  }
+  ]
 }
