@@ -65,7 +65,7 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
       {/* Region Column */}
       <td className="px-8 py-6">
         <span 
-          className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest ring-1 ${statusStyles}`}
+          className={`px-4 py-1.5  text-xs font-black uppercase tracking-widest ring-1 ${statusStyles}`}
         >
           {vehicle.status}
         </span>
@@ -92,7 +92,7 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
           <div className="flex items-center gap-1">
             <button
               onClick={handleEdit}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg hover:bg-blue-50 text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-2  hover:bg-blue-50 text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               title="Edit vehicle"
               aria-label={`Edit ${vehicle.make_model}`}
               type="button"
@@ -103,7 +103,7 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
             </button>
             <button
               onClick={handleDelete}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg hover:bg-red-50 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-2  hover:bg-red-50 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               title="Delete vehicle"
               aria-label={`Delete ${vehicle.make_model}`}
               type="button"
@@ -138,7 +138,7 @@ export const VehicleList: React.FC<VehicleListProps> = memo(({ vehicles, onEdit,
 
   if (vehicles.length === 0) {
     return (
-      <div className="bg-white rounded-3xl shadow-sm border border-zinc-200 p-12 text-center">
+      <div className="bg-white  shadow-sm border border-zinc-200 p-12 text-center">
         <svg 
           className="w-16 h-16 text-zinc-300 mx-auto mb-4" 
           fill="none" 
@@ -155,7 +155,7 @@ export const VehicleList: React.FC<VehicleListProps> = memo(({ vehicles, onEdit,
   }
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-zinc-200 overflow-hidden">
+    <div className="bg-white  shadow-sm border border-zinc-200 overflow-hidden">
       {/* Header */}
       <div className="px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/30">
         <div>

@@ -6,9 +6,9 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { sql } from './_db';
-import { EmployeeSchema, EmployeeUpdateSchema } from './_schemas';
+} from './_middleware.js';
+import { sql } from './_db.js';
+import { EmployeeSchema, EmployeeUpdateSchema } from './_schemas.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);

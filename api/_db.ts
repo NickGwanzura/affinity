@@ -5,7 +5,7 @@
  * Database credentials are never exposed to the browser.
  */
 
-import { neon, NeonQueryFunction } from '@neondatabase/serverless';
+import { neon, NeonQueryFunction, Pool } from '@neondatabase/serverless';
 
 let sqlInstance: NeonQueryFunction<false, false> | null = null;
 
@@ -24,10 +24,21 @@ function getSql(): NeonQueryFunction<false, false> {
   return sqlInstance;
 }
 
-// SQL template tag function that lazy-initializes the connection
-export function sql(strings: TemplateStringsArray, ...values: any[]) {
-  return getSql()(strings, ...values);
-}
+type SqlTag = ((
+  strings: TemplateStringsArray,
+  ...values: any[]
+) => ReturnType<NeonQueryFunction<false, false>>) & {
+  query: (queryText: string, params?: any[]) => Promise<any>;
+  unsafe: (value: string) => any;
+};
+
+export const sql = Object.assign(
+  ((strings: TemplateStringsArray, ...values: any[]) => getSql()(strings, ...values)) as SqlTag,
+  {
+    query: (queryText: string, params?: any[]) => getSql().query(queryText, params),
+    unsafe: (value: string) => (getSql() as any).unsafe(value),
+  },
+);
 
 // Connection check
 export async function checkConnection(): Promise<boolean> {
@@ -63,7 +74,7 @@ export function validateOrderColumn(table: string, column: string): string | nul
 export async function withTransaction<T>(
   operations: (client: import('@neondatabase/serverless').PoolClient) => Promise<T>,
 ): Promise<T> {
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new Pool({ connectionString: getDatabaseUrl() });
   const client = await pool.connect();
 
   try {

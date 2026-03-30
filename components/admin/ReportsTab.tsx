@@ -264,13 +264,13 @@ export const ReportsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-8 rounded-3xl text-white">
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-8 text-white">
         <h3 className="text-2xl font-black mb-2">Fleet Analytics &amp; Reports</h3>
         <p className="text-purple-100">Comprehensive insights into your logistics operations</p>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
+      <div className="bg-white p-6 border border-zinc-200 shadow-sm">
         <h4 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
           <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -280,26 +280,26 @@ export const ReportsTab: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-semibold text-zinc-700 mb-2">Date From</label>
-            <input type="date" value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-purple-500 outline-none" />
+            <input type="date" value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} className="w-full px-4 py-2 border border-zinc-200 focus:ring-2 focus:ring-purple-500 outline-none" />
           </div>
           <div>
             <label className="block text-sm font-semibold text-zinc-700 mb-2">Date To</label>
-            <input type="date" value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-purple-500 outline-none" />
+            <input type="date" value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} className="w-full px-4 py-2 border border-zinc-200 focus:ring-2 focus:ring-purple-500 outline-none" />
           </div>
           <div>
             <label className="block text-sm font-semibold text-zinc-700 mb-2">Filter by Vehicle</label>
-            <select value={reportVehicleFilter} onChange={(e) => setReportVehicleFilter(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-purple-500 outline-none">
+            <select value={reportVehicleFilter} onChange={(e) => setReportVehicleFilter(e.target.value)} className="w-full px-4 py-2 border border-zinc-200 focus:ring-2 focus:ring-purple-500 outline-none">
               <option value="all">All Vehicles</option>
               {vehicles.map(v => <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>)}
             </select>
           </div>
         </div>
         <div className="mt-4 flex gap-2">
-          <button onClick={() => { setReportDateFrom(''); setReportDateTo(''); setReportVehicleFilter('all'); }} className="px-4 py-2 bg-zinc-100 text-zinc-700 font-semibold rounded-lg hover:bg-zinc-200 transition-colors">
+          <button onClick={() => { setReportDateFrom(''); setReportDateTo(''); setReportVehicleFilter('all'); }} className="px-4 py-2 bg-zinc-100 text-zinc-700 font-semibold  hover:bg-zinc-200 transition-colors">
             Clear Filters
           </button>
           {(reportDateFrom || reportDateTo || reportVehicleFilter !== 'all') && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-semibold">
+            <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700  text-sm font-semibold">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               Filters active - Showing filtered results
             </div>
@@ -309,10 +309,10 @@ export const ReportsTab: React.FC = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+        <div className="bg-white p-6 shadow-sm border border-zinc-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Total Fleet Value</p>
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-100 flex items-center justify-center">
               <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
           </div>
@@ -320,10 +320,10 @@ export const ReportsTab: React.FC = () => {
           <p className="text-xs text-zinc-500 mt-2">{filteredSummaries.length} vehicles</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+        <div className="bg-white p-6 shadow-sm border border-zinc-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Total Expenses</p>
-            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-red-100 flex items-center justify-center">
               <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
             </div>
           </div>
@@ -331,10 +331,10 @@ export const ReportsTab: React.FC = () => {
           <p className="text-xs text-zinc-500 mt-2">{filteredExpenses.length} transactions</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+        <div className="bg-white p-6 shadow-sm border border-zinc-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Avg Cost Per Vehicle</p>
-            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-100 flex items-center justify-center">
               <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
             </div>
           </div>
@@ -342,10 +342,10 @@ export const ReportsTab: React.FC = () => {
           <p className="text-xs text-zinc-500 mt-2">Per unit analysis</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+        <div className="bg-white p-6 shadow-sm border border-zinc-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Expense Ratio</p>
-            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center">
               <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
             </div>
           </div>
@@ -381,7 +381,7 @@ export const ReportsTab: React.FC = () => {
       {/* Detailed Reports */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Expense Breakdown by Category */}
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200">
+        <div className="bg-white p-6 border border-zinc-200">
           <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
             Expenses by Category
@@ -409,7 +409,7 @@ export const ReportsTab: React.FC = () => {
         </div>
 
         {/* Location Analysis */}
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200">
+        <div className="bg-white p-6 border border-zinc-200">
           <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             Expenses by Location
@@ -421,7 +421,7 @@ export const ReportsTab: React.FC = () => {
               const totalAll = filteredExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
               const percentage = totalAll > 0 ? (total / totalAll * 100) : 0;
               return total > 0 ? (
-                <div key={location} className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg hover:bg-zinc-100 transition-colors">
+                <div key={location} className="flex items-center justify-between p-3 bg-zinc-50  hover:bg-zinc-100 transition-colors">
                   <div>
                     <p className="font-semibold text-zinc-900">{location}</p>
                     <p className="text-xs text-zinc-500">{locExpenses.length} transactions &bull; {percentage.toFixed(1)}% of total</p>
@@ -435,7 +435,7 @@ export const ReportsTab: React.FC = () => {
       </div>
 
       {/* Vehicle Cost Rankings */}
-      <div className="bg-white p-6 rounded-2xl border border-zinc-200">
+      <div className="bg-white p-6 border border-zinc-200">
         <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
           <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
           Top Vehicles by Total Cost
@@ -459,12 +459,12 @@ export const ReportsTab: React.FC = () => {
                 .map((summary, index) => (
                   <tr key={summary.vehicle_id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-lg flex items-center justify-center font-bold text-xs">{index + 1}</div>
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 text-white  flex items-center justify-center font-bold text-xs">{index + 1}</div>
                     </td>
                     <td className="px-4 py-3 font-semibold text-zinc-900">{summary.make_model}</td>
                     <td className="px-4 py-3 font-mono text-xs text-zinc-500">{summary.vin_number ? `${truncateValue(summary.vin_number, 12)}...` : '-'}</td>
                     <td className="px-4 py-3">
-                      <span className="inline-block px-2 py-1 text-xs font-semibold rounded-md bg-blue-50 text-blue-700">{summary.status}</span>
+                      <span className="inline-block px-2 py-1 text-xs font-semibold  bg-blue-50 text-blue-700">{summary.status}</span>
                     </td>
                     <td className="px-4 py-3 text-right text-zinc-600">£{(summary.purchase_price_gbp || 0).toLocaleString()}</td>
                     <td className="px-4 py-3 text-right font-bold text-green-600">${(summary.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
@@ -476,14 +476,14 @@ export const ReportsTab: React.FC = () => {
       </div>
 
       {/* Export Section */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 rounded-2xl text-white">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8  text-white">
         <div className="flex justify-between items-start mb-6">
           <div>
             <h3 className="text-xl font-bold mb-2">Export Comprehensive Reports</h3>
             <p className="text-indigo-100">Download detailed analytics and reports for stakeholders</p>
           </div>
           {isExporting && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm">
               <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
               <span className="text-sm font-semibold">Exporting...</span>
             </div>

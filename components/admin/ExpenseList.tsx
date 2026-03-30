@@ -141,7 +141,7 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
       {/* Category Column */}
       <td className="px-6 py-4">
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ring-1 ${categoryStyles}`}>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1  text-xs font-semibold ring-1 ${categoryStyles}`}>
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={categoryIcon} />
             </svg>
@@ -199,7 +199,7 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
         <td className="px-6 py-4 text-right">
           <button
             onClick={handleDelete}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg hover:bg-red-50 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-2  hover:bg-red-50 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             title="Delete expense"
             aria-label={`Delete expense ${expense.description}`}
             type="button"
@@ -261,7 +261,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
 
   if (expenses.length === 0) {
     return (
-      <div className="bg-white rounded-3xl shadow-sm border border-zinc-200 p-12 text-center">
+      <div className="bg-white  shadow-sm border border-zinc-200 p-12 text-center">
         <svg 
           className="w-16 h-16 text-zinc-300 mx-auto mb-4" 
           fill="none" 
@@ -277,7 +277,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
   }
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-zinc-200 overflow-hidden">
+    <div className="bg-white  shadow-sm border border-zinc-200 overflow-hidden">
       {/* Header */}
       <div className="px-6 py-5 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/30">
         <div>

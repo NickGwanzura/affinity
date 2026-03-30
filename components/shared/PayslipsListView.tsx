@@ -21,13 +21,13 @@ export const PayslipsListView: React.FC<PayslipsListViewProps> = ({
 }) => (
   <div className="space-y-6">
     {showIntro && (
-      <div className="bg-gradient-to-r from-pink-600 to-purple-600 p-8 rounded-3xl text-white">
+      <div className="bg-gradient-to-r from-pink-600 to-purple-600 p-8  text-white">
         <h3 className="text-2xl font-black mb-2">Payslip Management</h3>
         <p className="text-pink-100">Generate and manage employee payslips</p>
       </div>
     )}
 
-    <div className="bg-white rounded-2xl shadow-lg border border-zinc-200 overflow-hidden">
+    <div className="bg-white  shadow-lg border border-zinc-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-zinc-50 border-b border-zinc-200">
@@ -57,7 +57,7 @@ export const PayslipsListView: React.FC<PayslipsListViewProps> = ({
                   <td className="px-6 py-4 text-zinc-900 font-semibold">${payslip.gross_pay.toLocaleString()}</td>
                   <td className="px-6 py-4 text-green-600 font-bold">${payslip.net_pay.toLocaleString()}</td>
                   <td className="px-6 py-4">
-                    <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md ${
+                    <span className={`inline-block px-2 py-1 text-xs font-semibold  ${
                       payslip.status === 'Generated' ? 'bg-blue-100 text-blue-700' :
                       payslip.status === 'Approved' ? 'bg-yellow-100 text-yellow-700' :
                       payslip.status === 'Paid' ? 'bg-green-100 text-green-700' :

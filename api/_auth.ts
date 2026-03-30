@@ -9,7 +9,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { sql } from './_db';
+import { sql } from './_db.js';
 
 const JWT_EXPIRY = '24h';
 const LEGACY_HASH_ALGORITHM = 'sha256';

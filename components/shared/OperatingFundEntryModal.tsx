@@ -95,7 +95,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 <button
                   type="button"
                   onClick={() => onChange({ type: 'Received' })}
-                  className={`p-4 rounded-xl border-2 transition-all ${
+                  className={`p-4 border-2 transition-all ${
                     form.type === 'Received' ? receivedActiveClasses : `${baseBorder} hover:border-zinc-300`
                   }`}
                 >
@@ -108,7 +108,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 <button
                   type="button"
                   onClick={() => onChange({ type: 'Disbursed' })}
-                  className={`p-4 rounded-xl border-2 transition-all ${
+                  className={`p-4 border-2 transition-all ${
                     form.type === 'Disbursed' ? disbursedActiveClasses : `${baseBorder} hover:border-zinc-300`
                   }`}
                 >
@@ -127,7 +127,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 <select
                   value={form.type}
                   onChange={(event) => onChange({ type: event.target.value as OperatingFundType })}
-                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
                 >
                   <option value="Received">Received</option>
                   <option value="Disbursed">Disbursed</option>
@@ -138,7 +138,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 <select
                   value={form.currency}
                   onChange={(event) => onChange({ currency: event.target.value as Currency })}
-                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
                 >
                   {currencyOptions.map((currency) => (
                     <option key={currency} value={currency}>
@@ -162,7 +162,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   value={form.amount}
                   onChange={(event) => onChange({ amount: event.target.value })}
                   placeholder="0.00"
-                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
               <div>
@@ -170,7 +170,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 <select
                   value={form.currency}
                   onChange={(event) => onChange({ currency: event.target.value as Currency })}
-                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
                 >
                   {currencyOptions.map((currency) => (
                     <option key={currency} value={currency}>
@@ -193,7 +193,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   required
                   value={form.amount}
                   onChange={(event) => onChange({ amount: event.target.value })}
-                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
               <div>
@@ -203,7 +203,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   required
                   value={form.date}
                   onChange={(event) => onChange({ date: event.target.value })}
-                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
             </div>
@@ -218,7 +218,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 onChange={(event) => onChange({ description: event.target.value })}
                 required
                 placeholder={form.type === 'Received' ? receivedDescriptionPlaceholder : disbursedDescriptionPlaceholder}
-                className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
               />
             </div>
           )}
@@ -230,7 +230,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 value={form.recipient}
                 onChange={(event) => onChange({ recipient: event.target.value })}
                 required
-                className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
               >
                 <option value="">-- Select Driver --</option>
                 {drivers.map((driver) => (
@@ -251,7 +251,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   value={form.reference}
                   onChange={(event) => onChange({ reference: event.target.value })}
                   placeholder="e.g., TRF-001"
-                  className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
               <div>
@@ -261,7 +261,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   value={form.date}
                   onChange={(event) => onChange({ date: event.target.value })}
                   required
-                  className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
             </div>
@@ -275,7 +275,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 value={form.description}
                 onChange={(event) => onChange({ description: event.target.value })}
                 placeholder={form.type === 'Received' ? receivedDescriptionPlaceholder : disbursedDescriptionPlaceholder}
-                className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                className={`w-full px-4 py-3 border ${baseBorder} ${focusTone} outline-none`}
               />
             </div>
           )}
@@ -288,7 +288,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                   value={form.reference}
                   onChange={(event) => onChange({ reference: event.target.value })}
                   placeholder="Transfer ref, trip name..."
-                  className={`w-full px-4 py-3 rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                  className={`w-full px-4 py-3 border ${baseBorder} ${focusTone} outline-none`}
                 />
               </div>
               <div>
@@ -300,7 +300,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                     value={form.recipient}
                     onChange={(event) => onChange({ recipient: event.target.value })}
                     required
-                    className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                    className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
                   >
                     <option value="">-- Select Driver --</option>
                     {drivers.map((driver) => (
@@ -314,7 +314,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                     value={form.recipient}
                     onChange={(event) => onChange({ recipient: event.target.value })}
                     placeholder="Office, branch, cash float..."
-                    className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                    className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
                   />
                 ) : null}
               </div>
@@ -328,7 +328,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 value={form.approved_by || ''}
                 onChange={(event) => onChange({ approved_by: event.target.value })}
                 placeholder="Manager name"
-                className={`w-full px-4 py-3 text-base rounded-xl border ${baseBorder} ${focusTone} outline-none`}
+                className={`w-full px-4 py-3 text-base border ${baseBorder} ${focusTone} outline-none`}
               />
             </div>
           )}

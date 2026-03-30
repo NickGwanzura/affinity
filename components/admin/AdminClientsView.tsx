@@ -14,12 +14,12 @@ export const AdminClientsView: React.FC<AdminClientsViewProps> = ({
   onDeleteClient,
 }) => (
   <div className="space-y-6">
-    <div className="bg-gradient-to-r from-green-600 to-teal-600 p-8 rounded-3xl text-white">
+    <div className="bg-gradient-to-r from-green-600 to-teal-600 p-8  text-white">
       <h3 className="text-2xl font-black mb-2">Client Management</h3>
       <p className="text-green-100">Manage all your clients and contacts</p>
     </div>
 
-    <div className="bg-white rounded-2xl shadow-lg border border-zinc-200 overflow-hidden">
+    <div className="bg-white  shadow-lg border border-zinc-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-zinc-50 border-b border-zinc-200">

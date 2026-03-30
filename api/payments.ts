@@ -7,9 +7,9 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { sql, withTransaction } from './_db';
-import { PaymentAllocationSchema, PaymentSchema, PaymentUpdateSchema } from './_schemas';
+} from './_middleware.js';
+import { sql, withTransaction } from './_db.js';
+import { PaymentAllocationSchema, PaymentSchema, PaymentUpdateSchema } from './_schemas.js';
 
 type PaymentRow = {
   id: string;

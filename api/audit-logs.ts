@@ -6,9 +6,9 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { sql } from './_db';
-import { ensureAuditSchema } from './_audit';
+} from './_middleware.js';
+import { sql } from './_db.js';
+import { ensureAuditSchema } from './_audit.js';
 
 type AuditLogRow = {
   id: string;

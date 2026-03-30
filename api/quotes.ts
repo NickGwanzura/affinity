@@ -8,9 +8,9 @@ import {
   setSecurityHeaders, 
   handleCors, 
   apiError 
-} from './_middleware';
-import { sql, withTransaction, validateOrderColumn } from './_db';
-import { QuoteSchema, QuoteUpdateSchema, PaginationSchema } from './_schemas';
+} from './_middleware.js';
+import { sql, withTransaction, validateOrderColumn } from './_db.js';
+import { QuoteSchema, QuoteUpdateSchema, PaginationSchema } from './_schemas.js';
 import type { QuoteItem } from '../types';
 
 type QuoteLineItemInput = {

@@ -8,9 +8,9 @@ import {
   setSecurityHeaders, 
   handleCors, 
   apiError 
-} from './_middleware';
-import { sql, withTransaction, validateOrderColumn } from './_db';
-import { InvoiceSchema, InvoiceUpdateSchema, PaginationSchema } from './_schemas';
+} from './_middleware.js';
+import { sql, withTransaction, validateOrderColumn } from './_db.js';
+import { InvoiceSchema, InvoiceUpdateSchema, PaginationSchema } from './_schemas.js';
 import type { InvoiceItem } from '../types';
 
 type InvoiceLineItemInput = {

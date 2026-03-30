@@ -69,7 +69,7 @@ const StatCard: React.FC<StatCardProps> = memo(({
 
   return (
     <div 
-      className={`${styles.card} p-8 rounded-3xl shadow-sm border border-zinc-200 relative overflow-hidden group transition-all duration-300 hover:shadow-md`}
+      className={`${styles.card} p-8  shadow-sm border border-zinc-200 relative overflow-hidden group transition-all duration-300 hover:shadow-md`}
       role="region"
       aria-label={title}
     >
@@ -136,7 +136,7 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
 
   return (
     <div 
-      className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200 relative overflow-hidden group transition-all duration-300 hover:shadow-md"
+      className="bg-white p-8  shadow-sm border border-zinc-200 relative overflow-hidden group transition-all duration-300 hover:shadow-md"
       role="region"
       aria-label="Fleet Efficiency"
     >

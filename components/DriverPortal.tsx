@@ -727,7 +727,7 @@ export const DriverPortal: React.FC = () => {
                 </Tile>
               )}
 
-              <div className="sticky bottom-3 z-10 rounded-2xl border border-zinc-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+              <div className="sticky bottom-3 z-10  border border-zinc-200 bg-white/95 p-3 shadow-lg backdrop-blur">
                 <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm font-semibold text-zinc-900">Ready to submit</p>
                   <p className="text-xs text-zinc-500">Available balance: {availableBalanceDisplay}</p>
@@ -759,7 +759,7 @@ export const DriverPortal: React.FC = () => {
                 {calendarDays.map((day) => (
                   <div
                     key={day.isoDate}
-                    className={`rounded-2xl border p-3 ${
+                    className={` border p-3 ${
                       day.events.length > 0
                         ? 'border-blue-200 bg-blue-50'
                         : 'border-zinc-200 bg-zinc-50'

@@ -195,7 +195,7 @@ export const ReportsOverviewView: React.FC<ReportsOverviewViewProps> = ({
       </InsightPanel>
     </div>
 
-    <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-2xl text-white">
+    <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
       <h3 className="text-lg font-bold mb-2">Export Reports</h3>
       <p className="text-sm text-blue-100 mb-4">Download comprehensive financial reports for your records</p>
       <div className="flex gap-3 flex-wrap">

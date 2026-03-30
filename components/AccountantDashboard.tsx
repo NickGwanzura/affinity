@@ -742,7 +742,7 @@ export const AccountantDashboard: React.FC = () => {
         </div>
         <button 
           onClick={() => setShowExpenseModal(true)}
-          className="bg-green-600 text-white px-4 sm:px-6 py-3 sm:py-2.5 rounded-xl font-bold text-sm hover:bg-green-700 transition-all shadow-xl shadow-green-100 flex items-center gap-2 min-h-[48px]"
+          className="bg-green-600 text-white px-4 sm:px-6 py-3 sm:py-2.5 font-bold text-sm hover:bg-green-700 transition-all shadow-xl shadow-green-100 flex items-center gap-2 min-h-[48px]"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           Add Expense
@@ -751,10 +751,10 @@ export const AccountantDashboard: React.FC = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+        <div className="bg-white p-6 shadow-sm border border-zinc-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Total Revenue</p>
-            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-100 flex items-center justify-center">
               <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -764,10 +764,10 @@ export const AccountantDashboard: React.FC = () => {
           <p className="text-xs text-green-600 mt-2 font-semibold">From {invoices.filter(i => i.status === 'Paid').length} paid invoices</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+        <div className="bg-white p-6 shadow-sm border border-zinc-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Total Expenses</p>
-            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-red-100 flex items-center justify-center">
               <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
@@ -777,10 +777,10 @@ export const AccountantDashboard: React.FC = () => {
           <p className="text-xs text-red-600 mt-2 font-semibold">{expenses.length} expense entries</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+        <div className="bg-white p-6 shadow-sm border border-zinc-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Net Profit</p>
-            <div className={`w-10 h-10 ${netProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100'} rounded-xl flex items-center justify-center`}>
+            <div className={`w-10 h-10 ${netProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100'} flex items-center justify-center`}>
               <svg className={`w-5 h-5 ${netProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
@@ -792,10 +792,10 @@ export const AccountantDashboard: React.FC = () => {
           <p className="text-xs text-zinc-500 mt-2 font-semibold">Revenue - Expenses</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+        <div className="bg-white p-6 shadow-sm border border-zinc-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Pending Invoices</p>
-            <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-yellow-100 flex items-center justify-center">
               <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -807,7 +807,7 @@ export const AccountantDashboard: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
+      <div className="bg-white shadow-sm border border-zinc-200 overflow-hidden">
         <div className="border-b border-zinc-200 bg-zinc-50">
           <div className="p-3">
             <DashboardSectionSwitcher
@@ -893,7 +893,7 @@ export const AccountantDashboard: React.FC = () => {
                 </div>
                 <button
                   onClick={() => { setEditingClient(null); setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' }); setShowClientModal(true); }}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 flex items-center gap-2 text-sm"
+                  className="bg-green-600 text-white px-4 py-2 font-semibold hover:bg-green-700 flex items-center gap-2 text-sm"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
                   Add Client
@@ -924,7 +924,7 @@ export const AccountantDashboard: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-bold text-zinc-900">Payslips</h3>
-                <button onClick={() => { setPayslipForm(createEmptyPayslipForm()); setShowPayslipModal(true); }} className="bg-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-pink-700 flex items-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg> Generate Payslip</button>
+                <button onClick={() => { setPayslipForm(createEmptyPayslipForm()); setShowPayslipModal(true); }} className="bg-pink-600 text-white px-4 py-2 font-semibold hover:bg-pink-700 flex items-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg> Generate Payslip</button>
               </div>
               <PayslipsListView
                 payslips={payslips}

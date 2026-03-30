@@ -6,9 +6,9 @@ import {
   setSecurityHeaders, 
   handleCors, 
   apiError 
-} from './_middleware';
-import { sql, validateOrderColumn } from './_db';
-import { VehicleSchema, VehicleUpdateSchema, PaginationSchema } from './_schemas';
+} from './_middleware.js';
+import { sql, validateOrderColumn } from './_db.js';
+import { VehicleSchema, VehicleUpdateSchema, PaginationSchema } from './_schemas.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);

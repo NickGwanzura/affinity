@@ -44,17 +44,17 @@ export const AdminTripsView: React.FC<AdminTripsViewProps> = ({ trips, onEditTri
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+        <div className=" border border-blue-200 bg-blue-50 p-4">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Open Trips</p>
           <p className="mt-3 text-3xl font-black text-blue-950">
             {trips.filter((trip) => !['Completed', 'Cancelled'].includes(trip.status)).length}
           </p>
         </div>
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div className=" border border-amber-200 bg-amber-50 p-4">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600">Departing Soon</p>
           <p className="mt-3 text-3xl font-black text-amber-950">{upcoming.length}</p>
         </div>
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+        <div className=" border border-emerald-200 bg-emerald-50 p-4">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600">Completed</p>
           <p className="mt-3 text-3xl font-black text-emerald-950">
             {trips.filter((trip) => trip.status === 'Completed').length}
@@ -62,14 +62,14 @@ export const AdminTripsView: React.FC<AdminTripsViewProps> = ({ trips, onEditTri
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className=" border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="mb-4">
           <h3 className="text-xl font-black text-zinc-900">Departure Calendar</h3>
           <p className="mt-1 text-sm text-zinc-500">Operational view of the next 7 days.</p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
           {nextSevenDays.map((day) => (
-            <div key={day.isoDate} className={`rounded-2xl border p-3 ${day.count > 0 ? 'border-blue-200 bg-blue-50' : 'border-zinc-200 bg-zinc-50'}`}>
+            <div key={day.isoDate} className={` border p-3 ${day.count > 0 ? 'border-blue-200 bg-blue-50' : 'border-zinc-200 bg-zinc-50'}`}>
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{day.label}</p>
               <p className="mt-2 text-2xl font-black text-zinc-900">{day.dayNumber}</p>
               <p className="mt-2 text-xs text-zinc-600">{day.count > 0 ? `${day.count} departure${day.count === 1 ? '' : 's'}` : 'No trips'}</p>
@@ -78,7 +78,7 @@ export const AdminTripsView: React.FC<AdminTripsViewProps> = ({ trips, onEditTri
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className=" border border-zinc-200 bg-white shadow-sm">
         {trips.length === 0 ? (
           <div className="p-8 text-center text-zinc-500">No trips created yet. Add the first planned route to begin scheduling.</div>
         ) : (
@@ -117,14 +117,14 @@ export const AdminTripsView: React.FC<AdminTripsViewProps> = ({ trips, onEditTri
                     <button
                       type="button"
                       onClick={() => onEditTrip(trip)}
-                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+                      className="inline-flex min-h-[44px] items-center justify-center  bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
                     >
                       Edit
                     </button>
                     <button
                       type="button"
                       onClick={() => onDeleteTrip(trip)}
-                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 transition-colors hover:bg-red-100"
+                      className="inline-flex min-h-[44px] items-center justify-center  border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 transition-colors hover:bg-red-100"
                     >
                       Delete
                     </button>

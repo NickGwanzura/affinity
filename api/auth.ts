@@ -7,24 +7,24 @@ import {
   setSecurityHeaders, 
   handleCors, 
   apiError 
-} from './_middleware';
-import { checkRateLimit } from './_db';
-import { logAuditEvent } from './_audit';
+} from './_middleware.js';
+import { checkRateLimit } from './_db.js';
+import { logAuditEvent } from './_audit.js';
 import { 
   authenticateUser, 
   changePassword, 
   createPasswordResetRequest,
   resetPassword,
   getUserById
-} from './_auth';
-import { isEmailTransportConfigured, sendPasswordResetEmail } from './_email';
+} from './_auth.js';
+import { isEmailTransportConfigured, sendPasswordResetEmail } from './_email.js';
 import {
   ChangePasswordSchema,
   ForgotPasswordSchema,
   LoginSchema,
   RegisterSchema,
   ResetPasswordSchema,
-} from './_schemas';
+} from './_schemas.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);

@@ -68,7 +68,7 @@ export const AccountantOverviewSection: React.FC<AccountantOverviewSectionProps>
         <h3 className="mb-4 text-lg font-bold text-zinc-900">Recent Invoices</h3>
         <div className="space-y-2">
           {invoices.slice(0, 5).map((invoice) => (
-            <div key={invoice.id} className="flex items-center justify-between rounded-lg bg-zinc-50 p-3">
+            <div key={invoice.id} className="flex items-center justify-between bg-zinc-50 p-3">
               <div>
                 <p className="text-sm font-semibold text-zinc-900">{invoice.invoice_number}</p>
                 <p className="text-xs text-zinc-500">{formatDate(invoice.created_at)}</p>
@@ -86,7 +86,7 @@ export const AccountantOverviewSection: React.FC<AccountantOverviewSectionProps>
         <h3 className="mb-4 text-lg font-bold text-zinc-900">Recent Payments</h3>
         <div className="space-y-2">
           {payments.slice(0, 5).map((payment) => (
-            <div key={payment.id} className="flex items-center justify-between rounded-lg bg-zinc-50 p-3">
+            <div key={payment.id} className="flex items-center justify-between bg-zinc-50 p-3">
               <div>
                 <p className="text-sm font-semibold text-zinc-900">{payment.method}</p>
                 <p className="text-xs text-zinc-500">{formatDate(payment.date)}</p>
@@ -108,13 +108,13 @@ export const AccountantOverviewSection: React.FC<AccountantOverviewSectionProps>
       <h3 className="mb-4 text-lg font-bold text-zinc-900">Vehicle Landed Costs</h3>
       <div className="space-y-3 lg:hidden">
         {summaries.map((summary) => (
-          <div key={summary.vehicle_id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+          <div key={summary.vehicle_id} className=" border border-zinc-200 bg-zinc-50 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-mono text-xs text-zinc-500">{summary.vin_number}</p>
                 <p className="mt-1 font-bold text-zinc-900">{summary.make_model}</p>
               </div>
-              <span className="rounded-md bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{summary.status}</span>
+              <span className=" bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{summary.status}</span>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <div>
@@ -154,7 +154,7 @@ export const AccountantOverviewSection: React.FC<AccountantOverviewSectionProps>
                 <td className="px-4 py-3 text-right">{formatCurrency(summary.total_expenses_usd)}</td>
                 <td className="px-4 py-3 text-right font-bold">{formatCurrency(summary.total_landed_cost_usd)}</td>
                 <td className="px-4 py-3 text-center">
-                  <span className="inline-block rounded-md bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{summary.status}</span>
+                  <span className="inline-block bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{summary.status}</span>
                 </td>
               </tr>
             ))}
@@ -181,7 +181,7 @@ export const AccountantInvoicesSection: React.FC<AccountantInvoicesSectionProps>
   <>
     <div className="space-y-3 lg:hidden">
       {invoices.map((invoice) => (
-        <div key={invoice.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+        <div key={invoice.id} className=" border border-zinc-200 bg-zinc-50 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs text-zinc-500">{invoice.invoice_number}</p>
@@ -251,7 +251,7 @@ export const AccountantExpensesSection: React.FC<AccountantExpensesSectionProps>
   <>
     <div className="space-y-3 lg:hidden">
       {expenses.map((expense) => (
-        <div key={expense.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+        <div key={expense.id} className=" border border-zinc-200 bg-zinc-50 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-zinc-900">{expense.description}</p>
@@ -264,7 +264,7 @@ export const AccountantExpensesSection: React.FC<AccountantExpensesSectionProps>
           <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Category</p>
-              <span className="inline-block rounded-md bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{expense.category}</span>
+              <span className="inline-block bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{expense.category}</span>
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Location</p>
@@ -299,7 +299,7 @@ export const AccountantExpensesSection: React.FC<AccountantExpensesSectionProps>
           {expenses.map((expense) => (
             <tr key={expense.id} className="hover:bg-zinc-50">
               <td className="px-4 py-3">{expense.description}</td>
-              <td className="px-4 py-3"><span className="inline-block rounded-md bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{expense.category}</span></td>
+              <td className="px-4 py-3"><span className="inline-block bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{expense.category}</span></td>
               <td className="px-4 py-3">{expense.location}</td>
               <td className="px-4 py-3 text-right font-medium">{expense.currency} {expense.amount.toLocaleString()}</td>
               <td className="px-4 py-3 text-right font-bold">{formatCurrency(expense.amount * expense.exchange_rate_to_usd)}</td>
@@ -333,13 +333,13 @@ export const AccountantPaymentsSection: React.FC<AccountantPaymentsSectionProps>
   <>
     <div className="space-y-3 lg:hidden">
       {payments.map((payment) => (
-        <div key={payment.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+        <div key={payment.id} className=" border border-zinc-200 bg-zinc-50 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs text-zinc-500">{truncateValue(payment.reference_id, 12)}</p>
               <p className="mt-1 font-semibold text-zinc-900">{payment.method}</p>
             </div>
-            <span className={`inline-block rounded-md px-2 py-1 text-xs font-semibold ${payment.type === 'Inbound' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            <span className={`inline-block px-2 py-1 text-xs font-semibold ${payment.type === 'Inbound' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
               {payment.type}
             </span>
           </div>
@@ -375,7 +375,7 @@ export const AccountantPaymentsSection: React.FC<AccountantPaymentsSectionProps>
             <tr key={payment.id} className="hover:bg-zinc-50">
               <td className="px-4 py-3 font-mono text-xs">{truncateValue(payment.reference_id, 12)}</td>
               <td className="px-4 py-3">
-                <span className={`inline-block rounded-md px-2 py-1 text-xs font-semibold ${payment.type === 'Inbound' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                <span className={`inline-block px-2 py-1 text-xs font-semibold ${payment.type === 'Inbound' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                   {payment.type}
                 </span>
               </td>
@@ -437,20 +437,20 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
   onExportCSV,
 }) => (
   <div className="space-y-6">
-    <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+    <div className=" border border-zinc-200 bg-zinc-50 p-4">
       <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-700">Filters</h3>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">From</label>
-          <input type="date" value={erDateFrom} onChange={(event) => onDateFromChange(event.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="date" value={erDateFrom} onChange={(event) => onDateFromChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">To</label>
-          <input type="date" value={erDateTo} onChange={(event) => onDateToChange(event.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="date" value={erDateTo} onChange={(event) => onDateToChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">Category</label>
-          <select value={erCategory} onChange={(event) => onCategoryChange(event.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+          <select value={erCategory} onChange={(event) => onCategoryChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">All Categories</option>
             {['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Driver Disbursement', 'Other'].map((category) => (
               <option key={category} value={category}>{category}</option>
@@ -459,7 +459,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">Location</label>
-          <select value={erLocation} onChange={(event) => onLocationChange(event.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+          <select value={erLocation} onChange={(event) => onLocationChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">All Locations</option>
             {['UK', 'Namibia', 'Zimbabwe', 'Botswana'].map((location) => (
               <option key={location} value={location}>{location}</option>
@@ -468,7 +468,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">Vehicle</label>
-          <select value={erVehicle} onChange={(event) => onVehicleChange(event.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+          <select value={erVehicle} onChange={(event) => onVehicleChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">All Vehicles</option>
             {vehicles.map((vehicle) => (
               <option key={vehicle.id} value={vehicle.id}>{vehicle.make_model} — {vehicle.vin_number}</option>
@@ -484,27 +484,27 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
     </div>
 
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+      <div className=" border border-zinc-200 bg-white p-5">
         <p className="mb-1 text-xs font-bold uppercase tracking-wide text-zinc-500">Total Entries</p>
         <p className="text-3xl font-black text-zinc-900">{filteredExpensesForReport.length}</p>
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+      <div className=" border border-zinc-200 bg-white p-5">
         <p className="mb-1 text-xs font-bold uppercase tracking-wide text-zinc-500">Total (USD)</p>
         <p className="text-3xl font-black text-red-600">{formatCurrency(expenseReportTotal)}</p>
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+      <div className=" border border-zinc-200 bg-white p-5">
         <p className="mb-1 text-xs font-bold uppercase tracking-wide text-zinc-500">Top Category</p>
         <p className="text-2xl font-black text-zinc-900">{expenseReportByCategory[0]?.category || '—'}</p>
         {expenseReportByCategory[0] ? <p className="mt-1 text-xs text-zinc-500">{formatCurrency(expenseReportByCategory[0].totalUsd)}</p> : null}
       </div>
     </div>
 
-    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+    <div className="overflow-hidden border border-zinc-200 bg-white">
       <div className="flex flex-col gap-3 border-b border-zinc-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="font-bold text-zinc-900">Breakdown by Category</h3>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button type="button" onClick={onExportPDF} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-emerald-700">Export PDF</button>
-          <button type="button" onClick={onExportCSV} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-blue-700">Export CSV</button>
+          <button type="button" onClick={onExportPDF} className=" bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-emerald-700">Export PDF</button>
+          <button type="button" onClick={onExportCSV} className=" bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-blue-700">Export CSV</button>
         </div>
       </div>
       <div className="space-y-3 p-4 lg:hidden">
@@ -512,7 +512,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
           <p className="py-8 text-center text-zinc-400">No expenses match the selected filters</p>
         ) : (
           expenseReportByCategory.map((row) => (
-            <div key={row.category} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+            <div key={row.category} className=" border border-zinc-200 bg-zinc-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold text-zinc-900">{row.category}</p>
@@ -563,7 +563,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
       </table>
     </div>
 
-    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+    <div className="overflow-hidden border border-zinc-200 bg-white">
       <div className="border-b border-zinc-100 px-6 py-4">
         <h3 className="font-bold text-zinc-900">All Entries <span className="text-sm font-normal text-zinc-400">({filteredExpensesForReport.length})</span></h3>
       </div>
@@ -572,10 +572,10 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
           <p className="py-8 text-center text-zinc-400">No expenses match the selected filters</p>
         ) : (
           filteredExpensesForReport.map((expense) => (
-            <div key={expense.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+            <div key={expense.id} className=" border border-zinc-200 bg-zinc-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{expense.category}</span>
+                  <span className=" bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{expense.category}</span>
                   <p className="mt-2 font-medium text-zinc-900">{expense.description}</p>
                 </div>
                 <p className="text-xs text-zinc-500">{formatDate(expense.created_at)}</p>
@@ -621,7 +621,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
             ) : filteredExpensesForReport.map((expense) => (
               <tr key={expense.id} className="hover:bg-zinc-50">
                 <td className="px-4 py-3 text-xs text-zinc-500">{formatDate(expense.created_at)}</td>
-                <td className="px-4 py-3"><span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{expense.category}</span></td>
+                <td className="px-4 py-3"><span className=" bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{expense.category}</span></td>
                 <td className="max-w-[200px] truncate px-4 py-3 text-zinc-700">{expense.description}</td>
                 <td className="px-4 py-3 text-xs text-zinc-500">{expense.location}</td>
                 <td className="px-4 py-3 text-xs text-zinc-500">{expense.driver_name || '—'}</td>

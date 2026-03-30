@@ -15,7 +15,7 @@ export const AccountantClientsView: React.FC<AccountantClientsViewProps> = ({
   onDeleteClient,
 }) => (
   <div className="space-y-5">
-    <div className="rounded-2xl border border-zinc-200 overflow-hidden">
+    <div className=" border border-zinc-200 overflow-hidden">
       <table className="w-full text-sm">
         <thead className="bg-zinc-50 border-b border-zinc-200">
           <tr>
@@ -46,7 +46,7 @@ export const AccountantClientsView: React.FC<AccountantClientsViewProps> = ({
                 </td>
                 <td className="px-4 py-3 text-zinc-600">{client.company || '—'}</td>
                 <td className="px-4 py-3 text-center">
-                  <span className="inline-block px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-bold">{stats.count}</span>
+                  <span className="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-bold">{stats.count}</span>
                 </td>
                 <td className="px-4 py-3 text-right font-bold text-green-700">
                   {stats.total > 0 ? `$${stats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}

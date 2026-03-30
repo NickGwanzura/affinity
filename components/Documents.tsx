@@ -121,12 +121,12 @@ export const Documents: React.FC = () => {
         </p>
       </div>
 
-      <div className="flex w-full gap-1 rounded-2xl bg-zinc-100 p-1.5 sm:w-fit">
+      <div className="flex w-full gap-1 bg-zinc-100 p-1.5 sm:w-fit">
         <button 
           onClick={() => setActiveTab('receipts')}
           aria-label="View Digital Receipts"
           aria-pressed={activeTab === 'receipts'}
-          className={`min-h-[44px] flex-1 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'receipts' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
+          className={`min-h-[44px] flex-1 px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'receipts' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
         >
           Digital Receipts
         </button>
@@ -134,7 +134,7 @@ export const Documents: React.FC = () => {
           onClick={() => setActiveTab('statements')}
           aria-label="View Fleet Statements"
           aria-pressed={activeTab === 'statements'}
-          className={`min-h-[44px] flex-1 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'statements' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
+          className={`min-h-[44px] flex-1 px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'statements' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
         >
           Fleet Statements
         </button>
@@ -144,7 +144,7 @@ export const Documents: React.FC = () => {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
           {expenses.length === 0 ? (
             <div className="col-span-full text-center py-20">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-zinc-100 rounded-2xl mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-zinc-100 mb-4">
                 <svg className="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -154,7 +154,7 @@ export const Documents: React.FC = () => {
             </div>
           ) : (
             expenses.map((exp) => (
-              <div key={exp.id} onClick={() => viewReceiptDetails(exp)} className="bg-white rounded-2xl overflow-hidden border border-zinc-200 shadow-sm group cursor-pointer hover:border-blue-300 transition-all">
+              <div key={exp.id} onClick={() => viewReceiptDetails(exp)} className="bg-white overflow-hidden border border-zinc-200 shadow-sm group cursor-pointer hover:border-blue-300 transition-all">
                 <div className="aspect-[3/4] bg-zinc-100 relative overflow-hidden flex items-center justify-center">
                   {exp.receipt_url ? (
                     failedImages.has(exp.id) ? (
@@ -185,7 +185,7 @@ export const Documents: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                     <button 
                       aria-label={`View details for ${exp.description} receipt`}
-                      className="text-white text-xs font-black uppercase tracking-widest w-full py-2 bg-white/20 backdrop-blur-md rounded-lg"
+                      className="text-white text-xs font-black uppercase tracking-widest w-full py-2 bg-white/20 backdrop-blur-md"
                     >
                       View Details
                     </button>
@@ -207,7 +207,7 @@ export const Documents: React.FC = () => {
         <div className="space-y-6">
           {/* Show general expenses without vehicle assignment */}
           {unassignedExpenses.length > 0 && (
-            <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl">
+            <div className="bg-amber-50 border border-amber-200 p-6">
               <h3 className="text-lg font-bold text-amber-900 mb-2 flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -219,7 +219,7 @@ export const Documents: React.FC = () => {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {unassignedExpenses.map(exp => (
-                  <div key={exp.id} className="bg-white p-4 rounded-xl border border-amber-200">
+                  <div key={exp.id} className="bg-white p-4 border border-amber-200">
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-bold text-amber-600 uppercase">{exp.category}</span>
                       <span className="text-xs text-zinc-500">{new Date(exp.created_at).toLocaleDateString()}</span>
@@ -236,7 +236,7 @@ export const Documents: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {vehicles.length === 0 ? (
             <div className="col-span-full text-center py-20">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-zinc-100 rounded-2xl mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-zinc-100 mb-4">
                 <svg className="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0 a2 2 0 114 0" />
@@ -247,10 +247,10 @@ export const Documents: React.FC = () => {
             </div>
           ) : (
             vehicleData.map(({ vehicle: v, expenses: vehicleExpenses, totalExpenses }) => (
-              <div key={v.id} className="bg-white p-8 rounded-3xl border border-zinc-200 shadow-sm group hover:shadow-xl hover:shadow-blue-50 transition-all">
+              <div key={v.id} className="bg-white p-8 border border-zinc-200 shadow-sm group hover:shadow-xl hover:shadow-blue-50 transition-all">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-zinc-50 rounded-2xl flex items-center justify-center text-zinc-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                    <div className="w-14 h-14 bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeWidth="2.5" /></svg>
                     </div>
                     <div>
@@ -260,7 +260,7 @@ export const Documents: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 mb-4 bg-zinc-50 p-4 rounded-xl">
+                <div className="grid grid-cols-2 gap-4 mb-4 bg-zinc-50 p-4">
                   <div>
                     <p className="text-xs font-semibold text-zinc-500 mb-1">Expenses</p>
                     <p className="text-sm font-black text-zinc-900">{vehicleExpenses.length} items</p>
@@ -274,7 +274,7 @@ export const Documents: React.FC = () => {
                 <button 
                   onClick={() => generateVehicleStatement(v)}
                   aria-label={`Generate statement for ${v.make_model}`}
-                  className="bg-zinc-900 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-blue-600 transition-all w-full"
+                  className="bg-zinc-900 text-white px-5 py-2.5 font-black text-xs uppercase tracking-widest shadow-lg hover:bg-blue-600 transition-all w-full"
                 >
                   Generate Statement
                 </button>
@@ -292,7 +292,7 @@ export const Documents: React.FC = () => {
       {selectedReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="receipt-modal-title">
           <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={closeReceiptModal}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 id="receipt-modal-title" className="text-2xl font-black text-zinc-900">Receipt Details</h3>
@@ -349,7 +349,7 @@ export const Documents: React.FC = () => {
               {selectedReceipt.receipt_url && (
                 <div>
                   <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 block">Receipt Image</label>
-                  <div className="bg-zinc-50 rounded-xl p-4">
+                  <div className="bg-zinc-50 p-4">
                     {modalImageError ? (
                       <div className="text-center text-zinc-400 py-8">
                         <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -361,7 +361,7 @@ export const Documents: React.FC = () => {
                       <img 
                         src={selectedReceipt.receipt_url} 
                         alt={`Receipt for ${selectedReceipt.description}`} 
-                        className="w-full rounded-lg" 
+                        className="w-full" 
                         onError={handleModalImageError}
                       />
                     )}
@@ -369,7 +369,7 @@ export const Documents: React.FC = () => {
                 </div>
               )}
               
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-6">
+              <div className="bg-blue-50 border border-blue-200 p-4 mt-6">
                 <p className="text-xs font-semibold text-blue-900 mb-2">✓ Audit Trail</p>
                 <p className="text-sm text-blue-800">Created: {new Date(selectedReceipt.created_at).toLocaleString()}</p>
                 <p className="text-sm text-blue-800">Vehicle ID: {selectedReceipt.vehicle_id}</p>
@@ -380,7 +380,7 @@ export const Documents: React.FC = () => {
               <button 
                 onClick={closeReceiptModal} 
                 aria-label="Close receipt details"
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
+                className="flex-1 px-4 py-3 font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
               >
                 Close
               </button>
@@ -390,7 +390,7 @@ export const Documents: React.FC = () => {
                   target="_blank" 
                   rel="noopener noreferrer" 
                   aria-label="Open receipt in new tab"
-                  className="flex-1 px-4 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 text-center"
+                  className="flex-1 px-4 py-3 font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 text-center"
                 >
                   Open Receipt
                 </a>

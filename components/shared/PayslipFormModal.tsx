@@ -89,9 +89,9 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
     return null;
   }
 
-  const inputClasses = 'w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none';
-  const earningsInputClasses = 'w-full px-3 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none';
-  const deductionsInputClasses = 'w-full px-3 py-2 rounded-lg border border-red-300 focus:ring-2 focus:ring-red-500 outline-none';
+  const inputClasses = 'w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none';
+  const earningsInputClasses = 'w-full px-3 py-2 border border-green-300 focus:ring-2 focus:ring-green-500 outline-none';
+  const deductionsInputClasses = 'w-full px-3 py-2 border border-red-300 focus:ring-2 focus:ring-red-500 outline-none';
 
   return (
     <CarbonFormModal
@@ -153,7 +153,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
             </div>
           </div>
 
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+          <div className="bg-green-50 border border-green-200 p-4">
             <h4 className="text-sm font-bold text-green-800 mb-3">Earnings</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -183,7 +183,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
             </div>
           </div>
 
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+          <div className="bg-red-50 border border-red-200 p-4">
             <h4 className="text-sm font-bold text-red-800 mb-3">Deductions</h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
@@ -205,7 +205,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
               <div>
                 <p className="text-xs text-blue-200 mb-1 uppercase tracking-wide font-semibold">Gross Pay</p>
@@ -253,7 +253,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
               value={form.notes}
               onChange={(event) => onChange({ notes: event.target.value })}
               rows={2}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none resize-none"
+              className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-pink-500 outline-none resize-none"
             />
           </div>
 

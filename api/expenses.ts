@@ -6,10 +6,10 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { logAuditEvent } from './_audit';
-import { sql, validateOrderColumn } from './_db';
-import { ExpenseSchema, ExpenseUpdateSchema, PaginationSchema } from './_schemas';
+} from './_middleware.js';
+import { logAuditEvent } from './_audit.js';
+import { sql, validateOrderColumn } from './_db.js';
+import { ExpenseSchema, ExpenseUpdateSchema, PaginationSchema } from './_schemas.js';
 
 const EXPENSE_COLUMNS = ['id', 'vehicle_id', 'description', 'amount', 'currency', 'category', 'location', 'created_at'];
 const EXCHANGE_RATES: Record<string, number> = {

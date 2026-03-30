@@ -6,9 +6,9 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { sql } from './_db';
-import { ReceiptSchema, ReceiptUpdateSchema } from './_schemas';
+} from './_middleware.js';
+import { sql } from './_db.js';
+import { ReceiptSchema, ReceiptUpdateSchema } from './_schemas.js';
 
 const isMissingTableError = (error: unknown, tableName: string): boolean =>
   error instanceof Error && error.message.includes(`relation "public.${tableName}" does not exist`);

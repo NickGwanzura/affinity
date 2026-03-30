@@ -71,8 +71,8 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
     if (error && !invite) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-8">
-                <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-zinc-200 text-center">
-                    <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <div className="max-w-md w-full bg-white p-8 shadow-xl border border-zinc-200 text-center">
+                    <div className="w-16 h-16 bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-6">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -81,7 +81,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                     <p className="text-zinc-500 font-medium mb-8">{error}</p>
                     <button
                         onClick={onCancel}
-                        className="w-full bg-zinc-900 text-white font-black py-4 rounded-2xl hover:bg-zinc-800 transition-all font-sans"
+                        className="w-full bg-zinc-900 text-white font-black py-4 hover:bg-zinc-800 transition-all font-sans"
                     >
                         Back to Login
                     </button>
@@ -104,7 +104,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
 
                 <div className="relative z-10 px-12 py-24 text-white max-w-xl text-center md:text-left">
                     <div className="flex items-center gap-3 mb-12 justify-center md:justify-start">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-2xl">
+                        <div className="w-12 h-12 bg-white flex items-center justify-center shadow-2xl">
                             <svg className="w-8 h-8 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                             </svg>
@@ -120,10 +120,10 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                         <span className="text-blue-300">Logistics Team.</span>
                     </h2>
                     <p className="text-lg text-blue-100 font-medium mb-8">
-                        You've been invited by <span className="text-white underline decoration-blue-400 font-black">{invite?.invitedBy}</span> to join Affinity Logistics as a <span className="bg-blue-600 px-2 py-0.5 rounded-lg text-white font-black">{invite?.role}</span>.
+                        You've been invited by <span className="text-white underline decoration-blue-400 font-black">{invite?.invitedBy}</span> to join Affinity Logistics as a <span className="bg-blue-600 px-2 py-0.5 text-white font-black">{invite?.role}</span>.
                     </p>
 
-                    <div className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 inline-block">
+                    <div className="p-6 bg-white/10 backdrop-blur-md border border-white/10 inline-block">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-blue-400/20 rounded-full flex items-center justify-center">
                                 <svg className="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +149,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm font-bold flex items-center gap-2">
+                            <div className="bg-red-50 text-red-600 p-4  border border-red-100 text-sm font-bold flex items-center gap-2">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="2.5" /></svg>
                                 {error}
                             </div>
@@ -163,7 +163,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                                 onChange={e => setPassword(e.target.value)}
                                 required
                                 placeholder="••••••••"
-                                className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
+                                className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
                             />
                         </div>
 
@@ -175,14 +175,14 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                                 onChange={e => setConfirmPassword(e.target.value)}
                                 required
                                 placeholder="••••••••"
-                                className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
+                                className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
                             />
                         </div>
 
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                            className="w-full bg-blue-600 text-white font-black py-5  shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                         >
                             {submitting ? (
                                 <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>

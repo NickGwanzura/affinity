@@ -83,13 +83,13 @@ export function setSecurityHeaders(res: VercelResponse): void {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  // Allow Google Fonts, Tailwind CDN, and necessary external resources
   res.setHeader('Content-Security-Policy', 
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' data: https://fonts.gstatic.com; " +
-    "connect-src 'self' https://*.vercel.app;"
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "font-src 'self' data: https://1.www.s81c.com; " +
+    "img-src 'self' data: https:; " +
+    "connect-src 'self' https:;"
   );
 }
 

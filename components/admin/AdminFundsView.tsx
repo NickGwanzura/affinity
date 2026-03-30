@@ -21,9 +21,9 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
 }) => (
   <div className="space-y-6">
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-3xl text-white shadow-lg">
+      <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6  text-white shadow-lg">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-white/20 flex items-center justify-center">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -33,9 +33,9 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
         <p className="text-3xl font-black">${fundsBalance.received.toLocaleString()}</p>
       </div>
 
-      <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-3xl text-white shadow-lg">
+      <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6  text-white shadow-lg">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-white/20 flex items-center justify-center">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
             </svg>
@@ -45,9 +45,9 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
         <p className="text-3xl font-black">${fundsBalance.disbursed.toLocaleString()}</p>
       </div>
 
-      <div className={`bg-gradient-to-br ${fundsBalance.balance >= 0 ? 'from-blue-500 to-blue-600' : 'from-red-500 to-red-600'} p-6 rounded-3xl text-white shadow-lg`}>
+      <div className={`bg-gradient-to-br ${fundsBalance.balance >= 0 ? 'from-blue-500 to-blue-600' : 'from-red-500 to-red-600'} p-6  text-white shadow-lg`}>
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-white/20 flex items-center justify-center">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
             </svg>
@@ -79,25 +79,25 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
       />
     </div>
 
-    <div className="bg-white rounded-2xl shadow-lg border border-zinc-200 overflow-hidden">
+    <div className="bg-white shadow-lg border border-zinc-200 overflow-hidden">
       <div className="p-6 border-b border-zinc-200">
         <h3 className="text-xl font-bold text-zinc-900">Transaction History</h3>
         <p className="text-zinc-500 text-sm">Track all operating funds received and disbursed</p>
       </div>
       <div className="space-y-3 p-4 md:hidden">
         {operatingFunds.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
+          <div className=" border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
             No transactions yet. Record a transaction to get started.
           </div>
         ) : (
           operatingFunds.map((fund) => (
-            <div key={fund.id} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <div key={fund.id} className=" border border-zinc-200 bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{formatDate(fund.date)}</p>
                   <p className="mt-1 font-semibold text-zinc-900">{fund.description}</p>
                 </div>
-                <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-md ${
+                <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold  ${
                   fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
                 }`}>
                   {fund.type}
@@ -155,7 +155,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
                     {formatDate(fund.date)}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-md ${
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold  ${
                       fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
                     }`}>
                       {fund.type === 'Received' ? (

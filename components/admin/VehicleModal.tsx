@@ -136,7 +136,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
       />
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white  p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 
@@ -147,7 +147,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
           </h3>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-600 transition-colors p-2 rounded-lg hover:bg-zinc-100"
+            className="text-zinc-400 hover:text-zinc-600 transition-colors p-2 hover:bg-zinc-100"
             aria-label="Close modal"
             type="button"
           >
@@ -175,7 +175,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               required
               disabled={isSubmitting}
               placeholder="Enter VIN number"
-              className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                 errors.vin_number 
                   ? 'border-red-300 focus:ring-red-500' 
                   : 'border-zinc-200 focus:ring-blue-500'
@@ -213,7 +213,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               required
               disabled={isSubmitting}
               placeholder="e.g. Toyota Land Cruiser V8"
-              className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                 errors.make_model 
                   ? 'border-red-300 focus:ring-red-500' 
                   : 'border-zinc-200 focus:ring-blue-500'
@@ -249,7 +249,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               required
               disabled={isSubmitting}
               placeholder="0.00"
-              className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                 errors.purchase_price_gbp 
                   ? 'border-red-300 focus:ring-red-500' 
                   : 'border-zinc-200 focus:ring-blue-500'
@@ -273,7 +273,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
 
           {/* Info Box - Only show for new vehicles */}
           {!isEditing && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="bg-blue-50 border border-blue-200 p-4">
               <p className="text-sm text-blue-800 flex items-center gap-2">
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -289,14 +289,14 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3  border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex-1 text-white font-bold py-3 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+              className={`flex-1 text-white font-bold py-3  shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
                 isEditing 
                   ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' 
                   : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'

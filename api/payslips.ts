@@ -6,9 +6,9 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { sql } from './_db';
-import { PayslipSchema } from './_schemas';
+} from './_middleware.js';
+import { sql } from './_db.js';
+import { PayslipSchema } from './_schemas.js';
 
 type PayslipStatus = 'Generated' | 'Approved' | 'Paid' | 'Cancelled';
 

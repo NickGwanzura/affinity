@@ -355,7 +355,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
         <select
           value={activeTab}
           onChange={(event) => setActiveTab(event.target.value as 'assets' | 'requests')}
-          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           aria-label="Select asset register section"
         >
           <option value="assets">Assets</option>
@@ -411,7 +411,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
             <>
               <div className="space-y-3 md:hidden">
                 {assets.map((asset) => (
-                  <div key={asset.id} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                  <div key={asset.id} className=" border border-gray-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-base font-semibold text-gray-900">{asset.name}</p>
@@ -521,7 +521,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
             <>
               <div className="space-y-3 md:hidden">
                 {requests.map((request) => (
-                  <div key={request.id} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                  <div key={request.id} className=" border border-gray-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-base font-semibold text-gray-900">{request.asset_name || 'Unknown'}</p>
@@ -673,7 +673,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       {/* Asset Modal */}
       {showAssetModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2">
-          <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-md max-h-[95vh] overflow-y-auto">
+          <div className="bg-white  p-4 sm:p-6 w-full max-w-md max-h-[95vh] overflow-y-auto">
             <h3 className="text-lg font-bold mb-4">
               {editingAsset ? 'Edit Asset' : 'Add Asset'}
             </h3>
@@ -684,7 +684,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   type="text"
                   value={assetForm.name}
                   onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
-                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -693,7 +693,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <select
                   value={assetForm.category}
                   onChange={(e) => setAssetForm({ ...assetForm, category: e.target.value })}
-                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   required
                 >
                   <option value="">Select…</option>
@@ -712,7 +712,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <textarea
                   value={assetForm.description}
                   onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
-                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   rows={2}
                 />
               </div>
@@ -722,7 +722,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   type="text"
                   value={assetForm.serial_number}
                   onChange={(e) => setAssetForm({ ...assetForm, serial_number: e.target.value })}
-                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -731,7 +731,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   <select
                     value={assetForm.status}
                     onChange={(e) => setAssetForm({ ...assetForm, status: e.target.value as AssetStatus })}
-                    className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="Available">Available</option>
                     <option value="Borrowed">Borrowed</option>
@@ -744,7 +744,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   <select
                     value={assetForm.condition}
                     onChange={(e) => setAssetForm({ ...assetForm, condition: e.target.value })}
-                    className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="Excellent">Excellent</option>
                     <option value="Good">Good</option>
@@ -759,7 +759,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   type="text"
                   value={assetForm.location}
                   onChange={(e) => setAssetForm({ ...assetForm, location: e.target.value })}
-                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -769,7 +769,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="date"
                     value={assetForm.purchase_date}
                     onChange={(e) => setAssetForm({ ...assetForm, purchase_date: e.target.value })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -779,7 +779,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     step="0.01"
                     value={assetForm.purchase_value}
                     onChange={(e) => setAssetForm({ ...assetForm, purchase_value: e.target.value })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -799,7 +799,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       {/* Request Modal */}
       {showRequestModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2">
-          <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-md max-h-[95vh] overflow-y-auto">
+          <div className="bg-white  p-4 sm:p-6 w-full max-w-md max-h-[95vh] overflow-y-auto">
             <h3 className="text-lg font-bold mb-4">
               {editingRequest ? 'Edit Request' : 'New Request'}
             </h3>
@@ -809,7 +809,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <select
                   value={requestForm.asset_id}
                   onChange={(e) => setRequestForm({ ...requestForm, asset_id: e.target.value })}
-                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   required
                   disabled={!!editingRequest}
                 >
@@ -827,7 +827,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   type="text"
                   value={requestForm.requested_by}
                   onChange={(e) => setRequestForm({ ...requestForm, requested_by: e.target.value })}
-                  className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -838,7 +838,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="email"
                     value={requestForm.requester_email}
                     onChange={(e) => setRequestForm({ ...requestForm, requester_email: e.target.value })}
-                    className="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -847,7 +847,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="text"
                     value={requestForm.requester_department}
                     onChange={(e) => setRequestForm({ ...requestForm, requester_department: e.target.value })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -858,7 +858,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="date"
                     value={requestForm.requested_take_date}
                     onChange={(e) => setRequestForm({ ...requestForm, requested_take_date: e.target.value })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -867,7 +867,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="date"
                     value={requestForm.expected_return_date}
                     onChange={(e) => setRequestForm({ ...requestForm, expected_return_date: e.target.value })}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -876,7 +876,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <textarea
                   value={requestForm.purpose}
                   onChange={(e) => setRequestForm({ ...requestForm, purpose: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
                   rows={2}
                 />
               </div>
@@ -885,7 +885,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <textarea
                   value={requestForm.notes}
                   onChange={(e) => setRequestForm({ ...requestForm, notes: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
                   rows={2}
                 />
               </div>

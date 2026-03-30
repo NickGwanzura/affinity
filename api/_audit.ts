@@ -1,5 +1,5 @@
 import type { VercelRequest } from '@vercel/node';
-import { sql } from './_db';
+import { sql } from './_db.js';
 
 type JsonValue =
   | string

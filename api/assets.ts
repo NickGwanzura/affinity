@@ -20,7 +20,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
-import { sql } from './_db';
+import { sql } from './_db.js';
 
 function getJwtSecret(): string | null {
   return process.env.JWT_SECRET || null;

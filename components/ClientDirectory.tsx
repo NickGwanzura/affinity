@@ -132,7 +132,7 @@ export const ClientDirectory: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar list */}
         <div className={`w-full lg:w-80 flex-shrink-0 ${showMobileDetail ? 'hidden lg:block' : ''}`}>
-          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
+          <div className="bg-white shadow-sm border border-zinc-200 overflow-hidden">
             <div className="p-4 border-b border-zinc-100">
               <div className="relative">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +142,7 @@ export const ClientDirectory: React.FC = () => {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search clients…"
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-zinc-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-9 pr-4 py-2.5  border border-zinc-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -182,7 +182,7 @@ export const ClientDirectory: React.FC = () => {
         {/* Detail panel */}
         <div className={`flex-1 min-w-0 ${!showMobileDetail ? 'hidden lg:block' : ''}`}>
           {!selectedClient ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 flex items-center justify-center min-h-[400px]">
+            <div className="bg-white shadow-sm border border-zinc-200 flex items-center justify-center min-h-[400px]">
               <div className="text-center">
                 <svg className="mx-auto h-12 w-12 text-zinc-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -200,12 +200,12 @@ export const ClientDirectory: React.FC = () => {
             return (
               <div className="space-y-4">
                 {/* Client header card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-6">
+                <div className="bg-white  shadow-sm border border-zinc-200 p-6">
                   <div className="mb-4 lg:hidden">
                     <button
                       type="button"
                       onClick={() => setSelectedClient(null)}
-                      className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
+                      className="inline-flex min-h-[44px] items-center gap-2  border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
                     >
                       <span aria-hidden="true">←</span>
                       Back to clients
@@ -222,7 +222,7 @@ export const ClientDirectory: React.FC = () => {
                       </div>
                     </div>
                     {c.isRegistered && (
-                      <span className="text-xs font-bold px-2 py-1 rounded-md bg-emerald-100 text-emerald-700">Registered</span>
+                      <span className="text-xs font-bold px-2 py-1 bg-emerald-100 text-emerald-700">Registered</span>
                     )}
                   </div>
 
@@ -248,13 +248,13 @@ export const ClientDirectory: React.FC = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
+                <div className="bg-white shadow-sm border border-zinc-200 overflow-hidden">
                   <div className="border-b border-zinc-100 bg-zinc-50 p-3 sm:hidden">
                     <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">Records</label>
                     <select
                       value={detailTab}
                       onChange={(event) => setDetailTab(event.target.value as 'invoices' | 'quotes' | 'payments')}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full  border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     >
                       <option value="invoices">Invoices ({clientInvoices.length})</option>
                       <option value="quotes">Quotes ({clientQuotes.length})</option>
@@ -266,7 +266,7 @@ export const ClientDirectory: React.FC = () => {
                       <button
                         key={tab}
                         onClick={() => setDetailTab(tab)}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-bold capitalize transition-all ${detailTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
+                        className={`px-5 py-2.5  text-sm font-bold capitalize transition-all ${detailTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
                       >
                         {tab}
                         <span className="ml-1.5 text-xs font-normal opacity-60">
@@ -284,13 +284,13 @@ export const ClientDirectory: React.FC = () => {
                         <>
                         <div className="space-y-3 sm:hidden">
                           {clientInvoices.map(inv => (
-                            <div key={inv.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                            <div key={inv.id} className=" border border-zinc-200 bg-zinc-50 p-4">
                               <div className="flex items-start justify-between gap-3">
                                 <div>
                                   <p className="font-mono text-xs font-bold text-blue-600">{inv.invoice_number}</p>
                                   <p className="mt-2 text-base font-bold text-zinc-900">{formatMoney(inv.amount_usd, inv.currency || 'USD')}</p>
                                 </div>
-                                <span className={`px-2 py-1 rounded-md text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-zinc-100 text-zinc-500'}`}>{inv.status}</span>
+                                <span className={`px-2 py-1  text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-zinc-100 text-zinc-500'}`}>{inv.status}</span>
                               </div>
                               <div className="mt-3 space-y-1 text-sm text-zinc-600">
                                 <p><span className="font-semibold text-zinc-900">Due:</span> {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</p>
@@ -316,7 +316,7 @@ export const ClientDirectory: React.FC = () => {
                                 <td className="py-3 font-mono text-xs font-bold text-blue-600">{inv.invoice_number}</td>
                                 <td className="py-3 font-bold text-zinc-900">{formatMoney(inv.amount_usd, inv.currency || 'USD')}</td>
                                 <td className="py-3">
-                                  <span className={`px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-zinc-100 text-zinc-500'}`}>{inv.status}</span>
+                                  <span className={`px-2 py-0.5  text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-zinc-100 text-zinc-500'}`}>{inv.status}</span>
                                 </td>
                                 <td className="py-3 text-zinc-500 text-xs">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</td>
                                 <td className="py-3 text-zinc-500 text-xs truncate max-w-[200px]">{inv.description || '—'}</td>
@@ -336,13 +336,13 @@ export const ClientDirectory: React.FC = () => {
                         <>
                         <div className="space-y-3 sm:hidden">
                           {clientQuotes.map(q => (
-                            <div key={q.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                            <div key={q.id} className=" border border-zinc-200 bg-zinc-50 p-4">
                               <div className="flex items-start justify-between gap-3">
                                 <div>
                                   <p className="font-mono text-xs font-bold text-blue-600">{q.quote_number}</p>
                                   <p className="mt-2 text-base font-bold text-zinc-900">{formatMoney(q.amount_usd, q.currency || 'USD')}</p>
                                 </div>
-                                <span className={`px-2 py-1 rounded-md text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-zinc-100 text-zinc-500'}`}>{q.status}</span>
+                                <span className={`px-2 py-1  text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-zinc-100 text-zinc-500'}`}>{q.status}</span>
                               </div>
                               <div className="mt-3 space-y-1 text-sm text-zinc-600">
                                 <p><span className="font-semibold text-zinc-900">Valid until:</span> {q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '—'}</p>
@@ -368,7 +368,7 @@ export const ClientDirectory: React.FC = () => {
                                 <td className="py-3 font-mono text-xs font-bold text-blue-600">{q.quote_number}</td>
                                 <td className="py-3 font-bold text-zinc-900">{formatMoney(q.amount_usd, q.currency || 'USD')}</td>
                                 <td className="py-3">
-                                  <span className={`px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-zinc-100 text-zinc-500'}`}>{q.status}</span>
+                                  <span className={`px-2 py-0.5  text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-zinc-100 text-zinc-500'}`}>{q.status}</span>
                                 </td>
                                 <td className="py-3 text-zinc-500 text-xs">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '—'}</td>
                                 <td className="py-3 text-zinc-500 text-xs truncate max-w-[200px]">{q.description || '—'}</td>
@@ -388,7 +388,7 @@ export const ClientDirectory: React.FC = () => {
                         <>
                         <div className="space-y-3 sm:hidden">
                           {clientPayments.map(p => (
-                            <div key={p.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                            <div key={p.id} className=" border border-zinc-200 bg-zinc-50 p-4">
                               <p className="font-mono text-xs font-bold text-zinc-600">{p.reference_id || '—'}</p>
                               <p className="mt-2 text-base font-bold text-emerald-600">{formatMoney(p.amount_usd, p.currency || 'USD')}</p>
                               <div className="mt-3 space-y-1 text-sm text-zinc-600">

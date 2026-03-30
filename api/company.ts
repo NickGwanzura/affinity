@@ -6,10 +6,10 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { logAuditEvent } from './_audit';
-import { sql } from './_db';
-import { CompanySchema } from './_schemas';
+} from './_middleware.js';
+import { logAuditEvent } from './_audit.js';
+import { sql } from './_db.js';
+import { CompanySchema } from './_schemas.js';
 
 const DEFAULT_COMPANY = {
   name: 'Your Company Name',

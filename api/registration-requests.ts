@@ -6,10 +6,10 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { logAuditEvent } from './_audit';
-import { RegistrationRequestSchema } from './_schemas';
-import { sql } from './_db';
+} from './_middleware.js';
+import { logAuditEvent } from './_audit.js';
+import { RegistrationRequestSchema } from './_schemas.js';
+import { sql } from './_db.js';
 
 type RegistrationRequestRecord = {
   id: string;

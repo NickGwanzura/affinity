@@ -1059,7 +1059,7 @@ export const AdminDashboard: React.FC = () => {
       {showDeleteVehicleDialog && vehicleToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm" onClick={() => setShowDeleteVehicleDialog(false)}></div>
-          <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white  p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
               <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1069,7 +1069,7 @@ export const AdminDashboard: React.FC = () => {
             <p className="text-zinc-600 mb-4">
               Are you sure you want to delete <span className="font-bold">{vehicleToDelete.make_model}</span> (VIN: {vehicleToDelete.vin_number})?
             </p>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+            <div className="bg-amber-50 border border-amber-200  p-4 mb-6">
               <div className="flex items-start gap-2">
                 <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -1084,13 +1084,13 @@ export const AdminDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowDeleteVehicleDialog(false)}
-                className="flex-1 px-6 py-3 rounded-xl font-bold text-sm text-zinc-700 border border-zinc-200 hover:bg-zinc-50 transition-colors"
+                className="flex-1 px-6 py-3  font-bold text-sm text-zinc-700 border border-zinc-200 hover:bg-zinc-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteVehicle}
-                className="flex-1 px-6 py-3 rounded-xl font-bold text-sm bg-red-600 text-white hover:bg-red-700 transition-colors"
+                className="flex-1 px-6 py-3  font-bold text-sm bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 Delete Vehicle
               </button>

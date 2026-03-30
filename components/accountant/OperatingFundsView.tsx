@@ -40,15 +40,15 @@ export const OperatingFundsView: React.FC<OperatingFundsViewProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
+        <div className=" bg-emerald-50 border border-emerald-200 p-4">
           <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Total Received</p>
           <p className="text-2xl font-black text-emerald-700 mt-1">${totalReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
+        <div className=" bg-red-50 border border-red-200 p-4">
           <p className="text-xs font-bold text-red-600 uppercase tracking-wider">Total Disbursed</p>
           <p className="text-2xl font-black text-red-700 mt-1">${totalDisbursed.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className={`rounded-2xl border p-4 ${balance >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
+        <div className={` border p-4 ${balance >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
           <p className={`text-xs font-bold uppercase tracking-wider ${balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>Balance</p>
           <p className={`text-2xl font-black mt-1 ${balance >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>${Math.abs(balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}{balance < 0 ? ' DR' : ''}</p>
         </div>
@@ -74,17 +74,17 @@ export const OperatingFundsView: React.FC<OperatingFundsViewProps> = ({
 
       <div className="space-y-3 md:hidden">
         {operatingFunds.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-8 text-center text-sm text-zinc-400">
+          <div className=" border border-zinc-200 bg-white px-4 py-8 text-center text-sm text-zinc-400">
             No entries yet
           </div>
         ) : operatingFunds.map((fund) => (
-          <div key={fund.id} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <div key={fund.id} className=" border border-zinc-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{formatDate(fund.date)}</p>
                 <p className="mt-1 font-semibold text-zinc-900">{fund.description}</p>
               </div>
-              <span className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter ${fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{fund.type}</span>
+              <span className={`shrink-0 px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{fund.type}</span>
             </div>
             <div className="mt-3 space-y-1 text-sm text-zinc-600">
               <p><span className="font-semibold text-zinc-900">Amount:</span> {fund.currency === 'GBP' ? '£' : '$'}{fund.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
@@ -119,7 +119,7 @@ export const OperatingFundsView: React.FC<OperatingFundsViewProps> = ({
             <tr key={fund.id} className="hover:bg-zinc-50 border-t">
               <td className="px-4 py-3 text-xs text-zinc-500">{formatDate(fund.date)}</td>
               <td className="px-4 py-3">
-                <span className={`px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter ${fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{fund.type}</span>
+                <span className={`px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{fund.type}</span>
               </td>
               <td className="px-4 py-3 font-bold">{fund.currency === 'GBP' ? '£' : '$'}{fund.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               <td className="px-4 py-3 text-zinc-700 max-w-[200px] truncate">{fund.description}</td>

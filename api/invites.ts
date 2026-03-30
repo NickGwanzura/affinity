@@ -7,10 +7,10 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { authenticateUser, createUser } from './_auth';
-import { logAuditEvent } from './_audit';
-import { sql } from './_db';
+} from './_middleware.js';
+import { authenticateUser, createUser } from './_auth.js';
+import { logAuditEvent } from './_audit.js';
+import { sql } from './_db.js';
 
 const InviteCreateSchema = z.object({
   email: z.string().email(),

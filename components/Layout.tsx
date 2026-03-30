@@ -171,7 +171,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
               zIndex: 8000,
               padding: '1rem',
               boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-              borderRadius: '0.75rem',
+              
             }}
           >
             <p style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -191,7 +191,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
               type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-md border border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer,#fff)] px-4 py-3 text-sm font-semibold text-[var(--cds-text-primary,#161616)] transition-colors hover:bg-[var(--cds-layer-hover,#e8e8e8)] md:hidden"
+              className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center  border border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer,#fff)] px-4 py-3 text-sm font-semibold text-[var(--cds-text-primary,#161616)] transition-colors hover:bg-[var(--cds-layer-hover,#e8e8e8)] md:hidden"
             >
               {isLoggingOut ? 'Signing out…' : 'Sign out'}
             </button>
@@ -243,7 +243,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
                   key={id}
                   type="button"
                   onClick={() => navigate(id)}
-                  className={`inline-flex min-h-[52px] min-w-[88px] flex-col items-center justify-center rounded-xl px-3 py-2 text-[11px] font-semibold transition-colors ${
+                  className={`inline-flex min-h-[52px] min-w-[88px] flex-col items-center justify-center  px-3 py-2 text-[11px] font-semibold transition-colors ${
                     isActive
                       ? 'bg-[var(--cds-layer-selected,#d0e2ff)] text-[var(--cds-text-primary,#161616)]'
                       : 'bg-transparent text-[var(--cds-text-secondary,#525252)]'

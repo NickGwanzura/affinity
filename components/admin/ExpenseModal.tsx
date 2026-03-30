@@ -195,7 +195,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
       />
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 
@@ -206,7 +206,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
           </h3>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-600 transition-colors p-2 rounded-lg hover:bg-zinc-100"
+            className="text-zinc-400 hover:text-zinc-600 transition-colors p-2 hover:bg-zinc-100"
             aria-label="Close modal"
             type="button"
           >
@@ -231,7 +231,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               value={formData.vehicle_id}
               onChange={(e) => handleChange('vehicle_id', e.target.value)}
               disabled={isSubmitting}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">None (General expense)</option>
               {vehicles.map((vehicle) => (
@@ -261,7 +261,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 required
                 disabled={isSubmitting}
                 placeholder="0.00"
-                className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                   errors.amount 
                     ? 'border-red-300 focus:ring-red-500' 
                     : 'border-zinc-200 focus:ring-green-500'
@@ -290,7 +290,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 value={formData.currency}
                 onChange={(e) => handleChange('currency', e.target.value as Currency)}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {currencyOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -313,7 +313,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 value={formData.category}
                 onChange={(e) => handleChange('category', e.target.value as ExpenseCategory)}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {categoryOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -332,7 +332,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 value={formData.location}
                 onChange={(e) => handleChange('location', e.target.value as VehicleStatus)}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {locationOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -343,7 +343,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
 
           {/* Driver Selection - Only shown for Driver Disbursement */}
           {isDriverDisbursement && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="bg-amber-50 border border-amber-200  p-4">
               <label 
                 htmlFor="expense-driver" 
                 className="text-sm font-semibold text-amber-800 mb-2 block"
@@ -356,7 +356,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 onChange={(e) => handleChange('driver_name', e.target.value)}
                 required={isDriverDisbursement}
                 disabled={isSubmitting}
-                className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                   errors.driver_name 
                     ? 'border-red-300 focus:ring-red-500' 
                     : 'border-amber-300 focus:ring-amber-500'
@@ -405,7 +405,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               rows={3}
               required={formData.category === EXPENSE_CATEGORIES.OTHER}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:border-transparent transition-all outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed ${
                 errors.description 
                   ? 'border-red-300 focus:ring-red-500' 
                   : 'border-zinc-200 focus:ring-green-500'
@@ -429,14 +429,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 rounded-xl border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3  shadow-lg shadow-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting && (
                 <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">

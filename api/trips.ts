@@ -6,10 +6,10 @@ import {
   requireRole,
   setSecurityHeaders,
   verifyToken,
-} from './_middleware';
-import { logAuditEvent } from './_audit';
-import { sql, validateOrderColumn } from './_db';
-import { PaginationSchema, TripSchema, TripUpdateSchema } from './_schemas';
+} from './_middleware.js';
+import { logAuditEvent } from './_audit.js';
+import { sql, validateOrderColumn } from './_db.js';
+import { PaginationSchema, TripSchema, TripUpdateSchema } from './_schemas.js';
 
 const TRIP_SELECT = `
   SELECT

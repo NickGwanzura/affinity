@@ -33,7 +33,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       aria-labelledby="confirm-title"
     >
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95"
+        className="bg-white shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-4">
