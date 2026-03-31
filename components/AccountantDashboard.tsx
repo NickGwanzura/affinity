@@ -153,8 +153,8 @@ export const AccountantDashboard: React.FC = () => {
       setShowFundModal(false);
       setFundForm({ type: 'Received', amount: '', currency: 'USD', description: '', reference: '', recipient: '', approved_by: '', date: new Date().toISOString().split('T')[0] });
       await loadData();
-      notifySuccess('Operating fund entry added');
-    } catch (err: any) { notifyError(err?.message || 'Failed to add fund entry'); }
+      notifySuccess('Operating fund recorded successfully.');
+    } catch (err: any) { notifyError(err?.message || 'Failed to record operating fund. Please try again.'); }
   };
 
   const handleDeleteFund = async (id: string) => {
@@ -163,8 +163,8 @@ export const AccountantDashboard: React.FC = () => {
     try {
       await dataService.deleteOperatingFund(id);
       await loadData();
-      notifySuccess('Entry deleted');
-    } catch (err: any) { notifyError(err?.message || 'Failed to delete entry'); }
+      notifySuccess('Operating fund deleted successfully.');
+    } catch (err: any) { notifyError(err?.message || 'Failed to delete operating fund. Please try again.'); }
   };
 
   // FIX: Centralized data loading function with error handling
@@ -201,6 +201,7 @@ export const AccountantDashboard: React.FC = () => {
       console.error('[AccountantDashboard] loadData: Error loading data:', error);
       setLoading(false);
       if (throwOnError) throw error;
+      notifyError('Failed to load dashboard data. Please refresh the page.');
     }
   };
 
@@ -714,7 +715,7 @@ export const AccountantDashboard: React.FC = () => {
     }
   };
 
-  const formatCurrency = (amount: number, currency: 'USD' | 'GBP' = 'USD') =>
+  const formatCurrency = (amount: number, currency: Currency = 'USD') =>
     formatMoney(amount, currency);
 
   const formatDate = (dateString: string) =>

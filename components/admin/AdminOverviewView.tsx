@@ -23,6 +23,9 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
 }) => {
   const totalValuation = summaries.reduce((acc, s) => acc + s.total_landed_cost_usd, 0);
   const inTransitCount = summaries.filter((s) => s.status !== 'Sold').length;
+  const efficiencyRate = summaries.length > 0
+    ? Math.round((inTransitCount / summaries.length) * 100)
+    : 0;
 
   return (
     <>
@@ -56,12 +59,12 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
 
         <DashboardCard
           title="Fleet Efficiency"
-          value="94%"
-          subtitle="Operational uptime"
+          value={summaries.length === 0 ? '—' : `${efficiencyRate}%`}
+          subtitle={summaries.length === 0 ? 'No fleet data' : `${inTransitCount} of ${summaries.length} vehicles active`}
           color="purple"
           footer={
             <div style={{ width: '100%', height: 8, background: 'var(--cds-layer-accent-01, #e8e8e8)', marginTop: '0.5rem' }}>
-              <div style={{ width: '94%', height: '100%', background: 'var(--cds-support-success, #24a148)' }} />
+              <div style={{ width: `${efficiencyRate}%`, height: '100%', background: 'var(--cds-support-success, #24a148)' }} />
             </div>
           }
         />

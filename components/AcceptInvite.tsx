@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { dataService } from '../services/dataService';
 import { UserInvite, AuthSession } from '../types';
+import { useToast } from './Toast';
 
 interface AcceptInviteProps {
     token: string;
@@ -10,6 +11,7 @@ interface AcceptInviteProps {
 }
 
 export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, onCancel }) => {
+    const { showToast } = useToast();
     const [invite, setInvite] = useState<UserInvite | null>(null);
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -41,20 +43,24 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
 
         if (password.length < 8) {
             setError('Password must be at least 8 characters long.');
+            showToast('Password must be at least 8 characters long.', 'warning');
             return;
         }
 
         if (password !== confirmPassword) {
             setError('Passwords do not match.');
+            showToast('Passwords do not match.', 'warning');
             return;
         }
 
         setSubmitting(true);
         try {
             const session = await dataService.acceptInvite(token, password);
+            showToast('Account created successfully. Welcome!', 'success');
             onSuccess(session);
         } catch (err: any) {
             setError(err.message || 'Failed to accept invitation. Please try again.');
+            showToast(err.message || 'Failed to accept invitation. Please try again.', 'error');
         } finally {
             setSubmitting(false);
         }

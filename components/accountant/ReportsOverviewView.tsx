@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LandedCostSummary, Invoice } from '../../types';
+import type { LandedCostSummary, Invoice, Currency } from '../../types';
 import { Button, InsightPanel, MetricBarList, RankedMetricList, StatCard } from '../ui';
 
 interface MonthlyTrendDatum {
@@ -26,7 +26,7 @@ interface ReportsOverviewViewProps {
   invoices: Invoice[];
   revenueByClientData: MetricDatum[];
   summaries: LandedCostSummary[];
-  formatCurrency: (amount: number, currency?: 'USD' | 'GBP') => string;
+  formatCurrency: (amount: number, currency?: Currency) => string;
   onExportPDF: () => void;
   onExportCSV: () => void;
   onExportDriverFundsReport: () => void;

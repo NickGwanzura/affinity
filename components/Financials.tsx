@@ -10,6 +10,7 @@ import {
  generateStatementPDF,
  type StatementData,
 } from '../services/pdfService';
+import { Button } from './ui';
 import { useConfirm } from './ConfirmModal';
 import { useToast } from './Toast';
 import { ClientFormModal, type ClientFormValue } from './shared/ClientFormModal';
@@ -136,6 +137,9 @@ export const Financials: React.FC = () => {
  const [statementDateFrom, setStatementDateFrom] = useState('');
  const [statementDateTo, setStatementDateTo] = useState('');
  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+ const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
+ const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
+ const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
  const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
@@ -687,6 +691,7 @@ export const Financials: React.FC = () => {
  return;
  }
 
+ setIsSubmittingQuote(true);
  try {
  const vehicleId = normalizeOptionalRelatedId(
  quoteForm.vehicle_id,
@@ -723,6 +728,8 @@ export const Financials: React.FC = () => {
  } catch (error: any) {
  console.error('[Financials] handleCreateQuote failed:', error);
  showToast(error?.message || 'Failed to save quote', 'error');
+ } finally {
+ setIsSubmittingQuote(false);
  }
  };
 
@@ -747,6 +754,7 @@ export const Financials: React.FC = () => {
  return;
  }
 
+ setIsSubmittingInvoice(true);
  try {
  const vehicleId = normalizeOptionalRelatedId(
  invoiceForm.vehicle_id,
@@ -787,6 +795,8 @@ export const Financials: React.FC = () => {
  } catch (error: any) {
  console.error('[Financials] handleSubmitInvoice failed:', error);
  showToast(error?.message || `Failed to ${editingInvoice ? 'update' : 'create'} invoice`, 'error');
+ } finally {
+ setIsSubmittingInvoice(false);
  }
  };
 
@@ -934,6 +944,7 @@ export const Financials: React.FC = () => {
  ? `ALLOC-${Date.now()}`
  : `PAY-${Date.now()}`;
 
+ setIsSubmittingPayment(true);
  try {
  const payment = editingPayment
  ? await dataService.updatePayment(editingPayment.id, {
@@ -1020,6 +1031,8 @@ export const Financials: React.FC = () => {
  } catch (error: any) {
  console.error('[Financials] handleRecordPayment failed:', error);
  showToast(error?.message || 'Failed to record payment', 'error');
+ } finally {
+ setIsSubmittingPayment(false);
  }
  };
 
@@ -1134,7 +1147,7 @@ export const Financials: React.FC = () => {
  try {
  await dataService.deleteQuote(quote.id);
  await loadData(true);
- showToast('Quote deleted successfully', 'success');
+ showToast('Quote deleted successfully.', 'success');
  } catch (error: any) {
  console.error('Failed to delete quote:', error);
  showToast(error?.message || 'Failed to delete quote', 'error');
@@ -1160,7 +1173,7 @@ export const Financials: React.FC = () => {
  try {
  await dataService.deleteInvoice(invoice.id);
  await loadData(true);
- showToast('Invoice deleted successfully', 'success');
+ showToast('Invoice deleted successfully.', 'success');
  } catch (error: any) {
  console.error('Failed to delete invoice:', error);
  showToast(error?.message || 'Failed to delete invoice', 'error');
@@ -1186,7 +1199,7 @@ export const Financials: React.FC = () => {
  try {
  await dataService.deletePayment(payment.id);
  await loadData(true);
- showToast('Payment deleted successfully', 'success');
+ showToast('Payment deleted successfully.', 'success');
  } catch (error: any) {
  console.error('Failed to delete payment:', error);
  showToast(error?.message || 'Failed to delete payment', 'error');
@@ -1623,9 +1636,15 @@ export const Financials: React.FC = () => {
  >
  Cancel
  </button>
- <button type="submit" className="flex-1 bg-blue-600 px-4 py-3 sm:py-3 text-sm font-bold text-white hover:bg-blue-700 touch-manipulation">
+ <Button
+ type="submit"
+ variant="primary"
+ isLoading={isSubmittingQuote}
+ disabled={isSubmittingQuote}
+ className="flex-1"
+ >
  {editingQuote ? 'Save' : 'Create'}
- </button>
+ </Button>
  </div>
  </div>
  </form>
@@ -1998,9 +2017,15 @@ export const Financials: React.FC = () => {
  >
  Cancel
  </button>
- <button type="submit" className="flex-1 bg-green-600 px-4 py-4 sm:py-3 text-base sm:text-sm font-bold text-white hover:bg-green-700 shadow-lg">
+ <Button
+ type="submit"
+ variant="primary"
+ isLoading={isSubmittingInvoice}
+ disabled={isSubmittingInvoice}
+ className="flex-1"
+ >
  {editingInvoice ? 'Save Changes' : 'Create Invoice'}
- </button>
+ </Button>
  </div>
  </form>
  </div>
@@ -2240,9 +2265,15 @@ export const Financials: React.FC = () => {
  >
  Cancel
  </button>
- <button type="submit" className="flex-1 bg-green-600 px-4 py-3 sm:py-3 text-sm font-bold text-white hover:bg-green-700 touch-manipulation">
+ <Button
+ type="submit"
+ variant="primary"
+ isLoading={isSubmittingPayment}
+ disabled={isSubmittingPayment}
+ className="flex-1"
+ >
  {editingPayment ? 'Save' : 'Record'}
- </button>
+ </Button>
  </div>
  </div>
  </form>

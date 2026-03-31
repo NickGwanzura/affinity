@@ -33,7 +33,7 @@ const getSnapshot = () => store;
 const sanitizeMessage = (message: string) => {
   const trimmed = message.trim();
   if (!trimmed) {
-    return 'Something happened.';
+    return 'An unexpected error occurred. Please try again.';
   }
 
   if (trimmed.length <= MAX_MESSAGE_LENGTH) {

@@ -22,6 +22,9 @@ export interface DriverFundSummary {
   allocationCount: number;
   spendCount: number;
   latestActivity?: string;
+  allocatedByCurrency: Partial<Record<Currency, number>>;
+  spentByCurrency: Partial<Record<Currency, number>>;
+  balanceByCurrency: Partial<Record<Currency, number>>;
 }
 
 export interface DriverFundsReportData {
@@ -113,6 +116,9 @@ export function buildDriverFundsReportData(
       balanceUsd: 0,
       allocationCount: 0,
       spendCount: 0,
+      allocatedByCurrency: {},
+      spentByCurrency: {},
+      balanceByCurrency: {},
     };
     summaryMap.set(driverName, created);
     return created;
@@ -122,6 +128,7 @@ export function buildDriverFundsReportData(
     const summary = ensureSummary(row.driverName);
     summary.allocatedUsd += row.amountUsd;
     summary.allocationCount += 1;
+    summary.allocatedByCurrency[row.currency] = (summary.allocatedByCurrency[row.currency] || 0) + row.amount;
     summary.latestActivity =
       !summary.latestActivity || new Date(row.date) > new Date(summary.latestActivity)
         ? row.date
@@ -132,6 +139,7 @@ export function buildDriverFundsReportData(
     const summary = ensureSummary(row.driverName);
     summary.spentUsd += row.amountUsd;
     summary.spendCount += 1;
+    summary.spentByCurrency[row.currency] = (summary.spentByCurrency[row.currency] || 0) + row.amount;
     summary.latestActivity =
       !summary.latestActivity || new Date(row.date) > new Date(summary.latestActivity)
         ? row.date
@@ -139,10 +147,17 @@ export function buildDriverFundsReportData(
   });
 
   const summaries = Array.from(summaryMap.values())
-    .map((summary) => ({
-      ...summary,
-      balanceUsd: summary.allocatedUsd - summary.spentUsd,
-    }))
+    .map((summary) => {
+      const balanceByCurrency: Partial<Record<Currency, number>> = {};
+      for (const [currency, allocated] of Object.entries(summary.allocatedByCurrency) as [Currency, number][]) {
+        balanceByCurrency[currency] = (allocated || 0) - (summary.spentByCurrency[currency] || 0);
+      }
+      return {
+        ...summary,
+        balanceUsd: summary.allocatedUsd - summary.spentUsd,
+        balanceByCurrency,
+      };
+    })
     .sort((a, b) => b.allocatedUsd - a.allocatedUsd);
 
   const allocatedUsd = allocationRows.reduce((sum, row) => sum + row.amountUsd, 0);

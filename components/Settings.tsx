@@ -95,7 +95,7 @@ export const Settings: React.FC = () => {
  const setStatusMessage = (message: string, toastType: Parameters<typeof showToast>[1] = 'success') => {
  setSaveStatus(message);
  showToast(message, toastType);
- window.setTimeout(() => setSaveStatus(''), toastType === 'error' ? 5000 : 3500);
+ window.setTimeout(() => setSaveStatus(''), 4000);
  };
 
  const loadAuditLogs = async () => {

@@ -228,12 +228,23 @@ export const DriverPortal: React.FC = () => {
       const currency = currencies[0];
       return formatMoney(totals[currency] || 0, currency);
     }
+    if (currencies.length > 1) {
+      return formatCurrencyBreakdown(totals);
+    }
     return formatUsd(usdAmount);
   };
 
+  const availableByCurrency = useMemo<CurrencyTotals>(() => {
+    const result: CurrencyTotals = {};
+    for (const [cur, allocated] of Object.entries(allocationCurrencyTotals) as Array<[Currency, number | undefined]>) {
+      result[cur] = (allocated || 0) - (spentCurrencyTotals[cur] || 0);
+    }
+    return result;
+  }, [allocationCurrencyTotals, spentCurrencyTotals]);
+
   const availableBalanceDisplay = balanceCurrency
     ? formatMoney(availableUsd / (EXCHANGE_RATES[balanceCurrency] || 1), balanceCurrency)
-    : formatUsd(availableUsd);
+    : formatCurrencyBreakdown(availableByCurrency) || formatUsd(availableUsd);
 
   const ledger = useMemo<DriverLedgerEntry[]>(() => {
     const allocationEntries: DriverLedgerEntry[] = expenseDisbursements.map((expense) => ({
@@ -496,11 +507,9 @@ export const DriverPortal: React.FC = () => {
               {availableBalanceDisplay}
             </p>
             <p className="mt-2 text-xs text-slate-200/80">
-              {balanceCurrency
+              {allocationBreakdown
                 ? `USD equivalent: ${formatUsd(availableUsd)}`
-                : allocationBreakdown
-                  ? `Assigned natively: ${allocationBreakdown}`
-                  : 'No driver-specific allocation recorded yet.'}
+                : 'No driver-specific allocation recorded yet.'}
             </p>
             <p className="text-sm text-slate-200 mt-3 leading-5">
               {availableUsd > 0
@@ -515,11 +524,7 @@ export const DriverPortal: React.FC = () => {
         <StatCard
           title="Allocated"
           value={formatPreferredDisplay(allocatedUsd, allocationCurrencyTotals)}
-          subtitle={
-            getNonZeroCurrencies(allocationCurrencyTotals).length > 1
-              ? `${allocationBreakdown} assigned`
-              : `${expenseDisbursements.length + driverFunds.length} allocation${expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded`
-          }
+          subtitle={`${expenseDisbursements.length + driverFunds.length} allocation${expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded`}
           color="blue"
         />
         <StatCard

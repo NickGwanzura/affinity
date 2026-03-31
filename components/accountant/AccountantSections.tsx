@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Expense, Invoice, LandedCostSummary, Payment } from '../../types';
+import type { Currency, Expense, Invoice, LandedCostSummary, Payment } from '../../types';
 import { StatCard, StatusBadge } from '../ui';
 
 type ExpenseReportRow = {
@@ -17,7 +17,7 @@ interface AccountantOverviewSectionProps {
   invoices: Invoice[];
   payments: Payment[];
   summaries: LandedCostSummary[];
-  formatCurrency: (amount: number, currency?: 'USD' | 'GBP') => string;
+  formatCurrency: (amount: number, currency?: Currency) => string;
   formatDate: (value: string) => string;
 }
 
@@ -74,7 +74,7 @@ export const AccountantOverviewSection: React.FC<AccountantOverviewSectionProps>
                 <p className="text-xs text-zinc-500">{formatDate(invoice.created_at)}</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-zinc-900">{formatCurrency(invoice.amount_usd, (invoice.currency as 'USD' | 'GBP') || 'USD')}</p>
+                <p className="font-bold text-zinc-900">{formatCurrency(invoice.amount_usd, invoice.currency || 'USD')}</p>
                 <StatusBadge status={invoice.status} />
               </div>
             </div>
@@ -167,7 +167,7 @@ export const AccountantOverviewSection: React.FC<AccountantOverviewSectionProps>
 
 interface AccountantInvoicesSectionProps {
   invoices: Invoice[];
-  formatCurrency: (amount: number, currency?: 'USD' | 'GBP') => string;
+  formatCurrency: (amount: number, currency?: Currency) => string;
   formatDate: (value: string) => string;
   truncateValue: (value: string | null | undefined, length: number, fallback?: string) => string;
 }
@@ -192,7 +192,7 @@ export const AccountantInvoicesSection: React.FC<AccountantInvoicesSectionProps>
           <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Amount</p>
-              <p className="font-bold text-zinc-900">{formatCurrency(invoice.amount_usd, (invoice.currency as 'USD' | 'GBP') || 'USD')}</p>
+              <p className="font-bold text-zinc-900">{formatCurrency(invoice.amount_usd, invoice.currency || 'USD')}</p>
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Due Date</p>
@@ -223,7 +223,7 @@ export const AccountantInvoicesSection: React.FC<AccountantInvoicesSectionProps>
             <tr key={invoice.id} className="hover:bg-zinc-50">
               <td className="px-4 py-3 font-mono text-xs">{invoice.invoice_number}</td>
               <td className="px-4 py-3 font-mono text-xs">{truncateValue(invoice.vehicle_id, 8)}</td>
-              <td className="px-4 py-3 text-right font-bold">{formatCurrency(invoice.amount_usd, (invoice.currency as 'USD' | 'GBP') || 'USD')}</td>
+              <td className="px-4 py-3 text-right font-bold">{formatCurrency(invoice.amount_usd, invoice.currency || 'USD')}</td>
               <td className="px-4 py-3"><StatusBadge status={invoice.status} /></td>
               <td className="px-4 py-3">{formatDate(invoice.due_date)}</td>
               <td className="px-4 py-3">{formatDate(invoice.created_at)}</td>
@@ -237,7 +237,7 @@ export const AccountantInvoicesSection: React.FC<AccountantInvoicesSectionProps>
 
 interface AccountantExpensesSectionProps {
   expenses: Expense[];
-  formatCurrency: (amount: number, currency?: 'USD' | 'GBP') => string;
+  formatCurrency: (amount: number, currency?: Currency) => string;
   formatDate: (value: string) => string;
   onEditExpense: (expense: Expense) => void;
 }
@@ -319,7 +319,7 @@ export const AccountantExpensesSection: React.FC<AccountantExpensesSectionProps>
 
 interface AccountantPaymentsSectionProps {
   payments: Payment[];
-  formatCurrency: (amount: number, currency?: 'USD' | 'GBP') => string;
+  formatCurrency: (amount: number, currency?: Currency) => string;
   formatDate: (value: string) => string;
   truncateValue: (value: string | null | undefined, length: number, fallback?: string) => string;
 }
@@ -403,7 +403,7 @@ interface AccountantExpenseReportsSectionProps {
   filteredExpensesForReport: Expense[];
   expenseReportTotal: number;
   expenseReportByCategory: ExpenseReportRow[];
-  formatCurrency: (amount: number, currency?: 'USD' | 'GBP') => string;
+  formatCurrency: (amount: number, currency?: Currency) => string;
   formatDate: (value: string) => string;
   onDateFromChange: (value: string) => void;
   onDateToChange: (value: string) => void;

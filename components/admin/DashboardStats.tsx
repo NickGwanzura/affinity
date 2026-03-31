@@ -79,7 +79,7 @@ const StatCard: React.FC<StatCardProps> = memo(({
       </p>
 
       {/* Value */}
-      <h2 className={`${styles.value} text-4xl font-black mt-3`}>
+      <h2 className={`${styles.value} text-2xl sm:text-3xl md:text-4xl font-black mt-3`}>
         {value}
       </h2>
 
@@ -143,7 +143,7 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
       <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">
         Fleet Efficiency
       </p>
-      <h2 className="text-4xl font-black mt-3 text-zinc-900">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mt-3 text-zinc-900">
         {clampedRate}%
       </h2>
       

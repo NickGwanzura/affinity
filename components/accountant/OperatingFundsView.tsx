@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { OperatingFund } from '../../types';
 import type { DriverFundsReportData } from '../../utils/driverFunds';
 import { Button, DriverFundsSnapshotPanel, DriverFundsSummaryPanel } from '../ui';
 import { formatDate } from '../../utils/formatters';
+import { useConfirm } from '../ConfirmModal';
 
 interface OperatingFundsViewProps {
   operatingFunds: OperatingFund[];
@@ -21,12 +22,32 @@ export const OperatingFundsView: React.FC<OperatingFundsViewProps> = ({
   onExportDriverFundsReport,
   onOpenFundModal,
 }) => {
+  const { confirm, ConfirmDialog } = useConfirm();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Delete Transaction',
+      message: 'Delete this transaction? This cannot be undone.',
+      confirmLabel: 'Delete',
+      confirmVariant: 'danger',
+    });
+    if (!confirmed) return;
+    setDeletingId(id);
+    try {
+      await onDeleteFund(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const totalReceived = operatingFunds.filter((fund) => fund.type === 'Received').reduce((sum, fund) => sum + fund.amount, 0);
   const totalDisbursed = operatingFunds.filter((fund) => fund.type === 'Disbursed').reduce((sum, fund) => sum + fund.amount, 0);
   const balance = totalReceived - totalDisbursed;
 
   return (
     <div className="space-y-4 p-4">
+      <ConfirmDialog />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-bold text-zinc-900">Operating Funds</h3>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
@@ -93,7 +114,15 @@ export const OperatingFundsView: React.FC<OperatingFundsViewProps> = ({
               <p><span className="font-semibold text-zinc-900">Approved by:</span> {fund.approved_by || '—'}</p>
             </div>
             <div className="mt-4">
-              <button onClick={() => onDeleteFund(fund.id)} className="min-h-[44px] text-sm font-semibold text-red-500 hover:text-red-700">Delete</button>
+              <Button
+                variant="danger"
+                size="sm"
+                isLoading={deletingId === fund.id}
+                disabled={deletingId === fund.id}
+                onClick={() => handleDelete(fund.id)}
+              >
+                {deletingId === fund.id ? 'Deleting...' : 'Delete'}
+              </Button>
             </div>
           </div>
         ))}
@@ -126,7 +155,15 @@ export const OperatingFundsView: React.FC<OperatingFundsViewProps> = ({
               <td className="px-4 py-3 text-xs text-zinc-500">{fund.reference || fund.recipient || '—'}</td>
               <td className="px-4 py-3 text-xs text-zinc-500">{fund.approved_by || '—'}</td>
               <td className="px-4 py-3 text-right">
-                <button onClick={() => onDeleteFund(fund.id)} className="text-red-500 hover:text-red-700 text-xs font-semibold">Delete</button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  isLoading={deletingId === fund.id}
+                  disabled={deletingId === fund.id}
+                  onClick={() => handleDelete(fund.id)}
+                >
+                  {deletingId === fund.id ? 'Deleting...' : 'Delete'}
+                </Button>
               </td>
             </tr>
           ))}

@@ -193,6 +193,7 @@ export const AdminDashboard: React.FC = () => {
       if (throwOnError) {
         throw error;
       }
+      notifyError('Failed to load dashboard data. Please refresh the page.');
     }
   };
 
@@ -237,7 +238,7 @@ export const AdminDashboard: React.FC = () => {
       } catch (refreshError: any) {
         // Vehicle was saved but refresh failed - notify user to manually refresh
         console.error('[AdminDashboard] handleSaveVehicle: Vehicle saved but refresh failed:', refreshError);
-        notifyWarning('Vehicle saved but failed to refresh list. Please refresh the page to see the new vehicle.');
+        showToast('Vehicle saved but failed to refresh list. Please refresh the page.', 'warning', 6000);
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveVehicle: Error saving vehicle:', error);
@@ -460,7 +461,7 @@ export const AdminDashboard: React.FC = () => {
         notifySuccess(editingClient ? 'Client updated successfully!' : 'Client created successfully!');
       } catch (refreshError) {
         console.error('[AdminDashboard] handleSaveClient: Client saved but refresh failed:', refreshError);
-        notifyWarning('Client saved but failed to refresh list. Please refresh the page.');
+        showToast('Client saved but failed to refresh list. Please refresh the page.', 'warning', 6000);
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveClient: Error saving client:', error);
@@ -511,7 +512,7 @@ export const AdminDashboard: React.FC = () => {
         notifySuccess(editingEmployee ? 'Employee updated successfully!' : 'Employee created successfully!');
       } catch (refreshError) {
         console.error('[AdminDashboard] handleSaveEmployee: Employee saved but refresh failed:', refreshError);
-        notifyWarning('Employee saved but failed to refresh list. Please refresh the page.');
+        showToast('Employee saved but failed to refresh list. Please refresh the page.', 'warning', 6000);
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveEmployee: Error saving employee:', error);
@@ -572,7 +573,7 @@ export const AdminDashboard: React.FC = () => {
         notifySuccess('Payslip generated successfully!');
       } catch (refreshError) {
         console.error('[AdminDashboard] handleGeneratePayslip: Payslip saved but refresh failed:', refreshError);
-        notifyWarning('Payslip generated but failed to refresh list. Please refresh the page.');
+        showToast('Payslip generated but failed to refresh list. Please refresh the page.', 'warning', 6000);
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleGeneratePayslip: Error generating payslip:', error);
@@ -584,6 +585,8 @@ export const AdminDashboard: React.FC = () => {
     try {
       await dataService.updatePayslipStatus(id, status);
       await fetchData(true);
+      const statusLabel = status === 'Approved' ? 'approved' : status === 'Paid' ? 'marked as paid' : status.toLowerCase();
+      notifySuccess(`Payslip ${statusLabel} successfully.`);
     } catch (error: any) {
       console.error('[AdminDashboard] handleUpdatePayslipStatus: Error updating payslip status:', error);
       notifyError(error?.message || 'Failed to update payslip status.');
@@ -661,7 +664,7 @@ export const AdminDashboard: React.FC = () => {
           : 'Disbursement recorded successfully!');
       } catch (refreshError) {
         console.error('[AdminDashboard] handleAddOperatingFund: Saved but refresh failed:', refreshError);
-        notifyWarning('Transaction saved but failed to refresh. Please refresh the page.');
+        showToast('Transaction saved but failed to refresh. Please refresh the page.', 'warning', 6000);
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleAddOperatingFund: Error:', error);

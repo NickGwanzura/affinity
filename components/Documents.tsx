@@ -56,6 +56,7 @@ export const Documents: React.FC = () => {
         setLoading(false);
       } catch (error) {
         setLoading(false);
+        showToast('Failed to load documents. Please refresh the page.', 'error');
       }
     };
     load();

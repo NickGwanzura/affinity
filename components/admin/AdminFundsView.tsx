@@ -30,7 +30,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
           </div>
           <span className="text-emerald-100 text-sm font-semibold uppercase tracking-wide">Funds Received</span>
         </div>
-        <p className="text-3xl font-black">${fundsBalance.received.toLocaleString()}</p>
+        <p className="text-2xl sm:text-3xl font-black">${fundsBalance.received.toLocaleString()}</p>
       </div>
 
       <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6  text-white shadow-lg">
@@ -42,7 +42,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
           </div>
           <span className="text-orange-100 text-sm font-semibold uppercase tracking-wide">Total Disbursed</span>
         </div>
-        <p className="text-3xl font-black">${fundsBalance.disbursed.toLocaleString()}</p>
+        <p className="text-2xl sm:text-3xl font-black">${fundsBalance.disbursed.toLocaleString()}</p>
       </div>
 
       <div className={`bg-gradient-to-br ${fundsBalance.balance >= 0 ? 'from-blue-500 to-blue-600' : 'from-red-500 to-red-600'} p-6  text-white shadow-lg`}>
@@ -54,7 +54,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
           </div>
           <span className="text-blue-100 text-sm font-semibold uppercase tracking-wide">Current Balance</span>
         </div>
-        <p className="text-3xl font-black">${fundsBalance.balance.toLocaleString()}</p>
+        <p className="text-2xl sm:text-3xl font-black">${fundsBalance.balance.toLocaleString()}</p>
       </div>
     </div>
 
@@ -84,7 +84,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
         <h3 className="text-xl font-bold text-zinc-900">Transaction History</h3>
         <p className="text-zinc-500 text-sm">Track all operating funds received and disbursed</p>
       </div>
-      <div className="space-y-3 p-4 md:hidden">
+      <div className="space-y-3 p-4 sm:hidden">
         {operatingFunds.length === 0 ? (
           <div className=" border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
             No transactions yet. Record a transaction to get started.
@@ -123,7 +123,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
         )}
       </div>
 
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full">
           <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>

@@ -79,7 +79,7 @@ const HARDCODED_PDF_LOGO_URL = affinityLogoUrl;
 const LIABILITY_DISCLAIMER =
   'Liability Disclaimer: Affinity Logistics acts as a logistics and facilitation service provider for the transportation of vehicles, goods, and cargo. While we take all reasonable care in handling and coordinating shipments, Affinity Logistics shall not be held liable for any loss, damage, or deterioration of goods or vehicles during transit, shipping, handling, storage, or customs processes. Clients are strongly encouraged to obtain appropriate transit or marine insurance for their cargo or vehicles where possible. Any claims relating to damage, loss, or delays must be directed to the relevant shipping line or insurance provider where coverage exists.';
 
-const formatCurrencyAmount = (amount: number, currency: 'USD' | 'GBP' = 'USD'): string =>
+const formatCurrencyAmount = (amount: number, currency: string = 'USD'): string =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
@@ -2715,11 +2715,18 @@ export const generateDriverFundsReportPDF = async (
   doc.setLineWidth(0.3);
   doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 32, 3, 3, 'S');
 
+  const allAllocatedCurrencies = new Set(
+    report.summaries.flatMap((s) => Object.keys(s.allocatedByCurrency).filter((k) => (s.allocatedByCurrency[k] || 0) > 0))
+  );
+  const currencyCountLabel = allAllocatedCurrencies.size > 1
+    ? `${allAllocatedCurrencies.size} currencies`
+    : '';
+
   const summaryItems = [
-    { label: 'ALLOCATED', value: formatCurrencyAmount(report.totals.allocatedUsd, 'USD') },
-    { label: 'SPENT', value: formatCurrencyAmount(report.totals.spentUsd, 'USD') },
-    { label: 'BALANCE', value: formatCurrencyAmount(report.totals.balanceUsd, 'USD') },
-    { label: 'FUNDED DRIVERS', value: String(report.totals.fundedDrivers) },
+    { label: 'ALLOCATED', value: formatCurrencyAmount(report.totals.allocatedUsd, 'USD'), subLabel: currencyCountLabel },
+    { label: 'SPENT', value: formatCurrencyAmount(report.totals.spentUsd, 'USD'), subLabel: currencyCountLabel },
+    { label: 'BALANCE', value: formatCurrencyAmount(report.totals.balanceUsd, 'USD'), subLabel: '' },
+    { label: 'FUNDED DRIVERS', value: String(report.totals.fundedDrivers), subLabel: '' },
   ];
 
   summaryItems.forEach((item, index) => {
@@ -2732,8 +2739,20 @@ export const generateDriverFundsReportPDF = async (
     doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(item.value, x, currentY + 22);
+    if (item.subLabel) {
+      doc.setFontSize(FONT_SIZES.XSMALL);
+      doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+      doc.setTextColor(...COLORS.LIGHT_GRAY);
+      doc.text(item.subLabel, x, currentY + 28);
+    }
   });
   currentY += 42;
+
+  const formatSummaryCurrencies = (byCurrency: Partial<Record<string, number>>, usdFallback: number): string => {
+    const entries = Object.entries(byCurrency).filter(([, amt]) => (amt || 0) > 0);
+    if (entries.length === 0) return formatCurrencyAmount(usdFallback, 'USD');
+    return entries.map(([cur, amt]) => formatCurrencyAmount(amt || 0, cur)).join('\n');
+  };
 
   if (report.summaries.length > 0) {
     currentY = builder.ensureContentSpace(30, currentY);
@@ -2744,11 +2763,11 @@ export const generateDriverFundsReportPDF = async (
 
     autoTable(doc, {
       startY: currentY + 6,
-      head: [['DRIVER', 'ALLOCATED (USD)', 'SPENT (USD)', 'BALANCE (USD)', 'ALLOCATIONS', 'SPENDS']],
+      head: [['DRIVER', 'ALLOCATED', 'SPENT', 'BALANCE (USD)', 'ALLOCATIONS', 'SPENDS']],
       body: report.summaries.map((summary) => [
         summary.driverName,
-        formatCurrencyAmount(summary.allocatedUsd, 'USD'),
-        formatCurrencyAmount(summary.spentUsd, 'USD'),
+        formatSummaryCurrencies(summary.allocatedByCurrency, summary.allocatedUsd),
+        formatSummaryCurrencies(summary.spentByCurrency, summary.spentUsd),
         formatCurrencyAmount(summary.balanceUsd, 'USD'),
         String(summary.allocationCount),
         String(summary.spendCount),
@@ -2779,13 +2798,14 @@ export const generateDriverFundsReportPDF = async (
 
     autoTable(doc, {
       startY: currentY + 6,
-      head: [['DATE', 'DRIVER', 'SOURCE', 'DESCRIPTION', 'VEHICLE', 'USD']],
+      head: [['DATE', 'DRIVER', 'SOURCE', 'DESCRIPTION', 'VEHICLE', 'NATIVE AMOUNT', 'USD EQ.']],
       body: report.allocationRows.map((row) => [
         new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         row.driverName,
         row.source,
         sanitizeText(row.description) || '—',
         row.vehicleLabel,
+        formatCurrencyAmount(row.amount, row.currency),
         formatCurrencyAmount(row.amountUsd, 'USD'),
       ]),
       theme: 'plain',
@@ -2794,11 +2814,12 @@ export const generateDriverFundsReportPDF = async (
       styles: { fontSize: FONT_SIZES.XXSMALL, cellPadding: 3, lineColor: COLORS.BORDER_GRAY, lineWidth: TABLE_STYLES.LINE_WIDTH, textColor: COLORS.PRIMARY_DARK },
       columnStyles: {
         0: { cellWidth: 22 },
-        1: { cellWidth: 28 },
-        2: { cellWidth: 24 },
-        3: { cellWidth: 56 },
-        4: { cellWidth: 28 },
-        5: { cellWidth: 22, halign: 'right', fontStyle: 'bold' },
+        1: { cellWidth: 26 },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 46 },
+        4: { cellWidth: 24 },
+        5: { cellWidth: 28, halign: 'right' },
+        6: { cellWidth: 22, halign: 'right', fontStyle: 'bold' },
       },
       alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
     });

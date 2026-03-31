@@ -67,7 +67,7 @@ export const AdminTripsView: React.FC<AdminTripsViewProps> = ({ trips, onEditTri
           <h3 className="text-xl font-black text-zinc-900">Departure Calendar</h3>
           <p className="mt-1 text-sm text-zinc-500">Operational view of the next 7 days.</p>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7 lg:grid-cols-7">
           {nextSevenDays.map((day) => (
             <div key={day.isoDate} className={` border p-3 ${day.count > 0 ? 'border-blue-200 bg-blue-50' : 'border-zinc-200 bg-zinc-50'}`}>
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{day.label}</p>

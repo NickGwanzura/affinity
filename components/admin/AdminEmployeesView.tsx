@@ -13,13 +13,44 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
   onDeleteEmployee,
 }) => (
   <div className="space-y-6">
-    <div className="bg-gradient-to-r from-orange-600 to-red-600 p-8  text-white">
-      <h3 className="text-2xl font-black mb-2">Employee Management</h3>
+    <div className="bg-gradient-to-r from-orange-600 to-red-600 p-4 sm:p-6 md:p-8  text-white">
+      <h3 className="text-xl sm:text-2xl font-black mb-2">Employee Management</h3>
       <p className="text-orange-100">Manage your team and their details</p>
     </div>
 
     <div className="bg-white  shadow-lg border border-zinc-200 overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="space-y-3 p-3 sm:hidden">
+        {employees.length === 0 ? (
+          <div className="border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
+            No employees yet. Click &quot;Add Employee&quot; to get started.
+          </div>
+        ) : (
+          employees.map((employee) => (
+            <div key={employee.id} className="border border-zinc-100 bg-white p-4 shadow-sm">
+              <div className="mb-2 flex items-start justify-between">
+                <div>
+                  <div className="font-bold text-zinc-900">{employee.name}</div>
+                  <div className="font-mono text-xs text-zinc-500">{employee.employee_number}</div>
+                </div>
+                <span className={`inline-block px-2 py-0.5 text-xs font-semibold  ${
+                  employee.status === 'Active' ? 'bg-green-100 text-green-700' :
+                  employee.status === 'On Leave' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                  {employee.status}
+                </span>
+              </div>
+              <div className="mb-1 text-xs text-zinc-600">{employee.position} &middot; {employee.employment_type}</div>
+              <div className="mb-3 font-semibold text-zinc-900 text-sm">${employee.base_pay_usd.toLocaleString()} {employee.currency}</div>
+              <div className="flex flex-wrap gap-2 border-t border-zinc-50 pt-3">
+                <button onClick={() => onEditEmployee(employee)} className="px-2 py-1 text-xs font-bold text-blue-600 hover:text-blue-800">Edit</button>
+                <button onClick={() => onDeleteEmployee(employee.id)} className="px-2 py-1 text-xs font-bold text-red-600 hover:text-red-800">Delete</button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full">
           <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
@@ -36,7 +67,7 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
             {employees.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
-                  No employees yet. Click "Add Employee" to get started.
+                  No employees yet. Click &quot;Add Employee&quot; to get started.
                 </td>
               </tr>
             ) : (

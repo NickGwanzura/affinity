@@ -1,10 +1,8 @@
 import type { Currency } from '../types';
 
-type MoneyCurrency = Extract<Currency, 'USD' | 'GBP'>;
-
 export const formatCurrency = (
   amount: number,
-  currency: MoneyCurrency = 'USD',
+  currency: Currency = 'USD',
   locale = 'en-US',
 ): string =>
   new Intl.NumberFormat(locale, {

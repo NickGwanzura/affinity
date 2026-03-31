@@ -21,14 +21,65 @@ export const PayslipsListView: React.FC<PayslipsListViewProps> = ({
 }) => (
   <div className="space-y-6">
     {showIntro && (
-      <div className="bg-gradient-to-r from-pink-600 to-purple-600 p-8  text-white">
-        <h3 className="text-2xl font-black mb-2">Payslip Management</h3>
+      <div className="bg-gradient-to-r from-pink-600 to-purple-600 p-4 sm:p-6 md:p-8  text-white">
+        <h3 className="text-xl sm:text-2xl font-black mb-2">Payslip Management</h3>
         <p className="text-pink-100">Generate and manage employee payslips</p>
       </div>
     )}
 
     <div className="bg-white  shadow-lg border border-zinc-200 overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="space-y-3 p-3 sm:hidden">
+        {payslips.length === 0 ? (
+          <div className="border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
+            No payslips yet. Click &quot;Generate Payslip&quot; to get started.
+          </div>
+        ) : (
+          payslips.map((payslip) => (
+            <div key={payslip.id} className="border border-zinc-100 bg-white p-4 shadow-sm">
+              <div className="mb-2 flex items-start justify-between">
+                <div>
+                  <div className="font-bold text-zinc-900">{payslip.employee?.name || 'N/A'}</div>
+                  <div className="font-mono text-xs text-zinc-500">{payslip.payslip_number}</div>
+                </div>
+                <span className={`inline-block px-2 py-0.5 text-xs font-semibold  ${
+                  payslip.status === 'Generated' ? 'bg-blue-100 text-blue-700' :
+                  payslip.status === 'Approved' ? 'bg-yellow-100 text-yellow-700' :
+                  payslip.status === 'Paid' ? 'bg-green-100 text-green-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                  {payslip.status}
+                </span>
+              </div>
+              <div className="mb-1 text-xs text-zinc-500">{formatMonthYear(payslip.year, payslip.month)}</div>
+              <div className="mb-3 text-sm">
+                <span className="text-zinc-600">${payslip.gross_pay.toLocaleString()} gross</span>
+                <span className="mx-1 text-zinc-400">&rarr;</span>
+                <span className="font-bold text-green-600">${payslip.net_pay.toLocaleString()} net</span>
+              </div>
+              <div className="flex flex-wrap gap-2 border-t border-zinc-50 pt-3">
+                {payslip.status === 'Generated' && (
+                  <button onClick={() => onApprove(payslip.id)} className="px-2 py-1 text-xs font-bold text-yellow-600 hover:text-yellow-800">Approve</button>
+                )}
+                {payslip.status === 'Approved' && (
+                  <button onClick={() => onMarkPaid(payslip.id)} className="px-2 py-1 text-xs font-bold text-green-600 hover:text-green-800">Mark Paid</button>
+                )}
+                <button
+                  onClick={() => onDownload(payslip)}
+                  className="px-2 py-1 text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                  title="Download PDF"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  PDF
+                </button>
+                <button onClick={() => onDelete(payslip.id)} className="px-2 py-1 text-xs font-bold text-red-600 hover:text-red-800">Delete</button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full">
           <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
@@ -45,7 +96,7 @@ export const PayslipsListView: React.FC<PayslipsListViewProps> = ({
             {payslips.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
-                  No payslips yet. Click "Generate Payslip" to get started.
+                  No payslips yet. Click &quot;Generate Payslip&quot; to get started.
                 </td>
               </tr>
             ) : (

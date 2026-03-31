@@ -156,7 +156,56 @@ export const PayslipsTab: React.FC = () => {
 
       {/* Table */}
       <div className="bg-white  shadow-lg border border-zinc-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="space-y-3 p-3 sm:hidden">
+          {payslips.length === 0 ? (
+            <div className="border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
+              No payslips yet. Click &quot;Generate Payslip&quot; to get started.
+            </div>
+          ) : (
+            payslips.map((payslip) => (
+              <div key={payslip.id} className="border border-zinc-100 bg-white p-4 shadow-sm">
+                <div className="mb-2 flex items-start justify-between">
+                  <div>
+                    <div className="font-bold text-zinc-900">{payslip.employee?.name || 'N/A'}</div>
+                    <div className="font-mono text-xs text-zinc-500">{payslip.payslip_number}</div>
+                  </div>
+                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold  ${
+                    payslip.status === 'Generated' ? 'bg-blue-100 text-blue-700' :
+                    payslip.status === 'Approved' ? 'bg-yellow-100 text-yellow-700' :
+                    payslip.status === 'Paid' ? 'bg-green-100 text-green-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {payslip.status}
+                  </span>
+                </div>
+                <div className="mb-1 text-xs text-zinc-500">{new Date(payslip.year, payslip.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+                <div className="mb-3 text-sm">
+                  <span className="text-zinc-600">${payslip.gross_pay.toLocaleString()} gross</span>
+                  <span className="mx-1 text-zinc-400">&rarr;</span>
+                  <span className="font-bold text-green-600">${payslip.net_pay.toLocaleString()} net</span>
+                </div>
+                <div className="flex flex-wrap gap-2 border-t border-zinc-50 pt-3">
+                  {payslip.status === 'Generated' && (
+                    <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Approved')} className="px-2 py-1 text-xs font-bold text-yellow-600 hover:text-yellow-800">Approve</button>
+                  )}
+                  {payslip.status === 'Approved' && (
+                    <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Paid')} className="px-2 py-1 text-xs font-bold text-green-600 hover:text-green-800">Mark Paid</button>
+                  )}
+                  <button
+                    onClick={() => handleDownloadPayslip(payslip)}
+                    className="px-2 py-1 text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                    title="Download PDF"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    PDF
+                  </button>
+                  <button onClick={() => handleDeletePayslip(payslip.id)} className="px-2 py-1 text-xs font-bold text-red-600 hover:text-red-800">Delete</button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
@@ -207,7 +256,7 @@ export const PayslipsTab: React.FC = () => {
                           className="text-purple-600 hover:text-purple-800 font-semibold text-sm flex items-center gap-1"
                           title="Download PDF"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                           PDF
                         </button>
                         <button onClick={() => handleDeletePayslip(payslip.id)} className="text-red-600 hover:text-red-800 font-semibold text-sm">Delete</button>

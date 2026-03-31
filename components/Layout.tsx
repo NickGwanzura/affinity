@@ -97,7 +97,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
           href="#"
           prefix=""
           onClick={e => e.preventDefault()}
-          style={{ fontWeight: 700, letterSpacing: '0.02em', maxWidth: 'calc(100vw - 9.5rem)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          style={{ fontWeight: 700, letterSpacing: '0.02em', maxWidth: 'min(200px, calc(100vw - 7rem))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
         >
           Affinity&nbsp;<span style={{ color: 'var(--cds-link-inverse, #78a9ff)', fontWeight: 400 }}>Logistics</span>
         </HeaderName>
