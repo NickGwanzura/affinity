@@ -8,6 +8,7 @@ import {
   verifyToken,
 } from './_middleware.js';
 import { sql } from './_db.js';
+import { logAuditEvent } from './_audit.js';
 import { ReceiptSchema, ReceiptUpdateSchema } from './_schemas.js';
 
 const isMissingTableError = (error: unknown, tableName: string): boolean =>
@@ -100,7 +101,8 @@ async function listReceipts(res: VercelResponse) {
   }
 }
 
-async function createReceipt(req: VercelRequest, res: VercelResponse) {
+async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
+  const user = req.user;
   try {
     const data = ReceiptSchema.parse(req.body);
     const receiptNumber = await generateReceiptNumber();
@@ -158,6 +160,15 @@ async function createReceipt(req: VercelRequest, res: VercelResponse) {
           )
           RETURNING *
         `;
+        await logAuditEvent({
+          req,
+          userId: user?.id,
+          action: 'receipt:create',
+          tableName: 'receipts',
+          recordId: rows[0].id,
+          newData: data,
+        });
+
         return res.status(201).json({
           ...rows[0],
           ...(normalizedItems.length > 0 ? { items: normalizedItems } : {}),
@@ -170,7 +181,8 @@ async function createReceipt(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function deleteReceipt(req: VercelRequest, res: VercelResponse) {
+async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse) {
+  const user = req.user;
   try {
     const { id } = req.query;
     if (!id || typeof id !== 'string') {
@@ -187,13 +199,23 @@ async function deleteReceipt(req: VercelRequest, res: VercelResponse) {
       return apiError(res, 404, 'Receipt not found');
     }
 
+    await logAuditEvent({
+      req,
+      userId: user?.id,
+      action: 'receipt:delete',
+      tableName: 'receipts',
+      recordId: id,
+      oldData: rows[0],
+    });
+
     return res.status(204).end();
   } catch (error) {
     return apiError(res, 500, 'Failed to delete receipt', error);
   }
 }
 
-async function updateReceipt(req: VercelRequest, res: VercelResponse) {
+async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse) {
+  const user = req.user;
   try {
     const data = ReceiptUpdateSchema.parse(req.body);
     const normalizedItems = data.items
@@ -221,6 +243,16 @@ async function updateReceipt(req: VercelRequest, res: VercelResponse) {
         RETURNING *
       `;
       if (rows.length === 0) return apiError(res, 404, 'Receipt not found');
+
+      await logAuditEvent({
+        req,
+        userId: user?.id,
+        action: 'receipt:update',
+        tableName: 'receipts',
+        recordId: req.query.id as string,
+        newData: data,
+      });
+
       return res.status(200).json({
         ...rows[0],
         ...(normalizedItems ? { items: normalizedItems } : {}),

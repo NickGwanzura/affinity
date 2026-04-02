@@ -9,6 +9,7 @@ import {
   verifyToken,
 } from './_middleware.js';
 import { sql, withTransaction } from './_db.js';
+import { logAuditEvent } from './_audit.js';
 import { PaymentAllocationSchema, PaymentSchema, PaymentUpdateSchema } from './_schemas.js';
 
 type PaymentRow = {
@@ -53,6 +54,62 @@ const parseAllocationsFromBody = (body: unknown) =>
     ? ((body as { allocations: unknown[] }).allocations.map((allocation) => PaymentAllocationSchema.parse(allocation)))
     : [];
 
+async function getInvoiceCurrency(client: PoolClient, invoiceId: string): Promise<string | null> {
+  const result = await client.query(
+    'SELECT currency FROM public.invoices WHERE id = $1::uuid',
+    [invoiceId]
+  );
+  return result.rows[0]?.currency || null;
+}
+
+async function updateInvoicePaymentStatus(client: PoolClient, invoiceId: string) {
+  // Get total allocated to this invoice
+  const allocationResult = await client.query(
+    `
+      SELECT COALESCE(SUM(amount_allocated), 0) as total_allocated
+      FROM public.payment_allocations
+      WHERE invoice_id = $1::uuid
+    `,
+    [invoiceId]
+  );
+  const totalAllocated = Number(allocationResult.rows[0]?.total_allocated || 0);
+
+  // Get invoice amount and currency
+  const invoiceResult = await client.query(
+    'SELECT amount_usd, status FROM public.invoices WHERE id = $1::uuid',
+    [invoiceId]
+  );
+  if (invoiceResult.rows.length === 0) return;
+
+  const invoiceAmount = Number(invoiceResult.rows[0].amount_usd);
+  const currentStatus = invoiceResult.rows[0].status;
+
+  // Only update if currently Draft or Sent
+  if (currentStatus !== 'Draft' && currentStatus !== 'Sent' && currentStatus !== 'Overdue') {
+    return;
+  }
+
+  // Determine new status
+  let newStatus: string | null = null;
+  if (totalAllocated >= invoiceAmount - 0.0001) {
+    newStatus = 'Paid';
+  } else if (totalAllocated > 0) {
+    // Partial payment - keep as Sent but could add 'Partial' status in future
+    return;
+  }
+
+  if (newStatus) {
+    await client.query(
+      `
+        UPDATE public.invoices
+        SET status = $1, updated_at = NOW()
+        WHERE id = $2::uuid
+      `,
+      [newStatus, invoiceId]
+    );
+  }
+}
+
 async function replaceAllocationsForPayment(
   client: PoolClient,
   paymentId: string,
@@ -60,8 +117,30 @@ async function replaceAllocationsForPayment(
   allocations: Array<{ invoice_id: string; amount_allocated: number; currency: 'USD' | 'GBP' }>,
 ) {
   const totalAllocated = allocations.reduce((sum, allocation) => sum + allocation.amount_allocated, 0);
-  if (totalAllocated > paymentAmountUsd + 0.0001) {
-    throw new Error('Allocated amount cannot exceed payment amount');
+  
+  // Allow small overpayment (store as credit)
+  if (totalAllocated > paymentAmountUsd + 0.01) {
+    throw new Error(`Allocated amount ($${totalAllocated.toFixed(2)}) exceeds payment amount ($${paymentAmountUsd.toFixed(2)})`);
+  }
+
+  // Get all affected invoice IDs before deletion (for status recalculation)
+  const existingAllocations = await client.query(
+    'SELECT invoice_id FROM public.payment_allocations WHERE payment_id = $1::uuid',
+    [paymentId]
+  );
+  const affectedInvoiceIds = new Set([
+    ...existingAllocations.rows.map(r => r.invoice_id),
+    ...allocations.map(a => a.invoice_id)
+  ]);
+
+  // Validate currency matching
+  for (const allocation of allocations) {
+    const invoiceCurrency = await getInvoiceCurrency(client, allocation.invoice_id);
+    if (invoiceCurrency && invoiceCurrency !== allocation.currency) {
+      throw new Error(
+        `Currency mismatch: Invoice uses ${invoiceCurrency} but allocation is in ${allocation.currency}`
+      );
+    }
   }
 
   await client.query('DELETE FROM public.payment_allocations WHERE payment_id = $1::uuid', [paymentId]);
@@ -74,6 +153,11 @@ async function replaceAllocationsForPayment(
       `,
       [paymentId, allocation.invoice_id, allocation.amount_allocated, allocation.currency],
     );
+  }
+
+  // Update invoice payment status for all affected invoices
+  for (const invoiceId of affectedInvoiceIds) {
+    await updateInvoicePaymentStatus(client, invoiceId);
   }
 }
 
@@ -124,7 +208,7 @@ async function listPayments(res: VercelResponse) {
   }
 }
 
-async function createPayment(req: VercelRequest, res: VercelResponse) {
+async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
   try {
     const data = PaymentSchema.parse(req.body);
     const allocations = parseAllocationsFromBody(req.body);
@@ -155,6 +239,15 @@ async function createPayment(req: VercelRequest, res: VercelResponse) {
       return createdPayment;
     });
 
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'payment:create',
+      tableName: 'payments',
+      recordId: payment.id,
+      newData: { ...data, allocations },
+    });
+
     const [hydrated] = await attachAllocations([payment]);
     return res.status(201).json(hydrated);
   } catch (error) {
@@ -162,13 +255,19 @@ async function createPayment(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function updatePayment(req: VercelRequest, res: VercelResponse) {
+async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
   try {
     const data = PaymentUpdateSchema.parse(req.body);
     const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
     if (!paymentId) return apiError(res, 400, 'Missing payment id');
 
     const allocations = parseAllocationsFromBody(req.body);
+
+    // Get old data for audit
+    const oldPaymentRows = await sql`
+      SELECT * FROM public.payments WHERE id = ${paymentId}::uuid
+    `;
+    const oldPayment = oldPaymentRows[0];
 
     const payment = await withTransaction(async (client) => {
       const result = await client.query(
@@ -207,6 +306,16 @@ async function updatePayment(req: VercelRequest, res: VercelResponse) {
       }
 
       return updatedPayment;
+    });
+
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'payment:update',
+      tableName: 'payments',
+      recordId: paymentId,
+      oldData: oldPayment,
+      newData: { ...data, allocations },
     });
 
     const [hydrated] = await attachAllocations([payment]);
@@ -252,7 +361,26 @@ async function replaceAllocations(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function deletePayment(req: VercelRequest, res: VercelResponse) {
-  await sql`DELETE FROM public.payments WHERE id = ${req.query.id}::uuid`;
+async function deletePayment(req: AuthenticatedRequest, res: VercelResponse) {
+  const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
+  if (!paymentId) return apiError(res, 400, 'Missing payment id');
+
+  // Get old data for audit before deletion
+  const oldPaymentRows = await sql`
+    SELECT * FROM public.payments WHERE id = ${paymentId}::uuid
+  `;
+  const oldPayment = oldPaymentRows[0];
+
+  await sql`DELETE FROM public.payments WHERE id = ${paymentId}::uuid`;
+
+  await logAuditEvent({
+    req,
+    userId: req.user?.id,
+    action: 'payment:delete',
+    tableName: 'payments',
+    recordId: paymentId,
+    oldData: oldPayment,
+  });
+
   return res.status(204).end();
 }

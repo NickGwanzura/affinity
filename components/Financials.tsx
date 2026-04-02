@@ -143,6 +143,7 @@ export const Financials: React.FC = () => {
  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
  const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+ const [convertingQuoteId, setConvertingQuoteId] = useState<string | null>(null);
  const [clientModalTarget, setClientModalTarget] = useState<'quote' | 'invoice'>('quote');
  const [clientForm, setClientForm] = useState<ClientFormValue>({
  name: '',
@@ -333,6 +334,7 @@ export const Financials: React.FC = () => {
  clientId = matchedClient?.id || '';
  }
 
+ setConvertingQuoteId(quote.id);
  setEditingInvoice(null);
  setInvoiceForm({
  invoice_kind: 'Standard',
@@ -372,6 +374,7 @@ export const Financials: React.FC = () => {
  });
  setInvoiceLineItems([createEmptyLineItem()]);
  setEditingInvoice(null);
+ setConvertingQuoteId(null);
  };
 
  const resetPaymentForm = () => {
@@ -787,6 +790,16 @@ export const Financials: React.FC = () => {
  await dataService.updateInvoice(editingInvoice.id, payload);
  } else {
  await dataService.createInvoice(payload);
+ 
+ // If converting from quote, update quote status to Accepted
+ if (convertingQuoteId) {
+ try {
+ await dataService.updateQuote(convertingQuoteId, { status: 'Accepted' });
+ } catch (quoteError) {
+ console.warn('Failed to update quote status:', quoteError);
+ // Don't fail the whole operation if quote update fails
+ }
+ }
  }
 
  closeInvoiceModal();

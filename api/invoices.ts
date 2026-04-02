@@ -10,6 +10,7 @@ import {
   apiError 
 } from './_middleware.js';
 import { sql, withTransaction, validateOrderColumn } from './_db.js';
+import { logAuditEvent } from './_audit.js';
 import { InvoiceSchema, InvoiceUpdateSchema, PaginationSchema } from './_schemas.js';
 import type { InvoiceItem } from '../types';
 
@@ -256,6 +257,7 @@ async function insertInvoiceItems(client: PoolClient, invoiceId: string, items: 
 }
 
 async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+  const user = req.user;
   try {
     const data = InvoiceSchema.parse(req.body);
 
@@ -302,7 +304,16 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
 
       return invoice;
     });
-    
+
+    await logAuditEvent({
+      req,
+      userId: user?.id,
+      action: 'invoice:create',
+      tableName: 'invoices',
+      recordId: result.id,
+      newData: data,
+    });
+
     res.status(201).json(result);
   } catch (error) {
     const { status, message } = getInvoiceInputErrorMessage(error, 'Failed to create invoice');
@@ -311,6 +322,7 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
 }
 
 async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+  const user = req.user;
   const { id } = req.query;
   
   try {
@@ -378,7 +390,16 @@ async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
 
       return rows.rows[0];
     });
-    
+
+    await logAuditEvent({
+      req,
+      userId: user?.id,
+      action: 'invoice:update',
+      tableName: 'invoices',
+      recordId: String(id),
+      newData: data,
+    });
+
     res.status(200).json(result);
   } catch (error) {
     if (error instanceof Error && error.message === 'Invoice not found') {
@@ -390,12 +411,24 @@ async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
 }
 
 async function deleteInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+  const user = req.user;
   const { id } = req.query;
   
+  const oldInvoice = await sql`SELECT * FROM invoices WHERE id = ${id}::uuid`;
+
   await withTransaction(async (client) => {
     await client.query('DELETE FROM invoice_items WHERE invoice_id = $1::uuid', [id]);
     await client.query('DELETE FROM invoices WHERE id = $1::uuid', [id]);
   });
-  
+
+  await logAuditEvent({
+    req,
+    userId: user?.id,
+    action: 'invoice:delete',
+    tableName: 'invoices',
+    recordId: String(id),
+    oldData: oldInvoice[0],
+  });
+
   res.status(204).end();
 }

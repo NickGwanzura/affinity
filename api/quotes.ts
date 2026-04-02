@@ -10,6 +10,7 @@ import {
   apiError 
 } from './_middleware.js';
 import { sql, withTransaction, validateOrderColumn } from './_db.js';
+import { logAuditEvent } from './_audit.js';
 import { QuoteSchema, QuoteUpdateSchema, PaginationSchema } from './_schemas.js';
 import type { QuoteItem } from '../types';
 
@@ -256,6 +257,7 @@ async function insertQuoteItems(client: PoolClient, quoteId: string, items: Quot
 }
 
 async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
+  const user = req.user;
   try {
     const data = QuoteSchema.parse(req.body);
 
@@ -296,7 +298,16 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
 
       return quote;
     });
-    
+
+    await logAuditEvent({
+      req,
+      userId: user?.id,
+      action: 'quote:create',
+      tableName: 'quotes',
+      recordId: result.id,
+      newData: data,
+    });
+
     res.status(201).json(result);
   } catch (error) {
     const { status, message } = getQuoteInputErrorMessage(error, 'Failed to create quote');
@@ -305,6 +316,7 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
 }
 
 async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
+  const user = req.user;
   const { id } = req.query;
   
   try {
@@ -362,7 +374,16 @@ async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
 
       return rows.rows[0];
     });
-    
+
+    await logAuditEvent({
+      req,
+      userId: user?.id,
+      action: 'quote:update',
+      tableName: 'quotes',
+      recordId: String(id),
+      newData: data,
+    });
+
     res.status(200).json(result);
   } catch (error) {
     if (error instanceof Error && error.message === 'Quote not found') {
@@ -374,12 +395,24 @@ async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
 }
 
 async function deleteQuote(req: AuthenticatedRequest, res: VercelResponse) {
+  const user = req.user;
   const { id } = req.query;
   
+  const oldQuote = await sql`SELECT * FROM quotes WHERE id = ${id}::uuid`;
+
   await withTransaction(async (client) => {
     await client.query('DELETE FROM quote_items WHERE quote_id = $1::uuid', [id]);
     await client.query('DELETE FROM quotes WHERE id = $1::uuid', [id]);
   });
-  
+
+  await logAuditEvent({
+    req,
+    userId: user?.id,
+    action: 'quote:delete',
+    tableName: 'quotes',
+    recordId: String(id),
+    oldData: oldQuote[0],
+  });
+
   res.status(204).end();
 }
