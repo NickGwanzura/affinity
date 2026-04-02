@@ -1208,6 +1208,32 @@ export const Financials: React.FC = () => {
  }
  };
 
+ const handleDeleteReceipt = async (receipt: Receipt) => {
+ const approved = await confirm({
+ title: 'Delete Receipt',
+ message: `Delete receipt ${receipt.receipt_number} for ${receipt.client_name}? This cannot be undone.`,
+ confirmLabel: 'Delete Receipt',
+ confirmVariant: 'danger',
+ });
+
+ if (!approved) {
+ return;
+ }
+
+ const key = `receipt:${receipt.id}`;
+ setDeletingKey(key);
+ try {
+ await dataService.deleteReceipt(receipt.id);
+ await loadData(true);
+ showToast('Receipt deleted successfully.', 'success');
+ } catch (error: any) {
+ console.error('Failed to delete receipt:', error);
+ showToast(error?.message || 'Failed to delete receipt', 'error');
+ } finally {
+ setDeletingKey(null);
+ }
+ };
+
  const handleClearStatement = async () => {
  const approved = await confirm({
  title: 'Clear Statement Selection',
@@ -2378,10 +2404,12 @@ export const Financials: React.FC = () => {
  {activeTab === 'receipts' && (
  <ReceiptsSection
  receipts={receipts}
+ deletingKey={deletingKey}
  formatMoney={formatMoney}
  onRecordPayment={openPaymentModal}
  onPreview={handleDownloadReceipt}
  onReissue={handleReissueReceipt}
+ onDelete={handleDeleteReceipt}
  />
  )}
 

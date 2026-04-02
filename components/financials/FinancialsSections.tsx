@@ -389,18 +389,22 @@ export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
 
 interface ReceiptsSectionProps {
  receipts: Receipt[];
+ deletingKey: string | null;
  formatMoney: (amount: number, currency?: string) => string;
  onRecordPayment: () => void;
  onPreview: (receipt: Receipt) => void;
  onReissue: (receipt: Receipt) => void;
+ onDelete: (receipt: Receipt) => void;
 }
 
 export const ReceiptsSection: React.FC<ReceiptsSectionProps> = ({
  receipts,
+ deletingKey,
  formatMoney,
  onRecordPayment,
  onPreview,
  onReissue,
+ onDelete,
 }) => (
  <div className="p-3 sm:p-8">
  {receipts.length === 0 ? (
@@ -437,6 +441,14 @@ export const ReceiptsSection: React.FC<ReceiptsSectionProps> = ({
  <div className="mt-2 flex gap-3 border-t border-zinc-50 pt-3">
  <button type="button" onClick={() => onPreview(receipt)} className="flex-1 py-2 text-center text-xs font-bold text-blue-600 hover:text-blue-800">Preview PDF</button>
  <button type="button" onClick={() => onReissue(receipt)} className="flex-1 py-2 text-center text-xs font-bold text-emerald-600 hover:text-emerald-800">Reissue</button>
+ <button
+ type="button"
+ onClick={() => onDelete(receipt)}
+ disabled={deletingKey === `receipt:${receipt.id}`}
+ className="flex-1 py-2 text-center text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+ >
+ {deletingKey === `receipt:${receipt.id}` ? 'Deleting...' : 'Delete'}
+ </button>
  </div>
  </div>
  ))}
@@ -470,6 +482,14 @@ export const ReceiptsSection: React.FC<ReceiptsSectionProps> = ({
  <div className="flex items-center gap-4">
  <button type="button" onClick={() => onPreview(receipt)} className="text-xs font-bold text-blue-600 hover:text-blue-800">Preview PDF</button>
  <button type="button" onClick={() => onReissue(receipt)} className="text-xs font-bold text-emerald-600 hover:text-emerald-800">Reissue</button>
+ <button
+ type="button"
+ onClick={() => onDelete(receipt)}
+ disabled={deletingKey === `receipt:${receipt.id}`}
+ className="text-xs font-bold text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+ >
+ {deletingKey === `receipt:${receipt.id}` ? 'Deleting...' : 'Delete'}
+ </button>
  </div>
  </td>
  </tr>

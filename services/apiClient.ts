@@ -285,6 +285,10 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
+    delete: (id: string) =>
+      apiRequest<void>(`/receipts?id=${id}`, {
+        method: 'DELETE',
+      }),
   },
 
   expenses: {

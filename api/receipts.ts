@@ -73,6 +73,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'PUT':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
         return await updateReceipt(req, res);
+      case 'DELETE':
+        if (!requireRole(authReq, res, ['Admin'])) return;
+        return await deleteReceipt(req, res);
       default:
         return apiError(res, 405, 'Method not allowed');
     }
@@ -164,6 +167,29 @@ async function createReceipt(req: VercelRequest, res: VercelResponse) {
     }
   } catch (error) {
     return apiError(res, 400, 'Invalid receipt data', error);
+  }
+}
+
+async function deleteReceipt(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { id } = req.query;
+    if (!id || typeof id !== 'string') {
+      return apiError(res, 400, 'Missing receipt id');
+    }
+
+    const rows = await sql`
+      DELETE FROM public.receipts
+      WHERE id = ${id}::uuid
+      RETURNING id
+    `;
+
+    if (rows.length === 0) {
+      return apiError(res, 404, 'Receipt not found');
+    }
+
+    return res.status(204).end();
+  } catch (error) {
+    return apiError(res, 500, 'Failed to delete receipt', error);
   }
 }
 

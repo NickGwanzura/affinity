@@ -139,6 +139,10 @@ class DataService {
     return api.receipts.update(id, updates);
   }
 
+  async deleteReceipt(id: string): Promise<void> {
+    return api.receipts.delete(id);
+  }
+
   async replacePaymentAllocations(
     paymentId: string,
     allocations: Array<{ invoice_id: string; amount_allocated: number; currency: 'USD' | 'GBP' }>,
