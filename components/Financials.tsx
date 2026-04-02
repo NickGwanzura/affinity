@@ -1332,12 +1332,19 @@ export const Financials: React.FC = () => {
  }, 0);
  const getInvoiceOutstandingAmount = (invoice: Invoice): number =>
  Math.max(0, invoice.amount_usd - getInvoicePaidAmount(invoice));
+ 
+ // Check if invoice can receive payments (not Paid or Cancelled)
+ const canInvoiceReceivePayments = (invoice: Invoice): boolean => {
+ return invoice.status === 'Draft' || invoice.status === 'Sent' || invoice.status === 'Overdue';
+ };
+ 
  const paymentAllocationCandidates = paymentForm.client_name
  ? invoices
  .filter(
  invoice =>
  normalizeClientName(invoice.client_name?.trim()) === normalizeClientName(paymentForm.client_name) &&
- normalizeDocumentCurrency(invoice.currency) === normalizeDocumentCurrency(paymentForm.currency)
+ normalizeDocumentCurrency(invoice.currency) === normalizeDocumentCurrency(paymentForm.currency) &&
+ canInvoiceReceivePayments(invoice)
  )
  .map(invoice => ({
  invoice,
@@ -1351,11 +1358,18 @@ export const Financials: React.FC = () => {
  if (paymentForm.client_name && showPaymentModal && paymentAllocationCandidates.length === 0) {
  const normalizedClient = normalizeClientName(paymentForm.client_name);
  const clientInvoices = invoices.filter(inv => normalizeClientName(inv.client_name) === normalizedClient);
+ const eligibleInvoices = clientInvoices.filter(inv => canInvoiceReceivePayments(inv));
+ const wrongCurrency = eligibleInvoices.filter(inv => normalizeDocumentCurrency(inv.currency) !== normalizeDocumentCurrency(paymentForm.currency));
+ const fullyPaid = eligibleInvoices.filter(inv => normalizeDocumentCurrency(inv.currency) === normalizeDocumentCurrency(paymentForm.currency) && getInvoiceOutstandingAmount(inv) <= 0);
+ 
  if (clientInvoices.length > 0) {
  console.log('[DEBUG] No payment allocation candidates for client:', {
  clientName: paymentForm.client_name,
  currency: paymentForm.currency,
  totalInvoicesForClient: clientInvoices.length,
+ eligibleByStatus: eligibleInvoices.length,
+ wrongCurrencyCount: wrongCurrency.length,
+ fullyPaidCount: fullyPaid.length,
  invoices: clientInvoices.map(inv => ({
  id: inv.id,
  number: inv.invoice_number,
@@ -1364,7 +1378,8 @@ export const Financials: React.FC = () => {
  currency: inv.currency,
  amount: inv.amount_usd,
  outstanding: getInvoiceOutstandingAmount(inv),
- status: inv.status
+ status: inv.status,
+ canReceivePayment: canInvoiceReceivePayments(inv)
  }))
  });
  }
@@ -2296,7 +2311,9 @@ export const Financials: React.FC = () => {
  {!paymentForm.client_name ? (
  <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Choose a client first to allocate this payment to invoices.</p>
  ) : paymentAllocationCandidates.length === 0 ? (
- <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>No open invoices found for this client in {paymentForm.currency}.</p>
+ <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+ No pending invoices (Draft/Sent/Overdue) with outstanding balance found for this client in {paymentForm.currency}.
+ </p>
  ) : null}
  <div className="flex items-center justify-between px-4 py-3 text-sm text-white" style={{ backgroundColor: 'var(--cds-text-primary, #161616)' }}>
  <span className="font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Allocated Total</span>
