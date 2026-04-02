@@ -243,7 +243,7 @@ export const VehiclesTab: React.FC = () => {
         <Button
           type="button"
           onClick={openAddVehicleModal}
-          leftIcon={<Vehicle size={20} />}
+          renderIcon={Car}
         >
           Add Vehicle
         </Button>
@@ -271,7 +271,7 @@ export const VehiclesTab: React.FC = () => {
           color="green"
           footer={
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cds-text-secondary, #525252)', fontSize: '0.875rem' }}>
-              <Vehicle size={16} />
+              <Car size={16} />
               <span>Across Namibia & Zimbabwe</span>
             </div>
           }

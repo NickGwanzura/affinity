@@ -24,7 +24,7 @@ export interface DataTableColumn<T = any> {
   render?: (row: T) => React.ReactNode;
 }
 
-export interface DataTableWrapperProps<T = any> {
+export interface DataTableWrapperProps<T extends { id: string } = any> {
   title?: string;
   description?: string;
   rows: T[];
@@ -67,8 +67,8 @@ export function DataTableWrapper<T extends { id: string }>({
       headers={headers}
       isSortable={isSortable}
       render={({
-        rows,
-        headers,
+        rows: tableRows,
+        headers: tableHeaders,
         getHeaderProps,
         getRowProps,
         getSelectionProps,
@@ -76,7 +76,7 @@ export function DataTableWrapper<T extends { id: string }>({
         getBatchActionProps,
         onInputChange,
         selectedRows,
-      }) => (
+      }: any) => (
         <TableContainer
           title={title}
           description={description}
@@ -92,7 +92,7 @@ export function DataTableWrapper<T extends { id: string }>({
                   <TableBatchAction
                     tabIndex={getBatchActionProps().shouldShowBatchActions ? 0 : -1}
                     renderIcon={TrashCan}
-                    onClick={() => onBatchDelete?.(selectedRows.map((r) => rows.find((row: any) => row.id === r.id)!))}
+                    onClick={() => onBatchDelete?.(selectedRows)}
                   >
                     Delete
                   </TableBatchAction>
@@ -123,7 +123,7 @@ export function DataTableWrapper<T extends { id: string }>({
             <TableHead>
               <TableRow>
                 {batchActions && <TableHeader {...getSelectionProps()} />}
-                {headers.map((header: any) => (
+                {tableHeaders.map((header: any) => (
                   <TableHeader {...getHeaderProps({ header })} key={header.key} style={{ width: header.width }}>
                     {header.header}
                   </TableHeader>
@@ -132,17 +132,21 @@ export function DataTableWrapper<T extends { id: string }>({
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.length === 0 ? (
+              {tableRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={headers.length + (batchActions ? 2 : 1)} style={{ textAlign: 'center', padding: '2rem' }}>
+                  <TableCell colSpan={tableHeaders.length + (batchActions ? 2 : 1)} style={{ textAlign: 'center', padding: '2rem' }}>
                     <p style={{ color: 'var(--cds-text-secondary, #525252)' }}>{emptyMessage}</p>
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((row: any) => (
+                tableRows.map((row: any) => (
                   <TableRow {...getRowProps({ row })} key={row.id}>
-                    {batchActions && <TableCell><input type="checkbox" {...getSelectionProps({ row })} /></TableCell>}
-                    {headers.map((header: any) => (
+                    {batchActions && (
+                      <TableCell>
+                        <input type="checkbox" {...getSelectionProps({ row })} />
+                      </TableCell>
+                    )}
+                    {tableHeaders.map((header: any) => (
                       <TableCell key={header.key}>
                         {columns.find((c) => c.key === header.key)?.render?.(row) ?? row[header.key]}
                       </TableCell>
