@@ -267,6 +267,7 @@ export const Financials: React.FC = () => {
  };
  }, [previewUrl]);
 
+
  const resetQuoteForm = () => {
  setQuoteForm({
  vehicle_id: '',
@@ -296,7 +297,7 @@ export const Financials: React.FC = () => {
 
  // Fallback: if client_id is missing, try to find client by name
  let clientId = quote.client_id || '';
- if (!clientId && quote.client_name) {
+ if (!clientId && quote.client_name?.trim()) {
  const matchedClient = clients.find(c => 
  c.name.trim().toLowerCase() === quote.client_name.trim().toLowerCase()
  );
@@ -327,7 +328,7 @@ export const Financials: React.FC = () => {
 
  // Fallback: if client_id is missing, try to find client by name
  let clientId = quote.client_id || '';
- if (!clientId && quote.client_name) {
+ if (!clientId && quote.client_name?.trim()) {
  const matchedClient = clients.find(c => 
  c.name.trim().toLowerCase() === quote.client_name.trim().toLowerCase()
  );
@@ -420,7 +421,7 @@ export const Financials: React.FC = () => {
 
  // Fallback: if client_id is missing, try to find client by name
  let clientId = invoice.client_id || '';
- if (!clientId && invoice.client_name) {
+ if (!clientId && invoice.client_name?.trim()) {
  const matchedClient = clients.find(c => 
  c.name.trim().toLowerCase() === invoice.client_name.trim().toLowerCase()
  );
@@ -1074,7 +1075,7 @@ export const Financials: React.FC = () => {
 
  const clientInvoices = invoices.filter(
  invoice =>
- normalizeClientName(invoice.client_name) === normalizedClient &&
+ normalizeClientName(invoice.client_name?.trim()) === normalizedClient &&
  isWithinStatementRange(invoice.created_at)
  );
  if (clientInvoices.length === 0) {
@@ -1088,12 +1089,12 @@ export const Financials: React.FC = () => {
  const clientInvoiceIds = new Set(clientInvoices.map(invoice => invoice.id));
  const receiptLinkedPaymentIds = new Set(
  receipts
- .filter(receipt => normalizeClientName(receipt.client_name) === normalizedClient && receipt.payment_id)
+ .filter(receipt => normalizeClientName(receipt.client_name?.trim()) === normalizedClient && receipt.payment_id)
  .map(receipt => receipt.payment_id as string)
  );
  const receiptLinkedReferences = new Set(
  receipts
- .filter(receipt => normalizeClientName(receipt.client_name) === normalizedClient)
+ .filter(receipt => normalizeClientName(receipt.client_name?.trim()) === normalizedClient)
  .map(receipt => receipt.reference_number)
  .filter(Boolean)
  );
@@ -1285,7 +1286,7 @@ export const Financials: React.FC = () => {
 
  const clientOptions = Array.from(
  new Set(
- [...quotes.map(quote => quote.client_name), ...invoices.map(invoice => invoice.client_name), ...receipts.map(receipt => receipt.client_name)].filter(Boolean)
+ [...quotes.map(quote => quote.client_name?.trim()), ...invoices.map(invoice => invoice.client_name?.trim()), ...receipts.map(receipt => receipt.client_name?.trim())].filter(Boolean)
  )
  ).sort();
  const receiptByPaymentId = new Map<string, Receipt>(
@@ -1335,7 +1336,7 @@ export const Financials: React.FC = () => {
  ? invoices
  .filter(
  invoice =>
- normalizeClientName(invoice.client_name) === normalizeClientName(paymentForm.client_name) &&
+ normalizeClientName(invoice.client_name?.trim()) === normalizeClientName(paymentForm.client_name) &&
  normalizeDocumentCurrency(invoice.currency) === normalizeDocumentCurrency(paymentForm.currency)
  )
  .map(invoice => ({
@@ -1345,6 +1346,29 @@ export const Financials: React.FC = () => {
  .filter(({ outstandingAmount }) => outstandingAmount > 0)
  .sort((a, b) => new Date(a.invoice.due_date).getTime() - new Date(b.invoice.due_date).getTime())
  : [];
+ 
+ // Debug: Log when no candidates found but client has invoices
+ if (paymentForm.client_name && showPaymentModal && paymentAllocationCandidates.length === 0) {
+ const normalizedClient = normalizeClientName(paymentForm.client_name);
+ const clientInvoices = invoices.filter(inv => normalizeClientName(inv.client_name) === normalizedClient);
+ if (clientInvoices.length > 0) {
+ console.log('[DEBUG] No payment allocation candidates for client:', {
+ clientName: paymentForm.client_name,
+ currency: paymentForm.currency,
+ totalInvoicesForClient: clientInvoices.length,
+ invoices: clientInvoices.map(inv => ({
+ id: inv.id,
+ number: inv.invoice_number,
+ client_name: inv.client_name,
+ normalized: normalizeClientName(inv.client_name),
+ currency: inv.currency,
+ amount: inv.amount_usd,
+ outstanding: getInvoiceOutstandingAmount(inv),
+ status: inv.status
+ }))
+ });
+ }
+ }
  const selectedPaymentAllocationInvoiceIds = new Set(
  paymentAllocationForm.map(allocation => allocation.invoice_id).filter(Boolean)
  );
@@ -2100,7 +2124,7 @@ export const Financials: React.FC = () => {
  required
  value={paymentForm.client_name}
  onChange={e => {
- const nextClient = e.target.value;
+ const nextClient = e.target.value.trim();
  setPaymentForm(current => ({
  ...current,
  client_name: nextClient,
