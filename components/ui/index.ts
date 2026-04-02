@@ -20,3 +20,5 @@ export {
 } from './Skeleton';
 
 export { DashboardCard } from './DashboardCard';
+export { DataTableWrapper } from './DataTableWrapper';
+export type { DataTableColumn, DataTableWrapperProps } from './DataTableWrapper';

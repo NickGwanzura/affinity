@@ -459,7 +459,7 @@ export const Settings: React.FC = () => {
 
  if (loading) return (
  <div className="flex items-center justify-center h-64 font-sans">
-  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  <div className="animate-spin h-8 w-8 border-b-2" style={{ borderColor: 'var(--cds-interactive, #0f62fe)' }}></div>
  </div>
  );
 
@@ -468,70 +468,90 @@ export const Settings: React.FC = () => {
   <ToastContainer />
   <ConfirmDialog />
   <div className="flex items-center gap-4 mb-8">
-  <div className="p-3 bg-blue-100 ">
-   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div className="p-3" style={{ background: 'var(--cds-layer-02, #f4f4f4)' }}>
+   <svg className="w-6 h-6" style={{ color: 'var(--cds-interactive, #0f62fe)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
    </svg>
   </div>
   <div>
-   <h2 className="text-2xl font-bold text-zinc-900">Platform Settings</h2>
-   <p className="text-zinc-500">Manage your business profile and team access</p>
+   <h2 className="text-2xl font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Platform Settings</h2>
+   <p style={{ color: 'var(--cds-text-secondary, #525252)' }}>Manage your business profile and team access</p>
   </div>
   </div>
 
-  <div className="bg-white shadow-sm border border-zinc-200 overflow-hidden">
-  <div className="flex border-b border-zinc-200 bg-zinc-50/50 overflow-x-auto">
+  <div className="overflow-hidden" style={{ background: 'var(--cds-layer-01, #ffffff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
+  <div className="flex overflow-x-auto" style={{ borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)', background: 'var(--cds-layer-02, #f4f4f4)' }}>
    <button
    onClick={() => setActiveTab('company')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'company'
-    ? 'border-blue-600 text-blue-600 bg-white'
-    : 'border-transparent text-zinc-500 hover:text-zinc-700'
+    ? 'bg-white'
+    : 'border-transparent'
     }`}
+   style={activeTab === 'company' 
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+    : { color: 'var(--cds-text-secondary, #525252)' }
+   }
    >
    Company Profile
    </button>
    <button
    onClick={() => setActiveTab('users')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'users'
-    ? 'border-blue-600 text-blue-600 bg-white'
-    : 'border-transparent text-zinc-500 hover:text-zinc-700'
+    ? 'bg-white'
+    : 'border-transparent'
     }`}
+   style={activeTab === 'users' 
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+    : { color: 'var(--cds-text-secondary, #525252)' }
+   }
    >
    User Management
    </button>
    <button
    onClick={() => setActiveTab('forensics')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'forensics'
-    ? 'border-blue-600 text-blue-600 bg-white'
-    : 'border-transparent text-zinc-500 hover:text-zinc-700'
+    ? 'bg-white'
+    : 'border-transparent'
     }`}
+   style={activeTab === 'forensics' 
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+    : { color: 'var(--cds-text-secondary, #525252)' }
+   }
    >
    Forensic Log
    </button>
    <button
    onClick={() => setActiveTab('requests')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'requests'
-    ? 'border-blue-600 text-blue-600 bg-white'
-    : 'border-transparent text-zinc-500 hover:text-zinc-700'
+    ? 'bg-white'
+    : 'border-transparent'
     }`}
+   style={activeTab === 'requests' 
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+    : { color: 'var(--cds-text-secondary, #525252)' }
+   }
    >
    Requests {registrationRequests.filter(r => r.status === 'Pending').length > 0 && (
-    <span className="ml-2 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-bold">
-    {registrationRequests.filter(r => r.status === 'Pending').length}
+    <span className="ml-2 px-2 py-0.5 text-xs font-bold">
+    <Tag type="warm-gray" size="sm">{registrationRequests.filter(r => r.status === 'Pending').length}</Tag>
     </span>
    )}
    </button>
    <button
    onClick={() => setActiveTab('invites')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'invites'
-    ? 'border-blue-600 text-blue-600 bg-white'
-    : 'border-transparent text-zinc-500 hover:text-zinc-700'
+    ? 'bg-white'
+    : 'border-transparent'
     }`}
+   style={activeTab === 'invites' 
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+    : { color: 'var(--cds-text-secondary, #525252)' }
+   }
    >
    Invitations {invites.filter(i => i.status === 'Pending').length > 0 && (
-    <span className="ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
-    {invites.filter(i => i.status === 'Pending').length}
+    <span className="ml-2 px-2 py-0.5 text-xs font-bold">
+    <Tag type="green" size="sm">{invites.filter(i => i.status === 'Pending').length}</Tag>
     </span>
    )}
    </button>
@@ -632,67 +652,70 @@ export const Settings: React.FC = () => {
     
     {/* KPI Cards - Responsive Grid: 1 col mobile, 2 col tablet, 4 col desktop */}
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 border border-blue-200 min-h-[100px]">
+    <Tile className="min-h-[100px]">
      <div className="flex items-center justify-between mb-2">
-     <svg className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+     <svg className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0" style={{ color: 'var(--cds-interactive, #0f62fe)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
      </svg>
      </div>
-     <p className="text-2xl sm:text-2xl font-black text-blue-900">{users.length}</p>
-     <p className="text-xs sm:text-xs font-bold text-blue-700 uppercase tracking-wider mt-1">Total Users</p>
-    </div>
+     <p className="text-2xl sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>{users.length}</p>
+     <p className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total Users</p>
+    </Tile>
 
-    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 border border-emerald-200 min-h-[100px]">
+    <Tile className="min-h-[100px]">
      <div className="flex items-center justify-between mb-2">
-     <svg className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+     <svg className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0" style={{ color: 'var(--cds-support-success, #24a148)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
      </svg>
      </div>
-     <p className="text-2xl sm:text-2xl font-black text-emerald-900">{users.filter(u => u.status === 'Active').length}</p>
-     <p className="text-xs sm:text-xs font-bold text-emerald-700 uppercase tracking-wider mt-1">Active Users</p>
-    </div>
+     <p className="text-2xl sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>{users.filter(u => u.status === 'Active').length}</p>
+     <p className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--cds-support-success, #24a148)' }}>Active Users</p>
+    </Tile>
 
-    <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 border border-purple-200 min-h-[100px]">
+    <Tile className="min-h-[100px]">
      <div className="flex items-center justify-between mb-2">
-     <svg className="w-7 h-7 sm:w-8 sm:h-8 text-purple-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+     <svg className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0" style={{ color: 'var(--cds-tag-color-purple, #8a3ffc)' }} fill="currentColor" viewBox="0 0 20 20">
       <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
      </svg>
      </div>
-     <p className="text-2xl sm:text-2xl font-black text-purple-900">{users.filter(u => u.role === 'Admin').length}</p>
-     <p className="text-xs sm:text-xs font-bold text-purple-700 uppercase tracking-wider mt-1">Administrators</p>
-    </div>
+     <p className="text-2xl sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>{users.filter(u => u.role === 'Admin').length}</p>
+     <p className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--cds-tag-color-purple, #8a3ffc)' }}>Administrators</p>
+    </Tile>
 
-    <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-4 border border-amber-200 min-h-[100px]">
+    <Tile className="min-h-[100px]">
      <div className="flex items-center justify-between mb-2">
-     <svg className="w-7 h-7 sm:w-8 sm:h-8 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+     <svg className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0" style={{ color: 'var(--cds-tag-color-warm-gray, #8d8d8d)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
      </svg>
      </div>
-     <p className="text-2xl sm:text-2xl font-black text-amber-900">{users.filter(u => u.status === 'Inactive').length}</p>
-     <p className="text-xs sm:text-xs font-bold text-amber-700 uppercase tracking-wider mt-1">Inactive Users</p>
-    </div>
+     <p className="text-2xl sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>{users.filter(u => u.status === 'Inactive').length}</p>
+     <p className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }}>Inactive Users</p>
+    </Tile>
     </div>
 
     {/* Action Row - Responsive: stacked on mobile, flex on tablet+ */}
     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
     <div className="flex-shrink-0">
-     <h3 className="text-base sm:text-lg font-bold text-zinc-800">Team Directory</h3>
-     <p className="text-xs sm:text-sm text-zinc-500 mt-0.5 sm:mt-1">{users.length} user{users.length !== 1 ? 's' : ''} in database</p>
+     <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Team Directory</h3>
+     <p className="text-xs sm:text-sm mt-0.5 sm:mt-1" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{users.length} user{users.length !== 1 ? 's' : ''} in database</p>
     </div>
     
     {/* Action Buttons - Responsive flex container */}
     <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
      {/* Primary Action - Full width on mobile */}
-     <button
+     <Button
      onClick={() => setShowUserModal(true)}
-     className="w-full sm:w-auto bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-bold px-4 py-2.5 sm:py-2 transition-all font-sans min-h-[44px] sm:min-h-0 order-first sm:order-last"
+     renderIcon={Add}
+     className="w-full sm:w-auto"
      >
-     + Add New User
-     </button>
+     Add New User
+     </Button>
      
      {/* Secondary Actions - Row on mobile, inline on tablet+ */}
      <div className="flex flex-wrap gap-2">
-     <button
+     <Button
+      kind="secondary"
+      size="sm"
       onClick={async () => {
       setLoading(true);
       try {
@@ -710,36 +733,38 @@ export const Settings: React.FC = () => {
       }
       setLoading(false);
       }}
-      className="flex-1 sm:flex-none bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs sm:text-sm font-bold px-3 sm:px-4 py-2.5 sm:py-2 transition-all font-sans flex items-center justify-center gap-2 min-h-[44px] sm:min-h-0"
+      renderIcon={Renew}
+      disabled={isBulkUpdating}
+      className="flex-1 sm:flex-none"
      >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-      <span className="sm:inline">Sync & Refresh</span>
-     </button>
-     <button
+      Sync & Refresh
+     </Button>
+     <Button
+      kind={selectedUserIds.length === 0 || isBulkUpdating ? 'ghost' : 'primary'}
+      size="sm"
       onClick={() => { setBulkTargetStatus('Active'); handleBulkUpdateStatus('Active'); }}
       disabled={selectedUserIds.length === 0 || isBulkUpdating}
-      className={`flex-1 sm:flex-none text-xs sm:text-sm font-bold px-3 sm:px-4 py-2.5 sm:py-2 transition-all font-sans min-h-[44px] sm:min-h-0 ${selectedUserIds.length === 0 || isBulkUpdating ? 'bg-zinc-100 text-zinc-400' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
+      className="flex-1 sm:flex-none"
      >
       {isBulkUpdating && bulkTargetStatus === 'Active' ? 'Activating…' : 'Activate'}
-     </button>
-     <button
+     </Button>
+     <Button
+      kind={selectedUserIds.length === 0 || isBulkUpdating ? 'ghost' : 'danger'}
+      size="sm"
       onClick={() => { setBulkTargetStatus('Inactive'); handleBulkUpdateStatus('Inactive'); }}
       disabled={selectedUserIds.length === 0 || isBulkUpdating}
-      className={`flex-1 sm:flex-none text-xs sm:text-sm font-bold px-3 sm:px-4 py-2.5 sm:py-2 transition-all font-sans min-h-[44px] sm:min-h-0 ${selectedUserIds.length === 0 || isBulkUpdating ? 'bg-zinc-100 text-zinc-400' : 'bg-amber-600 text-white hover:bg-amber-700'}`}
+      className="flex-1 sm:flex-none"
      >
       {isBulkUpdating && bulkTargetStatus === 'Inactive' ? 'Deactivating…' : 'Deactivate'}
-     </button>
+     </Button>
      </div>
      
      {/* Selection indicator */}
      {selectedUserIds.length > 0 && (
-     <span className={`self-center px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap ${bulkTargetStatus === 'Active' ? 'bg-emerald-100 text-emerald-700' :
-      bulkTargetStatus === 'Inactive' ? 'bg-amber-100 text-amber-700' :
-      'bg-blue-100 text-blue-700'
-      }`}>
-      {selectedUserIds.length} selected
+     <span className="self-center">
+      <Tag type={bulkTargetStatus === 'Active' ? 'green' : bulkTargetStatus === 'Inactive' ? 'warm-gray' : 'blue'} size="sm">
+       {selectedUserIds.length} selected
+      </Tag>
      </span>
      )}
     </div>
@@ -747,27 +772,25 @@ export const Settings: React.FC = () => {
     
     {/* Status message */}
     {saveStatus && activeTab === 'users' && (
-    <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 sm:px-4 py-2.5 sm:py-3 font-medium text-sm">
-     {saveStatus}
-    </div>
+    <InlineNotification kind="success" title="Success" subtitle={saveStatus} hideCloseButton />
     )}
 
     {/* User List Container */}
-    <div className="border border-zinc-200 overflow-hidden">
+    <div className="overflow-hidden" style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
     {loading ? (
-     <div className="p-6 sm:p-8 text-center text-zinc-500">Loading users...</div>
+     <div className="p-6 sm:p-8 text-center" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Loading users...</div>
     ) : users.length === 0 ? (
      <div className="p-6 sm:p-8 text-center">
      <div className="max-w-md mx-auto">
-      <svg className="w-16 h-16 mx-auto text-zinc-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
-      <h3 className="text-lg font-bold text-zinc-800 mb-2">No Users Found</h3>
-      <p className="text-zinc-500 mb-4 text-sm sm:text-base">
+      <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--cds-text-primary, #161616)' }}>No Users Found</h3>
+      <p className="mb-4 text-sm sm:text-base" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
       Users appear here after they log in. Click <strong>"Sync & Refresh"</strong> to add yourself, or invite new team members.
       </p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
-      <button
+      <Button
        onClick={async () => {
        setLoading(true);
        try {
@@ -783,21 +806,19 @@ export const Settings: React.FC = () => {
        }
        setLoading(false);
        }}
-       className="bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 font-bold min-h-[44px] flex items-center justify-center gap-2"
+       renderIcon={Renew}
+       className="min-h-[44px]"
       >
-       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-       </svg>
        Sync My Profile
-      </button>
-      <button
+      </Button>
+      <Button
        onClick={() => setShowInviteModal(true)}
-       className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 font-bold min-h-[44px]"
+       className="min-h-[44px]"
       >
        Invite Team Member
-      </button>
+      </Button>
       </div>
-      <p className="text-xs text-zinc-400 mt-4">
+      <p className="text-xs mt-4" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
       To change a user's role: Click the <strong>Edit</strong> (pencil) icon next to their name.
       </p>
      </div>
@@ -807,84 +828,76 @@ export const Settings: React.FC = () => {
      {/* Desktop/Tablet Table View */}
      <div className="hidden md:block overflow-x-auto">
       <table className="w-full text-left text-xs lg:text-sm">
-      <thead className="bg-zinc-50 border-b border-zinc-200">
+      <thead style={{ background: 'var(--cds-layer-02, #f4f4f4)', borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
        <tr>
        <th className="px-4 lg:px-6 py-3 w-12">
         <input
         type="checkbox"
         checked={selectedUserIds.length === users.length && users.length > 0}
         onChange={toggleSelectAll}
-        className="w-4 h-4 rounded border-zinc-300"
+        className="w-4 h-4"
+        style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
         />
        </th>
-       <th className="px-4 lg:px-6 py-3 font-semibold text-zinc-600">User</th>
-       <th className="px-4 lg:px-6 py-3 font-semibold text-zinc-600 hidden lg:table-cell">Email</th>
-       <th className="px-4 lg:px-6 py-3 font-semibold text-zinc-600">Role</th>
-       <th className="px-4 lg:px-6 py-3 font-semibold text-zinc-600">Status</th>
-       <th className="px-4 lg:px-6 py-3 font-semibold text-zinc-600 text-right">Actions</th>
+       <th className="px-4 lg:px-6 py-3 font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>User</th>
+       <th className="px-4 lg:px-6 py-3 font-semibold hidden lg:table-cell" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Email</th>
+       <th className="px-4 lg:px-6 py-3 font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Role</th>
+       <th className="px-4 lg:px-6 py-3 font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Status</th>
+       <th className="px-4 lg:px-6 py-3 font-semibold text-right" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Actions</th>
        </tr>
       </thead>
-      <tbody className="divide-y divide-zinc-200">
+      <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
        {users.map(user => (
-       <tr key={user.id} className="hover:bg-zinc-50 transition-colors group">
+       <tr key={user.id} className="group" style={{ borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
         <td className="px-4 lg:px-6 py-4">
         <input
          type="checkbox"
          checked={selectedUserIds.includes(user.id)}
          onChange={() => toggleSelectUser(user.id)}
-         className="w-4 h-4 rounded border-zinc-300"
+         className="w-4 h-4"
+         style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
         />
         </td>
         <td className="px-4 lg:px-6 py-4">
         <div className="flex items-center gap-3">
          <div className="relative flex-shrink-0">
-         <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
+         <div className="w-9 h-9 lg:w-10 lg:h-10 overflow-hidden" style={{ borderRadius: '50%', border: '2px solid var(--cds-layer-01, #ffffff)' }}>
           <img
           src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
           alt={user.name}
           className="w-full h-full"
           />
          </div>
-         <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full border-2 border-white ${user.status === 'Active' ? 'bg-emerald-500' : 'bg-zinc-400'}`}></div>
+         <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 lg:w-3 lg:h-3 border-2" style={{ borderRadius: '50%', borderColor: 'var(--cds-layer-01, #ffffff)', background: user.status === 'Active' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-text-disabled, #8d8d8d)' }}></div>
          </div>
          <div className="min-w-0">
-         <p className="font-semibold text-zinc-900 truncate">{user.name}</p>
+         <p className="font-semibold truncate" style={{ color: 'var(--cds-text-primary, #161616)' }}>{user.name}</p>
          {/* Email shown under name on tablet, hidden on desktop (shown in separate column) */}
-         <p className="text-xs text-zinc-500 truncate lg:hidden">{user.email}</p>
+         <p className="text-xs truncate lg:hidden" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{user.email}</p>
          </div>
         </div>
         </td>
         <td className="px-4 lg:px-6 py-4 hidden lg:table-cell">
-        <span className="text-zinc-600 font-mono text-xs truncate block max-w-[200px]" title={user.email}>{user.email}</span>
+        <span className="font-mono text-xs truncate block max-w-[200px]" style={{ color: 'var(--cds-text-secondary, #525252)' }} title={user.email}>{user.email}</span>
         </td>
         <td className="px-4 lg:px-6 py-4">
-        <span className={`px-2 py-1 text-xs lg:text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 ${user.role === 'Admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
-         user.role === 'Manager' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-         user.role === 'Accountant' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
-          'bg-orange-100 text-orange-700 border border-orange-200'
-         }`}>
-         {user.role === 'Admin' && (
-         <svg className="w-3 h-3 hidden lg:inline" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-         </svg>
-         )}
+        <Tag type={user.role === 'Admin' ? 'purple' : user.role === 'Manager' ? 'blue' : user.role === 'Accountant' ? 'green' : 'cyan'} size="sm">
          {user.role}
-        </span>
+        </Tag>
         </td>
         <td className="px-4 lg:px-6 py-4">
-        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs lg:text-xs font-bold ${user.status === 'Active'
-         ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-         : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
-         }`}>
-         <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-emerald-500' : 'bg-zinc-400'}`}></span>
+        <Tag type={user.status === 'Active' ? 'green' : 'warm-gray'} size="sm">
          {user.status}
-        </span>
+        </Tag>
         </td>
         <td className="px-4 lg:px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-1 lg:gap-2">
          <button
          onClick={() => openSetPasswordModal(user)}
-         className="text-zinc-400 hover:text-blue-600 p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+         className="p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+         style={{ color: 'var(--cds-text-secondary, #525252)' }}
+         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-interactive, #0f62fe)')}
+         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
          title="Set password"
          >
          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -893,7 +906,10 @@ export const Settings: React.FC = () => {
          </button>
          <button
          onClick={() => handleToggleUserStatus(user)}
-         className={`text-zinc-400 p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center ${user.status === 'Active' ? 'hover:text-amber-600' : 'hover:text-emerald-600'}`}
+         className="p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+         style={{ color: 'var(--cds-text-secondary, #525252)' }}
+         onMouseEnter={(e) => (e.currentTarget.style.color = user.status === 'Active' ? 'var(--cds-support-error, #da1e28)' : 'var(--cds-support-success, #24a148)')}
+         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
          title={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
          >
          {user.status === 'Active' ? (
@@ -908,7 +924,8 @@ export const Settings: React.FC = () => {
          </button>
          <button
          onClick={() => openEditModal(user)}
-         className="text-blue-600 hover:text-blue-800 p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+         className="p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+         style={{ color: 'var(--cds-interactive, #0f62fe)' }}
          title="Edit user role"
          >
          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -917,7 +934,10 @@ export const Settings: React.FC = () => {
          </button>
          <button
          onClick={() => openDeleteDialog(user)}
-         className="text-zinc-400 hover:text-red-600 p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+         className="p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+         style={{ color: 'var(--cds-text-secondary, #525252)' }}
+         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-support-error, #da1e28)')}
+         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
          title="Delete user"
          >
          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -935,50 +955,55 @@ export const Settings: React.FC = () => {
      {/* Mobile Card View */}
      <div className="md:hidden">
       {/* Select All Header for Mobile */}
-      <div className="px-4 py-3 bg-zinc-50 flex items-center justify-between">
-      <label className="flex items-center gap-2 text-sm font-medium text-zinc-600">
+      <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'var(--cds-layer-02, #f4f4f4)' }}>
+      <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
        <input
        type="checkbox"
        checked={selectedUserIds.length === users.length && users.length > 0}
        onChange={toggleSelectAll}
-       className="w-4 h-4 rounded border-zinc-300"
+       className="w-4 h-4 flex-shrink-0"
+       style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
        />
        Select All
       </label>
-      <span className="text-xs text-zinc-500">{users.length} user{users.length !== 1 ? 's' : ''}</span>
+      <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{users.length} user{users.length !== 1 ? 's' : ''}</span>
       </div>
       
-      <div className="divide-y divide-zinc-200">
+      <div style={{ borderTop: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
       {users.map(user => (
-       <div key={user.id} className="p-4 hover:bg-zinc-50 transition-colors">
+       <div key={user.id} className="p-4" style={{ borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
        {/* Top Row: Checkbox, Avatar, Name/Email, Actions */}
        <div className="flex items-center gap-3">
         <input
         type="checkbox"
         checked={selectedUserIds.includes(user.id)}
         onChange={() => toggleSelectUser(user.id)}
-        className="w-4 h-4 rounded border-zinc-300 flex-shrink-0"
+        className="w-4 h-4 flex-shrink-0"
+        style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
         />
         <div className="relative flex-shrink-0">
-        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
+        <div className="w-10 h-10 overflow-hidden" style={{ borderRadius: '50%', border: '2px solid var(--cds-layer-01, #ffffff)' }}>
          <img
          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
          alt={user.name}
          className="w-full h-full"
          />
         </div>
-        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${user.status === 'Active' ? 'bg-emerald-500' : 'bg-zinc-400'}`}></div>
+        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2" style={{ borderRadius: '50%', borderColor: 'var(--cds-layer-01, #ffffff)', background: user.status === 'Active' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-text-disabled, #8d8d8d)' }}></div>
         </div>
         <div className="flex-1 min-w-0">
-        <p className="font-semibold text-zinc-900 truncate">{user.name}</p>
-        <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+        <p className="font-semibold truncate" style={{ color: 'var(--cds-text-primary, #161616)' }}>{user.name}</p>
+        <p className="text-xs truncate" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{user.email}</p>
         </div>
         
         {/* Actions Dropdown Area */}
         <div className="flex items-center gap-1 flex-shrink-0">
         <button
          onClick={() => openSetPasswordModal(user)}
-         className="text-zinc-400 hover:text-blue-600 p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+         style={{ color: 'var(--cds-text-secondary, #525252)' }}
+         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-interactive, #0f62fe)')}
+         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
          title="Set password"
         >
          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -987,7 +1012,8 @@ export const Settings: React.FC = () => {
         </button>
         <button
          onClick={() => openEditModal(user)}
-         className="text-blue-600 hover:text-blue-800 p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+         style={{ color: 'var(--cds-interactive, #0f62fe)' }}
          title="Edit user role"
         >
          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -996,7 +1022,10 @@ export const Settings: React.FC = () => {
         </button>
         <button
          onClick={() => openDeleteDialog(user)}
-         className="text-zinc-400 hover:text-red-600 p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+         style={{ color: 'var(--cds-text-secondary, #525252)' }}
+         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-support-error, #da1e28)')}
+         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
          title="Delete user"
         >
          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1009,25 +1038,20 @@ export const Settings: React.FC = () => {
        {/* Bottom Row: Role, Status, and Secondary Actions */}
        <div className="flex items-center justify-between mt-3 pl-7">
         <div className="flex items-center gap-2">
-        <span className={`px-2 py-1 text-xs font-bold uppercase tracking-wider ${user.role === 'Admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
-         user.role === 'Manager' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-         user.role === 'Accountant' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
-          'bg-orange-100 text-orange-700 border border-orange-200'
-         }`}>
+        <Tag type={user.role === 'Admin' ? 'purple' : user.role === 'Manager' ? 'blue' : user.role === 'Accountant' ? 'green' : 'cyan'} size="sm">
          {user.role}
-        </span>
-        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-bold ${user.status === 'Active'
-         ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-         : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
-         }`}>
-         <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-emerald-500' : 'bg-zinc-400'}`}></span>
+        </Tag>
+        <Tag type={user.status === 'Active' ? 'green' : 'warm-gray'} size="sm">
          {user.status}
-        </span>
+        </Tag>
         </div>
         <div className="flex items-center gap-1">
         <button
          onClick={() => openSetPasswordModal(user)}
-         className="text-zinc-400 hover:text-blue-600 p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+         style={{ color: 'var(--cds-text-secondary, #525252)' }}
+         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-interactive, #0f62fe)')}
+         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
          title="Set password"
         >
          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1036,7 +1060,10 @@ export const Settings: React.FC = () => {
         </button>
         <button
          onClick={() => handleToggleUserStatus(user)}
-         className={`p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${user.status === 'Active' ? 'text-zinc-400 hover:text-amber-600' : 'text-zinc-400 hover:text-emerald-600'}`}
+         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+         style={{ color: 'var(--cds-text-secondary, #525252)' }}
+         onMouseEnter={(e) => (e.currentTarget.style.color = user.status === 'Active' ? 'var(--cds-support-error, #da1e28)' : 'var(--cds-support-success, #24a148)')}
+         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
          title={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
         >
          {user.status === 'Active' ? (
@@ -1073,88 +1100,73 @@ export const Settings: React.FC = () => {
    <div className="space-y-6">
     <div className="flex justify-between items-center">
     <div>
-     <h2 className="text-2xl font-black text-zinc-900">Registration Requests</h2>
-     <p className="text-zinc-500 font-medium">Review and approve account requests from users</p>
+     <h2 className="text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>Registration Requests</h2>
+     <p className="font-medium" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Review and approve account requests from users</p>
     </div>
     </div>
 
     {saveStatus && (
-    <div className="bg-blue-50 text-blue-700 px-6 py-4 border border-blue-200 font-bold flex items-center gap-3">
-     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-     </svg>
-     {saveStatus}
-    </div>
+    <InlineNotification kind="info" title="Info" subtitle={saveStatus} hideCloseButton />
     )}
 
-    <div className="bg-white border border-zinc-200 overflow-hidden">
+    <div className="overflow-hidden" style={{ background: 'var(--cds-layer-01, #ffffff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
     <table className="w-full">
-     <thead className="bg-zinc-50 border-b border-zinc-200">
+     <thead style={{ background: 'var(--cds-layer-02, #f4f4f4)', borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
      <tr>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Name</th>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Email</th>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Role</th>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Status</th>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Requested</th>
-      <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-zinc-500">Actions</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Name</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Email</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Role</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Status</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Requested</th>
+      <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Actions</th>
      </tr>
      </thead>
-     <tbody className="divide-y divide-zinc-100">
+     <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
      {registrationRequests.length === 0 ? (
       <tr>
-      <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 font-medium">
+      <td colSpan={6} className="px-6 py-12 text-center font-medium" style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }}>
        No registration requests yet. Users can request access from the sign-in page.
       </td>
       </tr>
      ) : (
       registrationRequests.map((request) => (
-      <tr key={request.id} className="hover:bg-zinc-50 transition-colors">
-       <td className="px-6 py-4 font-semibold text-zinc-900">{request.name}</td>
-       <td className="px-6 py-4 text-zinc-600 font-mono text-sm">{request.email}</td>
+      <tr key={request.id} style={{ borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
+       <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{request.name}</td>
+       <td className="px-6 py-4 font-mono text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{request.email}</td>
        <td className="px-6 py-4">
-       <span className={`px-3 py-1 rounded-full text-xs font-bold ${request.role === 'Manager' ? 'bg-blue-100 text-blue-700' :
-        request.role === 'Accountant' ? 'bg-amber-100 text-amber-700' :
-        'bg-zinc-100 text-zinc-700'
-        }`}>
+       <Tag type={request.role === 'Manager' ? 'blue' : request.role === 'Accountant' ? 'warm-gray' : 'cyan'} size="sm">
         {request.role}
-       </span>
+       </Tag>
        </td>
        <td className="px-6 py-4">
-       <span className={`px-3 py-1 rounded-full text-xs font-bold ${request.status === 'Pending' ? 'bg-amber-100 text-amber-700' :
-        request.status === 'Approved' ? 'bg-green-100 text-green-700' :
-        'bg-red-100 text-red-700'
-        }`}>
+       <Tag type={request.status === 'Pending' ? 'warm-gray' : request.status === 'Approved' ? 'green' : 'red'} size="sm">
         {request.status}
-       </span>
+       </Tag>
        </td>
-       <td className="px-6 py-4 text-zinc-600 text-sm">
+       <td className="px-6 py-4 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
        {new Date(request.requested_at).toLocaleDateString()}
        </td>
        <td className="px-6 py-4 text-right">
        {request.status === 'Pending' && (
         <div className="flex items-center justify-end gap-2">
-        <button
+        <Button
+         kind="primary"
+         size="sm"
          onClick={() => handleApproveRequest(request.id)}
-         className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 transition-all font-bold text-sm flex items-center gap-1"
         >
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-         </svg>
          Approve
-        </button>
-        <button
+        </Button>
+        <Button
+         kind="danger"
+         size="sm"
          onClick={() => handleRejectRequest(request.id)}
-         className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 transition-all font-bold text-sm flex items-center gap-1"
         >
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-         </svg>
          Reject
-        </button>
+        </Button>
         </div>
        )}
        {request.status !== 'Pending' && (
-        <span className="text-xs text-zinc-400 font-medium">
+        <span className="text-xs font-medium" style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }}>
         Reviewed {request.reviewed_at ? new Date(request.reviewed_at).toLocaleDateString() : ''}
         </span>
        )}
@@ -1172,82 +1184,68 @@ export const Settings: React.FC = () => {
    <div className="space-y-6">
     <div className="flex justify-between items-center">
     <div>
-     <h2 className="text-2xl font-black text-zinc-900">User Invitations</h2>
-     <p className="text-zinc-500 font-medium">Send email invitations to new team members</p>
+     <h2 className="text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>User Invitations</h2>
+     <p className="font-medium" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Send email invitations to new team members</p>
     </div>
-    <button
+    <Button
      onClick={() => setShowInviteModal(true)}
-     className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white hover:bg-green-700 transition-all shadow-lg shadow-green-200 font-bold"
+     renderIcon={Email}
     >
-     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-     </svg>
      Send Invitation
-    </button>
+    </Button>
     </div>
 
     {saveStatus && (
-    <div className="bg-blue-50 text-blue-700 px-6 py-4 border border-blue-200 font-bold flex items-center gap-3">
-     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-     </svg>
-     {saveStatus}
-    </div>
+    <InlineNotification kind="info" title="Info" subtitle={saveStatus} hideCloseButton />
     )}
 
-    <div className="bg-white border border-zinc-200 overflow-hidden">
+    <div className="overflow-hidden" style={{ background: 'var(--cds-layer-01, #ffffff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
     <table className="w-full">
-     <thead className="bg-zinc-50 border-b border-zinc-200">
+     <thead style={{ background: 'var(--cds-layer-02, #f4f4f4)', borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
      <tr>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Name</th>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Email</th>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Role</th>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Status</th>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Expires</th>
-      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-zinc-500">Invited By</th>
-      <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-zinc-500">Actions</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Name</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Email</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Role</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Status</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Expires</th>
+      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Invited By</th>
+      <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Actions</th>
      </tr>
      </thead>
-     <tbody className="divide-y divide-zinc-100">
+     <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
      {invites.length === 0 ? (
       <tr>
-      <td colSpan={7} className="px-6 py-12 text-center text-zinc-400 font-medium">
+      <td colSpan={7} className="px-6 py-12 text-center font-medium" style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }}>
        No pending invitations. Click "Send Invitation" to invite team members.
       </td>
       </tr>
      ) : (
       invites.map((invite) => (
-      <tr key={invite.id} className="hover:bg-zinc-50 transition-colors">
-       <td className="px-6 py-4 font-semibold text-zinc-900">{invite.name}</td>
-       <td className="px-6 py-4 text-zinc-600 font-mono text-sm">{invite.email}</td>
+      <tr key={invite.id} style={{ borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
+       <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{invite.name}</td>
+       <td className="px-6 py-4 font-mono text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{invite.email}</td>
        <td className="px-6 py-4">
-       <span className={`px-3 py-1 rounded-full text-xs font-bold ${invite.role === 'Admin' ? 'bg-purple-100 text-purple-700' :
-        invite.role === 'Manager' ? 'bg-blue-100 text-blue-700' :
-        invite.role === 'Accountant' ? 'bg-amber-100 text-amber-700' :
-         'bg-zinc-100 text-zinc-700'
-        }`}>
+       <Tag type={invite.role === 'Admin' ? 'purple' : invite.role === 'Manager' ? 'blue' : invite.role === 'Accountant' ? 'warm-gray' : 'cyan'} size="sm">
         {invite.role}
-       </span>
+       </Tag>
        </td>
        <td className="px-6 py-4">
-       <span className={`px-3 py-1 rounded-full text-xs font-bold ${invite.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
-        invite.status === 'Accepted' ? 'bg-green-100 text-green-700' :
-        'bg-red-100 text-red-700'
-        }`}>
+       <Tag type={invite.status === 'Pending' ? 'warm-gray' : invite.status === 'Accepted' ? 'green' : 'red'} size="sm">
         {invite.status}
-       </span>
+       </Tag>
        </td>
-       <td className="px-6 py-4 text-zinc-600 text-sm">
+       <td className="px-6 py-4 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
        {new Date(invite.expiresAt).toLocaleDateString()}
        </td>
-       <td className="px-6 py-4 text-zinc-600 text-sm">{invite.invitedBy}</td>
+       <td className="px-6 py-4 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{invite.invitedBy}</td>
        <td className="px-6 py-4 text-right">
        <div className="flex items-center justify-end gap-2">
         {invite.status === 'Pending' && (
         <>
          <button
          onClick={() => handleCopyInviteLink(invite.inviteToken)}
-         className="text-emerald-600 hover:text-emerald-800 p-1 transition-colors"
+         className="p-1 transition-colors"
+         style={{ color: 'var(--cds-support-success, #24a148)' }}
          title="Copy invite link"
          >
          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1256,7 +1254,8 @@ export const Settings: React.FC = () => {
          </button>
          <button
          onClick={() => handleResendInvite(invite.id)}
-         className="text-blue-600 hover:text-blue-800 p-1 transition-colors"
+         className="p-1 transition-colors"
+         style={{ color: 'var(--cds-interactive, #0f62fe)' }}
          title="Resend invitation"
          >
          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1265,7 +1264,10 @@ export const Settings: React.FC = () => {
          </button>
          <button
          onClick={() => handleDeleteInvite(invite.id)}
-         className="text-zinc-400 hover:text-red-600 p-1 transition-colors"
+         className="p-1 transition-colors"
+         style={{ color: 'var(--cds-text-secondary, #525252)' }}
+         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-support-error, #da1e28)')}
+         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
          title="Cancel invitation"
          >
          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1290,34 +1292,36 @@ export const Settings: React.FC = () => {
   {/* User Creation Modal */}
   {showUserModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-   <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowUserModal(false)}></div>
-   <div className="relative bg-white p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-   <h3 className="text-2xl font-black text-zinc-900 mb-6">Add New User</h3>
+   <div className="absolute inset-0 backdrop-blur-sm cursor-pointer" style={{ background: 'rgba(22, 22, 22, 0.4)' }} onClick={() => setShowUserModal(false)}></div>
+   <div className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto" style={{ background: 'var(--cds-layer-01, #ffffff)', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)' }}>
+   <h3 className="text-2xl font-black mb-6" style={{ color: 'var(--cds-text-primary, #161616)' }}>Add New User</h3>
    <form onSubmit={handleCreateUser} className="space-y-4">
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Full Name</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Full Name</label>
     <input
      required
      type="text"
      value={userForm.name}
      onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
      placeholder="John Doe"
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     />
     </div>
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Email Address</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Email Address</label>
     <input
      required
      type="email"
      value={userForm.email}
      onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
      placeholder="john@affinity.com"
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     />
     </div>
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Password</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Password</label>
     <input
      required
      type="password"
@@ -1325,24 +1329,22 @@ export const Settings: React.FC = () => {
      onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
      placeholder="Min 8 characters"
      minLength={8}
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     />
-    <p className="text-xs text-zinc-500">Must be at least 8 characters</p>
+    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Must be at least 8 characters</p>
     </div>
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Role</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Role</label>
     <div className="space-y-2">
      <div
      onClick={() => setUserForm({ ...userForm, role: 'Admin' })}
-     className={`p-4 border-2 cursor-pointer transition-all ${userForm.role === 'Admin'
-      ? 'border-purple-500 bg-purple-50'
-      : 'border-zinc-200 hover:border-purple-300'
-      }`}
+     className="p-4 cursor-pointer transition-all"
+     style={{ border: `2px solid ${userForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: userForm.role === 'Admin' ? 'var(--cds-tag-background-purple, #f6f2ff)' : 'transparent' }}
      >
      <div className="flex items-center justify-between mb-1">
-      <span className="font-bold text-zinc-900">Administrator</span>
-      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${userForm.role === 'Admin' ? 'border-purple-500 bg-purple-500' : 'border-zinc-300'
-      }`}>
+      <span className="font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Administrator</span>
+      <div className="w-5 h-5 flex items-center justify-center" style={{ borderRadius: '50%', border: `2px solid ${userForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: userForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'transparent' }}>
       {userForm.role === 'Admin' && (
        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1350,20 +1352,17 @@ export const Settings: React.FC = () => {
       )}
       </div>
      </div>
-     <p className="text-xs text-zinc-600">Full system access, user management, and all settings</p>
+     <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Full system access, user management, and all settings</p>
      </div>
 
      <div
      onClick={() => setUserForm({ ...userForm, role: 'Manager' })}
-     className={`p-4 border-2 cursor-pointer transition-all ${userForm.role === 'Manager'
-      ? 'border-blue-500 bg-blue-50'
-      : 'border-zinc-200 hover:border-blue-300'
-      }`}
+     className="p-4 cursor-pointer transition-all"
+     style={{ border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: userForm.role === 'Manager' ? 'var(--cds-layer-selected-01, #e5f6ff)' : 'transparent' }}
      >
      <div className="flex items-center justify-between mb-1">
-      <span className="font-bold text-zinc-900">Manager</span>
-      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${userForm.role === 'Manager' ? 'border-blue-500 bg-blue-500' : 'border-zinc-300'
-      }`}>
+      <span className="font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Manager</span>
+      <div className="w-5 h-5 flex items-center justify-center" style={{ borderRadius: '50%', border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: userForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'transparent' }}>
       {userForm.role === 'Manager' && (
        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1371,20 +1370,17 @@ export const Settings: React.FC = () => {
       )}
       </div>
      </div>
-     <p className="text-xs text-zinc-600">Dashboard, reports, vehicles, and operational data</p>
+     <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Dashboard, reports, vehicles, and operational data</p>
      </div>
 
      <div
      onClick={() => setUserForm({ ...userForm, role: 'Accountant' })}
-     className={`p-4 border-2 cursor-pointer transition-all ${userForm.role === 'Accountant'
-      ? 'border-emerald-500 bg-emerald-50'
-      : 'border-zinc-200 hover:border-emerald-300'
-      }`}
+     className="p-4 cursor-pointer transition-all"
+     style={{ border: `2px solid ${userForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: userForm.role === 'Accountant' ? 'var(--cds-tag-background-green, #defbe6)' : 'transparent' }}
      >
      <div className="flex items-center justify-between mb-1">
-      <span className="font-bold text-zinc-900">Accountant</span>
-      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${userForm.role === 'Accountant' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-300'
-      }`}>
+      <span className="font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Accountant</span>
+      <div className="w-5 h-5 flex items-center justify-center" style={{ borderRadius: '50%', border: `2px solid ${userForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: userForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'transparent' }}>
       {userForm.role === 'Accountant' && (
        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1392,20 +1388,17 @@ export const Settings: React.FC = () => {
       )}
       </div>
      </div>
-     <p className="text-xs text-zinc-600">Financial data, expenses, quotes, invoices, and payments</p>
+     <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Financial data, expenses, quotes, invoices, and payments</p>
      </div>
 
      <div
      onClick={() => setUserForm({ ...userForm, role: 'Driver' })}
-     className={`p-4 border-2 cursor-pointer transition-all ${userForm.role === 'Driver'
-      ? 'border-orange-500 bg-orange-50'
-      : 'border-zinc-200 hover:border-orange-300'
-      }`}
+     className="p-4 cursor-pointer transition-all"
+     style={{ border: `2px solid ${userForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: userForm.role === 'Driver' ? 'var(--cds-tag-background-cyan, #e5f6ff)' : 'transparent' }}
      >
      <div className="flex items-center justify-between mb-1">
-      <span className="font-bold text-zinc-900">Driver</span>
-      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${userForm.role === 'Driver' ? 'border-orange-500 bg-orange-500' : 'border-zinc-300'
-      }`}>
+      <span className="font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Driver</span>
+      <div className="w-5 h-5 flex items-center justify-center" style={{ borderRadius: '50%', border: `2px solid ${userForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: userForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'transparent' }}>
       {userForm.role === 'Driver' && (
        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1413,7 +1406,7 @@ export const Settings: React.FC = () => {
       )}
       </div>
      </div>
-     <p className="text-xs text-zinc-600">Driver portal, document uploads, and trip logs</p>
+     <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Driver portal, document uploads, and trip logs</p>
      </div>
     </div>
     </div>
@@ -1424,13 +1417,15 @@ export const Settings: React.FC = () => {
      setShowUserModal(false);
      setUserForm({ name: '', email: '', password: '', role: 'Driver', status: 'Active' });
      }}
-     className="flex-1 px-4 py-3 font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
+     className="flex-1 px-4 py-3 font-bold text-sm"
+     style={{ color: 'var(--cds-text-secondary, #525252)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     >
      Cancel
     </button>
     <button
      type="submit"
-     className="flex-1 px-4 py-3 font-bold text-sm bg-blue-600 text-white hover:bg-blue-700"
+     className="flex-1 px-4 py-3 font-bold text-sm text-white"
+     style={{ background: 'var(--cds-interactive, #0f62fe)' }}
     >
      Create User
     </button>
@@ -1443,22 +1438,22 @@ export const Settings: React.FC = () => {
   {/* Set Password Modal */}
   {showSetPasswordModal && userToSetPassword && (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-   <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowSetPasswordModal(false)}></div>
-   <div className="relative bg-white p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+   <div className="absolute inset-0 backdrop-blur-sm cursor-pointer" style={{ background: 'rgba(22, 22, 22, 0.4)' }} onClick={() => setShowSetPasswordModal(false)}></div>
+   <div className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto" style={{ background: 'var(--cds-layer-01, #ffffff)', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)' }}>
    <div className="flex items-center gap-3 mb-6">
-    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="w-12 h-12 flex items-center justify-center" style={{ borderRadius: '50%', background: 'var(--cds-layer-selected-01, #e5f6ff)' }}>
+    <svg className="w-6 h-6" style={{ color: 'var(--cds-interactive, #0f62fe)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
     </svg>
     </div>
     <div>
-    <h3 className="text-2xl font-black text-zinc-900">Set Password</h3>
-    <p className="text-sm text-zinc-500">Set a new password for {userToSetPassword.name}</p>
+    <h3 className="text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>Set Password</h3>
+    <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Set a new password for {userToSetPassword.name}</p>
     </div>
    </div>
    <form onSubmit={handleSetPassword} className="space-y-4">
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">New Password</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>New Password</label>
     <input
      required
      type="password"
@@ -1466,11 +1461,12 @@ export const Settings: React.FC = () => {
      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
      placeholder="Min 8 characters"
      minLength={8}
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     />
     </div>
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Confirm Password</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Confirm Password</label>
     <input
      required
      type="password"
@@ -1478,11 +1474,12 @@ export const Settings: React.FC = () => {
      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
      placeholder="Re-enter password"
      minLength={8}
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     />
     </div>
-    <div className="bg-amber-50 border border-amber-200 p-4">
-    <p className="text-xs text-amber-700 font-medium">
+    <div className="p-4" style={{ background: 'var(--cds-tag-background-warm-gray, #f7f3f2)', border: '1px solid var(--cds-tag-border-warm-gray, #e5e0df)' }}>
+    <p className="text-xs font-medium" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
      ⚠️ This will immediately change the user's password. They will need to use the new password on their next login.
     </p>
     </div>
@@ -1494,13 +1491,15 @@ export const Settings: React.FC = () => {
      setUserToSetPassword(null);
      setPasswordForm({ newPassword: '', confirmPassword: '' });
      }}
-     className="flex-1 px-4 py-3 font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
+     className="flex-1 px-4 py-3 font-bold text-sm"
+     style={{ color: 'var(--cds-text-secondary, #525252)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     >
      Cancel
     </button>
     <button
      type="submit"
-     className="flex-1 px-4 py-3 font-bold text-sm bg-blue-600 text-white hover:bg-blue-700"
+     className="flex-1 px-4 py-3 font-bold text-sm text-white"
+     style={{ background: 'var(--cds-interactive, #0f62fe)' }}
     >
      Set Password
     </button>
@@ -1513,46 +1512,45 @@ export const Settings: React.FC = () => {
   {/* Edit User Modal */}
   {showEditModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-   <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowEditModal(false)}></div>
-   <div className="relative bg-white p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-   <h3 className="text-2xl font-black text-zinc-900 mb-6">Edit User</h3>
+   <div className="absolute inset-0 backdrop-blur-sm cursor-pointer" style={{ background: 'rgba(22, 22, 22, 0.4)' }} onClick={() => setShowEditModal(false)}></div>
+   <div className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto" style={{ background: 'var(--cds-layer-01, #ffffff)', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)' }}>
+   <h3 className="text-2xl font-black mb-6" style={{ color: 'var(--cds-text-primary, #161616)' }}>Edit User</h3>
    <form onSubmit={handleEditUser} className="space-y-4">
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Full Name</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Full Name</label>
     <input
      required
      type="text"
      value={editForm.name}
      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
      placeholder="John Doe"
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     />
     </div>
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Email Address</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Email Address</label>
     <input
      required
      type="email"
      value={editForm.email}
      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
      placeholder="john@affinity.com"
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     />
     </div>
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Role</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Role</label>
     <div className="space-y-2">
      <div
      onClick={() => setEditForm({ ...editForm, role: 'Admin' })}
-     className={`p-3 border-2 cursor-pointer transition-all ${editForm.role === 'Admin'
-      ? 'border-purple-500 bg-purple-50'
-      : 'border-zinc-200 hover:border-purple-300'
-      }`}
+     className="p-3 cursor-pointer transition-all"
+     style={{ border: `2px solid ${editForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: editForm.role === 'Admin' ? 'var(--cds-tag-background-purple, #f6f2ff)' : 'transparent' }}
      >
      <div className="flex items-center justify-between">
-      <span className="font-bold text-sm text-zinc-900">Administrator</span>
-      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${editForm.role === 'Admin' ? 'border-purple-500 bg-purple-500' : 'border-zinc-300'
-      }`}>
+      <span className="font-bold text-sm" style={{ color: 'var(--cds-text-primary, #161616)' }}>Administrator</span>
+      <div className="w-4 h-4 flex items-center justify-center" style={{ borderRadius: '50%', border: `2px solid ${editForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: editForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'transparent' }}>
       {editForm.role === 'Admin' && (
        <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1564,15 +1562,12 @@ export const Settings: React.FC = () => {
 
      <div
      onClick={() => setEditForm({ ...editForm, role: 'Manager' })}
-     className={`p-3 border-2 cursor-pointer transition-all ${editForm.role === 'Manager'
-      ? 'border-blue-500 bg-blue-50'
-      : 'border-zinc-200 hover:border-blue-300'
-      }`}
+     className="p-3 cursor-pointer transition-all"
+     style={{ border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: editForm.role === 'Manager' ? 'var(--cds-layer-selected-01, #e5f6ff)' : 'transparent' }}
      >
      <div className="flex items-center justify-between">
-      <span className="font-bold text-sm text-zinc-900">Manager</span>
-      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${editForm.role === 'Manager' ? 'border-blue-500 bg-blue-500' : 'border-zinc-300'
-      }`}>
+      <span className="font-bold text-sm" style={{ color: 'var(--cds-text-primary, #161616)' }}>Manager</span>
+      <div className="w-4 h-4 flex items-center justify-center" style={{ borderRadius: '50%', border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: editForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'transparent' }}>
       {editForm.role === 'Manager' && (
        <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1584,15 +1579,12 @@ export const Settings: React.FC = () => {
 
      <div
      onClick={() => setEditForm({ ...editForm, role: 'Accountant' })}
-     className={`p-3 border-2 cursor-pointer transition-all ${editForm.role === 'Accountant'
-      ? 'border-emerald-500 bg-emerald-50'
-      : 'border-zinc-200 hover:border-emerald-300'
-      }`}
+     className="p-3 cursor-pointer transition-all"
+     style={{ border: `2px solid ${editForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: editForm.role === 'Accountant' ? 'var(--cds-tag-background-green, #defbe6)' : 'transparent' }}
      >
      <div className="flex items-center justify-between">
-      <span className="font-bold text-sm text-zinc-900">Accountant</span>
-      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${editForm.role === 'Accountant' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-300'
-      }`}>
+      <span className="font-bold text-sm" style={{ color: 'var(--cds-text-primary, #161616)' }}>Accountant</span>
+      <div className="w-4 h-4 flex items-center justify-center" style={{ borderRadius: '50%', border: `2px solid ${editForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: editForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'transparent' }}>
       {editForm.role === 'Accountant' && (
        <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1604,15 +1596,12 @@ export const Settings: React.FC = () => {
 
      <div
      onClick={() => setEditForm({ ...editForm, role: 'Driver' })}
-     className={`p-3 border-2 cursor-pointer transition-all ${editForm.role === 'Driver'
-      ? 'border-orange-500 bg-orange-50'
-      : 'border-zinc-200 hover:border-orange-300'
-      }`}
+     className="p-3 cursor-pointer transition-all"
+     style={{ border: `2px solid ${editForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: editForm.role === 'Driver' ? 'var(--cds-tag-background-cyan, #e5f6ff)' : 'transparent' }}
      >
      <div className="flex items-center justify-between">
-      <span className="font-bold text-sm text-zinc-900">Driver</span>
-      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${editForm.role === 'Driver' ? 'border-orange-500 bg-orange-500' : 'border-zinc-300'
-      }`}>
+      <span className="font-bold text-sm" style={{ color: 'var(--cds-text-primary, #161616)' }}>Driver</span>
+      <div className="w-4 h-4 flex items-center justify-center" style={{ borderRadius: '50%', border: `2px solid ${editForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #c6c6c6)'}`, background: editForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'transparent' }}>
       {editForm.role === 'Driver' && (
        <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1624,12 +1613,13 @@ export const Settings: React.FC = () => {
     </div>
     </div>
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Status</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Status</label>
     <select
      required
      value={editForm.status}
      onChange={(e) => setEditForm({ ...editForm, status: e.target.value as ('Active' | 'Inactive') })}
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-blue-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     >
      <option value="Active">Active</option>
      <option value="Inactive">Inactive</option>
@@ -1639,13 +1629,15 @@ export const Settings: React.FC = () => {
     <button
      type="button"
      onClick={() => setShowEditModal(false)}
-     className="flex-1 px-4 py-3 font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
+     className="flex-1 px-4 py-3 font-bold text-sm"
+     style={{ color: 'var(--cds-text-secondary, #525252)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     >
      Cancel
     </button>
     <button
      type="submit"
-     className="flex-1 px-4 py-3 font-bold text-sm bg-blue-600 text-white hover:bg-blue-700"
+     className="flex-1 px-4 py-3 font-bold text-sm text-white"
+     style={{ background: 'var(--cds-interactive, #0f62fe)' }}
     >
      Update User
     </button>
@@ -1658,49 +1650,52 @@ export const Settings: React.FC = () => {
   {/* Invite Modal */}
   {showInviteModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-   <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowInviteModal(false)}></div>
-   <div className="relative bg-white p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+   <div className="absolute inset-0 backdrop-blur-sm cursor-pointer" style={{ background: 'rgba(22, 22, 22, 0.4)' }} onClick={() => setShowInviteModal(false)}></div>
+   <div className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto" style={{ background: 'var(--cds-layer-01, #ffffff)', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)' }}>
    <div className="flex items-center gap-3 mb-6">
-    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="w-12 h-12 flex items-center justify-center" style={{ borderRadius: '50%', background: 'var(--cds-tag-background-green, #defbe6)' }}>
+    <svg className="w-6 h-6" style={{ color: 'var(--cds-support-success, #24a148)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
     </svg>
     </div>
     <div>
-    <h3 className="text-2xl font-black text-zinc-900">Send Invitation</h3>
-    <p className="text-sm text-zinc-500">Invite a new team member via email</p>
+    <h3 className="text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>Send Invitation</h3>
+    <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Invite a new team member via email</p>
     </div>
    </div>
    <form onSubmit={handleSendInvite} className="space-y-4">
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Full Name</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Full Name</label>
     <input
      required
      type="text"
      value={inviteForm.name}
      onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
      placeholder="John Doe"
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     />
     </div>
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Email Address</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Email Address</label>
     <input
      required
      type="email"
      value={inviteForm.email}
      onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
      placeholder="john@company.com"
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     />
     </div>
     <div className="space-y-1">
-    <label className="text-sm font-semibold text-zinc-700">Role</label>
+    <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Role</label>
     <select
      required
      value={inviteForm.role}
      onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value as UserRole })}
-     className="w-full px-4 py-3 border border-zinc-200 focus:ring-2 focus:ring-green-500 outline-none"
+     className="w-full px-4 py-3 outline-none"
+     style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     >
      <option value="Driver">Driver</option>
      <option value="Manager">Manager</option>
@@ -1708,8 +1703,8 @@ export const Settings: React.FC = () => {
      <option value="Admin">Admin</option>
     </select>
     </div>
-    <div className="bg-blue-50 border border-blue-200 p-4">
-    <p className="text-xs text-blue-700 font-medium">
+    <div className="p-4" style={{ background: 'var(--cds-layer-selected-01, #e5f6ff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
+    <p className="text-xs font-medium" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
      📧 An email invitation will be sent with a secure signup link. The invitation expires in 7 days.
     </p>
     </div>
@@ -1717,13 +1712,15 @@ export const Settings: React.FC = () => {
     <button
      type="button"
      onClick={() => setShowInviteModal(false)}
-     className="flex-1 px-4 py-3 font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
+     className="flex-1 px-4 py-3 font-bold text-sm"
+     style={{ color: 'var(--cds-text-secondary, #525252)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     >
      Cancel
     </button>
     <button
      type="submit"
-     className="flex-1 px-4 py-3 font-bold text-sm bg-green-600 text-white hover:bg-green-700"
+     className="flex-1 px-4 py-3 font-bold text-sm text-white"
+     style={{ background: 'var(--cds-support-success, #24a148)' }}
     >
      Send Invite
     </button>
@@ -1736,33 +1733,35 @@ export const Settings: React.FC = () => {
   {/* Delete Confirmation Dialog */}
   {showDeleteDialog && userToDelete && (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-   <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm cursor-pointer" onClick={() => setShowDeleteDialog(false)}></div>
-   <div className="relative bg-white p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+   <div className="absolute inset-0 backdrop-blur-sm cursor-pointer" style={{ background: 'rgba(22, 22, 22, 0.4)' }} onClick={() => setShowDeleteDialog(false)}></div>
+   <div className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto" style={{ background: 'var(--cds-layer-01, #ffffff)', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)' }}>
    <div className="flex items-center gap-4 mb-4">
-    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="w-12 h-12 flex items-center justify-center" style={{ borderRadius: '50%', background: 'var(--cds-tag-background-red, #fff0f0)' }}>
+    <svg className="w-6 h-6" style={{ color: 'var(--cds-support-error, #da1e28)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
     </svg>
     </div>
     <div>
-    <h3 className="text-xl font-black text-zinc-900">Delete User</h3>
-    <p className="text-sm text-zinc-500">This action cannot be undone</p>
+    <h3 className="text-xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>Delete User</h3>
+    <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>This action cannot be undone</p>
     </div>
    </div>
-   <div className="bg-zinc-50 p-4 mb-6">
-    <p className="text-sm text-zinc-700">Are you sure you want to delete <span className="font-bold">{userToDelete.name}</span>?</p>
-    <p className="text-xs text-zinc-500 mt-2">{userToDelete.email}</p>
+   <div className="p-4 mb-6" style={{ background: 'var(--cds-layer-02, #f4f4f4)' }}>
+    <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Are you sure you want to delete <span className="font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{userToDelete.name}</span>?</p>
+    <p className="text-xs mt-2" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{userToDelete.email}</p>
    </div>
    <div className="flex gap-3">
     <button
     onClick={() => setShowDeleteDialog(false)}
-    className="flex-1 px-4 py-3 font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
+    className="flex-1 px-4 py-3 font-bold text-sm"
+    style={{ color: 'var(--cds-text-secondary, #525252)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     >
     Cancel
     </button>
     <button
     onClick={handleDeleteUser}
-    className="flex-1 px-4 py-3 font-bold text-sm bg-red-600 text-white hover:bg-red-700"
+    className="flex-1 px-4 py-3 font-bold text-sm text-white"
+    style={{ background: 'var(--cds-support-error, #da1e28)' }}
     >
     Delete User
     </button>

@@ -1398,13 +1398,13 @@ export const Financials: React.FC = () => {
 
  <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
  <div>
- <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-900">Finance</h2>
- <p className="font-medium text-zinc-500">Quotes, Billing, Receipts, Statements</p>
+ <h2 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ color: 'var(--cds-text-primary, #161616)' }}>Finance</h2>
+ <p className="font-medium" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Quotes, Billing, Receipts, Statements</p>
  </div>
  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
  <button
  onClick={openCreateInvoiceModal}
- className="flex-1 sm:flex-none items-center justify-center gap-2 bg-green-600 px-6 py-4 sm:py-2.5 text-base sm:text-sm font-bold text-white shadow-xl shadow-green-100 transition-all hover:bg-green-700 active:scale-[0.98]"
+ className="flex-1 sm:flex-none items-center justify-center gap-2 px-6 py-4 sm:py-2.5 text-base sm:text-sm font-bold text-white transition-all active:scale-[0.98]" style={{ backgroundColor: 'var(--cds-support-success, #24a148)' }}
  >
  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1413,7 +1413,7 @@ export const Financials: React.FC = () => {
  </button>
  <button
  onClick={() => setShowQuoteModal(true)}
- className="flex-1 sm:flex-none items-center justify-center gap-2 bg-blue-600 px-6 py-4 sm:py-2.5 text-base sm:text-sm font-bold text-white shadow-xl shadow-blue-100 transition-all hover:bg-blue-700"
+ className="flex-1 sm:flex-none items-center justify-center gap-2 px-6 py-4 sm:py-2.5 text-base sm:text-sm font-bold text-white transition-all" style={{ backgroundColor: 'var(--cds-interactive, #0f62fe)' }}
  >
  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1425,16 +1425,16 @@ export const Financials: React.FC = () => {
 
  {showQuoteModal && (
  <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
- <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={closeQuoteModal} />
- <div className="relative max-h-[95vh] w-full max-w-2xl overflow-y-auto sm: bg-white p-4 sm:p-8 shadow-2xl">
+ <div className="absolute inset-0 backdrop-blur-sm" onClick={closeQuoteModal} style={{ backgroundColor: 'rgba(22, 22, 22, 0.4)' }} />
+ <div className="relative max-h-[95vh] w-full max-w-2xl overflow-y-auto p-4 sm:p-8" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
  <div className="flex items-center justify-between mb-4 sm:mb-6">
- <h3 className="text-lg sm:text-2xl font-black text-zinc-900">
+ <h3 className="text-lg sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>
  {editingQuote ? `Edit Quote` : 'Create Quote'}
  </h3>
  <button
  type="button"
  onClick={closeQuoteModal}
- className="lg:hidden p-2 -mr-2 text-zinc-400 hover:text-zinc-600"
+ className="lg:hidden p-2 -mr-2" style={{ color: 'var(--cds-text-secondary, #525252)' }}
  aria-label="Close"
  >
  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1445,11 +1445,11 @@ export const Financials: React.FC = () => {
  <form onSubmit={handleCreateQuote} className="space-y-3 sm:space-y-4">
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Vehicle (Optional)</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Vehicle (Optional)</label>
  <select
  value={quoteForm.vehicle_id}
  onChange={e => setQuoteForm({ ...quoteForm, vehicle_id: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="">No Vehicle</option>
  {vehicles.map(vehicle => (
@@ -1460,13 +1460,13 @@ export const Financials: React.FC = () => {
  </select>
  </div>
  <div>
- <label className="text-sm font-semibold text-zinc-700">Saved Client</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Saved Client</label>
  <div className="mb-2 flex items-center justify-between gap-3">
- <span className="text-xs text-zinc-500">Select an existing client or leave blank for a one-off quote.</span>
+ <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Select an existing client or leave blank for a one-off quote.</span>
  <button
  type="button"
  onClick={() => openClientModal('quote')}
- className=" border border-blue-200 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-50"
+ className="px-3 py-1.5 text-xs font-bold" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }}
  >
  + Add Client
  </button>
@@ -1483,7 +1483,7 @@ export const Financials: React.FC = () => {
  client_address: client?.address ?? '',
  });
  }}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="">
  {clients.length === 0 ? 'No clients found - click "+ Add Client" to create one' : 'Select a client...'}
@@ -1494,7 +1494,7 @@ export const Financials: React.FC = () => {
  </select>
  </div>
  <div>
- <label className="text-sm font-semibold text-zinc-700">Client Name *</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Client Name *</label>
  <input
  required
  value={quoteForm.client_name}
@@ -1506,63 +1506,63 @@ export const Financials: React.FC = () => {
  })
  }
  placeholder="Enter client name..."
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Email</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Email</label>
  <input
  type="email"
  value={quoteForm.client_email}
  onChange={e => setQuoteForm({ ...quoteForm, client_email: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Address</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Address</label>
  <textarea
  rows={2}
  value={quoteForm.client_address}
  onChange={e => setQuoteForm({ ...quoteForm, client_address: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div>
- <label className="text-sm font-semibold text-zinc-700">Valid Until</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Valid Until</label>
  <input
  type="date"
  value={quoteForm.valid_until}
  onChange={e => setQuoteForm({ ...quoteForm, valid_until: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div>
- <label className="text-sm font-semibold text-zinc-700">Currency</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Currency</label>
  <select
  value={quoteForm.currency}
  onChange={e => setQuoteForm({ ...quoteForm, currency: e.target.value as 'USD' | 'GBP' })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="USD">USD ($)</option>
  <option value="GBP">GBP (£)</option>
  </select>
  </div>
  <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Notes</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Notes</label>
  <input
  value={quoteForm.description}
  onChange={e => setQuoteForm({ ...quoteForm, description: e.target.value })}
  placeholder="Additional notes..."
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-2 mt-2 border-t pt-4">
  <div className="mb-3 flex items-center justify-between">
- <label className="text-sm font-bold text-zinc-800">Line Items</label>
+ <label className="text-sm font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Line Items</label>
  <button
  type="button"
  onClick={() => setQuoteLineItems([...quoteLineItems, createEmptyLineItem()])}
- className=" bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-200"
+ className="px-3 py-1.5 text-xs font-bold" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-interactive, #0f62fe)' }}
  >
  + Add Line
  </button>
@@ -1570,21 +1570,21 @@ export const Financials: React.FC = () => {
 
  <div className="space-y-3">
  {quoteLineItems.map((item, index) => (
- <div key={index} className=" border border-zinc-200 bg-zinc-50 p-3">
+ <div key={index} className="p-3" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}>
  <div className="grid grid-cols-12 items-end gap-2">
  <div className="col-span-4">
- <label className="text-xs text-zinc-500">Description</label>
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Description</label>
  <input
  required
  value={item.description}
  onChange={e =>
  updateLineItem(quoteLineItems, setQuoteLineItems, index, 'description', e.target.value)
  }
- className="w-full border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1">
- <label className="text-xs text-zinc-500">Qty</label>
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Qty</label>
  <input
  type="number"
  min="1"
@@ -1598,11 +1598,11 @@ export const Financials: React.FC = () => {
  parseFloat(e.target.value) || 1
  )
  }
- className="w-full border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-2">
- <label className="text-xs text-zinc-500">Unit Price</label>
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Unit Price</label>
  <input
  type="number"
  step="0.01"
@@ -1616,11 +1616,11 @@ export const Financials: React.FC = () => {
  parseFloat(e.target.value) || 0
  )
  }
- className="w-full border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-2">
- <label className="text-xs text-zinc-500">Discount %</label>
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Discount %</label>
  <input
  type="number"
  min="0"
@@ -1636,12 +1636,12 @@ export const Financials: React.FC = () => {
  clampDiscountPercentage(parseFloat(e.target.value) || 0)
  )
  }
- className="w-full border border-zinc-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-2">
- <label className="text-xs text-zinc-500">Amount</label>
- <div className=" bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-700">
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Amount</label>
+ <div className="px-3 py-2 text-sm font-semibold" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-text-primary, #161616)' }}>
  {formatMoney(calculateLineAmount(item), quoteForm.currency)}
  </div>
  </div>
@@ -1650,7 +1650,7 @@ export const Financials: React.FC = () => {
  <button
  type="button"
  onClick={() => setQuoteLineItems(quoteLineItems.filter((_, lineIndex) => lineIndex !== index))}
- className="w-full p-2 sm:p-2 text-red-500 hover:bg-red-50 touch-manipulation"
+ className="w-full p-2 sm:p-2 touch-manipulation" style={{ color: 'var(--cds-support-error, #da1e28)' }}
  >
  <svg className="mx-auto h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
  <path
@@ -1665,7 +1665,7 @@ export const Financials: React.FC = () => {
  </div>
  </div>
  {(item.discount_percentage || 0) > 0 && (
- <p className="mt-2 text-xs text-zinc-500">
+ <p className="mt-2 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
  Discount applied: {formatMoney(calculateLineDiscountAmount(item), quoteForm.currency)}
  </p>
  )}
@@ -1675,14 +1675,14 @@ export const Financials: React.FC = () => {
 
  <div className="mt-4 flex justify-end border-t pt-3">
  <div className="text-right">
- <div className="space-y-1 text-sm text-zinc-500">
+ <div className="space-y-1 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
  <div>Subtotal: {formatMoney(quoteTotals.subtotal, quoteForm.currency)}</div>
  <div>Discounts: {formatMoney(quoteTotals.discount, quoteForm.currency)}</div>
  <div>Tax: {formatMoney(quoteTotals.tax, quoteForm.currency)}</div>
  </div>
  <div className="mt-2">
- <span className="text-sm text-zinc-500">Total:</span>
- <span className="ml-3 text-2xl font-black text-zinc-900">
+ <span className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total:</span>
+ <span className="ml-3 text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>
  {formatMoney(quoteTotals.total, quoteForm.currency)}
  </span>
  </div>
@@ -1690,12 +1690,12 @@ export const Financials: React.FC = () => {
  </div>
  </div>
  </div>
- <div className="sticky bottom-0 -mx-4 sm:mx-0 -mb-4 sm:mb-0 bg-white pt-4 sm:pt-4 border-t border-zinc-100 mt-4 sm:mt-4">
+ <div className="sticky bottom-0 -mx-4 sm:mx-0 -mb-4 sm:mb-0 pt-4 sm:pt-4 mt-4 sm:mt-4" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)', borderTopWidth: '1px', borderTopStyle: 'solid', borderTopColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
  <div className="flex gap-3">
  <button
  type="button"
  onClick={closeQuoteModal}
- className="flex-1 border border-zinc-200 px-4 py-3 sm:py-3 text-sm font-bold text-zinc-500 hover:bg-zinc-50 touch-manipulation"
+ className="flex-1 px-4 py-3 sm:py-3 text-sm font-bold touch-manipulation" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', color: 'var(--cds-text-secondary, #525252)' }}
  >
  Cancel
  </button>
@@ -1717,16 +1717,16 @@ export const Financials: React.FC = () => {
 
  {showInvoiceModal && (
  <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
- <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={closeInvoiceModal} />
- <div className="relative max-h-[95vh] w-full max-w-2xl overflow-y-auto sm: bg-white p-4 sm:p-8 shadow-2xl">
+ <div className="absolute inset-0 backdrop-blur-sm" onClick={closeInvoiceModal} style={{ backgroundColor: 'rgba(22, 22, 22, 0.4)' }} />
+ <div className="relative max-h-[95vh] w-full max-w-2xl overflow-y-auto p-4 sm:p-8" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
  <div className="flex items-center justify-between mb-4 sm:mb-2">
- <h3 className="text-lg sm:text-2xl font-black text-zinc-900">
+ <h3 className="text-lg sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>
  {editingInvoice ? `Edit Invoice ${editingInvoice.invoice_number}` : 'Create Invoice'}
  </h3>
  <button
  type="button"
  onClick={closeInvoiceModal}
- className="lg:hidden p-2 -mr-2 text-zinc-400 hover:text-zinc-600"
+ className="lg:hidden p-2 -mr-2" style={{ color: 'var(--cds-text-secondary, #525252)' }}
  aria-label="Close"
  >
  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1734,7 +1734,7 @@ export const Financials: React.FC = () => {
  </svg>
  </button>
  </div>
- <p className="mb-4 sm:mb-6 text-xs sm:text-sm text-zinc-500">
+ <p className="mb-4 sm:mb-6 text-xs sm:text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
  {editingInvoice
  ? 'Update the invoice details, currency, status, notes, and line items while keeping the existing invoice number.'
  : 'Build a polished customer invoice with itemized charges, tailored notes, and clear payment terms.'}
@@ -1743,18 +1743,18 @@ export const Financials: React.FC = () => {
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  {editingInvoice && (
  <div className="col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Invoice Number</label>
- <div className=" border border-zinc-200 bg-zinc-50 px-4 py-3 font-mono text-sm font-bold text-green-700">
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Invoice Number</label>
+ <div className="px-4 py-3 font-mono text-sm font-bold" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-support-success, #24a148)' }}>
  {editingInvoice.invoice_number}
  </div>
  </div>
  )}
  <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Vehicle (Optional)</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Vehicle (Optional)</label>
  <select
  value={invoiceForm.vehicle_id}
  onChange={e => setInvoiceForm({ ...invoiceForm, vehicle_id: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="">No Vehicle (Custom Invoice)</option>
  {vehicles.map(vehicle => (
@@ -1765,13 +1765,13 @@ export const Financials: React.FC = () => {
  </select>
  </div>
  <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Saved Client</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Saved Client</label>
  <div className="mb-2 flex items-center justify-between gap-3">
- <span className="text-xs text-zinc-500">Select an existing client or leave blank for a one-off invoice.</span>
+ <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Select an existing client or leave blank for a one-off invoice.</span>
  <button
  type="button"
  onClick={() => openClientModal('invoice')}
- className=" border border-green-200 px-3 py-1.5 text-xs font-bold text-green-700 hover:bg-green-50"
+ className="px-3 py-1.5 text-xs font-bold" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-support-success, #24a148)', color: 'var(--cds-support-success, #24a148)' }}
  >
  + Add Client
  </button>
@@ -1789,7 +1789,7 @@ export const Financials: React.FC = () => {
  client_address: client?.address ?? '',
  });
  }}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="">
  {clients.length === 0 ? 'No clients found - click "+ Add Client" to create one' : 'Select a client...'}
@@ -1800,7 +1800,7 @@ export const Financials: React.FC = () => {
  </select>
  </div>
  <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Client Name *</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Client Name *</label>
  <input
  required
  value={invoiceForm.client_name}
@@ -1812,29 +1812,29 @@ export const Financials: React.FC = () => {
  })
  }
  placeholder="Enter client name..."
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Email</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Email</label>
  <input
  type="email"
  value={invoiceForm.client_email}
  onChange={e => setInvoiceForm({ ...invoiceForm, client_email: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Address</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Address</label>
  <textarea
  rows={2}
  value={invoiceForm.client_address}
  onChange={e => setInvoiceForm({ ...invoiceForm, client_address: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Type</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Type</label>
  <select
  value={invoiceForm.invoice_kind}
  onChange={e =>
@@ -1843,7 +1843,7 @@ export const Financials: React.FC = () => {
  invoice_kind: e.target.value as 'Standard' | 'Deposit' | 'Final',
  })
  }
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="Standard">Standard</option>
  <option value="Deposit">Deposit</option>
@@ -1851,42 +1851,42 @@ export const Financials: React.FC = () => {
  </select>
  </div>
  <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Currency</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Currency</label>
  <select
  value={invoiceForm.currency}
  onChange={e => setInvoiceForm({ ...invoiceForm, currency: e.target.value as 'USD' | 'GBP' })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="USD">USD ($)</option>
  <option value="GBP">GBP (£)</option>
  </select>
  </div>
  <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Due Date *</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Due Date *</label>
  <input
  type="date"
  required
  value={invoiceForm.due_date}
  onChange={e => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Batch</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Batch</label>
  <input
  type="text"
  placeholder="MAR-2026"
  value={invoiceForm.batch}
  onChange={e => setInvoiceForm({ ...invoiceForm, batch: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Status</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Status</label>
  <select
  value={invoiceForm.status}
  onChange={e => setInvoiceForm({ ...invoiceForm, status: e.target.value as Invoice['status'] })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="Draft">Draft</option>
  <option value="Sent">Sent</option>
@@ -1896,41 +1896,41 @@ export const Financials: React.FC = () => {
  </select>
  </div>
  <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Summary</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Summary</label>
  <input
  value={invoiceForm.description}
  onChange={e => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
  placeholder="Short invoice summary..."
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Notes</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Notes</label>
  <textarea
  rows={2}
  value={invoiceForm.notes}
  onChange={e => setInvoiceForm({ ...invoiceForm, notes: e.target.value })}
  placeholder="Optional notes..."
- className="w-full resize-none border border-zinc-200 bg-zinc-50/70 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:bg-white focus:ring-2 focus:ring-green-500"
+ className="w-full resize-none px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold text-zinc-700">Terms</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Terms</label>
  <textarea
  rows={2}
  value={invoiceForm.terms_and_conditions}
  onChange={e => setInvoiceForm({ ...invoiceForm, terms_and_conditions: e.target.value })}
  placeholder="Payment terms..."
- className="w-full resize-none border border-emerald-200 bg-emerald-50/50 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:bg-white focus:ring-2 focus:ring-green-500"
+ className="w-full resize-none px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}
  />
  </div>
  <div className="col-span-1 sm:col-span-2 mt-2 border-t pt-4">
  <div className="mb-3 flex items-center justify-between">
- <label className="text-sm font-bold text-zinc-800">Line Items</label>
+ <label className="text-sm font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Line Items</label>
  <button
  type="button"
  onClick={() => setInvoiceLineItems([...invoiceLineItems, createEmptyLineItem()])}
- className=" bg-green-100 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-200"
+ className="px-3 py-2 text-xs font-bold" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-support-success, #24a148)' }}
  >
  + Add
  </button>
@@ -1938,21 +1938,21 @@ export const Financials: React.FC = () => {
 
  <div className="space-y-3">
  {invoiceLineItems.map((item, index) => (
- <div key={index} className=" border border-zinc-200 bg-zinc-50 p-3">
+ <div key={index} className="p-3" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}>
  <div className="grid grid-cols-2 md:grid-cols-12 gap-2 sm:gap-3">
  <div className="col-span-2 md:col-span-6">
- <label className="text-xs text-zinc-500">Description</label>
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Description</label>
  <input
  required
  value={item.description}
  onChange={e =>
  updateLineItem(invoiceLineItems, setInvoiceLineItems, index, 'description', e.target.value)
  }
- className="w-full border border-zinc-200 px-3 py-2.5 sm:py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-2.5 sm:py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 md:col-span-2">
- <label className="text-xs text-zinc-500">Qty</label>
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Qty</label>
  <input
  type="number"
  min="1"
@@ -1966,11 +1966,11 @@ export const Financials: React.FC = () => {
  parseFloat(e.target.value) || 1
  )
  }
- className="w-full border border-zinc-200 px-2 py-2.5 sm:py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-2 py-2.5 sm:py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1 md:col-span-2">
- <label className="text-xs text-zinc-500">Price</label>
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Price</label>
  <input
  type="number"
  step="0.01"
@@ -1984,11 +1984,11 @@ export const Financials: React.FC = () => {
  parseFloat(e.target.value) || 0
  )
  }
- className="w-full border border-zinc-200 px-2 py-2.5 sm:py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-2 py-2.5 sm:py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="hidden md:block md:col-span-1">
- <label className="text-xs text-zinc-500">Disc %</label>
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Disc %</label>
  <input
  type="number"
  min="0"
@@ -2004,19 +2004,19 @@ export const Financials: React.FC = () => {
  clampDiscountPercentage(parseFloat(e.target.value) || 0)
  )
  }
- className="w-full border border-zinc-200 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-2 md:col-span-1">
- <label className="text-xs text-zinc-500">Total</label>
- <div className=" bg-zinc-100 px-2 py-2.5 sm:py-2 text-sm font-semibold text-zinc-700">
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total</label>
+ <div className="px-2 py-2.5 sm:py-2 text-sm font-semibold" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-text-primary, #161616)' }}>
  {formatMoney(calculateLineAmount(item), invoiceForm.currency)}
  </div>
  </div>
  </div>
  {/* Mobile-only discount row */}
  <div className="mt-2 md:hidden">
- <label className="text-xs text-zinc-500">Discount %</label>
+ <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Discount %</label>
  <input
  type="number"
  min="0"
@@ -2032,11 +2032,11 @@ export const Financials: React.FC = () => {
  clampDiscountPercentage(parseFloat(e.target.value) || 0)
  )
  }
- className="w-24 border border-zinc-200 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+ className="w-24 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  {(item.discount_percentage || 0) > 0 && (
- <p className="mt-2 text-xs text-zinc-500">
+ <p className="mt-2 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
  Discount: -{formatMoney(calculateLineDiscountAmount(item), invoiceForm.currency)}
  </p>
  )}
@@ -2046,7 +2046,7 @@ export const Financials: React.FC = () => {
  onClick={() =>
  setInvoiceLineItems(invoiceLineItems.filter((_, lineIndex) => lineIndex !== index))
  }
- className="mt-2 w-full py-3 sm:py-2 text-xs font-bold text-red-500 hover:bg-red-50 touch-manipulation"
+ className="mt-2 w-full py-3 sm:py-2 text-xs font-bold touch-manipulation" style={{ color: 'var(--cds-support-error, #da1e28)' }}
  >
  Remove Line
  </button>
@@ -2057,14 +2057,14 @@ export const Financials: React.FC = () => {
 
  <div className="mt-4 flex justify-end border-t pt-3">
  <div className="text-right">
- <div className="space-y-1 text-sm text-zinc-500">
+ <div className="space-y-1 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
  <div>Subtotal: {formatMoney(invoiceTotals.subtotal, invoiceForm.currency)}</div>
  <div>Discounts: {formatMoney(invoiceTotals.discount, invoiceForm.currency)}</div>
  <div>Tax: {formatMoney(invoiceTotals.tax, invoiceForm.currency)}</div>
  </div>
  <div className="mt-2">
- <span className="text-sm text-zinc-500">Total:</span>
- <span className="ml-3 text-2xl font-black text-zinc-900">
+ <span className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total:</span>
+ <span className="ml-3 text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>
  {formatMoney(invoiceTotals.total, invoiceForm.currency)}
  </span>
  </div>
@@ -2072,11 +2072,11 @@ export const Financials: React.FC = () => {
  </div>
  </div>
  </div>
- <div className="flex flex-col sm:flex-row gap-3 pt-4 sticky bottom-0 bg-white pt-4 border-t">
+ <div className="flex flex-col sm:flex-row gap-3 pt-4 sticky bottom-0 pt-4" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)', borderTopWidth: '1px', borderTopStyle: 'solid', borderTopColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
  <button
  type="button"
  onClick={closeInvoiceModal}
- className="flex-1 border border-zinc-200 px-4 py-4 sm:py-3 text-base sm:text-sm font-bold text-zinc-500 hover:bg-zinc-50"
+ className="flex-1 px-4 py-4 sm:py-3 text-base sm:text-sm font-bold" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', color: 'var(--cds-text-secondary, #525252)' }}
  >
  Cancel
  </button>
@@ -2097,14 +2097,14 @@ export const Financials: React.FC = () => {
 
  {showPaymentModal && (
  <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
- <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={closePaymentModal} />
- <div className="relative max-h-[95vh] w-full max-w-xl overflow-y-auto sm: bg-white p-4 sm:p-8 shadow-2xl">
+ <div className="absolute inset-0 backdrop-blur-sm" onClick={closePaymentModal} style={{ backgroundColor: 'rgba(22, 22, 22, 0.4)' }} />
+ <div className="relative max-h-[95vh] w-full max-w-xl overflow-y-auto p-4 sm:p-8" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
  <div className="flex items-center justify-between mb-3 sm:mb-2">
- <h3 className="text-lg sm:text-2xl font-black text-zinc-900">{editingPayment ? 'Edit Payment' : 'Record Payment'}</h3>
+ <h3 className="text-lg sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>{editingPayment ? 'Edit Payment' : 'Record Payment'}</h3>
  <button
  type="button"
  onClick={closePaymentModal}
- className="lg:hidden p-2 -mr-2 text-zinc-400 hover:text-zinc-600"
+ className="lg:hidden p-2 -mr-2" style={{ color: 'var(--cds-text-secondary, #525252)' }}
  aria-label="Close"
  >
  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2112,14 +2112,14 @@ export const Financials: React.FC = () => {
  </svg>
  </button>
  </div>
- <p className="mb-4 sm:mb-6 text-xs sm:text-sm text-zinc-500">
+ <p className="mb-4 sm:mb-6 text-xs sm:text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
  {editingPayment
  ? 'Update the payment, reallocate it across invoices, and refresh the linked receipt.'
  : 'Record an inbound payment and immediately create a receipt.'}
  </p>
  <form onSubmit={handleRecordPayment} className="space-y-3 sm:space-y-4">
  <div>
- <label className="text-sm font-semibold text-zinc-700">Client *</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Client *</label>
  <select
  required
  value={paymentForm.client_name}
@@ -2131,7 +2131,7 @@ export const Financials: React.FC = () => {
  }));
  setPaymentAllocationForm([createEmptyPaymentAllocationDraft()]);
  }}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="">Select client</option>
  {clientOptions.map(clientName => (
@@ -2143,7 +2143,7 @@ export const Financials: React.FC = () => {
  </div>
  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
  <div className="col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Amount *</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Amount *</label>
  <input
  required
  value={paymentForm.amount}
@@ -2151,11 +2151,11 @@ export const Financials: React.FC = () => {
  type="number"
  step="0.01"
  placeholder="0.00"
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
  <div className="col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Currency</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Currency</label>
  <select
  value={paymentForm.currency}
  onChange={e => {
@@ -2173,18 +2173,18 @@ export const Financials: React.FC = () => {
  : [createEmptyPaymentAllocationDraft()]
  );
  }}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="USD">USD ($)</option>
  <option value="GBP">GBP (£)</option>
  </select>
  </div>
  <div className="col-span-2 sm:col-span-1">
- <label className="text-sm font-semibold text-zinc-700">Method</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Method</label>
  <select
  value={paymentForm.method}
  onChange={e => setPaymentForm({ ...paymentForm, method: e.target.value })}
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="Bank Transfer">Bank Transfer</option>
  <option value="Cash">Cash</option>
@@ -2194,17 +2194,17 @@ export const Financials: React.FC = () => {
  </select>
  </div>
  </div>
- <div className=" border border-zinc-200 bg-zinc-50/70 p-3 sm:p-4">
+ <div className="p-3 sm:p-4" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}>
  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
  <div className="flex-1">
- <label className="text-sm font-semibold text-zinc-700">Allocations (Optional)</label>
- <p className="mt-1 text-xs text-zinc-500">Split this payment across open invoices.</p>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Allocations (Optional)</label>
+ <p className="mt-1 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Split this payment across open invoices.</p>
  </div>
  <button
  type="button"
  onClick={() => setPaymentAllocationForm(current => [...current, createEmptyPaymentAllocationDraft()])}
  disabled={!paymentForm.client_name}
- className="w-full sm:w-auto border border-green-200 px-3 py-3 sm:py-2 text-xs font-bold text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation"
+ className="w-full sm:w-auto px-3 py-3 sm:py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-support-success, #24a148)', color: 'var(--cds-support-success, #24a148)' }}
  >
  + Add
  </button>
@@ -2219,10 +2219,10 @@ export const Financials: React.FC = () => {
  );
 
  return (
- <div key={`${allocation.invoice_id || 'new'}-${index}`} className=" border border-zinc-200 bg-white p-3 sm:p-4">
+ <div key={`${allocation.invoice_id || 'new'}-${index}`} className="p-3 sm:p-4" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
  <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.6fr,0.9fr,auto]">
  <div>
- <label className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Invoice</label>
+ <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Invoice</label>
  <select
  value={allocation.invoice_id}
  onChange={e => {
@@ -2242,7 +2242,7 @@ export const Financials: React.FC = () => {
  )
  );
  }}
- className="w-full border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-4 py-3 outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="">Select invoice</option>
  {invoiceOptions.map(({ invoice, outstandingAmount }) => (
@@ -2253,7 +2253,7 @@ export const Financials: React.FC = () => {
  </select>
  </div>
  <div>
- <label className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Allocated Amount</label>
+ <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Allocated Amount</label>
  <input
  value={allocation.amount}
  onChange={e =>
@@ -2266,10 +2266,10 @@ export const Financials: React.FC = () => {
  type="number"
  step="0.01"
  placeholder="0.00"
- className="w-full border border-zinc-200 px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-4 py-3 outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  {selectedInvoice ? (
- <p className="mt-1 text-[11px] text-zinc-500">
+ <p className="mt-1 text-[11px]" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
  Outstanding: {formatMoney(selectedInvoiceOutstanding, selectedInvoice.currency)}
  </p>
  ) : null}
@@ -2284,7 +2284,7 @@ export const Financials: React.FC = () => {
  : current.filter((_, entryIndex) => entryIndex !== index)
  )
  }
- className=" border border-red-200 px-3 py-3 sm:py-2 text-xs font-bold text-red-600 hover:bg-red-50 touch-manipulation"
+ className="px-3 py-3 sm:py-2 text-xs font-bold touch-manipulation" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-support-error, #da1e28)', color: 'var(--cds-support-error, #da1e28)' }}
  >
  Remove
  </button>
@@ -2294,12 +2294,12 @@ export const Financials: React.FC = () => {
  );
  })}
  {!paymentForm.client_name ? (
- <p className="text-xs text-zinc-500">Choose a client first to allocate this payment to invoices.</p>
+ <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Choose a client first to allocate this payment to invoices.</p>
  ) : paymentAllocationCandidates.length === 0 ? (
- <p className="text-xs text-zinc-500">No open invoices found for this client in {paymentForm.currency}.</p>
+ <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>No open invoices found for this client in {paymentForm.currency}.</p>
  ) : null}
- <div className="flex items-center justify-between bg-zinc-900 px-4 py-3 text-sm text-white">
- <span className="font-semibold text-zinc-200">Allocated Total</span>
+ <div className="flex items-center justify-between px-4 py-3 text-sm text-white" style={{ backgroundColor: 'var(--cds-text-primary, #161616)' }}>
+ <span className="font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Allocated Total</span>
  <span className="font-black">
  {formatMoney(
  paymentAllocationForm.reduce((sum, allocation) => sum + (parseFloat(allocation.amount) || 0), 0),
@@ -2310,21 +2310,21 @@ export const Financials: React.FC = () => {
  </div>
  </div>
  <div>
- <label className="text-sm font-semibold text-zinc-700">Notes</label>
+ <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Notes</label>
  <textarea
  rows={2}
  value={paymentForm.notes}
  onChange={e => setPaymentForm({ ...paymentForm, notes: e.target.value })}
  placeholder="Optional receipt notes..."
- className="w-full border border-zinc-200 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500"
+ className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  />
  </div>
- <div className="sticky bottom-0 -mx-4 sm:mx-0 -mb-4 sm:mb-0 bg-white pt-4 sm:pt-4 border-t border-zinc-100 mt-4 sm:mt-4">
+ <div className="sticky bottom-0 -mx-4 sm:mx-0 -mb-4 sm:mb-0 pt-4 sm:pt-4 mt-4 sm:mt-4" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)', borderTopWidth: '1px', borderTopStyle: 'solid', borderTopColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
  <div className="flex gap-3">
  <button
  type="button"
  onClick={closePaymentModal}
- className="flex-1 border border-zinc-200 px-4 py-3 sm:py-3 text-sm font-bold text-zinc-500 hover:bg-zinc-50 touch-manipulation"
+ className="flex-1 px-4 py-3 sm:py-3 text-sm font-bold touch-manipulation" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', color: 'var(--cds-text-secondary, #525252)' }}
  >
  Cancel
  </button>
@@ -2356,44 +2356,44 @@ export const Financials: React.FC = () => {
 
  {previewUrl && (
  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
- <div className="absolute inset-0 bg-zinc-950/60 backdrop-blur-sm" onClick={closePreview} />
- <div className="relative h-[88vh] w-full max-w-6xl overflow-hidden border border-zinc-200 bg-white shadow-2xl">
- <div className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-zinc-50 px-6 py-4">
+ <div className="absolute inset-0 backdrop-blur-sm" onClick={closePreview} style={{ backgroundColor: 'rgba(22, 22, 22, 0.6)' }} />
+ <div className="relative h-[88vh] w-full max-w-6xl overflow-hidden" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
+ <div className="flex items-center justify-between gap-4 px-6 py-4" style={{ borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}>
  <div>
- <h3 className="text-lg font-black text-zinc-900">{previewTitle} Preview</h3>
- <p className="text-sm text-zinc-500">Review the PDF before downloading or sharing it.</p>
+ <h3 className="text-lg font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>{previewTitle} Preview</h3>
+ <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Review the PDF before downloading or sharing it.</p>
  </div>
  <div className="flex items-center gap-3">
  <a
  href={previewUrl}
  target="_blank"
  rel="noreferrer"
- className=" bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 transition-colors hover:bg-blue-100"
+ className="px-4 py-2 text-sm font-bold transition-colors" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-interactive, #0f62fe)' }}
  >
  Open in New Tab
  </a>
  <a
  href={previewUrl}
  download={`${previewTitle.replace(/\s+/g, '_')}.pdf`}
- className=" bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-100"
+ className="px-4 py-2 text-sm font-bold transition-colors" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-support-success, #24a148)' }}
  >
  Download PDF
  </a>
  <button
  type="button"
  onClick={closePreview}
- className=" border border-zinc-200 px-4 py-2 text-sm font-bold text-zinc-600 transition-colors hover:bg-zinc-100"
+ className="px-4 py-2 text-sm font-bold transition-colors" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', color: 'var(--cds-text-secondary, #525252)' }}
  >
  Close
  </button>
  </div>
  </div>
- <iframe src={previewUrl} title={previewTitle} className="h-[calc(88vh-73px)] w-full bg-zinc-100" />
+ <iframe src={previewUrl} title={previewTitle} className="h-[calc(88vh-73px)] w-full" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }} />
  </div>
  </div>
  )}
 
- <div className="overflow-hidden border border-zinc-200 bg-white shadow-sm">
+ <div className="overflow-hidden" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
  <FinancialsTabBar activeTab={activeTab} onChange={setActiveTab} />
 
  <div className="overflow-x-auto">
