@@ -63,7 +63,23 @@ async function getInvoiceCurrency(client: PoolClient, invoiceId: string): Promis
 }
 
 async function updateInvoicePaymentStatus(client: PoolClient, invoiceId: string) {
-  // Get total allocated to this invoice
+  // Get invoice details
+  const invoiceResult = await client.query(
+    'SELECT amount_usd, status, invoice_number FROM public.invoices WHERE id = $1::uuid',
+    [invoiceId]
+  );
+  if (invoiceResult.rows.length === 0) return;
+
+  const invoiceAmount = Number(invoiceResult.rows[0].amount_usd);
+  const currentStatus = invoiceResult.rows[0].status;
+  const invoiceNumber = invoiceResult.rows[0].invoice_number;
+
+  // Only update if currently Draft, Sent, or Overdue
+  if (currentStatus !== 'Draft' && currentStatus !== 'Sent' && currentStatus !== 'Overdue') {
+    return;
+  }
+
+  // Get total from payment_allocations (new system)
   const allocationResult = await client.query(
     `
       SELECT COALESCE(SUM(amount_allocated), 0) as total_allocated
@@ -72,33 +88,33 @@ async function updateInvoicePaymentStatus(client: PoolClient, invoiceId: string)
     `,
     [invoiceId]
   );
-  const totalAllocated = Number(allocationResult.rows[0]?.total_allocated || 0);
+  const totalFromAllocations = Number(allocationResult.rows[0]?.total_allocated || 0);
 
-  // Get invoice amount and currency
-  const invoiceResult = await client.query(
-    'SELECT amount_usd, status FROM public.invoices WHERE id = $1::uuid',
-    [invoiceId]
+  // Get total from legacy payments (payments where reference_id matches invoice number or id)
+  const legacyPaymentResult = await client.query(
+    `
+      SELECT COALESCE(SUM(amount_usd), 0) as total_payments
+      FROM public.payments
+      WHERE (reference_id = $1 OR reference_id = $2)
+      AND type = 'Inbound'
+    `,
+    [invoiceId, invoiceNumber]
   );
-  if (invoiceResult.rows.length === 0) return;
+  const totalFromLegacyPayments = Number(legacyPaymentResult.rows[0]?.total_payments || 0);
 
-  const invoiceAmount = Number(invoiceResult.rows[0].amount_usd);
-  const currentStatus = invoiceResult.rows[0].status;
-
-  // Only update if currently Draft or Sent
-  if (currentStatus !== 'Draft' && currentStatus !== 'Sent' && currentStatus !== 'Overdue') {
-    return;
-  }
+  // Use the higher of the two (in case both systems are used)
+  const totalPaid = Math.max(totalFromAllocations, totalFromLegacyPayments);
 
   // Determine new status
   let newStatus: string | null = null;
-  if (totalAllocated >= invoiceAmount - 0.0001) {
+  if (totalPaid >= invoiceAmount - 0.0001) {
     newStatus = 'Paid';
-  } else if (totalAllocated > 0) {
-    // Partial payment - keep as Sent but could add 'Partial' status in future
-    return;
+  } else if (totalPaid > 0) {
+    // Partial payment - update to Sent (or could add 'Partial' status in future)
+    newStatus = 'Sent';
   }
 
-  if (newStatus) {
+  if (newStatus && newStatus !== currentStatus) {
     await client.query(
       `
         UPDATE public.invoices
@@ -236,6 +252,17 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
         await replaceAllocationsForPayment(client, createdPayment.id, createdPayment.amount_usd, allocations);
       }
 
+      // Also update invoice status for legacy payments (reference_id matches invoice)
+      if (data.reference_id && data.type === 'Inbound') {
+        const invoiceResult = await client.query(
+          'SELECT id FROM public.invoices WHERE invoice_number = $1 OR id = $1::uuid',
+          [data.reference_id]
+        );
+        if (invoiceResult.rows.length > 0) {
+          await updateInvoicePaymentStatus(client, invoiceResult.rows[0].id);
+        }
+      }
+
       return createdPayment;
     });
 
@@ -303,6 +330,17 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
       const updatedPayment = result.rows[0] as PaymentRow;
       if (Array.isArray((req.body as { allocations?: unknown[] } | undefined)?.allocations)) {
         await replaceAllocationsForPayment(client, updatedPayment.id, updatedPayment.amount_usd, allocations);
+      }
+
+      // Also update invoice status for legacy payments (reference_id matches invoice)
+      if (updatedPayment.reference_id && updatedPayment.type === 'Inbound') {
+        const invoiceResult = await client.query(
+          'SELECT id FROM public.invoices WHERE invoice_number = $1 OR id = $1::uuid',
+          [updatedPayment.reference_id]
+        );
+        if (invoiceResult.rows.length > 0) {
+          await updateInvoicePaymentStatus(client, invoiceResult.rows[0].id);
+        }
       }
 
       return updatedPayment;

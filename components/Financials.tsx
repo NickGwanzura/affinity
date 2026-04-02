@@ -1333,9 +1333,16 @@ export const Financials: React.FC = () => {
  const getInvoiceOutstandingAmount = (invoice: Invoice): number =>
  Math.max(0, invoice.amount_usd - getInvoicePaidAmount(invoice));
  
- // Check if invoice can receive payments (not Paid or Cancelled)
+ // Check if invoice can receive payments (not Cancelled)
+ // Also include 'Paid' invoices that still have outstanding balance (data inconsistency fix)
  const canInvoiceReceivePayments = (invoice: Invoice): boolean => {
- return invoice.status === 'Draft' || invoice.status === 'Sent' || invoice.status === 'Overdue';
+ if (invoice.status === 'Cancelled') return false;
+ // For 'Paid' invoices, only show if they actually have outstanding balance
+ if (invoice.status === 'Paid') {
+ const outstanding = getInvoiceOutstandingAmount(invoice);
+ return outstanding > 0;
+ }
+ return true; // Draft, Sent, Overdue are always eligible
  };
  
  const paymentAllocationCandidates = paymentForm.client_name
