@@ -1384,6 +1384,57 @@ export const Financials: React.FC = () => {
  });
  }
  }
+ 
+ // Debug: Trace specific invoice (useful for troubleshooting)
+ // To use: Open browser console and run: debugInvoice('INV-2026-9A0B9646')
+ (window as any).debugInvoice = (invoiceNumber: string) => {
+ const invoice = invoices.find(inv => inv.invoice_number === invoiceNumber);
+ if (!invoice) {
+ console.log(`[DEBUG] Invoice ${invoiceNumber} not found`);
+ return;
+ }
+ 
+ const paidAmount = getInvoicePaidAmount(invoice);
+ const outstanding = getInvoiceOutstandingAmount(invoice);
+ const relatedPayments = payments.filter(p => {
+ if (p.allocations?.some(a => a.invoice_id === invoice.id)) return true;
+ return p.reference_id === invoice.invoice_number || p.reference_id === invoice.id;
+ });
+ const relatedReceipts = receipts.filter(r => r.invoice_id === invoice.id);
+ 
+ console.log(`[DEBUG] Invoice Trace: ${invoiceNumber}`, {
+ invoice: {
+ id: invoice.id,
+ number: invoice.invoice_number,
+ client: invoice.client_name,
+ amount: invoice.amount_usd,
+ currency: invoice.currency,
+ status: invoice.status,
+ due_date: invoice.due_date,
+ created_at: invoice.created_at,
+ },
+ calculations: {
+ paidAmount,
+ outstanding,
+ isFullyPaid: outstanding <= 0,
+ canReceivePayment: canInvoiceReceivePayments(invoice)
+ },
+ relatedPayments: relatedPayments.map(p => ({
+ id: p.id,
+ reference_id: p.reference_id,
+ amount: p.amount_usd,
+ currency: p.currency,
+ date: p.date,
+ allocations: p.allocations?.filter(a => a.invoice_id === invoice.id)
+ })),
+ relatedReceipts: relatedReceipts.map(r => ({
+ id: r.id,
+ receipt_number: r.receipt_number,
+ amount: r.amount_received,
+ payment_id: r.payment_id
+ }))
+ });
+ };
  const selectedPaymentAllocationInvoiceIds = new Set(
  paymentAllocationForm.map(allocation => allocation.invoice_id).filter(Boolean)
  );
