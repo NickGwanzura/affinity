@@ -12,7 +12,8 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,css}\"",
     "deploy": "vercel --prod",
-    "db:migrate": "psql $NEON_DATABASE_URL -f API_SECURITY_MIGRATION.sql"
+    "db:migrate": "psql $NEON_DATABASE_URL -f API_SECURITY_MIGRATION.sql",
+    "db:indexes": "psql $NEON_DATABASE_URL -f PERFORMANCE_INDEXES_MIGRATION.sql"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.76.0",
