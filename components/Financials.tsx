@@ -186,6 +186,7 @@ export const Financials: React.FC = () => {
  const [batchFilter, setBatchFilter] = useState('');
  const [invoiceLineItems, setInvoiceLineItems] = useState<LineItem[]>([createEmptyLineItem()]);
  const [paymentForm, setPaymentForm] = useState({
+ client_id: '',
  client_name: '',
  currency: 'USD' as 'USD' | 'GBP',
  amount: '',
@@ -380,6 +381,7 @@ export const Financials: React.FC = () => {
 
  const resetPaymentForm = () => {
  setPaymentForm({
+ client_id: '',
  client_name: '',
  currency: 'USD',
  amount: '',
@@ -890,6 +892,7 @@ export const Financials: React.FC = () => {
  const handleRecordPayment = async (e: React.FormEvent<HTMLFormElement>) => {
  e.preventDefault();
 
+ const clientId = paymentForm.client_id;
  const clientName = paymentForm.client_name.trim();
  const amount = parseFloat(paymentForm.amount) || 0;
  const method = paymentForm.method.trim();
@@ -979,18 +982,18 @@ export const Financials: React.FC = () => {
  const linkedReceipt = editingPayment
  ? receipts.find(receipt => receipt.payment_id === editingPayment.id)
  : undefined;
+ // Generate a simple payment reference - never use fake UUIDs
  const referenceId =
  allocatedInvoices.length === 1
  ? primaryInvoice.invoice_number
- : allocatedInvoices.length > 1
- ? `ALLOC-${Date.now()}`
- : `UNALLOC-${Date.now()}`;
+ : `PAY-${Date.now()}`;
 
  setIsSubmittingPayment(true);
  
  const paymentPayload = editingPayment
  ? {
  reference_id: referenceId,
+ client_id: clientId || undefined,
  client_name: primaryInvoice?.client_name || clientName,
  type: 'Inbound' as const,
  amount_usd: amount,
@@ -1001,6 +1004,7 @@ export const Financials: React.FC = () => {
  }
  : {
  reference_id: referenceId,
+ client_id: clientId || undefined,
  client_name: primaryInvoice?.client_name || clientName,
  type: 'Inbound' as const,
  amount_usd: amount,
@@ -1323,11 +1327,25 @@ export const Financials: React.FC = () => {
  }
  };
 
- const clientOptions = Array.from(
- new Set(
- [...quotes.map(quote => quote.client_name?.trim()), ...invoices.map(invoice => invoice.client_name?.trim()), ...receipts.map(receipt => receipt.client_name?.trim())].filter(Boolean)
- )
- ).sort();
+ // Build client options from actual clients list (with IDs) plus names from invoices/quotes
+ const clientOptions = useMemo(() => {
+   const clientMap = new Map<string, { id: string; name: string }>();
+   
+   // First add registered clients with IDs
+   clients.forEach(client => {
+     clientMap.set(client.name, { id: client.id, name: client.name });
+   });
+   
+   // Then add names from invoices/quotes/receipts (may not have IDs)
+   [...quotes, ...invoices, ...receipts].forEach(doc => {
+     const name = doc.client_name?.trim();
+     if (name && !clientMap.has(name)) {
+       clientMap.set(name, { id: '', name });
+     }
+   });
+   
+   return Array.from(clientMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+ }, [clients, quotes, invoices, receipts]);
  const receiptByPaymentId = new Map<string, Receipt>(
  receipts
  .filter(receipt => receipt.payment_id)
@@ -1509,7 +1527,7 @@ export const Financials: React.FC = () => {
  const invoiceTotals = calculateDocumentSummary(invoiceLineItems);
 
  // Calculate client balance for payment modal display using unified formula
- const getClientBalanceForPayment = (clientName: string): { 
+ const getClientBalanceForPayment = (clientName: string, clientId?: string): { 
    balance: number; 
    credit: number; 
    currency: 'USD' | 'GBP';
@@ -1519,10 +1537,10 @@ export const Financials: React.FC = () => {
  } | null => {
    if (!clientName) return null;
    
-   // Find the client by name
-   const client = clients.find(c => 
-     c.name.trim().toLowerCase() === clientName.trim().toLowerCase()
-   );
+   // Find the client by ID first, then by name
+   const client = clientId 
+     ? clients.find(c => c.id === clientId)
+     : clients.find(c => c.name.trim().toLowerCase() === clientName.trim().toLowerCase());
    
    if (client) {
      // Use unified calculation from dataService
@@ -2295,7 +2313,7 @@ export const Financials: React.FC = () => {
  
  {/* Client Balance Display - Shows unified balance */}
  {paymentForm.client_name && (() => {
-   const balanceInfo = getClientBalanceForPayment(paymentForm.client_name);
+   const balanceInfo = getClientBalanceForPayment(paymentForm.client_name, paymentForm.client_id);
    if (!balanceInfo) return null;
    
    return (
@@ -2348,21 +2366,30 @@ export const Financials: React.FC = () => {
  <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Client *</label>
  <select
  required
- value={paymentForm.client_name}
+ value={paymentForm.client_id}
  onChange={e => {
- const nextClient = e.target.value.trim();
+ const selectedClient = clientOptions.find(c => c.id === e.target.value);
+ if (selectedClient) {
  setPaymentForm(current => ({
  ...current,
- client_name: nextClient,
+ client_id: selectedClient.id,
+ client_name: selectedClient.name,
  }));
+ } else {
+ setPaymentForm(current => ({
+ ...current,
+ client_id: '',
+ client_name: '',
+ }));
+ }
  setPaymentAllocationForm([createEmptyPaymentAllocationDraft()]);
  }}
  className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
  >
  <option value="">Select client</option>
- {clientOptions.map(clientName => (
- <option key={clientName} value={clientName}>
- {clientName}
+ {clientOptions.map(client => (
+ <option key={client.id || client.name} value={client.id}>
+ {client.name}{!client.id ? ' (unregistered)' : ''}
  </option>
  ))}
  </select>
