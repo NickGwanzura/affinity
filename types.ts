@@ -73,7 +73,12 @@ export interface Client {
   address?: string;
   company?: string;
   notes?: string;
+  opening_balance?: number;
+  opening_balance_currency?: 'USD' | 'GBP';
+  is_active?: boolean;
   created_at: string;
+  updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface LineItem {
@@ -160,6 +165,13 @@ export interface Payment {
   method: string;
   date: string;
   status?: 'allocated' | 'unallocated' | 'credit';
+  is_deleted?: boolean;
+  created_by?: string;
+  updated_by?: string;
+  deleted_by?: string;
+  created_at: string;
+  updated_at?: string;
+  deleted_at?: string | null;
   allocations?: PaymentAllocation[];
 }
 

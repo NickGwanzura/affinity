@@ -2,6 +2,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Client, Invoice, Quote, Payment } from '../types';
 import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
+import { useConfirm } from './ConfirmModal';
+import { Modal, TextInput, Button, Form, Stack, Tag } from '@carbon/react';
+import { Add, Edit, TrashCan, DocumentDownload } from '@carbon/icons-react';
 
 const formatMoney = (amount: number, currency = 'USD') => {
   const symbol = currency === 'GBP' ? '£' : '$';
@@ -18,8 +21,31 @@ const statusColor: Record<string, string> = {
   Approved: 'bg-[var(--cds-support-warning,#f1c21b)] text-[var(--cds-text-primary,#161616)]',
 };
 
+interface ClientFormData {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  address: string;
+  notes: string;
+  opening_balance: string;
+  opening_balance_currency: 'USD' | 'GBP';
+}
+
+const emptyForm: ClientFormData = {
+  name: '',
+  email: '',
+  phone: '',
+  company: '',
+  address: '',
+  notes: '',
+  opening_balance: '0',
+  opening_balance_currency: 'USD',
+};
+
 export const ClientDirectory: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [clients, setClients] = useState<Client[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -29,57 +55,75 @@ export const ClientDirectory: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [detailTab, setDetailTab] = useState<'invoices' | 'quotes' | 'payments'>('invoices');
+  const [detailTab, setDetailTab] = useState<'invoices' | 'quotes' | 'payments' | 'statement'>('invoices');
   const showMobileDetail = Boolean(selectedClient);
 
+  // Modal states
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [formData, setFormData] = useState<ClientFormData>(emptyForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Statement date range
+  const [statementDateFrom, setStatementDateFrom] = useState('');
+  const [statementDateTo, setStatementDateTo] = useState('');
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [cli, inv, quo, pay] = await Promise.all([
-          dataService.getClients(),
-          dataService.getInvoices(),
-          dataService.getQuotes(),
-          dataService.getPayments(),
-        ]);
-        setClients(cli);
-        setInvoices(inv);
-        setQuotes(quo);
-        setPayments(pay);
-      } catch (err: any) {
-        showToast(err?.message || 'Failed to load client directory', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadData();
   }, []);
 
-  // Build enriched client list by collecting all unique names from financial records
+  const loadData = async () => {
+    try {
+      const [cli, inv, quo, pay] = await Promise.all([
+        dataService.getClients(),
+        dataService.getInvoices(),
+        dataService.getQuotes(),
+        dataService.getPayments(),
+      ]);
+      setClients(cli);
+      setInvoices(inv);
+      setQuotes(quo);
+      setPayments(pay);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to load client directory', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Build enriched client list
   const enrichedClients = useMemo(() => {
-    const clientMap = new Map<string, { id: string; name: string; email: string; company?: string; phone?: string; address?: string; isRegistered: boolean }>();
+    const clientMap = new Map<string, Client & { isRegistered: boolean }>();
 
     // First add registered clients
     for (const c of clients) {
       const key = c.name.trim().toLowerCase();
-      clientMap.set(key, { id: c.id, name: c.name, email: c.email, company: c.company, phone: c.phone, address: c.address, isRegistered: true });
+      clientMap.set(key, { ...c, isRegistered: true });
     }
 
     // Add clients from invoices not in registry
     for (const inv of invoices) {
       const key = inv.client_name.trim().toLowerCase();
       if (!clientMap.has(key)) {
-        clientMap.set(key, { id: `inv-${key}`, name: inv.client_name, email: inv.client_email || '', company: undefined, phone: undefined, address: inv.client_address, isRegistered: false });
-      }
-    }
-    for (const q of quotes) {
-      const key = q.client_name.trim().toLowerCase();
-      if (!clientMap.has(key)) {
-        clientMap.set(key, { id: `qt-${key}`, name: q.client_name, email: q.client_email || '', company: undefined, phone: undefined, address: q.client_address, isRegistered: false });
+        clientMap.set(key, {
+          id: `inv-${key}`,
+          name: inv.client_name,
+          email: inv.client_email || '',
+          company: undefined,
+          phone: undefined,
+          address: inv.client_address,
+          notes: '',
+          opening_balance: 0,
+          opening_balance_currency: 'USD',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          isRegistered: false,
+        } as any);
       }
     }
 
     return Array.from(clientMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [clients, invoices, quotes]);
+  }, [clients, invoices]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -100,12 +144,109 @@ export const ClientDirectory: React.FC = () => {
   const getClientPayments = (name: string) =>
     payments.filter(p => (p.client_name || '').trim().toLowerCase() === name.trim().toLowerCase());
 
+  // Calculate true client balance including opening balance
   const clientStats = (name: string) => {
+    const client = enrichedClients.find(c => c.name.toLowerCase() === name.toLowerCase());
     const inv = getClientInvoices(name);
     const totalBilled = inv.reduce((s, i) => s + i.amount_usd, 0);
     const totalPaid = inv.filter(i => i.status === 'Paid').reduce((s, i) => s + i.amount_usd, 0);
-    const outstanding = totalBilled - totalPaid;
-    return { totalBilled, totalPaid, outstanding, invoiceCount: inv.length, quoteCount: getClientQuotes(name).length };
+    const actualPayments = getClientPayments(name).reduce((s, p) => s + p.amount_usd, 0);
+    const openingBalance = client?.opening_balance || 0;
+    const outstanding = totalBilled - actualPayments + openingBalance;
+    
+    return { 
+      totalBilled, 
+      totalPaid: actualPayments, 
+      openingBalance,
+      outstanding, 
+      invoiceCount: inv.length, 
+      quoteCount: getClientQuotes(name).length 
+    };
+  };
+
+  // CRUD Operations
+  const openAddClient = () => {
+    setEditingClient(null);
+    setFormData(emptyForm);
+    setIsClientModalOpen(true);
+  };
+
+  const openEditClient = (client: Client) => {
+    setEditingClient(client);
+    setFormData({
+      name: client.name,
+      email: client.email || '',
+      phone: client.phone || '',
+      company: client.company || '',
+      address: client.address || '',
+      notes: client.notes || '',
+      opening_balance: String(client.opening_balance || 0),
+      opening_balance_currency: client.opening_balance_currency || 'USD',
+    });
+    setIsClientModalOpen(true);
+  };
+
+  const handleSaveClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        company: formData.company.trim(),
+        address: formData.address.trim(),
+        notes: formData.notes.trim(),
+        opening_balance: parseFloat(formData.opening_balance) || 0,
+        opening_balance_currency: formData.opening_balance_currency,
+      };
+
+      if (editingClient) {
+        await dataService.updateClient(editingClient.id, payload);
+        showToast('Client updated successfully', 'success');
+      } else {
+        await dataService.createClient(payload as any);
+        showToast('Client created successfully', 'success');
+      }
+
+      setIsClientModalOpen(false);
+      await loadData();
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to save client', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteClient = async (client: Client) => {
+    const confirmed = await confirm({
+      title: 'Delete Client?',
+      message: `This will soft-delete "${client.name}". Financial history will be preserved.`,
+      confirmLabel: 'Delete',
+      confirmVariant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await dataService.deleteClient(client.id);
+      showToast('Client deleted successfully', 'success');
+      if (selectedClient?.id === client.id) {
+        setSelectedClient(null);
+      }
+      await loadData();
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to delete client', 'error');
+    }
+  };
+
+  // Generate client statement
+  const generateStatement = async () => {
+    if (!selectedClient) return;
+    
+    // This will be implemented with PDF generation
+    showToast('Statement generation coming soon', 'info');
   };
 
   if (loading) {
@@ -122,11 +263,21 @@ export const ClientDirectory: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--cds-layer-02,#f4f4f4)] p-4 sm:p-6">
       <ToastContainer />
+      <ConfirmDialog />
 
       {/* Header */}
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-[var(--cds-text-primary,#161616)]">Client Directory</h1>
-        <p className="mt-1 text-[var(--cds-text-secondary,#525252)] text-sm">{enrichedClients.length} clients · search across invoices, quotes & payments</p>
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-[var(--cds-text-primary,#161616)]">Client Directory</h1>
+          <p className="mt-1 text-[var(--cds-text-secondary,#525252)] text-sm">{enrichedClients.length} clients · search across invoices, quotes & payments</p>
+        </div>
+        <Button
+          renderIcon={Add}
+          onClick={openAddClient}
+          className="w-full sm:w-auto"
+        >
+          Add Client
+        </Button>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -155,7 +306,7 @@ export const ClientDirectory: React.FC = () => {
                   return (
                     <button
                       key={client.id}
-                      onClick={() => { setSelectedClient(client as any); setDetailTab('invoices'); }}
+                      onClick={() => { setSelectedClient(client); setDetailTab('invoices'); }}
                       className={`w-full text-left px-4 py-4 border-b border-[var(--cds-border-subtle,#c6c6c6)] transition-colors hover:bg-[var(--cds-layer-hover,#e8e8e8)] ${selectedClient?.name === client.name ? 'bg-[var(--cds-layer-selected,#e0e0e0)] border-l-4 border-l-[var(--cds-interactive,#0f62fe)]' : ''}`}
                     >
                       <div className="flex items-center justify-between">
@@ -166,8 +317,10 @@ export const ClientDirectory: React.FC = () => {
                         </div>
                         <div className="text-right">
                           <p className="text-xs font-bold text-[var(--cds-text-primary,#161616)]">{stats.invoiceCount} inv</p>
-                          {stats.outstanding > 0 && (
-                            <p className="text-xs text-[var(--cds-support-error,#da1e28)] font-semibold">{formatMoney(stats.outstanding)} due</p>
+                          {stats.outstanding !== 0 && (
+                            <p className={`text-xs font-semibold ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : 'text-[var(--cds-support-success,#24a148)]'}`}>
+                              {formatMoney(Math.abs(stats.outstanding))} {stats.outstanding > 0 ? 'due' : 'cr'}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -191,7 +344,7 @@ export const ClientDirectory: React.FC = () => {
               </div>
             </div>
           ) : (() => {
-            const c = selectedClient as any;
+            const c = selectedClient;
             const stats = clientStats(c.name);
             const clientInvoices = getClientInvoices(c.name);
             const clientQuotes = getClientQuotes(c.name);
@@ -213,7 +366,29 @@ export const ClientDirectory: React.FC = () => {
                   </div>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <h2 className="text-2xl font-black text-[var(--cds-text-primary,#161616)]">{c.name}</h2>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-black text-[var(--cds-text-primary,#161616)]">{c.name}</h2>
+                        {(c as any).isRegistered && (
+                          <>
+                            <Button
+                              kind="ghost"
+                              size="sm"
+                              renderIcon={Edit}
+                              iconDescription="Edit client"
+                              hasIconOnly
+                              onClick={() => openEditClient(c)}
+                            />
+                            <Button
+                              kind="danger--ghost"
+                              size="sm"
+                              renderIcon={TrashCan}
+                              iconDescription="Delete client"
+                              hasIconOnly
+                              onClick={() => handleDeleteClient(c)}
+                            />
+                          </>
+                        )}
+                      </div>
                       {c.company && <p className="text-[var(--cds-text-secondary,#525252)] text-sm mt-0.5">{c.company}</p>}
                       <div className="flex flex-wrap gap-4 mt-3 text-sm text-[var(--cds-text-secondary,#525252)]">
                         {c.email && <span>✉ {c.email}</span>}
@@ -221,13 +396,19 @@ export const ClientDirectory: React.FC = () => {
                         {c.address && <span>📍 {c.address}</span>}
                       </div>
                     </div>
-                    {c.isRegistered && (
-                      <span className="text-xs font-bold px-2 py-1 bg-[var(--cds-support-success,#24a148)] text-white">Registered</span>
+                    {(c as any).isRegistered ? (
+                      <Tag type="green">Registered</Tag>
+                    ) : (
+                      <Tag type="warm-gray">Unregistered</Tag>
                     )}
                   </div>
 
                   {/* Stats row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-4 border-t border-[var(--cds-border-subtle,#c6c6c6)]">
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mt-6 pt-4 border-t border-[var(--cds-border-subtle,#c6c6c6)]">
+                    <div>
+                      <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">Opening Bal</p>
+                      <p className="text-xl font-black text-[var(--cds-text-primary,#161616)] mt-1">{formatMoney(stats.openingBalance)}</p>
+                    </div>
                     <div>
                       <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">Total Billed</p>
                       <p className="text-xl font-black text-[var(--cds-text-primary,#161616)] mt-1">{formatMoney(stats.totalBilled)}</p>
@@ -238,7 +419,9 @@ export const ClientDirectory: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">Outstanding</p>
-                      <p className={`text-xl font-black mt-1 ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : 'text-[var(--cds-text-secondary,#525252)]'}`}>{formatMoney(stats.outstanding)}</p>
+                      <p className={`text-xl font-black mt-1 ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : 'text-[var(--cds-support-success,#24a148)]'}`}>
+                        {formatMoney(Math.abs(stats.outstanding))}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">Quotes</p>
@@ -253,25 +436,28 @@ export const ClientDirectory: React.FC = () => {
                     <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-[var(--cds-text-secondary,#525252)]">Records</label>
                     <select
                       value={detailTab}
-                      onChange={(event) => setDetailTab(event.target.value as 'invoices' | 'quotes' | 'payments')}
+                      onChange={(event) => setDetailTab(event.target.value as any)}
                       className="w-full border border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-field-01,#ffffff)] px-4 py-3 text-sm font-semibold text-[var(--cds-text-primary,#161616)] outline-none focus:border-[var(--cds-interactive,#0f62fe)] focus:ring-2 focus:ring-[var(--cds-interactive,#0f62fe)]/20"
                     >
                       <option value="invoices">Invoices ({clientInvoices.length})</option>
                       <option value="quotes">Quotes ({clientQuotes.length})</option>
                       <option value="payments">Payments ({clientPayments.length})</option>
+                      <option value="statement">Statement</option>
                     </select>
                   </div>
                   <div className="hidden gap-1 p-2 border-b border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-02,#f4f4f4)] overflow-x-auto sm:flex">
-                    {(['invoices', 'quotes', 'payments'] as const).map(tab => (
+                    {(['invoices', 'quotes', 'payments', 'statement'] as const).map(tab => (
                       <button
                         key={tab}
                         onClick={() => setDetailTab(tab)}
                         className={`px-5 py-2.5 text-sm font-bold capitalize transition-all ${detailTab === tab ? 'bg-[var(--cds-layer-01,#ffffff)] text-[var(--cds-interactive,#0f62fe)]' : 'text-[var(--cds-text-secondary,#525252)] hover:text-[var(--cds-text-primary,#161616)]'}`}
                       >
                         {tab}
-                        <span className="ml-1.5 text-xs font-normal opacity-60">
-                          ({tab === 'invoices' ? clientInvoices.length : tab === 'quotes' ? clientQuotes.length : clientPayments.length})
-                        </span>
+                        {tab !== 'statement' && (
+                          <span className="ml-1.5 text-xs font-normal opacity-60">
+                            ({tab === 'invoices' ? clientInvoices.length : tab === 'quotes' ? clientQuotes.length : clientPayments.length})
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -281,51 +467,32 @@ export const ClientDirectory: React.FC = () => {
                       clientInvoices.length === 0 ? (
                         <p className="text-center py-10 text-[var(--cds-text-secondary,#525252)] text-sm">No invoices for this client</p>
                       ) : (
-                        <>
-                        <div className="space-y-3 sm:hidden">
-                          {clientInvoices.map(inv => (
-                            <div key={inv.id} className="border border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-02,#f4f4f4)] p-4">
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="font-mono text-xs font-bold text-[var(--cds-interactive,#0f62fe)]">{inv.invoice_number}</p>
-                                  <p className="mt-2 text-base font-bold text-[var(--cds-text-primary,#161616)]">{formatMoney(inv.amount_usd, inv.currency || 'USD')}</p>
-                                </div>
-                                <span className={`px-2 py-1 text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-[var(--cds-layer-02,#f4f4f4)] text-[var(--cds-text-secondary,#525252)]'}`}>{inv.status}</span>
-                              </div>
-                              <div className="mt-3 space-y-1 text-sm text-[var(--cds-text-secondary,#525252)]">
-                                <p><span className="font-semibold text-[var(--cds-text-primary,#161616)]">Due:</span> {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</p>
-                                <p><span className="font-semibold text-[var(--cds-text-primary,#161616)]">Description:</span> {inv.description || '—'}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
                         <div className="hidden sm:block overflow-x-auto">
-                        <table className="w-full text-sm min-w-[40rem]">
-                          <thead>
-                            <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Invoice #</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Amount</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Status</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Due Date</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Description</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {clientInvoices.map(inv => (
-                              <tr key={inv.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
-                                <td className="py-3 font-mono text-xs font-bold text-[var(--cds-interactive,#0f62fe)]">{inv.invoice_number}</td>
-                                <td className="py-3 font-bold text-[var(--cds-text-primary,#161616)]">{formatMoney(inv.amount_usd, inv.currency || 'USD')}</td>
-                                <td className="py-3">
-                                  <span className={`px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-[var(--cds-layer-02,#f4f4f4)] text-[var(--cds-text-secondary,#525252)]'}`}>{inv.status}</span>
-                                </td>
-                                <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</td>
-                                <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs truncate max-w-[200px]">{inv.description || '—'}</td>
+                          <table className="w-full text-sm min-w-[40rem]">
+                            <thead>
+                              <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Invoice #</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Amount</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Status</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Due Date</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Description</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {clientInvoices.map(inv => (
+                                <tr key={inv.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
+                                  <td className="py-3 font-mono text-xs font-bold text-[var(--cds-interactive,#0f62fe)]">{inv.invoice_number}</td>
+                                  <td className="py-3 font-bold text-[var(--cds-text-primary,#161616)]">{formatMoney(inv.amount_usd, inv.currency || 'USD')}</td>
+                                  <td className="py-3">
+                                    <span className={`px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-[var(--cds-layer-02,#f4f4f4)] text-[var(--cds-text-secondary,#525252)]'}`}>{inv.status}</span>
+                                  </td>
+                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</td>
+                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs truncate max-w-[200px]">{inv.description || '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                        </>
                       )
                     )}
 
@@ -333,51 +500,32 @@ export const ClientDirectory: React.FC = () => {
                       clientQuotes.length === 0 ? (
                         <p className="text-center py-10 text-[var(--cds-text-secondary,#525252)] text-sm">No quotes for this client</p>
                       ) : (
-                        <>
-                        <div className="space-y-3 sm:hidden">
-                          {clientQuotes.map(q => (
-                            <div key={q.id} className="border border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-02,#f4f4f4)] p-4">
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="font-mono text-xs font-bold text-[var(--cds-interactive,#0f62fe)]">{q.quote_number}</p>
-                                  <p className="mt-2 text-base font-bold text-[var(--cds-text-primary,#161616)]">{formatMoney(q.amount_usd, q.currency || 'USD')}</p>
-                                </div>
-                                <span className={`px-2 py-1 text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-[var(--cds-layer-02,#f4f4f4)] text-[var(--cds-text-secondary,#525252)]'}`}>{q.status}</span>
-                              </div>
-                              <div className="mt-3 space-y-1 text-sm text-[var(--cds-text-secondary,#525252)]">
-                                <p><span className="font-semibold text-[var(--cds-text-primary,#161616)]">Valid until:</span> {q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '—'}</p>
-                                <p><span className="font-semibold text-[var(--cds-text-primary,#161616)]">Description:</span> {q.description || '—'}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
                         <div className="hidden sm:block overflow-x-auto">
-                        <table className="w-full text-sm min-w-[40rem]">
-                          <thead>
-                            <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Quote #</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Amount</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Status</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Valid Until</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Description</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {clientQuotes.map(q => (
-                              <tr key={q.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
-                                <td className="py-3 font-mono text-xs font-bold text-[var(--cds-interactive,#0f62fe)]">{q.quote_number}</td>
-                                <td className="py-3 font-bold text-[var(--cds-text-primary,#161616)]">{formatMoney(q.amount_usd, q.currency || 'USD')}</td>
-                                <td className="py-3">
-                                  <span className={`px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-[var(--cds-layer-02,#f4f4f4)] text-[var(--cds-text-secondary,#525252)]'}`}>{q.status}</span>
-                                </td>
-                                <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '—'}</td>
-                                <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs truncate max-w-[200px]">{q.description || '—'}</td>
+                          <table className="w-full text-sm min-w-[40rem]">
+                            <thead>
+                              <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Quote #</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Amount</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Status</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Valid Until</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Description</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {clientQuotes.map(q => (
+                                <tr key={q.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
+                                  <td className="py-3 font-mono text-xs font-bold text-[var(--cds-interactive,#0f62fe)]">{q.quote_number}</td>
+                                  <td className="py-3 font-bold text-[var(--cds-text-primary,#161616)]">{formatMoney(q.amount_usd, q.currency || 'USD')}</td>
+                                  <td className="py-3">
+                                    <span className={`px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-[var(--cds-layer-02,#f4f4f4)] text-[var(--cds-text-secondary,#525252)]'}`}>{q.status}</span>
+                                  </td>
+                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '—'}</td>
+                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs truncate max-w-[200px]">{q.description || '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                        </>
                       )
                     )}
 
@@ -385,43 +533,136 @@ export const ClientDirectory: React.FC = () => {
                       clientPayments.length === 0 ? (
                         <p className="text-center py-10 text-[var(--cds-text-secondary,#525252)] text-sm">No payments recorded for this client</p>
                       ) : (
-                        <>
-                        <div className="space-y-3 sm:hidden">
-                          {clientPayments.map(p => (
-                            <div key={p.id} className="border border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-02,#f4f4f4)] p-4">
-                              <p className="font-mono text-xs font-bold text-[var(--cds-text-secondary,#525252)]">{p.reference_id || '—'}</p>
-                              <p className="mt-2 text-base font-bold text-[var(--cds-support-success,#24a148)]">{formatMoney(p.amount_usd, p.currency || 'USD')}</p>
-                              <div className="mt-3 space-y-1 text-sm text-[var(--cds-text-secondary,#525252)]">
-                                <p><span className="font-semibold text-[var(--cds-text-primary,#161616)]">Method:</span> {p.method || '—'}</p>
-                                <p><span className="font-semibold text-[var(--cds-text-primary,#161616)]">Date:</span> {p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
                         <div className="hidden sm:block overflow-x-auto">
-                        <table className="w-full text-sm min-w-[32rem]">
-                          <thead>
-                            <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Ref</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Amount</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Method</th>
-                              <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Date</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {clientPayments.map(p => (
-                              <tr key={p.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
-                                <td className="py-3 font-mono text-xs font-bold text-[var(--cds-text-secondary,#525252)]">{p.reference_id || '—'}</td>
-                                <td className="py-3 font-bold text-[var(--cds-support-success,#24a148)]">{formatMoney(p.amount_usd, p.currency || 'USD')}</td>
-                                <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{p.method || '—'}</td>
-                                <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}</td>
+                          <table className="w-full text-sm min-w-[32rem]">
+                            <thead>
+                              <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Ref</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Amount</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Status</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Method</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Date</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {clientPayments.map(p => (
+                                <tr key={p.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
+                                  <td className="py-3 font-mono text-xs font-bold text-[var(--cds-text-secondary,#525252)]">{p.reference_id || '—'}</td>
+                                  <td className="py-3 font-bold text-[var(--cds-support-success,#24a148)]">{formatMoney(p.amount_usd, p.currency || 'USD')}</td>
+                                  <td className="py-3">
+                                    {p.status === 'unallocated' ? (
+                                      <Tag type="warm-gray" size="sm">Unallocated</Tag>
+                                    ) : (
+                                      <Tag type="green" size="sm">Allocated</Tag>
+                                    )}
+                                  </td>
+                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{p.method || '—'}</td>
+                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{p.date ? new Date(p.date).toLocaleDateString() : '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                        </>
                       )
+                    )}
+
+                    {detailTab === 'statement' && (
+                      <div className="p-4">
+                        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                          <div className="flex gap-4">
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--cds-text-secondary,#525252)] mb-1">From</label>
+                              <input
+                                type="date"
+                                value={statementDateFrom}
+                                onChange={(e) => setStatementDateFrom(e.target.value)}
+                                className="border border-[var(--cds-border-subtle,#c6c6c6)] px-3 py-2 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--cds-text-secondary,#525252)] mb-1">To</label>
+                              <input
+                                type="date"
+                                value={statementDateTo}
+                                onChange={(e) => setStatementDateTo(e.target.value)}
+                                className="border border-[var(--cds-border-subtle,#c6c6c6)] px-3 py-2 text-sm"
+                              />
+                            </div>
+                          </div>
+                          <Button
+                            renderIcon={DocumentDownload}
+                            onClick={generateStatement}
+                            disabled
+                          >
+                            Download Statement (Coming Soon)
+                          </Button>
+                        </div>
+                        
+                        {/* Simple ledger display */}
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b-2 border-[var(--cds-text-primary,#161616)]">
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Date</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Type</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Reference</th>
+                                <th className="py-3 text-right text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Debit</th>
+                                <th className="py-3 text-right text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Credit</th>
+                                <th className="py-3 text-right text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Balance</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {/* Opening Balance */}
+                              {stats.openingBalance !== 0 && (
+                                <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-02,#f4f4f4)]">
+                                  <td className="py-3 text-xs">{new Date(c.created_at).toLocaleDateString()}</td>
+                                  <td className="py-3"><Tag size="sm">Opening</Tag></td>
+                                  <td className="py-3 text-xs">Opening Balance</td>
+                                  <td className="py-3 text-right font-bold">{stats.openingBalance > 0 ? formatMoney(stats.openingBalance) : '-'}</td>
+                                  <td className="py-3 text-right font-bold">{stats.openingBalance < 0 ? formatMoney(Math.abs(stats.openingBalance)) : '-'}</td>
+                                  <td className="py-3 text-right font-black">{formatMoney(stats.openingBalance)}</td>
+                                </tr>
+                              )}
+                              
+                              {/* Invoices */}
+                              {clientInvoices.map(inv => (
+                                <tr key={inv.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
+                                  <td className="py-3 text-xs">{new Date(inv.created_at).toLocaleDateString()}</td>
+                                  <td className="py-3"><Tag type="blue" size="sm">Invoice</Tag></td>
+                                  <td className="py-3 font-mono text-xs">{inv.invoice_number}</td>
+                                  <td className="py-3 text-right font-bold text-[var(--cds-support-error,#da1e28)]">{formatMoney(inv.amount_usd)}</td>
+                                  <td className="py-3 text-right">-</td>
+                                  <td className="py-3 text-right font-black">-</td>
+                                </tr>
+                              ))}
+                              
+                              {/* Payments */}
+                              {clientPayments.map(pay => (
+                                <tr key={pay.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
+                                  <td className="py-3 text-xs">{new Date(pay.date).toLocaleDateString()}</td>
+                                  <td className="py-3"><Tag type="green" size="sm">Payment</Tag></td>
+                                  <td className="py-3 font-mono text-xs">{pay.reference_id}</td>
+                                  <td className="py-3 text-right">-</td>
+                                  <td className="py-3 text-right font-bold text-[var(--cds-support-success,#24a148)]">{formatMoney(pay.amount_usd)}</td>
+                                  <td className="py-3 text-right font-black">-</td>
+                                </tr>
+                              ))}
+                              
+                              {/* Total Row */}
+                              <tr className="border-t-2 border-[var(--cds-text-primary,#161616)] bg-[var(--cds-layer-02,#f4f4f4)]">
+                                <td className="py-4" colSpan={3}>
+                                  <span className="font-black uppercase tracking-wider">Current Balance</span>
+                                </td>
+                                <td className="py-4"></td>
+                                <td className="py-4"></td>
+                                <td className={`py-4 text-right font-black text-xl ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : 'text-[var(--cds-support-success,#24a148)]'}`}>
+                                  {formatMoney(Math.abs(stats.outstanding))} {stats.outstanding > 0 ? 'DR' : stats.outstanding < 0 ? 'CR' : ''}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -430,6 +671,87 @@ export const ClientDirectory: React.FC = () => {
           })()}
         </div>
       </div>
+
+      {/* Client Add/Edit Modal */}
+      <Modal
+        open={isClientModalOpen}
+        onRequestClose={() => setIsClientModalOpen(false)}
+        modalHeading={editingClient ? 'Edit Client' : 'Add New Client'}
+        primaryButtonText={isSubmitting ? 'Saving...' : (editingClient ? 'Save Changes' : 'Create Client')}
+        secondaryButtonText="Cancel"
+        onRequestSubmit={handleSaveClient}
+        primaryButtonDisabled={isSubmitting || !formData.name.trim()}
+      >
+        <Form onSubmit={handleSaveClient}>
+          <Stack gap={5}>
+            <TextInput
+              id="client-name"
+              labelText="Client Name *"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+            <TextInput
+              id="client-email"
+              labelText="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+            <TextInput
+              id="client-phone"
+              labelText="Phone"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
+            <TextInput
+              id="client-company"
+              labelText="Company"
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            />
+            <TextInput
+              id="client-address"
+              labelText="Address"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            />
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <TextInput
+                  id="opening-balance"
+                  labelText="Opening Balance"
+                  type="number"
+                  step="0.01"
+                  value={formData.opening_balance}
+                  onChange={(e) => setFormData({ ...formData, opening_balance: e.target.value })}
+                />
+              </div>
+              <div className="w-32">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[var(--cds-text-secondary,#525252)] mb-1">
+                  Currency
+                </label>
+                <select
+                  value={formData.opening_balance_currency}
+                  onChange={(e) => setFormData({ ...formData, opening_balance_currency: e.target.value as 'USD' | 'GBP' })}
+                  className="w-full border border-[var(--cds-border-subtle,#c6c6c6)] px-3 py-2 text-sm bg-white"
+                >
+                  <option value="USD">USD</option>
+                  <option value="GBP">GBP</option>
+                </select>
+              </div>
+            </div>
+            <TextInput
+              id="client-notes"
+              labelText="Notes"
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            />
+          </Stack>
+        </Form>
+      </Modal>
     </div>
   );
 };
+
+export default ClientDirectory;
