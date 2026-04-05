@@ -81,6 +81,28 @@ export interface Client {
   deleted_at?: string | null;
 }
 
+// Unified client balance - Single source of truth
+export interface ClientBalance {
+  current_balance: number;
+  total_invoiced: number;
+  total_paid: number;
+  opening_balance: number;
+  currency: 'USD' | 'GBP';
+  credit_balance: number;
+}
+
+// Ledger entry for client transaction history
+export interface LedgerEntry {
+  date: string;
+  type: 'opening_balance' | 'invoice' | 'payment' | 'adjustment';
+  reference: string;
+  document_id?: string;
+  debit: number;
+  credit: number;
+  currency: 'USD' | 'GBP';
+  balance: number; // Running balance after this entry
+}
+
 export interface LineItem {
   id?: string; // Optional for new items
   line_number?: number; // For ordering
@@ -158,13 +180,14 @@ export interface Payment {
   id: string;
   reference_id: string; // Linked to Invoice or Expense (auto-generated for unallocated)
   client_name?: string;
-  client_id?: string; // Direct link to client record
-  type: 'Inbound' | 'Outbound';
+  client_id?: string; // Direct link to client record - PRIMARY KEY FOR JOINS
+  type: 'Inbound' | 'Outbound' | 'Invoice Payment' | 'Quote Payment' | 'Deposit' | 'Refund' | 'Other';
   amount_usd: number;
   currency?: 'USD' | 'GBP';
   method: string;
   date: string;
   status?: 'allocated' | 'unallocated' | 'credit';
+  // Audit fields for soft delete and tracking
   is_deleted?: boolean;
   created_by?: string;
   updated_by?: string;

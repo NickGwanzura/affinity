@@ -1497,6 +1497,60 @@ export const Financials: React.FC = () => {
  const quoteTotals = calculateDocumentSummary(quoteLineItems);
  const invoiceTotals = calculateDocumentSummary(invoiceLineItems);
 
+ // Calculate client balance for payment modal display using unified formula
+ const getClientBalanceForPayment = (clientName: string): { 
+   balance: number; 
+   credit: number; 
+   currency: 'USD' | 'GBP';
+   openingBalance: number;
+   totalInvoiced: number;
+   totalPaid: number;
+ } | null => {
+   if (!clientName) return null;
+   
+   // Find the client by name
+   const client = clients.find(c => 
+     c.name.trim().toLowerCase() === clientName.trim().toLowerCase()
+   );
+   
+   if (client) {
+     // Use unified calculation from dataService
+     const balance = dataService.calculateClientBalance(client, invoices, payments);
+     return {
+       balance: balance.current_balance,
+       credit: balance.credit_balance,
+       currency: client.opening_balance_currency || 'USD',
+       openingBalance: balance.opening_balance,
+       totalInvoiced: balance.total_invoiced,
+       totalPaid: balance.total_paid,
+     };
+   }
+   
+   // Fallback: Calculate from invoices and payments only (no opening balance)
+   const clientInvoices = invoices.filter(i => 
+     i.client_name.trim().toLowerCase() === clientName.trim().toLowerCase() &&
+     i.status !== 'Cancelled'
+   );
+   const clientPayments = payments.filter(p => 
+     (p.client_name || '').trim().toLowerCase() === clientName.trim().toLowerCase() &&
+     p.type === 'Inbound' &&
+     !p.is_deleted
+   );
+   
+   const totalInvoiced = clientInvoices.reduce((sum, i) => sum + (Number(i.amount_usd) || 0), 0);
+   const totalPaid = clientPayments.reduce((sum, p) => sum + (Number(p.amount_usd) || 0), 0);
+   const rawBalance = totalInvoiced - totalPaid;
+   
+   return {
+     balance: rawBalance > 0 ? rawBalance : 0,
+     credit: rawBalance < 0 ? Math.abs(rawBalance) : 0,
+     currency: paymentForm.currency || 'USD',
+     openingBalance: 0,
+     totalInvoiced,
+     totalPaid,
+   };
+ };
+
  if (loading) {
  return <div className="animate-pulse flex h-64 items-center justify-center">Loading Financial Records...</div>;
  }
@@ -2227,6 +2281,57 @@ export const Financials: React.FC = () => {
  ? 'Update the payment, reallocate it across invoices, and refresh the linked receipt.'
  : 'Record an inbound payment and immediately create a receipt.'}
  </p>
+ 
+ {/* Client Balance Display - Shows unified balance */}
+ {paymentForm.client_name && (() => {
+   const balanceInfo = getClientBalanceForPayment(paymentForm.client_name);
+   if (!balanceInfo) return null;
+   
+   return (
+     <div className="mb-4 p-4" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
+       <div className="flex items-center justify-between mb-2">
+         <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Client Balance Summary</span>
+         <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Formula: Opening + Invoiced - Paid</span>
+       </div>
+       <div className="grid grid-cols-4 gap-2 text-center">
+         <div>
+           <div className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Opening</div>
+           <div className="font-bold">{formatMoney(balanceInfo.openingBalance, balanceInfo.currency)}</div>
+         </div>
+         <div>
+           <div className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Invoiced</div>
+           <div className="font-bold">{formatMoney(balanceInfo.totalInvoiced, balanceInfo.currency)}</div>
+         </div>
+         <div>
+           <div className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Paid</div>
+           <div className="font-bold" style={{ color: 'var(--cds-support-success, #24a148)' }}>{formatMoney(balanceInfo.totalPaid, balanceInfo.currency)}</div>
+         </div>
+         <div>
+           <div className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+             {balanceInfo.balance > 0 ? 'Due' : balanceInfo.credit > 0 ? 'Credit' : 'Balance'}
+           </div>
+           <div className="font-bold text-lg" style={{ 
+             color: balanceInfo.balance > 0 ? 'var(--cds-support-error, #da1e28)' : 
+                    balanceInfo.credit > 0 ? 'var(--cds-support-success, #24a148)' : 
+                    'inherit'
+           }}>
+             {balanceInfo.balance > 0 
+               ? formatMoney(balanceInfo.balance, balanceInfo.currency)
+               : balanceInfo.credit > 0 
+                 ? formatMoney(balanceInfo.credit, balanceInfo.currency)
+                 : formatMoney(0, balanceInfo.currency)}
+           </div>
+         </div>
+       </div>
+       {balanceInfo.balance <= 0 && balanceInfo.credit === 0 && (
+         <div className="mt-2 p-2 text-xs" style={{ backgroundColor: 'var(--cds-support-warning-light, #fcf4d6)', color: 'var(--cds-support-warning, #f1c21b)' }}>
+           ⚠️ Client has no outstanding balance. Payment will be recorded as credit.
+         </div>
+       )}
+     </div>
+   );
+ })()}
+ 
  <form onSubmit={handleRecordPayment} className="space-y-3 sm:space-y-4">
  <div>
  <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Client *</label>

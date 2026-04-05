@@ -390,6 +390,247 @@ class DataService {
         return 1;
     }
   }
+
+  // ===========================================================================
+  // CLIENT FINANCIALS - Unified Balance & Ledger System
+  // Single source of truth for all client balance calculations
+  // ===========================================================================
+
+  /**
+   * Get unified balance for a client using the formula:
+   * current_balance = opening_balance + total_invoiced - total_paid
+   */
+  async getClientBalance(clientId: string): Promise<{
+    client: Client;
+    balance: {
+      current_balance: number;
+      total_invoiced: number;
+      total_paid: number;
+      opening_balance: number;
+      currency: 'USD' | 'GBP';
+      credit_balance: number;
+    };
+    formula_applied: string;
+  }> {
+    return api.clientFinancials.getBalance(clientId);
+  }
+
+  /**
+   * Get the ledger (transaction history) for a client with running balance
+   */
+  async getClientLedger(
+    clientId: string,
+    params?: { from?: string; to?: string }
+  ): Promise<{
+    client: Client;
+    date_range: { from: string | null; to: string | null };
+    entries: Array<{
+      date: string;
+      type: 'opening_balance' | 'invoice' | 'payment' | 'adjustment';
+      reference: string;
+      document_id?: string;
+      debit: number;
+      credit: number;
+      currency: 'USD' | 'GBP';
+      balance: number;
+    }>;
+    summary: {
+      total_debits: number;
+      total_credits: number;
+      opening_balance: number;
+      closing_balance: number;
+    };
+  }> {
+    return api.clientFinancials.getLedger(clientId, params);
+  }
+
+  /**
+   * Get balances for all clients, optionally filtered
+   */
+  async getAllClientBalances(params?: {
+    hasOutstanding?: boolean;
+    minBalance?: number;
+    search?: string;
+  }): Promise<{
+    count: number;
+    clients: Array<{
+      id: string;
+      name: string;
+      email: string;
+      company: string;
+      balance: {
+        opening_balance: number;
+        total_invoiced: number;
+        total_paid: number;
+        current_balance: number;
+        credit_balance: number;
+        currency: 'USD' | 'GBP';
+      };
+      is_active: boolean;
+      created_at: string;
+    }>;
+  }> {
+    return api.clientFinancials.getAllBalances(params);
+  }
+
+  /**
+   * Force recalculation of a client's balance (admin only)
+   */
+  async recalculateClientBalance(clientId: string): Promise<{
+    message: string;
+    client_id: string;
+    balance: any;
+    formula_applied: string;
+    timestamp: string;
+  }> {
+    return api.clientFinancials.recalculateBalance(clientId);
+  }
+
+  /**
+   * Calculate client balance locally (for when API is unavailable)
+   * Uses the same formula: opening_balance + total_invoiced - total_paid
+   */
+  calculateClientBalance(
+    client: Client,
+    invoices: Invoice[],
+    payments: Payment[]
+  ): {
+    current_balance: number;
+    total_invoiced: number;
+    total_paid: number;
+    opening_balance: number;
+    credit_balance: number;
+  } {
+    const openingBalance = client.opening_balance || 0;
+    
+    // Calculate total invoiced (excluding cancelled invoices)
+    const totalInvoiced = invoices
+      .filter(inv => 
+        (inv.client_id === client.id || inv.client_name === client.name) &&
+        inv.status !== 'Cancelled'
+      )
+      .reduce((sum, inv) => sum + (Number(inv.amount_usd) || 0), 0);
+
+    // Calculate total paid (excluding deleted payments)
+    const totalPaid = payments
+      .filter(pay => 
+        (pay.client_id === client.id || pay.client_name === client.name) &&
+        pay.type === 'Inbound' &&
+        !pay.is_deleted
+      )
+      .reduce((sum, pay) => sum + (Number(pay.amount_usd) || 0), 0);
+
+    const rawBalance = openingBalance + totalInvoiced - totalPaid;
+    
+    // If overpaid, show credit balance
+    let currentBalance = rawBalance;
+    let creditBalance = 0;
+    
+    if (rawBalance < 0) {
+      creditBalance = Math.abs(rawBalance);
+      currentBalance = 0;
+    }
+
+    return {
+      current_balance: currentBalance,
+      total_invoiced: totalInvoiced,
+      total_paid: totalPaid,
+      opening_balance: openingBalance,
+      credit_balance: creditBalance,
+    };
+  }
+
+  /**
+   * Generate ledger entries locally
+   */
+  generateClientLedger(
+    client: Client,
+    invoices: Invoice[],
+    payments: Payment[]
+  ): Array<{
+    date: string;
+    type: 'opening_balance' | 'invoice' | 'payment' | 'adjustment';
+    reference: string;
+    document_id?: string;
+    debit: number;
+    credit: number;
+    currency: 'USD' | 'GBP';
+    balance: number;
+  }> {
+    const entries: Array<{
+      date: string;
+      type: 'opening_balance' | 'invoice' | 'payment' | 'adjustment';
+      reference: string;
+      document_id?: string;
+      debit: number;
+      credit: number;
+      currency: 'USD' | 'GBP';
+    }> = [];
+
+    const currency = client.opening_balance_currency || 'USD';
+
+    // Opening balance entry
+    if (client.opening_balance && client.opening_balance !== 0) {
+      entries.push({
+        date: client.created_at,
+        type: 'opening_balance',
+        reference: 'Opening Balance',
+        debit: client.opening_balance > 0 ? client.opening_balance : 0,
+        credit: client.opening_balance < 0 ? Math.abs(client.opening_balance) : 0,
+        currency,
+      });
+    }
+
+    // Invoice entries
+    invoices
+      .filter(inv => 
+        (inv.client_id === client.id || inv.client_name === client.name) &&
+        inv.status !== 'Cancelled'
+      )
+      .forEach(inv => {
+        entries.push({
+          date: inv.created_at,
+          type: 'invoice',
+          reference: inv.invoice_number,
+          document_id: inv.id,
+          debit: Number(inv.amount_usd) || 0,
+          credit: 0,
+          currency: inv.currency || currency,
+        });
+      });
+
+    // Payment entries
+    payments
+      .filter(pay => 
+        (pay.client_id === client.id || pay.client_name === client.name) &&
+        pay.type === 'Inbound' &&
+        !pay.is_deleted
+      )
+      .forEach(pay => {
+        entries.push({
+          date: pay.date,
+          type: 'payment',
+          reference: pay.reference_id || 'Payment',
+          document_id: pay.id,
+          debit: 0,
+          credit: Number(pay.amount_usd) || 0,
+          currency: pay.currency || currency,
+        });
+      });
+
+    // Sort by date
+    entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Calculate running balance
+    let runningBalance = 0;
+    return entries.map(entry => {
+      runningBalance += entry.debit - entry.credit;
+      return {
+        ...entry,
+        balance: runningBalance,
+      };
+    });
+  }
 }
 
 export const dataService = new DataService();

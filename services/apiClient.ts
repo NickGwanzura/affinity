@@ -477,6 +477,77 @@ export const api = {
     list: (params?: { limit?: number }) =>
       apiRequest<any[]>(`/audit-logs?${new URLSearchParams(params as Record<string, string>).toString()}`),
   },
+
+  // Client Financials - Unified Balance & Ledger
+  clientFinancials: {
+    getBalance: (clientId: string) =>
+      apiRequest<{
+        client: any;
+        balance: {
+          current_balance: number;
+          total_invoiced: number;
+          total_paid: number;
+          opening_balance: number;
+          currency: 'USD' | 'GBP';
+          credit_balance: number;
+        };
+        formula_applied: string;
+      }>(`/client-financials?action=balance&clientId=${clientId}`),
+
+    getLedger: (clientId: string, params?: { from?: string; to?: string }) =>
+      apiRequest<{
+        client: any;
+        date_range: { from: string | null; to: string | null };
+        entries: Array<{
+          date: string;
+          type: 'opening_balance' | 'invoice' | 'payment' | 'adjustment';
+          reference: string;
+          document_id?: string;
+          debit: number;
+          credit: number;
+          currency: 'USD' | 'GBP';
+          balance: number;
+        }>;
+        summary: {
+          total_debits: number;
+          total_credits: number;
+          opening_balance: number;
+          closing_balance: number;
+        };
+      }>(`/client-financials?action=ledger&clientId=${clientId}&${new URLSearchParams(params as Record<string, string>).toString()}`),
+
+    getAllBalances: (params?: { hasOutstanding?: boolean; minBalance?: number; search?: string }) =>
+      apiRequest<{
+        count: number;
+        clients: Array<{
+          id: string;
+          name: string;
+          email: string;
+          company: string;
+          balance: {
+            opening_balance: number;
+            total_invoiced: number;
+            total_paid: number;
+            current_balance: number;
+            credit_balance: number;
+            currency: 'USD' | 'GBP';
+          };
+          is_active: boolean;
+          created_at: string;
+        }>;
+      }>(`/client-financials?action=all-balances&${new URLSearchParams(params as Record<string, string>).toString()}`),
+
+    recalculateBalance: (clientId: string) =>
+      apiRequest<{
+        message: string;
+        client_id: string;
+        balance: any;
+        formula_applied: string;
+        timestamp: string;
+      }>(`/client-financials?action=recalculate&clientId=${clientId}`, {
+        method: 'POST',
+      }),
+  },
   
   // Generic request for future endpoints
   request: apiRequest,

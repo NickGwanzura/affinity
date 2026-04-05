@@ -145,21 +145,39 @@ export const ClientDirectory: React.FC = () => {
   const getClientPayments = (name: string) =>
     payments.filter(p => (p.client_name || '').trim().toLowerCase() === name.trim().toLowerCase());
 
-  // Calculate true client balance including opening balance
+  // Calculate true client balance using unified formula:
+  // current_balance = opening_balance + total_invoiced - total_paid
   const clientStats = (name: string) => {
     const client = enrichedClients.find(c => c.name.toLowerCase() === name.toLowerCase());
     const inv = getClientInvoices(name);
-    // Ensure numeric calculations
+    const clientPayments = getClientPayments(name);
+    
+    // Use the unified calculation from dataService if available
+    if (client) {
+      const balance = dataService.calculateClientBalance(client, invoices, payments);
+      return {
+        totalBilled: balance.total_invoiced,
+        totalPaid: balance.total_paid,
+        openingBalance: balance.opening_balance,
+        outstanding: balance.current_balance,
+        creditBalance: balance.credit_balance,
+        invoiceCount: inv.length,
+        quoteCount: getClientQuotes(name).length
+      };
+    }
+    
+    // Fallback calculation
     const totalBilled = inv.reduce((s, i) => s + (Number(i.amount_usd) || 0), 0);
-    const actualPayments = getClientPayments(name).reduce((s, p) => s + (Number(p.amount_usd) || 0), 0);
-    const openingBalance = Number(client?.opening_balance) || 0;
+    const actualPayments = clientPayments.reduce((s, p) => s + (Number(p.amount_usd) || 0), 0);
+    const openingBalance = 0;
     const outstanding = totalBilled - actualPayments + openingBalance;
     
     return { 
       totalBilled, 
       totalPaid: actualPayments, 
       openingBalance,
-      outstanding, 
+      outstanding,
+      creditBalance: 0,
       invoiceCount: inv.length, 
       quoteCount: getClientQuotes(name).length 
     };
@@ -445,11 +463,15 @@ export const ClientDirectory: React.FC = () => {
                         </div>
                         <div className="text-right">
                           <p className="text-xs font-bold text-[var(--cds-text-primary,#161616)]">{stats.invoiceCount} inv</p>
-                          {stats.outstanding !== 0 && (
-                            <p className={`text-xs font-semibold ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : 'text-[var(--cds-support-success,#24a148)]'}`}>
-                              {formatMoney(Math.abs(stats.outstanding))} {stats.outstanding > 0 ? 'due' : 'cr'}
+                          {stats.outstanding > 0 ? (
+                            <p className="text-xs font-semibold text-[var(--cds-support-error,#da1e28)]">
+                              {formatMoney(stats.outstanding)} due
                             </p>
-                          )}
+                          ) : stats.creditBalance > 0 ? (
+                            <p className="text-xs font-semibold text-[var(--cds-support-success,#24a148)]">
+                              {formatMoney(stats.creditBalance)} cr
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     </button>
@@ -546,9 +568,13 @@ export const ClientDirectory: React.FC = () => {
                       <p className="text-xl font-black text-[var(--cds-support-success,#24a148)] mt-1">{formatMoney(stats.totalPaid)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">Outstanding</p>
-                      <p className={`text-xl font-black mt-1 ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : 'text-[var(--cds-support-success,#24a148)]'}`}>
-                        {formatMoney(Math.abs(stats.outstanding))}
+                      <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">
+                        {stats.outstanding > 0 ? 'Balance Due' : stats.creditBalance > 0 ? 'Credit' : 'Balance'}
+                      </p>
+                      <p className={`text-xl font-black mt-1 ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : stats.creditBalance > 0 ? 'text-[var(--cds-support-success,#24a148)]' : 'text-[var(--cds-text-primary,#161616)]'}`}>
+                        {stats.outstanding > 0 ? formatMoney(stats.outstanding) : 
+                         stats.creditBalance > 0 ? formatMoney(stats.creditBalance) : 
+                         formatMoney(0)}
                       </p>
                     </div>
                     <div>
@@ -785,8 +811,12 @@ export const ClientDirectory: React.FC = () => {
                                     </td>
                                     <td className="py-4"></td>
                                     <td className="py-4"></td>
-                                    <td className={`py-4 text-right font-black text-xl ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : 'text-[var(--cds-support-success,#24a148)]'}`}>
-                                      {formatMoney(Math.abs(stats.outstanding))} {stats.outstanding > 0 ? 'DR' : stats.outstanding < 0 ? 'CR' : ''}
+                                    <td className={`py-4 text-right font-black text-xl ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : stats.creditBalance > 0 ? 'text-[var(--cds-support-success,#24a148)]' : ''}`}>
+                                      {stats.outstanding > 0 
+                                        ? formatMoney(stats.outstanding) + ' DR'
+                                        : stats.creditBalance > 0 
+                                          ? formatMoney(stats.creditBalance) + ' CR'
+                                          : formatMoney(0)}
                                     </td>
                                   </tr>
                                 </>
