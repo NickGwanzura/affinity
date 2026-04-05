@@ -987,26 +987,35 @@ export const Financials: React.FC = () => {
  : `UNALLOC-${Date.now()}`;
 
  setIsSubmittingPayment(true);
- try {
- const payment = editingPayment
- ? await dataService.updatePayment(editingPayment.id, {
+ 
+ const paymentPayload = editingPayment
+ ? {
  reference_id: referenceId,
  client_name: primaryInvoice?.client_name || clientName,
- type: 'Inbound',
+ type: 'Inbound' as const,
  amount_usd: amount,
  currency: selectedCurrency,
  method,
  date: editingPayment.date,
- })
- : await dataService.addPayment({
+ allocations: mergedAllocations,
+ }
+ : {
  reference_id: referenceId,
  client_name: primaryInvoice?.client_name || clientName,
- type: 'Inbound',
+ type: 'Inbound' as const,
  amount_usd: amount,
  currency: selectedCurrency,
  method,
  date: new Date().toISOString(),
- });
+ allocations: mergedAllocations,
+ };
+ 
+ console.log('[Financials] Payment payload:', JSON.stringify(paymentPayload, null, 2));
+ 
+ try {
+ const payment = editingPayment
+ ? await dataService.updatePayment(editingPayment.id, paymentPayload)
+ : await dataService.addPayment(paymentPayload);
 
  await dataService.replacePaymentAllocations(payment.id, mergedAllocations);
 
@@ -1072,6 +1081,8 @@ export const Financials: React.FC = () => {
  }
  } catch (error: any) {
  console.error('[Financials] handleRecordPayment failed:', error);
+ console.error('[Financials] Error details:', error?.data || 'No details');
+ console.error('[Financials] Error stack:', error?.stack || 'No stack');
  showToast(error?.message || 'Failed to record payment', 'error');
  } finally {
  setIsSubmittingPayment(false);
