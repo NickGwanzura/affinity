@@ -122,6 +122,6 @@ export function apiError(res: VercelResponse, status: number, message: string, d
   console.error(`[API Error ${status}]`, message, details);
   res.status(status).json({ 
     error: message,
-    ...(process.env.NODE_ENV === 'development' && details ? { details } : {})
+    ...(details ? { details: typeof details === 'object' ? details.message || JSON.stringify(details) : details } : {})
   });
 }

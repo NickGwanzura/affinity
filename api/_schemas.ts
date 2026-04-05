@@ -85,7 +85,7 @@ export const InvoiceUpdateSchema = InvoiceSchema.partial().extend({
 
 // Payment schemas
 export const PaymentAllocationSchema = z.object({
-  invoice_id: z.string().uuid().optional(),
+  invoice_id: z.string().uuid().optional().nullable(),
   amount_allocated: z.number().positive(),
   currency: z.enum(['USD', 'GBP']).default('USD'),
   status: z.enum(['allocated', 'unallocated', 'credit']).optional(),

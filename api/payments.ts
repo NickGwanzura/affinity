@@ -52,10 +52,20 @@ async function attachAllocations(rows: PaymentRow[]) {
   }));
 }
 
-const parseAllocationsFromBody = (body: unknown) =>
-  Array.isArray((body as { allocations?: unknown[] } | undefined)?.allocations)
-    ? ((body as { allocations: unknown[] }).allocations.map((allocation) => PaymentAllocationSchema.parse(allocation)))
-    : [];
+const parseAllocationsFromBody = (body: unknown) => {
+  const allocations = (body as { allocations?: unknown[] } | undefined)?.allocations;
+  if (!Array.isArray(allocations)) return [];
+  
+  try {
+    return allocations.map((allocation) => PaymentAllocationSchema.parse(allocation));
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const issues = error.issues.map(i => `allocations.${i.path.join('.')}: ${i.message}`).join(', ');
+      throw new Error(`Allocation validation error: ${issues}`);
+    }
+    throw error;
+  }
+};
 
 async function getInvoiceCurrency(client: PoolClient, invoiceId: string): Promise<string | null> {
   const result = await client.query(
@@ -328,9 +338,13 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
     const [hydrated] = await attachAllocations([payment]);
     return res.status(201).json(hydrated);
   } catch (error) {
+    console.error('[Payments API] Create payment error:', error);
     if (error instanceof z.ZodError) {
       const issues = error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
       return apiError(res, 400, `Validation error: ${issues}`, error);
+    }
+    if (error instanceof Error) {
+      return apiError(res, 400, error.message, error);
     }
     return apiError(res, 400, 'Invalid payment data', error);
   }
