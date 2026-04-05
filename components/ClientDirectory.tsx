@@ -5,6 +5,7 @@ import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 import { Modal, TextInput, Button, Form, Stack, Tag } from '@carbon/react';
 import { Add, Edit, TrashCan, DocumentDownload } from '@carbon/icons-react';
+import { generateStatementPDF } from '../services/pdfService';
 
 const formatMoney = (amount: number, currency = 'USD') => {
   const symbol = currency === 'GBP' ? '£' : '$';
@@ -148,10 +149,10 @@ export const ClientDirectory: React.FC = () => {
   const clientStats = (name: string) => {
     const client = enrichedClients.find(c => c.name.toLowerCase() === name.toLowerCase());
     const inv = getClientInvoices(name);
-    const totalBilled = inv.reduce((s, i) => s + i.amount_usd, 0);
-    const totalPaid = inv.filter(i => i.status === 'Paid').reduce((s, i) => s + i.amount_usd, 0);
-    const actualPayments = getClientPayments(name).reduce((s, p) => s + p.amount_usd, 0);
-    const openingBalance = client?.opening_balance || 0;
+    // Ensure numeric calculations
+    const totalBilled = inv.reduce((s, i) => s + (Number(i.amount_usd) || 0), 0);
+    const actualPayments = getClientPayments(name).reduce((s, p) => s + (Number(p.amount_usd) || 0), 0);
+    const openingBalance = Number(client?.opening_balance) || 0;
     const outstanding = totalBilled - actualPayments + openingBalance;
     
     return { 
@@ -162,6 +163,72 @@ export const ClientDirectory: React.FC = () => {
       invoiceCount: inv.length, 
       quoteCount: getClientQuotes(name).length 
     };
+  };
+
+  // Generate ledger entries with running balance
+  const generateLedger = (clientName: string) => {
+    const client = enrichedClients.find(c => c.name.toLowerCase() === clientName.toLowerCase());
+    if (!client) return [];
+
+    const openingBalance = Number(client.opening_balance) || 0;
+    
+    // Build entries array
+    const entries: Array<{
+      date: Date;
+      type: 'opening' | 'invoice' | 'payment';
+      reference: string;
+      debit: number;
+      credit: number;
+      id?: string;
+    }> = [];
+
+    // Add opening balance if exists
+    if (openingBalance !== 0) {
+      entries.push({
+        date: new Date(client.created_at),
+        type: 'opening',
+        reference: 'Opening Balance',
+        debit: openingBalance > 0 ? openingBalance : 0,
+        credit: openingBalance < 0 ? Math.abs(openingBalance) : 0,
+      });
+    }
+
+    // Add invoices (debits)
+    getClientInvoices(clientName).forEach(inv => {
+      entries.push({
+        date: new Date(inv.created_at),
+        type: 'invoice',
+        reference: inv.invoice_number,
+        debit: Number(inv.amount_usd) || 0,
+        credit: 0,
+        id: inv.id,
+      });
+    });
+
+    // Add payments (credits)
+    getClientPayments(clientName).forEach(pay => {
+      entries.push({
+        date: new Date(pay.date),
+        type: 'payment',
+        reference: pay.reference_id || 'Payment',
+        debit: 0,
+        credit: Number(pay.amount_usd) || 0,
+        id: pay.id,
+      });
+    });
+
+    // Sort by date
+    entries.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    // Calculate running balance
+    let runningBalance = 0;
+    return entries.map(entry => {
+      runningBalance += entry.debit - entry.credit;
+      return {
+        ...entry,
+        balance: runningBalance,
+      };
+    });
   };
 
   // CRUD Operations
@@ -241,12 +308,73 @@ export const ClientDirectory: React.FC = () => {
     }
   };
 
-  // Generate client statement
+  // Generate client statement PDF
   const generateStatement = async () => {
     if (!selectedClient) return;
     
-    // This will be implemented with PDF generation
-    showToast('Statement generation coming soon', 'info');
+    try {
+      const company = await dataService.getCompanyDetails();
+      if (!company) {
+        showToast('Company details not found', 'error');
+        return;
+      }
+
+      const clientInvoices = getClientInvoices(selectedClient.name);
+      const clientPayments = getClientPayments(selectedClient.name);
+
+      // Filter by date range if specified
+      const filteredInvoices = clientInvoices.filter(inv => {
+        if (!statementDateFrom && !statementDateTo) return true;
+        const invDate = new Date(inv.created_at).toISOString().split('T')[0];
+        if (statementDateFrom && invDate < statementDateFrom) return false;
+        if (statementDateTo && invDate > statementDateTo) return false;
+        return true;
+      });
+
+      const filteredPayments = clientPayments.filter(pay => {
+        if (!statementDateFrom && !statementDateTo) return true;
+        const payDate = new Date(pay.date).toISOString().split('T')[0];
+        if (statementDateFrom && payDate < statementDateFrom) return false;
+        if (statementDateTo && payDate > statementDateTo) return false;
+        return true;
+      });
+
+      // Build payment currency map
+      const paymentCurrencyMap: Record<string, 'USD' | 'GBP'> = {};
+      filteredPayments.forEach(p => {
+        if (p.id && p.currency) {
+          paymentCurrencyMap[p.id] = p.currency;
+        }
+      });
+
+      const statementData = {
+        client_name: selectedClient.name,
+        client_email: selectedClient.email,
+        client_address: selectedClient.address,
+        invoices: filteredInvoices,
+        payments: filteredPayments,
+        paymentCurrencyMap,
+        startDate: statementDateFrom || filteredInvoices[0]?.created_at || filteredPayments[0]?.date || new Date().toISOString(),
+        endDate: statementDateTo || new Date().toISOString(),
+      };
+
+      const blob = await generateStatementPDF(statementData, company);
+      
+      // Download the PDF
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Statement_${selectedClient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('Statement downloaded successfully', 'success');
+    } catch (err: any) {
+      console.error('Failed to generate statement:', err);
+      showToast(err?.message || 'Failed to generate statement', 'error');
+    }
   };
 
   if (loading) {
@@ -566,9 +694,19 @@ export const ClientDirectory: React.FC = () => {
                       )
                     )}
 
-                    {detailTab === 'statement' && (
+                    {detailTab === 'statement' && (() => {
+                      const ledger = generateLedger(c.name);
+                      const filteredLedger = ledger.filter(entry => {
+                        if (!statementDateFrom && !statementDateTo) return true;
+                        const entryDate = entry.date.toISOString().split('T')[0];
+                        if (statementDateFrom && entryDate < statementDateFrom) return false;
+                        if (statementDateTo && entryDate > statementDateTo) return false;
+                        return true;
+                      });
+                      
+                      return (
                       <div className="p-4">
-                        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
                           <div className="flex gap-4">
                             <div>
                               <label className="block text-xs font-bold uppercase tracking-wider text-[var(--cds-text-secondary,#525252)] mb-1">From</label>
@@ -592,13 +730,12 @@ export const ClientDirectory: React.FC = () => {
                           <Button
                             renderIcon={DocumentDownload}
                             onClick={generateStatement}
-                            disabled
                           >
-                            Download Statement (Coming Soon)
+                            Download PDF Statement
                           </Button>
                         </div>
                         
-                        {/* Simple ledger display */}
+                        {/* Ledger display with running balance */}
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
@@ -612,58 +749,53 @@ export const ClientDirectory: React.FC = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {/* Opening Balance */}
-                              {stats.openingBalance !== 0 && (
-                                <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-02,#f4f4f4)]">
-                                  <td className="py-3 text-xs">{new Date(c.created_at).toLocaleDateString()}</td>
-                                  <td className="py-3"><Tag size="sm">Opening</Tag></td>
-                                  <td className="py-3 text-xs">Opening Balance</td>
-                                  <td className="py-3 text-right font-bold">{stats.openingBalance > 0 ? formatMoney(stats.openingBalance) : '-'}</td>
-                                  <td className="py-3 text-right font-bold">{stats.openingBalance < 0 ? formatMoney(Math.abs(stats.openingBalance)) : '-'}</td>
-                                  <td className="py-3 text-right font-black">{formatMoney(stats.openingBalance)}</td>
+                              {filteredLedger.length === 0 ? (
+                                <tr>
+                                  <td colSpan={6} className="py-10 text-center text-[var(--cds-text-secondary,#525252)]">
+                                    No entries for the selected date range
+                                  </td>
                                 </tr>
+                              ) : (
+                                <>
+                                  {filteredLedger.map((entry, index) => (
+                                    <tr key={index} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
+                                      <td className="py-3 text-xs">{entry.date.toLocaleDateString()}</td>
+                                      <td className="py-3">
+                                        {entry.type === 'opening' && <Tag size="sm">Opening</Tag>}
+                                        {entry.type === 'invoice' && <Tag type="blue" size="sm">Invoice</Tag>}
+                                        {entry.type === 'payment' && <Tag type="green" size="sm">Payment</Tag>}
+                                      </td>
+                                      <td className="py-3 font-mono text-xs">{entry.reference}</td>
+                                      <td className="py-3 text-right font-bold text-[var(--cds-support-error,#da1e28)]">
+                                        {entry.debit > 0 ? formatMoney(entry.debit) : '-'}
+                                      </td>
+                                      <td className="py-3 text-right font-bold text-[var(--cds-support-success,#24a148)]">
+                                        {entry.credit > 0 ? formatMoney(entry.credit) : '-'}
+                                      </td>
+                                      <td className={`py-3 text-right font-black ${entry.balance > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : entry.balance < 0 ? 'text-[var(--cds-support-success,#24a148)]' : ''}`}>
+                                        {formatMoney(Math.abs(entry.balance))} {entry.balance > 0 ? 'DR' : entry.balance < 0 ? 'CR' : ''}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                  
+                                  {/* Total Row */}
+                                  <tr className="border-t-2 border-[var(--cds-text-primary,#161616)] bg-[var(--cds-layer-02,#f4f4f4)]">
+                                    <td className="py-4" colSpan={3}>
+                                      <span className="font-black uppercase tracking-wider">Current Balance</span>
+                                    </td>
+                                    <td className="py-4"></td>
+                                    <td className="py-4"></td>
+                                    <td className={`py-4 text-right font-black text-xl ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : 'text-[var(--cds-support-success,#24a148)]'}`}>
+                                      {formatMoney(Math.abs(stats.outstanding))} {stats.outstanding > 0 ? 'DR' : stats.outstanding < 0 ? 'CR' : ''}
+                                    </td>
+                                  </tr>
+                                </>
                               )}
-                              
-                              {/* Invoices */}
-                              {clientInvoices.map(inv => (
-                                <tr key={inv.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
-                                  <td className="py-3 text-xs">{new Date(inv.created_at).toLocaleDateString()}</td>
-                                  <td className="py-3"><Tag type="blue" size="sm">Invoice</Tag></td>
-                                  <td className="py-3 font-mono text-xs">{inv.invoice_number}</td>
-                                  <td className="py-3 text-right font-bold text-[var(--cds-support-error,#da1e28)]">{formatMoney(inv.amount_usd)}</td>
-                                  <td className="py-3 text-right">-</td>
-                                  <td className="py-3 text-right font-black">-</td>
-                                </tr>
-                              ))}
-                              
-                              {/* Payments */}
-                              {clientPayments.map(pay => (
-                                <tr key={pay.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
-                                  <td className="py-3 text-xs">{new Date(pay.date).toLocaleDateString()}</td>
-                                  <td className="py-3"><Tag type="green" size="sm">Payment</Tag></td>
-                                  <td className="py-3 font-mono text-xs">{pay.reference_id}</td>
-                                  <td className="py-3 text-right">-</td>
-                                  <td className="py-3 text-right font-bold text-[var(--cds-support-success,#24a148)]">{formatMoney(pay.amount_usd)}</td>
-                                  <td className="py-3 text-right font-black">-</td>
-                                </tr>
-                              ))}
-                              
-                              {/* Total Row */}
-                              <tr className="border-t-2 border-[var(--cds-text-primary,#161616)] bg-[var(--cds-layer-02,#f4f4f4)]">
-                                <td className="py-4" colSpan={3}>
-                                  <span className="font-black uppercase tracking-wider">Current Balance</span>
-                                </td>
-                                <td className="py-4"></td>
-                                <td className="py-4"></td>
-                                <td className={`py-4 text-right font-black text-xl ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : 'text-[var(--cds-support-success,#24a148)]'}`}>
-                                  {formatMoney(Math.abs(stats.outstanding))} {stats.outstanding > 0 ? 'DR' : stats.outstanding < 0 ? 'CR' : ''}
-                                </td>
-                              </tr>
                             </tbody>
                           </table>
                         </div>
                       </div>
-                    )}
+                    );})()}
                   </div>
                 </div>
               </div>
