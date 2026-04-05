@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { PoolClient } from '@neondatabase/serverless';
+import { z } from 'zod';
 import {
   AuthenticatedRequest,
   apiError,
@@ -245,7 +246,9 @@ async function listPayments(res: VercelResponse) {
 
 async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
   try {
+    console.log('[Payments API] Creating payment with body:', JSON.stringify(req.body, null, 2));
     const data = PaymentSchema.parse(req.body);
+    console.log('[Payments API] Parsed data:', JSON.stringify(data, null, 2));
     const allocations = parseAllocationsFromBody(req.body);
 
     // Determine payment status based on allocations
@@ -325,6 +328,10 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
     const [hydrated] = await attachAllocations([payment]);
     return res.status(201).json(hydrated);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      const issues = error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+      return apiError(res, 400, `Validation error: ${issues}`, error);
+    }
     return apiError(res, 400, 'Invalid payment data', error);
   }
 }
