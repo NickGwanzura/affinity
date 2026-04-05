@@ -85,19 +85,22 @@ export const InvoiceUpdateSchema = InvoiceSchema.partial().extend({
 
 // Payment schemas
 export const PaymentAllocationSchema = z.object({
-  invoice_id: z.string().uuid(),
+  invoice_id: z.string().uuid().optional(),
   amount_allocated: z.number().positive(),
   currency: z.enum(['USD', 'GBP']).default('USD'),
+  status: z.enum(['allocated', 'unallocated', 'credit']).optional(),
 });
 
 export const PaymentSchema = z.object({
-  reference_id: z.string().min(1),
+  reference_id: z.string().min(1).optional().or(z.literal('')),
   client_name: z.string().min(1),
+  client_id: z.string().uuid().optional(),
   type: z.enum(['Inbound', 'Outbound']).default('Inbound'),
   amount_usd: z.number().positive(),
   currency: z.enum(['USD', 'GBP']).default('USD'),
   method: z.string().min(1),
   date: DateLikeSchema,
+  status: z.enum(['allocated', 'unallocated', 'credit']).optional().default('allocated'),
   allocations: z.array(PaymentAllocationSchema).optional(),
 });
 

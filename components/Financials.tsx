@@ -911,6 +911,8 @@ export const Financials: React.FC = () => {
  }
 
  const selectedCurrency = paymentForm.currency || 'USD';
+ 
+ // Parse allocations - now allowing unallocated (no invoice_id) payments
  const draftedAllocations = paymentAllocationForm
  .map(allocation => ({
  invoice_id: allocation.invoice_id,
@@ -918,24 +920,49 @@ export const Financials: React.FC = () => {
  }))
  .filter(allocation => allocation.invoice_id || allocation.amount_allocated > 0);
 
+ // Only validate amounts for allocations that have an invoice_id specified
  const invalidAllocation = draftedAllocations.find(
- allocation => !allocation.invoice_id || allocation.amount_allocated <= 0
+ allocation => allocation.invoice_id && allocation.amount_allocated <= 0
  );
  if (invalidAllocation) {
- showToast('Each allocation row needs both an invoice and an amount', 'warning');
+ showToast('Each allocated row needs a positive amount', 'warning');
  return;
  }
 
- const mergedAllocations = Array.from(
- draftedAllocations.reduce((acc, allocation) => {
- acc.set(allocation.invoice_id, (acc.get(allocation.invoice_id) || 0) + allocation.amount_allocated);
- return acc;
- }, new Map<string, number>())
- ).map(([invoice_id, amount_allocated]) => ({
- invoice_id,
- amount_allocated,
+ // Build allocations array
+ // If no valid allocations to invoices, create an unallocated entry
+ const hasInvoiceAllocations = draftedAllocations.some(a => a.invoice_id && a.amount_allocated > 0);
+ 
+ let mergedAllocations: Array<{ invoice_id?: string; amount_allocated: number; currency: 'USD' | 'GBP'; status?: string }> = [];
+ 
+ if (hasInvoiceAllocations) {
+ // Group allocations by invoice_id
+ const allocationsByInvoice = draftedAllocations
+ .filter(a => a.invoice_id)
+ .reduce((acc, allocation) => {
+ const existing = acc.get(allocation.invoice_id);
+ if (existing) {
+ existing.amount_allocated += allocation.amount_allocated;
+ } else {
+ acc.set(allocation.invoice_id, { 
+ invoice_id: allocation.invoice_id, 
+ amount_allocated: allocation.amount_allocated,
  currency: selectedCurrency,
- }));
+ status: 'allocated'
+ });
+ }
+ return acc;
+ }, new Map<string, { invoice_id: string; amount_allocated: number; currency: 'USD' | 'GBP'; status: string }>());
+ 
+ mergedAllocations = Array.from(allocationsByInvoice.values());
+ } else {
+ // Unallocated payment - will be tracked as client credit
+ mergedAllocations = [{
+ amount_allocated: amount,
+ currency: selectedCurrency,
+ status: 'unallocated'
+ }];
+ }
 
  const totalAllocated = mergedAllocations.reduce((sum, allocation) => sum + allocation.amount_allocated, 0);
  if (totalAllocated - amount > 0.001) {
@@ -944,6 +971,7 @@ export const Financials: React.FC = () => {
  }
 
  const allocatedInvoices = mergedAllocations
+ .filter(a => a.invoice_id)
  .map(allocation => invoices.find(invoice => invoice.id === allocation.invoice_id))
  .filter(Boolean) as Invoice[];
  const primaryInvoice = allocatedInvoices[0];
@@ -956,7 +984,7 @@ export const Financials: React.FC = () => {
  ? primaryInvoice.invoice_number
  : allocatedInvoices.length > 1
  ? `ALLOC-${Date.now()}`
- : `PAY-${Date.now()}`;
+ : `UNALLOC-${Date.now()}`;
 
  setIsSubmittingPayment(true);
  try {
@@ -1450,8 +1478,17 @@ export const Financials: React.FC = () => {
  return null;
  }
 
+ // Check if all allocations are unallocated (no invoice_id)
+ const hasUnallocatedOnly = payment.allocations.every(a => !a.invoice_id);
+ if (hasUnallocatedOnly) {
+ return 'Unallocated payment (client credit)';
+ }
+
  return payment.allocations
  .map(allocation => {
+ if (!allocation.invoice_id) {
+ return `Unallocated ${formatMoney(allocation.amount_allocated, allocation.currency)}`;
+ }
  const invoice = invoices.find(candidate => candidate.id === allocation.invoice_id);
  return `${invoice?.invoice_number || allocation.invoice_id.slice(0, 8)} ${formatMoney(allocation.amount_allocated, allocation.currency)}`;
  })
@@ -2369,9 +2406,17 @@ export const Financials: React.FC = () => {
  {!paymentForm.client_name ? (
  <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Choose a client first to allocate this payment to invoices.</p>
  ) : paymentAllocationCandidates.length === 0 ? (
+ <div className="p-3" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
  <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- No pending invoices (Draft/Sent/Overdue) with outstanding balance found for this client in {paymentForm.currency}.
+ No pending invoices found for this client in {paymentForm.currency}.
  </p>
+ <p className="mt-2 text-xs font-semibold" style={{ color: 'var(--cds-support-warning, #f1c21b)' }}>
+ This payment will be recorded as UNALLOCATED (client credit).
+ </p>
+ <p className="mt-1 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+ The payment will reduce the client&apos;s balance and can be allocated to invoices later.
+ </p>
+ </div>
  ) : null}
  <div className="flex items-center justify-between px-4 py-3 text-sm text-white" style={{ backgroundColor: 'var(--cds-text-primary, #161616)' }}>
  <span className="font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Allocated Total</span>

@@ -297,6 +297,13 @@ interface PaymentsSectionProps {
  onDelete: (payment: Payment) => void;
 }
 
+const getPaymentStatusBadge = (payment: Payment) => {
+ if (payment.status === 'unallocated' || payment.reference_id?.startsWith('UNALLOC-')) {
+ return <span className="bg-amber-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-amber-700">Unallocated</span>;
+ }
+ return <span className={`text-xs font-black uppercase ${payment.type === 'Inbound' ? 'text-emerald-600' : 'text-red-600'}`}>{payment.type}</span>;
+ };
+
 export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
  payments,
  deletingKey,
@@ -313,10 +320,10 @@ export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
  <div key={payment.id} className="border border-zinc-100 bg-white p-4 shadow-sm">
  <div className="mb-2 flex items-start justify-between">
  <div>
- <div className="font-bold text-zinc-900">{payment.client_name}</div>
+ <div className="font-bold text-zinc-900">{getPaymentClientName(payment)}</div>
  <div className="text-xs font-mono text-zinc-500">{payment.reference_id}</div>
  </div>
- <span className="bg-green-100 px-2 py-0.5 text-xs font-black uppercase tracking-tighter text-green-700">{payment.type}</span>
+ {getPaymentStatusBadge(payment)}
  </div>
  <div className="mb-2 font-black text-zinc-900">{formatMoney(payment.amount_usd, getPaymentCurrency(payment))}</div>
  <div className="mb-3 flex items-center gap-2 text-xs text-zinc-400">
@@ -342,7 +349,7 @@ export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
  <tr>
  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Client</th>
  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Reference</th>
- <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Type</th>
+ <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Status</th>
  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Amount</th>
  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Currency</th>
  <th className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-400">Method</th>
@@ -361,7 +368,7 @@ export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
  ) : null}
  </td>
  <td className="px-8 py-4">
- <span className={`text-xs font-black uppercase ${payment.type === 'Inbound' ? 'text-emerald-600' : 'text-red-600'}`}>{payment.type}</span>
+ {getPaymentStatusBadge(payment)}
  </td>
  <td className="px-8 py-4 font-black text-zinc-900">{formatMoney(payment.amount_usd, getPaymentCurrency(payment))}</td>
  <td className="px-8 py-4 text-xs font-black uppercase tracking-widest text-zinc-500">{getPaymentCurrency(payment)}</td>

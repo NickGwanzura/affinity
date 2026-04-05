@@ -16,11 +16,13 @@ type PaymentRow = {
   id: string;
   reference_id: string;
   client_name?: string | null;
+  client_id?: string | null;
   type: 'Inbound' | 'Outbound';
   amount_usd: number;
   currency?: 'USD' | 'GBP' | null;
   method: string;
   date: string;
+  status?: string | null;
 };
 
 async function attachAllocations(rows: PaymentRow[]) {
@@ -30,7 +32,7 @@ async function attachAllocations(rows: PaymentRow[]) {
 
   const paymentIds = rows.map((payment) => payment.id);
   const allocationRows = await sql`
-    SELECT id, payment_id, invoice_id, amount_allocated, currency, created_at
+    SELECT id, payment_id, invoice_id, amount_allocated, currency, status, created_at
     FROM public.payment_allocations
     WHERE payment_id = ANY(${paymentIds}::uuid[])
     ORDER BY created_at ASC
@@ -130,7 +132,8 @@ async function replaceAllocationsForPayment(
   client: PoolClient,
   paymentId: string,
   paymentAmountUsd: number,
-  allocations: Array<{ invoice_id: string; amount_allocated: number; currency: 'USD' | 'GBP' }>,
+  allocations: Array<{ invoice_id?: string; amount_allocated: number; currency: 'USD' | 'GBP'; status?: string }>,
+  clientName?: string,
 ) {
   const totalAllocated = allocations.reduce((sum, allocation) => sum + allocation.amount_allocated, 0);
   
@@ -144,36 +147,52 @@ async function replaceAllocationsForPayment(
     'SELECT invoice_id FROM public.payment_allocations WHERE payment_id = $1::uuid',
     [paymentId]
   );
-  const affectedInvoiceIds = new Set([
-    ...existingAllocations.rows.map(r => r.invoice_id),
-    ...allocations.map(a => a.invoice_id)
-  ]);
+  const affectedInvoiceIds = new Set<string>(
+    [...existingAllocations.rows.map(r => r.invoice_id).filter(Boolean), ...allocations.map(a => a.invoice_id).filter(Boolean)] as string[]
+  );
 
-  // Validate currency matching
+  // Validate currency matching (only for allocated payments)
   for (const allocation of allocations) {
-    const invoiceCurrency = await getInvoiceCurrency(client, allocation.invoice_id);
-    if (invoiceCurrency && invoiceCurrency !== allocation.currency) {
-      throw new Error(
-        `Currency mismatch: Invoice uses ${invoiceCurrency} but allocation is in ${allocation.currency}`
-      );
+    if (allocation.invoice_id) {
+      const invoiceCurrency = await getInvoiceCurrency(client, allocation.invoice_id);
+      if (invoiceCurrency && invoiceCurrency !== allocation.currency) {
+        throw new Error(
+          `Currency mismatch: Invoice uses ${invoiceCurrency} but allocation is in ${allocation.currency}`
+        );
+      }
     }
   }
 
   await client.query('DELETE FROM public.payment_allocations WHERE payment_id = $1::uuid', [paymentId]);
 
+  // Get client_id if clientName provided
+  let clientId: string | null = null;
+  if (clientName) {
+    const clientResult = await client.query(
+      'SELECT id FROM public.clients WHERE name = $1 LIMIT 1',
+      [clientName]
+    );
+    clientId = clientResult.rows[0]?.id || null;
+  }
+
   for (const allocation of allocations) {
+    // Determine status based on whether invoice_id is present
+    const status = allocation.invoice_id ? 'allocated' : 'unallocated';
+    
     await client.query(
       `
-        INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency)
-        VALUES ($1::uuid, $2::uuid, $3, $4)
+        INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id)
+        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6)
       `,
-      [paymentId, allocation.invoice_id, allocation.amount_allocated, allocation.currency],
+      [paymentId, allocation.invoice_id || null, allocation.amount_allocated, allocation.currency, status, clientId],
     );
   }
 
   // Update invoice payment status for all affected invoices
   for (const invoiceId of affectedInvoiceIds) {
-    await updateInvoicePaymentStatus(client, invoiceId);
+    if (invoiceId) {
+      await updateInvoicePaymentStatus(client, invoiceId);
+    }
   }
 }
 
@@ -214,7 +233,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function listPayments(res: VercelResponse) {
   try {
     const rows = await sql`
-      SELECT id, reference_id, client_name, type, amount_usd, currency, method, date
+      SELECT id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
       FROM public.payments
       ORDER BY date DESC
     `;
@@ -229,27 +248,55 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
     const data = PaymentSchema.parse(req.body);
     const allocations = parseAllocationsFromBody(req.body);
 
+    // Determine payment status based on allocations
+    const hasAllocations = allocations.length > 0;
+    const hasInvoiceAllocations = hasAllocations && allocations.some(a => a.invoice_id);
+    const paymentStatus = hasInvoiceAllocations ? 'allocated' : (hasAllocations ? 'unallocated' : 'unallocated');
+
     const payment = await withTransaction(async (client) => {
+      // Get client_id if client_name provided
+      let clientId: string | null = data.client_id || null;
+      if (!clientId && data.client_name) {
+        const clientResult = await client.query(
+          'SELECT id FROM public.clients WHERE name = $1 LIMIT 1',
+          [data.client_name]
+        );
+        clientId = clientResult.rows[0]?.id || null;
+      }
+
       const result = await client.query(
         `
-          INSERT INTO public.payments (reference_id, client_name, type, amount_usd, currency, method, date)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-          RETURNING id, reference_id, client_name, type, amount_usd, currency, method, date
+          INSERT INTO public.payments (reference_id, client_name, client_id, type, amount_usd, currency, method, date, status)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          RETURNING id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
         `,
         [
-          data.reference_id,
+          data.reference_id || `PAY-${Date.now()}`,
           data.client_name,
+          clientId,
           data.type,
           data.amount_usd,
           data.currency,
           data.method,
           data.date,
+          paymentStatus,
         ],
       );
 
       const createdPayment = result.rows[0] as PaymentRow;
+      
+      // Handle allocations (including unallocated)
       if (allocations.length > 0) {
-        await replaceAllocationsForPayment(client, createdPayment.id, createdPayment.amount_usd, allocations);
+        await replaceAllocationsForPayment(client, createdPayment.id, createdPayment.amount_usd, allocations, data.client_name);
+      } else if (!hasAllocations) {
+        // Create an unallocated allocation entry for tracking
+        await client.query(
+          `
+            INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id)
+            VALUES ($1::uuid, NULL, $2, $3, 'unallocated', $4)
+          `,
+          [createdPayment.id, createdPayment.amount_usd, data.currency || 'USD', clientId],
+        );
       }
 
       // Also update invoice status for legacy payments (reference_id matches invoice)
@@ -297,28 +344,46 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
     const oldPayment = oldPaymentRows[0];
 
     const payment = await withTransaction(async (client) => {
+      // Determine new payment status based on allocations
+      const hasInvoiceAllocations = allocations.length > 0 && allocations.some(a => a.invoice_id);
+      const newStatus = hasInvoiceAllocations ? 'allocated' : (allocations.length > 0 ? 'unallocated' : 'unallocated');
+
+      // Get client_id if client_name provided
+      let clientId: string | null = data.client_id || null;
+      if (!clientId && data.client_name) {
+        const clientResult = await client.query(
+          'SELECT id FROM public.clients WHERE name = $1 LIMIT 1',
+          [data.client_name]
+        );
+        clientId = clientResult.rows[0]?.id || null;
+      }
+
       const result = await client.query(
         `
           UPDATE public.payments
           SET
             reference_id = COALESCE($1, reference_id),
             client_name = COALESCE($2, client_name),
-            type = COALESCE($3, type),
-            amount_usd = COALESCE($4, amount_usd),
-            currency = COALESCE($5, currency),
-            method = COALESCE($6, method),
-            date = COALESCE($7, date)
-          WHERE id = $8::uuid
-          RETURNING id, reference_id, client_name, type, amount_usd, currency, method, date
+            client_id = COALESCE($3, client_id),
+            type = COALESCE($4, type),
+            amount_usd = COALESCE($5, amount_usd),
+            currency = COALESCE($6, currency),
+            method = COALESCE($7, method),
+            date = COALESCE($8, date),
+            status = COALESCE($9, status)
+          WHERE id = $10::uuid
+          RETURNING id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
         `,
         [
           data.reference_id || null,
           data.client_name || null,
+          clientId,
           data.type || null,
           data.amount_usd || null,
           data.currency || null,
           data.method || null,
           data.date || null,
+          newStatus,
           paymentId,
         ],
       );
@@ -328,8 +393,10 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
       }
 
       const updatedPayment = result.rows[0] as PaymentRow;
+      const clientName = data.client_name || updatedPayment.client_name;
+      
       if (Array.isArray((req.body as { allocations?: unknown[] } | undefined)?.allocations)) {
-        await replaceAllocationsForPayment(client, updatedPayment.id, updatedPayment.amount_usd, allocations);
+        await replaceAllocationsForPayment(client, updatedPayment.id, updatedPayment.amount_usd, allocations, clientName);
       }
 
       // Also update invoice status for legacy payments (reference_id matches invoice)
@@ -376,19 +443,29 @@ async function replaceAllocations(req: VercelRequest, res: VercelResponse) {
       : [];
 
     const paymentRows = await sql`
-      SELECT amount_usd
+      SELECT amount_usd, client_name
       FROM public.payments
       WHERE id = ${paymentId}::uuid
     `;
     if (paymentRows.length === 0) return apiError(res, 404, 'Payment not found');
 
     await withTransaction(async (client) => {
-      await replaceAllocationsForPayment(client, paymentId, Number(paymentRows[0].amount_usd), allocations);
+      await replaceAllocationsForPayment(client, paymentId, Number(paymentRows[0].amount_usd), allocations, paymentRows[0].client_name);
+      
+      // Update payment status based on allocations
+      const hasInvoiceAllocations = allocations.some(a => a.invoice_id);
+      const newStatus = hasInvoiceAllocations ? 'allocated' : (allocations.length > 0 ? 'unallocated' : 'unallocated');
+      
+      await client.query(
+        'UPDATE public.payments SET status = $1 WHERE id = $2::uuid',
+        [newStatus, paymentId]
+      );
+      
       return null;
     });
 
     const rows = await sql`
-      SELECT id, payment_id, invoice_id, amount_allocated, currency, created_at
+      SELECT id, payment_id, invoice_id, amount_allocated, currency, status, created_at
       FROM public.payment_allocations
       WHERE payment_id = ${paymentId}::uuid
       ORDER BY created_at ASC

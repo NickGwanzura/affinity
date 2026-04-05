@@ -151,22 +151,26 @@ export interface Invoice {
 
 export interface Payment {
   id: string;
-  reference_id: string; // Linked to Invoice or Expense
+  reference_id: string; // Linked to Invoice or Expense (auto-generated for unallocated)
   client_name?: string;
+  client_id?: string; // Direct link to client record
   type: 'Inbound' | 'Outbound';
   amount_usd: number;
   currency?: 'USD' | 'GBP';
   method: string;
   date: string;
+  status?: 'allocated' | 'unallocated' | 'credit';
   allocations?: PaymentAllocation[];
 }
 
 export interface PaymentAllocation {
   id: string;
   payment_id: string;
-  invoice_id: string;
+  invoice_id?: string; // Optional for unallocated payments
+  client_id?: string; // For client-level unallocated tracking
   amount_allocated: number;
   currency: 'USD' | 'GBP';
+  status?: 'allocated' | 'unallocated' | 'credit';
   created_at: string;
 }
 

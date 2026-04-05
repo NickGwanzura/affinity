@@ -145,7 +145,7 @@ class DataService {
 
   async replacePaymentAllocations(
     paymentId: string,
-    allocations: Array<{ invoice_id: string; amount_allocated: number; currency: 'USD' | 'GBP' }>,
+    allocations: Array<{ invoice_id?: string; amount_allocated: number; currency: 'USD' | 'GBP'; status?: string }>,
   ): Promise<void> {
     await api.payments.replaceAllocations(paymentId, allocations);
   }
