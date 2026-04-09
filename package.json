@@ -55,6 +55,7 @@
     "postcss": "^8.5.8",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.2.2",
+    "serve": "^14.2.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }
