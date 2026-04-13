@@ -38,7 +38,8 @@ ON user_profiles(email);
 -- 1. Run this migration in your Neon SQL Editor
 --
 -- 2. Add to your .env file:
---    VITE_JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+--    JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+--    (Legacy fallback still supported: VITE_JWT_SECRET)
 --
 -- 3. For existing users without passwords:
 --    - They must use "Forgot Password" to set their initial password

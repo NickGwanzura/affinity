@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   AuthenticatedRequest,
   apiError,
+  getTenantId,
   handleCors,
   requireRole,
   setSecurityHeaders,
@@ -25,6 +26,8 @@ type PaymentRow = {
   date: string;
   status?: string | null;
 };
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 async function attachAllocations(rows: PaymentRow[]) {
   if (!rows.length) {
@@ -75,6 +78,24 @@ async function getInvoiceCurrency(client: PoolClient, invoiceId: string): Promis
   return result.rows[0]?.currency || null;
 }
 
+async function findInvoiceIdByReference(client: PoolClient, reference: string): Promise<string | null> {
+  if (!reference) return null;
+
+  if (UUID_REGEX.test(reference)) {
+    const rows = await client.query<{ id: string }>(
+      'SELECT id FROM public.invoices WHERE invoice_number = $1 OR id = $1::uuid LIMIT 1',
+      [reference],
+    );
+    return rows.rows[0]?.id || null;
+  }
+
+  const rows = await client.query<{ id: string }>(
+    'SELECT id FROM public.invoices WHERE invoice_number = $1 LIMIT 1',
+    [reference],
+  );
+  return rows.rows[0]?.id || null;
+}
+
 async function updateInvoicePaymentStatus(client: PoolClient, invoiceId: string) {
   // Get invoice details
   const invoiceResult = await client.query(
@@ -92,31 +113,16 @@ async function updateInvoicePaymentStatus(client: PoolClient, invoiceId: string)
     return;
   }
 
-  // Get total from payment_allocations (new system)
+  // payment_allocations is the authoritative source; legacy reference_id matching removed
   const allocationResult = await client.query(
     `
-      SELECT COALESCE(SUM(amount_allocated), 0) as total_allocated
+      SELECT COALESCE(SUM(amount_allocated), 0) as total_paid
       FROM public.payment_allocations
       WHERE invoice_id = $1::uuid
     `,
     [invoiceId]
   );
-  const totalFromAllocations = Number(allocationResult.rows[0]?.total_allocated || 0);
-
-  // Get total from legacy payments (payments where reference_id matches invoice number or id)
-  const legacyPaymentResult = await client.query(
-    `
-      SELECT COALESCE(SUM(amount_usd), 0) as total_payments
-      FROM public.payments
-      WHERE (reference_id = $1 OR reference_id = $2)
-      AND type = 'Inbound'
-    `,
-    [invoiceId, invoiceNumber]
-  );
-  const totalFromLegacyPayments = Number(legacyPaymentResult.rows[0]?.total_payments || 0);
-
-  // Use the higher of the two (in case both systems are used)
-  const totalPaid = Math.max(totalFromAllocations, totalFromLegacyPayments);
+  const totalPaid = Number(allocationResult.rows[0]?.total_paid || 0);
 
   // Determine new status
   let newStatus: string | null = null;
@@ -145,6 +151,7 @@ async function replaceAllocationsForPayment(
   paymentAmountUsd: number,
   allocations: Array<{ invoice_id?: string; amount_allocated: number; currency: 'USD' | 'GBP'; status?: string }>,
   clientName?: string,
+  tenantId?: string,
 ) {
   const totalAllocated = allocations.reduce((sum, allocation) => sum + allocation.amount_allocated, 0);
   
@@ -192,10 +199,10 @@ async function replaceAllocationsForPayment(
     
     await client.query(
       `
-        INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id)
-        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6)
+        INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id, tenant_id)
+        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7::uuid)
       `,
-      [paymentId, allocation.invoice_id || null, allocation.amount_allocated, allocation.currency, status, clientId],
+      [paymentId, allocation.invoice_id || null, allocation.amount_allocated, allocation.currency, status, clientId, tenantId || null],
     );
   }
 
@@ -212,27 +219,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   const authReq = req as AuthenticatedRequest;
-  if (!verifyToken(authReq, res)) return;
+  if (!(await verifyToken(authReq, res))) return;
 
   try {
+    const tenantId = getTenantId(req);
     const action = typeof req.query.action === 'string' ? req.query.action : '';
     if (action === 'allocations' && req.method === 'POST') {
       if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-      return await replaceAllocations(req, res);
+      return await replaceAllocations(req, res, tenantId);
     }
 
     switch (req.method) {
       case 'GET':
-        return await listPayments(res);
+        return await listPayments(res, tenantId);
       case 'POST':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await createPayment(req, res);
+        return await createPayment(req, res, tenantId);
       case 'PUT':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await updatePayment(req, res);
+        return await updatePayment(req, res, tenantId);
       case 'DELETE':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await deletePayment(req, res);
+        return await deletePayment(req, res, tenantId);
       default:
         return apiError(res, 405, 'Method not allowed');
     }
@@ -241,11 +249,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listPayments(res: VercelResponse) {
+async function listPayments(res: VercelResponse, tenantId: string) {
   try {
     const rows = await sql`
       SELECT id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
       FROM public.payments
+      WHERE tenant_id = ${tenantId}::uuid
       ORDER BY date DESC
     `;
     return res.status(200).json(await attachAllocations(rows as PaymentRow[]));
@@ -254,11 +263,9 @@ async function listPayments(res: VercelResponse) {
   }
 }
 
-async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
+async function createPayment(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   try {
-    console.log('[Payments API] Creating payment with body:', JSON.stringify(req.body, null, 2));
     const data = PaymentSchema.parse(req.body);
-    console.log('[Payments API] Parsed data:', JSON.stringify(data, null, 2));
     const allocations = parseAllocationsFromBody(req.body);
 
     // Determine payment status based on allocations
@@ -279,8 +286,8 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
 
       const result = await client.query(
         `
-          INSERT INTO public.payments (reference_id, client_name, client_id, type, amount_usd, currency, method, date, status)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          INSERT INTO public.payments (reference_id, client_name, client_id, type, amount_usd, currency, method, date, status, tenant_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::uuid)
           RETURNING id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
         `,
         [
@@ -293,6 +300,7 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
           data.method,
           data.date,
           paymentStatus,
+          tenantId,
         ],
       );
 
@@ -300,26 +308,23 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
       
       // Handle allocations (including unallocated)
       if (allocations.length > 0) {
-        await replaceAllocationsForPayment(client, createdPayment.id, createdPayment.amount_usd, allocations, data.client_name);
+        await replaceAllocationsForPayment(client, createdPayment.id, createdPayment.amount_usd, allocations, data.client_name, tenantId);
       } else if (!hasAllocations) {
         // Create an unallocated allocation entry for tracking
         await client.query(
           `
-            INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id)
-            VALUES ($1::uuid, NULL, $2, $3, 'unallocated', $4)
+            INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id, tenant_id)
+            VALUES ($1::uuid, NULL, $2, $3, 'unallocated', $4, $5::uuid)
           `,
-          [createdPayment.id, createdPayment.amount_usd, data.currency || 'USD', clientId],
+          [createdPayment.id, createdPayment.amount_usd, data.currency || 'USD', clientId, tenantId],
         );
       }
 
       // Also update invoice status for legacy payments (reference_id matches invoice)
       if (data.reference_id && data.type === 'Inbound') {
-        const invoiceResult = await client.query(
-          'SELECT id FROM public.invoices WHERE invoice_number = $1 OR id = $1::uuid',
-          [data.reference_id]
-        );
-        if (invoiceResult.rows.length > 0) {
-          await updateInvoicePaymentStatus(client, invoiceResult.rows[0].id);
+        const invoiceId = await findInvoiceIdByReference(client, data.reference_id);
+        if (invoiceId) {
+          await updateInvoicePaymentStatus(client, invoiceId);
         }
       }
 
@@ -350,7 +355,7 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
+async function updatePayment(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   try {
     const data = PaymentUpdateSchema.parse(req.body);
     const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
@@ -360,7 +365,7 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
 
     // Get old data for audit
     const oldPaymentRows = await sql`
-      SELECT * FROM public.payments WHERE id = ${paymentId}::uuid
+      SELECT * FROM public.payments WHERE id = ${paymentId}::uuid AND tenant_id = ${tenantId}::uuid
     `;
     const oldPayment = oldPaymentRows[0];
 
@@ -370,43 +375,51 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
       const newStatus = hasInvoiceAllocations ? 'allocated' : (allocations.length > 0 ? 'unallocated' : 'unallocated');
 
       // Get client_id if client_name provided
-      let clientId: string | null = data.client_id || null;
+      let clientId: string | null = data.client_id ?? null;
       if (!clientId && data.client_name) {
         const clientResult = await client.query(
           'SELECT id FROM public.clients WHERE name = $1 LIMIT 1',
           [data.client_name]
         );
-        clientId = clientResult.rows[0]?.id || null;
+        clientId = clientResult.rows[0]?.id ?? null;
       }
 
+      // Build dynamic SET clause — only include fields present in body
+      const updates: string[] = [];
+      const values: unknown[] = [];
+      let paramIdx = 1;
+      const bodyRecord = req.body as Record<string, unknown>;
+
+      const fieldMap: Record<string, unknown> = {
+        reference_id: data.reference_id,
+        client_name: data.client_name,
+        client_id: clientId,
+        type: data.type,
+        amount_usd: data.amount_usd,
+        currency: data.currency,
+        method: data.method,
+        date: data.date,
+      };
+
+      for (const [field, value] of Object.entries(fieldMap)) {
+        if (field in bodyRecord || (field === 'client_id' && clientId !== null)) {
+          updates.push(`${field} = $${paramIdx}`);
+          values.push(value ?? null);
+          paramIdx++;
+        }
+      }
+
+      // Always update status based on allocations
+      updates.push(`status = $${paramIdx}`);
+      values.push(newStatus);
+      paramIdx++;
+
+      values.push(paymentId);
+      paramIdx++;
+      values.push(tenantId);
       const result = await client.query(
-        `
-          UPDATE public.payments
-          SET
-            reference_id = COALESCE($1, reference_id),
-            client_name = COALESCE($2, client_name),
-            client_id = COALESCE($3, client_id),
-            type = COALESCE($4, type),
-            amount_usd = COALESCE($5, amount_usd),
-            currency = COALESCE($6, currency),
-            method = COALESCE($7, method),
-            date = COALESCE($8, date),
-            status = COALESCE($9, status)
-          WHERE id = $10::uuid
-          RETURNING id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
-        `,
-        [
-          data.reference_id || null,
-          data.client_name || null,
-          clientId,
-          data.type || null,
-          data.amount_usd || null,
-          data.currency || null,
-          data.method || null,
-          data.date || null,
-          newStatus,
-          paymentId,
-        ],
+        `UPDATE public.payments SET ${updates.join(', ')} WHERE id = $${paramIdx - 1}::uuid AND tenant_id = $${paramIdx}::uuid RETURNING id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status`,
+        values,
       );
 
       if (result.rows.length === 0) {
@@ -417,17 +430,14 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
       const clientName = data.client_name || updatedPayment.client_name;
       
       if (Array.isArray((req.body as { allocations?: unknown[] } | undefined)?.allocations)) {
-        await replaceAllocationsForPayment(client, updatedPayment.id, updatedPayment.amount_usd, allocations, clientName);
+        await replaceAllocationsForPayment(client, updatedPayment.id, updatedPayment.amount_usd, allocations, clientName, tenantId);
       }
 
       // Also update invoice status for legacy payments (reference_id matches invoice)
       if (updatedPayment.reference_id && updatedPayment.type === 'Inbound') {
-        const invoiceResult = await client.query(
-          'SELECT id FROM public.invoices WHERE invoice_number = $1 OR id = $1::uuid',
-          [updatedPayment.reference_id]
-        );
-        if (invoiceResult.rows.length > 0) {
-          await updateInvoicePaymentStatus(client, invoiceResult.rows[0].id);
+        const invoiceId = await findInvoiceIdByReference(client, updatedPayment.reference_id);
+        if (invoiceId) {
+          await updateInvoicePaymentStatus(client, invoiceId);
         }
       }
 
@@ -454,7 +464,7 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function replaceAllocations(req: VercelRequest, res: VercelResponse) {
+async function replaceAllocations(req: VercelRequest, res: VercelResponse, tenantId: string) {
   const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!paymentId) return apiError(res, 400, 'Missing payment id');
 
@@ -466,12 +476,12 @@ async function replaceAllocations(req: VercelRequest, res: VercelResponse) {
     const paymentRows = await sql`
       SELECT amount_usd, client_name
       FROM public.payments
-      WHERE id = ${paymentId}::uuid
+      WHERE id = ${paymentId}::uuid AND tenant_id = ${tenantId}::uuid
     `;
     if (paymentRows.length === 0) return apiError(res, 404, 'Payment not found');
 
     await withTransaction(async (client) => {
-      await replaceAllocationsForPayment(client, paymentId, Number(paymentRows[0].amount_usd), allocations, paymentRows[0].client_name);
+      await replaceAllocationsForPayment(client, paymentId, Number(paymentRows[0].amount_usd), allocations, paymentRows[0].client_name, tenantId);
       
       // Update payment status based on allocations
       const hasInvoiceAllocations = allocations.some(a => a.invoice_id);
@@ -497,17 +507,42 @@ async function replaceAllocations(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function deletePayment(req: AuthenticatedRequest, res: VercelResponse) {
+async function deletePayment(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!paymentId) return apiError(res, 400, 'Missing payment id');
 
   // Get old data for audit before deletion
   const oldPaymentRows = await sql`
-    SELECT * FROM public.payments WHERE id = ${paymentId}::uuid
+    SELECT * FROM public.payments WHERE id = ${paymentId}::uuid AND tenant_id = ${tenantId}::uuid
   `;
   const oldPayment = oldPaymentRows[0];
+  if (!oldPayment) return apiError(res, 404, 'Payment not found');
 
-  await sql`DELETE FROM public.payments WHERE id = ${paymentId}::uuid`;
+  await withTransaction(async (client) => {
+    // Collect affected invoice IDs before deleting allocations
+    const affectedInvoices = await client.query(
+      'SELECT DISTINCT invoice_id FROM public.payment_allocations WHERE payment_id = $1::uuid AND invoice_id IS NOT NULL',
+      [paymentId]
+    );
+
+    // Delete allocations first
+    await client.query('DELETE FROM public.payment_allocations WHERE payment_id = $1::uuid', [paymentId]);
+
+    // Delete the payment
+    const deleteResult = await client.query(
+      'DELETE FROM public.payments WHERE id = $1::uuid AND tenant_id = $2::uuid RETURNING id',
+      [paymentId, tenantId]
+    );
+
+    if (deleteResult.rows.length === 0) {
+      throw new Error('Payment not found');
+    }
+
+    // Recalculate invoice payment status for each affected invoice
+    for (const row of affectedInvoices.rows) {
+      await updateInvoicePaymentStatus(client, row.invoice_id);
+    }
+  });
 
   await logAuditEvent({
     req,

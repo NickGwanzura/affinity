@@ -20,6 +20,7 @@ add_env() {
 for var in \
   NEON_DATABASE_URL \
   JWT_SECRET \
+  VITE_JWT_SECRET \
   APP_BASE_URL \
   SMTP_HOST \
   SMTP_PORT \

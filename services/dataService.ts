@@ -26,6 +26,30 @@ type ExpenseInput = Omit<Expense, 'id' | 'created_at' | 'exchange_rate_to_usd'> 
   exchange_rate_to_usd?: number;
 };
 
+type PaymentAllocationInput = {
+  invoice_id?: string;
+  amount_allocated: number;
+  currency: 'USD' | 'GBP';
+  status?: 'allocated' | 'unallocated' | 'credit';
+};
+
+type PaymentInput = Omit<
+  Payment,
+  | 'id'
+  | 'created_at'
+  | 'updated_at'
+  | 'deleted_at'
+  | 'created_by'
+  | 'updated_by'
+  | 'deleted_by'
+  | 'is_deleted'
+  | 'allocations'
+> & {
+  allocations?: PaymentAllocationInput[];
+};
+
+type PaymentUpdateInput = Partial<PaymentInput>;
+
 const notImplemented = (feature: string): never => {
   throw new Error(`${feature} not implemented`);
 };
@@ -119,11 +143,11 @@ class DataService {
     return api.receipts.list();
   }
 
-  async addPayment(payment: Omit<Payment, 'id'>): Promise<Payment> {
+  async addPayment(payment: PaymentInput): Promise<Payment> {
     return api.payments.create(payment);
   }
 
-  async updatePayment(id: string, updates: Partial<Payment>): Promise<Payment> {
+  async updatePayment(id: string, updates: PaymentUpdateInput): Promise<Payment> {
     return api.payments.update(id, updates);
   }
 

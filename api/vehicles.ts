@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   
   const authReq = req as AuthenticatedRequest;
   
-  if (!verifyToken(authReq, res)) return;
+  if (!(await verifyToken(authReq, res))) return;
   
   try {
     switch (req.method) {

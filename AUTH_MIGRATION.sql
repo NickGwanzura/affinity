@@ -47,7 +47,8 @@ $$ LANGUAGE plpgsql;
 -- ============================================
 -- 
 -- 1. Add to your .env file:
---    VITE_JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+--    JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+--    (Legacy fallback still supported: VITE_JWT_SECRET)
 --
 -- 2. For existing users, they must use "Forgot Password" 
 --    to set their initial password since we're migrating

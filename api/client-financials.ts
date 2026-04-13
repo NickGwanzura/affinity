@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   AuthenticatedRequest,
   apiError,
+  getTenantId,
   handleCors,
   requireRole,
   setSecurityHeaders,
@@ -39,28 +40,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   const authReq = req as AuthenticatedRequest;
-  if (!verifyToken(authReq, res)) return;
+  if (!(await verifyToken(authReq, res))) return;
 
   try {
+    const tenantId = getTenantId(req);
     const { action } = req.query;
 
     switch (req.method) {
       case 'GET':
         if (action === 'balance') {
-          return await getClientBalance(authReq, res);
+          return await getClientBalance(authReq, res, tenantId);
         }
         if (action === 'ledger') {
-          return await getClientLedger(authReq, res);
+          return await getClientLedger(authReq, res, tenantId);
         }
         if (action === 'all-balances') {
-          return await getAllClientBalances(authReq, res);
+          return await getAllClientBalances(authReq, res, tenantId);
         }
         return apiError(res, 400, 'Invalid action. Use: balance, ledger, or all-balances');
 
       case 'POST':
         if (action === 'recalculate') {
           if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-          return await recalculateClientBalance(authReq, res);
+          return await recalculateClientBalance(authReq, res, tenantId);
         }
         return apiError(res, 400, 'Invalid action. Use: recalculate');
 
@@ -77,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
  * GET /api/client-financials?action=balance&clientId=xxx
  * Returns the unified balance for a single client
  */
-async function getClientBalance(req: AuthenticatedRequest, res: VercelResponse) {
+async function getClientBalance(req: AuthenticatedRequest, res: VercelResponse, _tenantId: string) {
   const { clientId } = req.query;
 
   if (!clientId || typeof clientId !== 'string') {
@@ -139,7 +141,7 @@ async function getClientBalance(req: AuthenticatedRequest, res: VercelResponse) 
  * GET /api/client-financials?action=ledger&clientId=xxx&from=yyyy-mm-dd&to=yyyy-mm-dd
  * Returns the ledger entries for a client with running balance
  */
-async function getClientLedger(req: AuthenticatedRequest, res: VercelResponse) {
+async function getClientLedger(req: AuthenticatedRequest, res: VercelResponse, _tenantId: string) {
   const { clientId, from, to } = req.query;
 
   if (!clientId || typeof clientId !== 'string') {
@@ -235,7 +237,7 @@ async function getClientLedger(req: AuthenticatedRequest, res: VercelResponse) {
  * GET /api/client-financials?action=all-balances&minBalance=xxx
  * Returns balances for all clients, optionally filtered
  */
-async function getAllClientBalances(req: AuthenticatedRequest, res: VercelResponse) {
+async function getAllClientBalances(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const { minBalance, hasOutstanding, search } = req.query;
 
   try {
@@ -258,24 +260,29 @@ async function getAllClientBalances(req: AuthenticatedRequest, res: VercelRespon
         c.is_active,
         c.created_at
       FROM public.clients c
+      -- Name-based fallback removed — use data migration to populate client_id on legacy records
       LEFT JOIN (
-        SELECT 
-          COALESCE(i.client_id, (SELECT id FROM public.clients WHERE name = i.client_name LIMIT 1)) as client_id,
-          SUM(i.amount_usd) as total_invoiced
-        FROM public.invoices i
-        WHERE i.status != 'Cancelled'
-        GROUP BY COALESCE(i.client_id, (SELECT id FROM public.clients WHERE name = i.client_name LIMIT 1))
+        SELECT
+          client_id,
+          SUM(amount_usd) as total_invoiced
+        FROM public.invoices
+        WHERE status != 'Cancelled'
+          AND client_id IS NOT NULL
+          AND tenant_id = ${tenantId}::uuid
+        GROUP BY client_id
       ) inv ON c.id = inv.client_id
       LEFT JOIN (
-        SELECT 
-          COALESCE(p.client_id, (SELECT id FROM public.clients WHERE name = p.client_name LIMIT 1)) as client_id,
-          SUM(p.amount_usd) as total_paid
-        FROM public.payments p
-        WHERE p.type = 'Inbound'
-          AND (p.is_deleted = false OR p.is_deleted IS NULL)
-        GROUP BY COALESCE(p.client_id, (SELECT id FROM public.clients WHERE name = p.client_name LIMIT 1))
+        SELECT
+          client_id,
+          SUM(amount_usd) as total_paid
+        FROM public.payments
+        WHERE type = 'Inbound'
+          AND client_id IS NOT NULL
+          AND (is_deleted = false OR is_deleted IS NULL)
+          AND tenant_id = ${tenantId}::uuid
+        GROUP BY client_id
       ) pay ON c.id = pay.client_id
-      WHERE c.is_active = true 
+      WHERE c.is_active = true
         AND c.deleted_at IS NULL
     `;
 
@@ -333,7 +340,7 @@ async function getAllClientBalances(req: AuthenticatedRequest, res: VercelRespon
  * POST /api/client-financials?action=recalculate&clientId=xxx
  * Force recalculation of client balance (admin only)
  */
-async function recalculateClientBalance(req: AuthenticatedRequest, res: VercelResponse) {
+async function recalculateClientBalance(req: AuthenticatedRequest, res: VercelResponse, _tenantId: string) {
   const { clientId } = req.query;
 
   if (!clientId || typeof clientId !== 'string') {

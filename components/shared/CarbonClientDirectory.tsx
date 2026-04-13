@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableBody,
   TableCell,
+  TableContainer,
   TableToolbar,
   TableToolbarContent,
   TableToolbarSearch,
@@ -32,7 +33,7 @@ import { Add, DocumentDownload, Edit, TrashCan, Money, Document, ShoppingCart, A
 import type { Client, Invoice, Quote, Payment, CompanyDetails } from '../../types';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../Toast';
-import { useConfirm } from '../ConfirmModal';
+import { useConfirm } from './CarbonConfirmModal';
 import { generateStatementPDF } from '../../services/pdfService';
 
 interface ClientStats {
@@ -119,13 +120,16 @@ export const CarbonClientDirectory: React.FC = () => {
   // Calculate client statistics
   const getClientStats = (client: Client): ClientStats => {
     const clientInvoices = invoices.filter(
-      i => i.client_name.toLowerCase() === client.name.toLowerCase()
+      i => i.client_id === client.id ||
+        (!i.client_id && i.client_name.toLowerCase() === client.name.toLowerCase())
     );
     const clientPayments = payments.filter(
-      p => p.client_name?.toLowerCase() === client.name.toLowerCase()
+      p => p.client_id === client.id ||
+        (!p.client_id && p.client_name?.toLowerCase() === client.name.toLowerCase())
     );
     const clientQuotes = quotes.filter(
-      q => q.client_name.toLowerCase() === client.name.toLowerCase()
+      q => q.client_id === client.id ||
+        (!q.client_id && q.client_name.toLowerCase() === client.name.toLowerCase())
     );
 
     const totalBilled = clientInvoices.reduce((sum, i) => sum + (Number(i.amount_usd) || 0), 0);
@@ -162,7 +166,10 @@ export const CarbonClientDirectory: React.FC = () => {
     }
 
     invoices
-      .filter(i => i.client_name.toLowerCase() === client.name.toLowerCase())
+      .filter(i =>
+        i.client_id === client.id ||
+        (!i.client_id && i.client_name.toLowerCase() === client.name.toLowerCase())
+      )
       .forEach(inv => {
         entries.push({
           date: new Date(inv.created_at),
@@ -177,7 +184,10 @@ export const CarbonClientDirectory: React.FC = () => {
       });
 
     payments
-      .filter(p => p.client_name?.toLowerCase() === client.name.toLowerCase())
+      .filter(p =>
+        p.client_id === client.id ||
+        (!p.client_id && p.client_name?.toLowerCase() === client.name.toLowerCase())
+      )
       .forEach(pay => {
         entries.push({
           date: new Date(pay.date),
@@ -223,10 +233,12 @@ export const CarbonClientDirectory: React.FC = () => {
     try {
       const stats = getClientStats(selectedClient);
       const clientInvoices = invoices.filter(
-        i => i.client_name.toLowerCase() === selectedClient.name.toLowerCase()
+        i => i.client_id === selectedClient.id ||
+          (!i.client_id && i.client_name.toLowerCase() === selectedClient.name.toLowerCase())
       );
       const clientPayments = payments.filter(
-        p => p.client_name?.toLowerCase() === selectedClient.name.toLowerCase()
+        p => p.client_id === selectedClient.id ||
+          (!p.client_id && p.client_name?.toLowerCase() === selectedClient.name.toLowerCase())
       );
 
       const [startDate, endDate] = statementDateRange;
@@ -326,8 +338,12 @@ export const CarbonClientDirectory: React.FC = () => {
     return (
       <div style={{ padding: 'var(--cds-spacing-05, 1rem)' }}>
         <Stack gap={5}>
-          <SkeletonPlaceholder style={{ height: '3rem', width: '100%' }} />
-          <SkeletonPlaceholder style={{ height: '20rem', width: '100%' }} />
+          <div style={{ height: '3rem', width: '100%' }}>
+            <SkeletonPlaceholder />
+          </div>
+          <div style={{ height: '20rem', width: '100%' }}>
+            <SkeletonPlaceholder />
+          </div>
         </Stack>
       </div>
     );
@@ -519,7 +535,7 @@ export const CarbonClientDirectory: React.FC = () => {
                             <TableHeader style={{ textAlign: 'right' }}>Amount</TableHeader>
                           </TableRow>
                         </TableHead>
-                        <TableBody>
+                        <TableBody {...({} as any)}>
                           {clientInvoices.map(inv => (
                             <TableRow key={inv.id}>
                               <TableCell>{inv.invoice_number}</TableCell>
@@ -568,7 +584,7 @@ export const CarbonClientDirectory: React.FC = () => {
                             <TableHeader style={{ textAlign: 'right' }}>Amount</TableHeader>
                           </TableRow>
                         </TableHead>
-                        <TableBody>
+                        <TableBody {...({} as any)}>
                           {clientPayments.map(pay => (
                             <TableRow key={pay.id}>
                               <TableCell>{pay.reference_id || '-'}</TableCell>
@@ -617,7 +633,7 @@ export const CarbonClientDirectory: React.FC = () => {
                             <TableHeader style={{ textAlign: 'right' }}>Amount</TableHeader>
                           </TableRow>
                         </TableHead>
-                        <TableBody>
+                        <TableBody {...({} as any)}>
                           {clientQuotes.map(q => (
                             <TableRow key={q.id}>
                               <TableCell>{q.quote_number}</TableCell>
@@ -710,7 +726,7 @@ export const CarbonClientDirectory: React.FC = () => {
                               <TableHeader style={{ textAlign: 'right' }}>Balance</TableHeader>
                             </TableRow>
                           </TableHead>
-                          <TableBody>
+                          <TableBody {...({} as any)}>
                             {ledger.map((entry, index) => (
                               <TableRow key={index}>
                                 <TableCell>{entry.date.toLocaleDateString()}</TableCell>
@@ -804,35 +820,41 @@ export const CarbonClientDirectory: React.FC = () => {
                     ))}
                   </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody {...({} as any)}>
                   {rows.map(row => (
+                    (() => {
+                      const rowClient = clients.find((candidate) => candidate.id === row.id);
+                      if (!rowClient) return null;
+                      return (
                     <TableRow {...getRowProps({ row })} key={row.id}>
-                      <TableCell onClick={() => setSelectedClient(row.client)} style={{ cursor: 'pointer' }}>
+                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
                         <div style={{ fontWeight: 600, color: 'var(--cds-interactive, #0f62fe)' }}>
                           {row.cells[0].value}
                         </div>
                       </TableCell>
-                      <TableCell onClick={() => setSelectedClient(row.client)} style={{ cursor: 'pointer' }}>
+                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
                         {row.cells[1].value}
                       </TableCell>
-                      <TableCell onClick={() => setSelectedClient(row.client)} style={{ cursor: 'pointer' }}>
+                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
                         {row.cells[2].value.display}
                       </TableCell>
-                      <TableCell onClick={() => setSelectedClient(row.client)} style={{ cursor: 'pointer' }}>
+                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
                         {row.cells[3].value}
                       </TableCell>
-                      <TableCell onClick={() => setSelectedClient(row.client)} style={{ cursor: 'pointer' }}>
+                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
                         {row.cells[4].value}
                       </TableCell>
                       <TableCell>
                         <OverflowMenu flipped>
-                          <OverflowMenuItem itemText="View Details" onClick={() => setSelectedClient(row.client)} />
+                          <OverflowMenuItem itemText="View Details" onClick={() => setSelectedClient(rowClient)} />
                           <OverflowMenuItem itemText="Edit Client" />
-                          <OverflowMenuItem itemText="View Statement" onClick={() => { setSelectedClient(row.client); setActiveTab(3); }} />
+                          <OverflowMenuItem itemText="View Statement" onClick={() => { setSelectedClient(rowClient); setActiveTab(3); }} />
                           <OverflowMenuItem itemText="Delete" hasDivider isDelete />
                         </OverflowMenu>
                       </TableCell>
                     </TableRow>
+                      );
+                    })()
                   ))}
                 </TableBody>
               </Table>

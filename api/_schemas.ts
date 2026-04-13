@@ -225,7 +225,7 @@ export const RegisterSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(['Admin', 'Accountant', 'Driver']).default('Driver'),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']).default('Driver'),
 });
 
 export const RegistrationRequestSchema = z.object({
@@ -269,15 +269,15 @@ export const UserSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(['Admin', 'Accountant', 'Driver']),
-  status: z.enum(['Active', 'Inactive']).default('Active'),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']),
+  status: z.enum(['Active', 'Inactive', 'Pending']).default('Active'),
 });
 
 export const UserUpdateSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().optional(),
-  role: z.enum(['Admin', 'Accountant', 'Driver']).optional(),
-  status: z.enum(['Active', 'Inactive']).optional(),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']).optional(),
+  status: z.enum(['Active', 'Inactive', 'Pending']).optional(),
 });
 
 export const AdminSetPasswordSchema = z.object({
@@ -324,8 +324,8 @@ export const UuidParamSchema = z.object({
 
 // Pagination schema
 export const PaginationSchema = z.object({
-  page: z.string().default('1').transform(Number),
-  limit: z.string().default('50').transform(Number),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(500).default(50),
   sortBy: z.string().optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 });

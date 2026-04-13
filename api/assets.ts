@@ -19,12 +19,12 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import jwt from 'jsonwebtoken';
 import { sql } from './_db.js';
-
-function getJwtSecret(): string | null {
-  return process.env.JWT_SECRET || null;
-}
+import {
+  AuthenticatedRequest,
+  requireTenantContext,
+  verifyToken as verifyRequestToken,
+} from './_middleware.js';
 
 // Auto-create tables if they don't exist
 async function ensureTablesExist() {
@@ -86,31 +86,6 @@ async function ensureTablesExist() {
   await sql`CREATE INDEX IF NOT EXISTS idx_asset_requests_actual_return_date ON public.asset_requests(actual_return_date)`;
 }
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
-
-async function verifyJWT(token: string): Promise<{ userId: string; role: string } | null> {
-  const secret = getJwtSecret();
-  if (!secret) return null;
-  try {
-    const decoded = jwt.verify(token, secret) as { sub?: string; role?: string };
-    if (typeof decoded.sub !== 'string' || typeof decoded.role !== 'string') {
-      return null;
-    }
-    return { userId: decoded.sub, role: decoded.role };
-  } catch {
-    return null;
-  }
-}
-
-async function authenticate(req: VercelRequest): Promise<{ userId: string; role: string; name: string } | null> {
-  const auth = req.headers['authorization'];
-  if (!auth?.startsWith('Bearer ')) return null;
-  const user = await verifyJWT(auth.slice(7));
-  if (!user) return null;
-  // Get user name from the token or database - for now use a placeholder
-  return { ...user, name: 'User' };
-}
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function json(res: VercelResponse, status: number, body: unknown) {
@@ -127,11 +102,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS for local dev
   res.setHeader('Access-Control-Allow-Origin', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Tenant-Context');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const user = await authenticate(req);
-  if (!user) return json(res, 401, { error: 'Unauthorized' });
+  const authReq = req as AuthenticatedRequest;
+  if (!(await verifyRequestToken(authReq, res))) return;
+  if (!requireTenantContext(authReq, res)) return;
+
+  const user = {
+    userId: authReq.user!.id,
+    role: authReq.user!.role,
+    name: 'User',
+  };
 
   // Ensure tables exist
   try {

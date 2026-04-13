@@ -60,7 +60,7 @@ const ALLOWED_COLUMNS: Record<string, string[]> = {
   payments: ['id', 'reference_id', 'client_name', 'amount_usd', 'date', 'created_at'],
   clients: ['id', 'name', 'email', 'company', 'created_at'],
   employees: ['id', 'employee_number', 'name', 'department', 'status', 'created_at'],
-  user_profiles: ['id', 'name', 'email', 'role', 'status', 'created_at'],
+  user_profiles: ['id', 'name', 'email', 'role', 'access_role', 'tenant_id', 'status', 'created_at'],
   trips: ['id', 'trip_number', 'title', 'status', 'route_origin', 'route_destination', 'departure_date', 'eta_date', 'created_at'],
 };
 
@@ -107,32 +107,30 @@ export async function queryWithAuth(
   return queryFn();
 }
 
-// Rate limiting (simple in-memory - use Redis in production)
+// NOTE: This in-memory rate limiter resets on cold starts and is not shared across serverless instances. For production, replace with Redis-based rate limiting (e.g. Upstash).
 const rateLimits = new Map<string, { count: number; resetTime: number }>();
 
 export function checkRateLimit(identifier: string, maxRequests: number = 100, windowMs: number = 60000): boolean {
   const now = Date.now();
-  const record = rateLimits.get(identifier);
-  
-  if (!record || now > record.resetTime) {
-    rateLimits.set(identifier, { count: 1, resetTime: now + windowMs });
-    return true;
-  }
-  
-  if (record.count >= maxRequests) {
-    return false;
-  }
-  
-  record.count++;
-  return true;
-}
 
-// Clean up old rate limit entries periodically
-setInterval(() => {
-  const now = Date.now();
+  // Lazy cleanup: prune expired entries before checking
   for (const [key, record] of rateLimits.entries()) {
     if (now > record.resetTime) {
       rateLimits.delete(key);
     }
   }
-}, 60000);
+
+  const record = rateLimits.get(identifier);
+
+  if (!record || now > record.resetTime) {
+    rateLimits.set(identifier, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+
+  if (record.count >= maxRequests) {
+    return false;
+  }
+
+  record.count++;
+  return true;
+}

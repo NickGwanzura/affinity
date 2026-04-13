@@ -13,9 +13,13 @@ import {
   TableToolbarSearch,
   TableBatchActions,
   TableBatchAction,
+  TableSelectRow,
+  TableSelectAll,
   Button,
 } from '@carbon/react';
 import { TrashCan, Edit, Add } from '@carbon/icons-react';
+
+const AnyTableBatchAction = TableBatchAction as any;
 
 export interface DataTableColumn<T = any> {
   key: string;
@@ -74,6 +78,7 @@ export function DataTableWrapper<T extends { id: string }>({
         getSelectionProps,
         getToolbarProps,
         getBatchActionProps,
+        getSortByHeaderProps,
         onInputChange,
         selectedRows,
       }: any) => (
@@ -89,13 +94,13 @@ export function DataTableWrapper<T extends { id: string }>({
             <TableToolbar {...getToolbarProps()}>
               {batchActions && (
                 <TableBatchActions {...getBatchActionProps()}>
-                  <TableBatchAction
+                  <AnyTableBatchAction
                     tabIndex={getBatchActionProps().shouldShowBatchActions ? 0 : -1}
                     renderIcon={TrashCan}
                     onClick={() => onBatchDelete?.(selectedRows)}
                   >
                     Delete
-                  </TableBatchAction>
+                  </AnyTableBatchAction>
                 </TableBatchActions>
               )}
               <TableToolbarContent>
@@ -122,16 +127,21 @@ export function DataTableWrapper<T extends { id: string }>({
           <Table size={size}>
             <TableHead>
               <TableRow>
-                {batchActions && <TableHeader {...getSelectionProps()} />}
+                {batchActions && <TableSelectAll {...getSelectionProps()} />}
                 {tableHeaders.map((header: any) => (
-                  <TableHeader {...getHeaderProps({ header })} key={header.key} style={{ width: header.width }}>
+                  <TableHeader
+                    {...getHeaderProps({ header })}
+                    {...(isSortable ? getSortByHeaderProps({ header }) : {})}
+                    key={header.key}
+                    style={{ width: header.width }}
+                  >
                     {header.header}
                   </TableHeader>
                 ))}
                 {(onEdit || onDelete) && <TableHeader>Actions</TableHeader>}
               </TableRow>
             </TableHead>
-            <TableBody>
+            <TableBody {...({} as any)}>
               {tableRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={tableHeaders.length + (batchActions ? 2 : 1)} style={{ textAlign: 'center', padding: '2rem' }}>
@@ -142,9 +152,7 @@ export function DataTableWrapper<T extends { id: string }>({
                 tableRows.map((row: any) => (
                   <TableRow {...getRowProps({ row })} key={row.id}>
                     {batchActions && (
-                      <TableCell>
-                        <input type="checkbox" {...getSelectionProps({ row })} />
-                      </TableCell>
+                      <TableSelectRow {...getSelectionProps({ row })} />
                     )}
                     {tableHeaders.map((header: any) => (
                       <TableCell key={header.key}>

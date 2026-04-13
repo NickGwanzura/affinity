@@ -1,13 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { PoolClient } from '@neondatabase/serverless';
 import { ZodError } from 'zod';
-import { 
-  AuthenticatedRequest, 
-  verifyToken, 
-  requireRole, 
-  setSecurityHeaders, 
-  handleCors, 
-  apiError 
+import {
+  AuthenticatedRequest,
+  verifyToken,
+  requireRole,
+  setSecurityHeaders,
+  handleCors,
+  apiError,
+  getTenantId,
 } from './_middleware.js';
 import { sql, withTransaction, validateOrderColumn } from './_db.js';
 import { logAuditEvent } from './_audit.js';
@@ -109,28 +110,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   
   const authReq = req as AuthenticatedRequest;
   
-  if (!verifyToken(authReq, res)) return;
+  if (!(await verifyToken(authReq, res))) return;
   
   try {
+    const tenantId = getTenantId(req);
     switch (req.method) {
       case 'GET':
         if (req.query.id) {
-          return await getInvoice(authReq, res);
+          return await getInvoice(authReq, res, tenantId);
         }
-        return await listInvoices(authReq, res);
-        
+        return await listInvoices(authReq, res, tenantId);
+
       case 'POST':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await createInvoice(authReq, res);
-        
+        return await createInvoice(authReq, res, tenantId);
+
       case 'PUT':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await updateInvoice(authReq, res);
-        
+        return await updateInvoice(authReq, res, tenantId);
+
       case 'DELETE':
         if (!requireRole(authReq, res, ['Admin'])) return;
-        return await deleteInvoice(authReq, res);
-        
+        return await deleteInvoice(authReq, res, tenantId);
+
       default:
         apiError(res, 405, 'Method not allowed');
     }
@@ -139,20 +141,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listInvoices(req: AuthenticatedRequest, res: VercelResponse) {
+async function listInvoices(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
-    
+
     let orderColumn = 'created_at';
     if (sortBy) {
       const validated = validateOrderColumn('invoices', sortBy);
       if (validated) orderColumn = validated;
     }
     const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
-    
+
     const [countResult, rows] = await Promise.all([
-      sql`SELECT COUNT(*) as total FROM invoices`,
+      sql`SELECT COUNT(*) as total FROM invoices WHERE tenant_id = ${tenantId}::uuid`,
       sql`
         SELECT i.*,
           COALESCE(
@@ -160,6 +162,7 @@ async function listInvoices(req: AuthenticatedRequest, res: VercelResponse) {
             '[]'::jsonb
           ) as items
         FROM invoices i
+        WHERE i.tenant_id = ${tenantId}::uuid
         ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
         LIMIT ${limit} OFFSET ${offset}
       `
@@ -179,9 +182,9 @@ async function listInvoices(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function getInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+async function getInvoice(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const { id } = req.query;
-  
+
   const rows = await sql`
     SELECT i.*,
       COALESCE(
@@ -189,7 +192,7 @@ async function getInvoice(req: AuthenticatedRequest, res: VercelResponse) {
         '[]'::jsonb
       ) as items
     FROM invoices i
-    WHERE i.id = ${id}::uuid
+    WHERE i.id = ${id}::uuid AND i.tenant_id = ${tenantId}::uuid
   `;
   
   if (rows.length === 0) {
@@ -256,7 +259,7 @@ async function insertInvoiceItems(client: PoolClient, invoiceId: string, items: 
   }
 }
 
-async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+async function createInvoice(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const user = req.user;
   try {
     const data = InvoiceSchema.parse(req.body);
@@ -270,11 +273,11 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
         `
           INSERT INTO invoices (
             invoice_number, invoice_kind, quote_id, vehicle_id, client_id, client_name, client_email, client_address,
-            amount_usd, currency, status, description, notes, terms_and_conditions, due_date, items, batch
+            amount_usd, currency, status, description, notes, terms_and_conditions, due_date, items, batch, tenant_id
           )
           VALUES (
             $1, $2, $3::uuid, $4::uuid, $5::uuid, $6, $7, $8,
-            $9, $10, $11, $12, $13, $14, $15, $16::jsonb, $17
+            $9, $10, $11, $12, $13, $14, $15, $16::jsonb, $17, $18::uuid
           )
           RETURNING *
         `,
@@ -296,6 +299,7 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
           data.due_date,
           JSON.stringify(itemsSnapshot),
           data.batch || null,
+          tenantId,
         ],
       );
 
@@ -321,7 +325,7 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const user = req.user;
   const { id } = req.query;
   
@@ -331,57 +335,66 @@ async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
     const result = await withTransaction(async (client) => {
       let totalAmount = undefined;
       let itemsSnapshot: InvoiceItem[] | undefined;
-      if (data.items && data.items.length > 0) {
+      if (Array.isArray(data.items)) {
         totalAmount = calculateInvoiceTotal(data.items);
         itemsSnapshot = buildInvoiceItemsSnapshot(data.items);
 
         await client.query('DELETE FROM invoice_items WHERE invoice_id = $1::uuid', [id]);
-        await insertInvoiceItems(client, String(id), data.items);
+        if (data.items.length > 0) {
+          await insertInvoiceItems(client, String(id), data.items);
+        }
       }
 
+      // Build dynamic SET clause — only include fields present in body
+      const updates: string[] = ['updated_at = NOW()'];
+      const values: unknown[] = [];
+      let paramIdx = 1;
+
+      const bodyRecord = req.body as Record<string, unknown>;
+      const fieldMap: Record<string, { value: unknown; cast?: string }> = {
+        invoice_kind: { value: data.invoice_kind },
+        quote_id: { value: data.quote_id ?? null, cast: '::uuid' },
+        vehicle_id: { value: data.vehicle_id ?? null, cast: '::uuid' },
+        client_id: { value: data.client_id ?? null, cast: '::uuid' },
+        client_name: { value: data.client_name },
+        client_email: { value: data.client_email },
+        client_address: { value: data.client_address },
+        currency: { value: data.currency },
+        status: { value: data.status },
+        description: { value: data.description },
+        notes: { value: data.notes },
+        terms_and_conditions: { value: data.terms_and_conditions },
+        due_date: { value: data.due_date },
+        batch: { value: data.batch },
+      };
+
+      for (const [field, meta] of Object.entries(fieldMap)) {
+        if (field in bodyRecord) {
+          const cast = meta.cast ?? '';
+          updates.push(`${field} = $${paramIdx}${cast}`);
+          values.push(meta.value ?? null);
+          paramIdx++;
+        }
+      }
+
+      // Always update amount_usd and items if items were provided
+      if (totalAmount !== undefined) {
+        updates.push(`amount_usd = $${paramIdx}`);
+        values.push(totalAmount);
+        paramIdx++;
+      }
+      if (itemsSnapshot) {
+        updates.push(`items = $${paramIdx}::jsonb`);
+        values.push(JSON.stringify(itemsSnapshot));
+        paramIdx++;
+      }
+
+      values.push(id);
+      paramIdx++;
+      values.push(tenantId);
       const rows = await client.query(
-        `
-          UPDATE invoices
-          SET
-            invoice_kind = COALESCE($1, invoice_kind),
-            quote_id = COALESCE($2::uuid, quote_id),
-            vehicle_id = COALESCE($3::uuid, vehicle_id),
-            client_id = COALESCE($4::uuid, client_id),
-            client_name = COALESCE($5, client_name),
-            client_email = COALESCE($6, client_email),
-            client_address = COALESCE($7, client_address),
-            amount_usd = COALESCE($8, amount_usd),
-            currency = COALESCE($9, currency),
-            status = COALESCE($10, status),
-            description = COALESCE($11, description),
-            notes = COALESCE($12, notes),
-            terms_and_conditions = COALESCE($13, terms_and_conditions),
-            due_date = COALESCE($14, due_date),
-            items = COALESCE($15::jsonb, items),
-            batch = COALESCE($16, batch),
-            updated_at = NOW()
-          WHERE id = $17::uuid
-          RETURNING *
-        `,
-        [
-          data.invoice_kind ?? null,
-          data.quote_id ?? null,
-          data.vehicle_id ?? null,
-          data.client_id ?? null,
-          data.client_name ?? null,
-          data.client_email ?? null,
-          data.client_address ?? null,
-          totalAmount ?? null,
-          data.currency ?? null,
-          data.status ?? null,
-          data.description ?? null,
-          data.notes ?? null,
-          data.terms_and_conditions ?? null,
-          data.due_date ?? null,
-          itemsSnapshot ? JSON.stringify(itemsSnapshot) : null,
-          data.batch ?? null,
-          id,
-        ],
+        `UPDATE invoices SET ${updates.join(', ')} WHERE id = $${paramIdx - 1}::uuid AND tenant_id = $${paramIdx}::uuid RETURNING *`,
+        values,
       );
 
       if (rows.rows.length === 0) {
@@ -410,15 +423,27 @@ async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteInvoice(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const user = req.user;
   const { id } = req.query;
-  
-  const oldInvoice = await sql`SELECT * FROM invoices WHERE id = ${id}::uuid`;
+
+  const oldInvoice = await sql`SELECT * FROM invoices WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid`;
+  if (oldInvoice.length === 0) {
+    return apiError(res, 404, 'Not found');
+  }
+
+  // Check for existing payment allocations
+  const allocationCount = await sql`SELECT COUNT(*) as cnt FROM payment_allocations WHERE invoice_id = ${id}::uuid`;
+  if (Number(allocationCount[0]?.cnt) > 0) {
+    return res.status(409).json({ error: 'Cannot delete invoice with existing payment allocations' });
+  }
 
   await withTransaction(async (client) => {
     await client.query('DELETE FROM invoice_items WHERE invoice_id = $1::uuid', [id]);
-    await client.query('DELETE FROM invoices WHERE id = $1::uuid', [id]);
+    const result = await client.query('DELETE FROM invoices WHERE id = $1::uuid AND tenant_id = $2::uuid RETURNING id', [id, tenantId]);
+    if (result.rows.length === 0) {
+      throw new Error('Not found');
+    }
   });
 
   await logAuditEvent({

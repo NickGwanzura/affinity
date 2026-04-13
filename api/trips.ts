@@ -157,7 +157,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   const authReq = req as AuthenticatedRequest;
-  if (!verifyToken(authReq, res)) return;
+  if (!(await verifyToken(authReq, res))) return;
 
   try {
     await ensureTripSchema();

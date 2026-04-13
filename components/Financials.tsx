@@ -14,6 +14,8 @@ import { Button } from './ui';
 import { useConfirm } from './ConfirmModal';
 import { useToast } from './Toast';
 import { ClientFormModal, type ClientFormValue } from './shared/ClientFormModal';
+import { CarbonInvoiceModal } from './shared/CarbonInvoiceModal';
+import { CarbonQuoteModal } from './shared/CarbonQuoteModal';
 import {
  FinancialsTabBar,
  InvoicesSection,
@@ -27,6 +29,21 @@ type PaymentAllocationDraft = {
  invoice_id: string;
  amount: string;
 };
+
+type PaymentAllocationPayload = {
+ invoice_id?: string;
+ amount_allocated: number;
+ currency: 'USD' | 'GBP';
+ status?: 'allocated' | 'unallocated' | 'credit';
+};
+
+type ClientOption = {
+ id: string;
+ name: string;
+ isRegistered: boolean;
+};
+
+const UNREGISTERED_CLIENT_PREFIX = 'unregistered:';
 
 const createEmptyLineItem = (): LineItem => ({
  description: '',
@@ -465,10 +482,17 @@ export const Financials: React.FC = () => {
  const legacyInvoice = invoices.find(
  invoice => invoice.invoice_number === payment.reference_id || invoice.id === payment.reference_id
  );
+ const resolvedClientName = payment.client_name || linkedReceipt?.client_name || legacyInvoice?.client_name || '';
+ const matchedClient = resolvedClientName
+ ? clients.find(client => normalizeClientName(client.name) === normalizeClientName(resolvedClientName))
+ : undefined;
+ const resolvedClientId = payment.client_id || matchedClient?.id || (
+ resolvedClientName ? `${UNREGISTERED_CLIENT_PREFIX}${normalizeClientName(resolvedClientName)}` : ''
+ );
  const allocationDrafts =
  payment.allocations && payment.allocations.length > 0
  ? payment.allocations.map(allocation => ({
- invoice_id: allocation.invoice_id,
+ invoice_id: allocation.invoice_id || '',
  amount: allocation.amount_allocated.toFixed(2),
  }))
  : legacyInvoice
@@ -477,7 +501,8 @@ export const Financials: React.FC = () => {
 
  setEditingPayment(payment);
  setPaymentForm({
- client_name: payment.client_name || linkedReceipt?.client_name || legacyInvoice?.client_name || '',
+ client_id: resolvedClientId,
+ client_name: resolvedClientName,
  currency: normalizeDocumentCurrency(payment.currency || linkedReceipt?.currency),
  amount: payment.amount_usd.toFixed(2),
  method: payment.method || 'Bank Transfer',
@@ -573,7 +598,7 @@ export const Financials: React.FC = () => {
 
  const buildReceiptItemsSnapshot = (
  allocatedInvoices: Invoice[],
- allocations: Array<{ invoice_id: string; amount_allocated: number; currency: 'USD' | 'GBP' }>,
+ allocations: Array<{ invoice_id?: string; amount_allocated: number; currency: 'USD' | 'GBP' }>,
  totalAmount: number,
  fallbackReference: string
  ): ReceiptItem[] => {
@@ -595,11 +620,15 @@ export const Financials: React.FC = () => {
 
  if (allocations.length > 0) {
  return allocations.map((allocation, index) => {
- const invoice = allocatedInvoices.find(candidate => candidate.id === allocation.invoice_id);
+ const invoice = allocation.invoice_id
+ ? allocatedInvoices.find(candidate => candidate.id === allocation.invoice_id)
+ : undefined;
  return {
  ...normalizeLineItemForForm({
  description: invoice
  ? `Payment toward ${invoice.invoice_number}${invoice.description ? ` - ${invoice.description}` : ''}`
+ : !allocation.invoice_id
+ ? 'Unallocated client payment'
  : `Payment allocation ${index + 1}`,
  quantity: 1,
  unit_price: allocation.amount_allocated,
@@ -681,13 +710,15 @@ export const Financials: React.FC = () => {
  };
  };
 
- const handleCreateQuote = async (e: React.FormEvent) => {
- e.preventDefault();
- const validItems = quoteLineItems
+ const submitQuote = async (
+ formValue: typeof quoteForm = quoteForm,
+ lineItemsValue: LineItem[] = quoteLineItems
+ ) => {
+ const validItems = lineItemsValue
  .filter(item => item.description.trim() && item.quantity > 0)
  .map(item => normalizeLineItemForForm(item));
 
- if (!quoteForm.client_name.trim()) {
+ if (!formValue.client_name.trim()) {
  showToast('Please enter a client name before saving the quote', 'warning');
  return;
  }
@@ -700,25 +731,25 @@ export const Financials: React.FC = () => {
  setIsSubmittingQuote(true);
  try {
  const vehicleId = normalizeOptionalRelatedId(
- quoteForm.vehicle_id,
+ formValue.vehicle_id,
  vehicles.map((vehicle) => vehicle.id),
  );
  const clientId = normalizeOptionalRelatedId(
- quoteForm.client_id,
+ formValue.client_id,
  clients.map((client) => client.id),
  );
 
  const payload = {
  vehicle_id: vehicleId,
  client_id: clientId,
- client_name: quoteForm.client_name.trim(),
- client_email: quoteForm.client_email.trim(),
- client_address: quoteForm.client_address.trim(),
- currency: quoteForm.currency,
+ client_name: formValue.client_name.trim(),
+ client_email: formValue.client_email.trim(),
+ client_address: formValue.client_address.trim(),
+ currency: formValue.currency,
  amount_usd: calculateTotal(validItems),
- description: quoteForm.description.trim(),
- valid_until: quoteForm.valid_until,
- status: quoteForm.status,
+ description: formValue.description.trim(),
+ valid_until: formValue.valid_until,
+ status: formValue.status,
  items: validItems.map((item, index) => ({ ...item, line_number: index + 1 })),
  };
 
@@ -732,25 +763,32 @@ export const Financials: React.FC = () => {
  await loadData(true);
  showToast(editingQuote ? 'Quote updated successfully!' : 'Quote created successfully!', 'success');
  } catch (error: any) {
- console.error('[Financials] handleCreateQuote failed:', error);
+ console.error('[Financials] submitQuote failed:', error);
  showToast(error?.message || 'Failed to save quote', 'error');
  } finally {
  setIsSubmittingQuote(false);
  }
  };
 
- const handleSubmitInvoice = async (e: React.FormEvent) => {
+ const handleCreateQuote = async (e: React.FormEvent) => {
  e.preventDefault();
- const validItems = invoiceLineItems
+ await submitQuote();
+ };
+
+ const submitInvoice = async (
+ formValue: typeof invoiceForm = invoiceForm,
+ lineItemsValue: LineItem[] = invoiceLineItems
+ ) => {
+ const validItems = lineItemsValue
  .filter(item => item.description.trim() && item.quantity > 0)
  .map(item => normalizeLineItemForForm(item));
 
- if (!invoiceForm.client_name.trim()) {
+ if (!formValue.client_name.trim()) {
  showToast('Please enter a client name before saving the invoice', 'warning');
  return;
  }
 
- if (!invoiceForm.due_date) {
+ if (!formValue.due_date) {
  showToast('Please choose a due date before saving the invoice', 'warning');
  return;
  }
@@ -763,29 +801,31 @@ export const Financials: React.FC = () => {
  setIsSubmittingInvoice(true);
  try {
  const vehicleId = normalizeOptionalRelatedId(
- invoiceForm.vehicle_id,
+ formValue.vehicle_id,
  vehicles.map((vehicle) => vehicle.id),
  );
  const clientId = normalizeOptionalRelatedId(
- invoiceForm.client_id,
+ formValue.client_id,
  clients.map((client) => client.id),
  );
+ const linkedQuoteId = convertingQuoteId || editingInvoice?.quote_id || undefined;
 
  const payload = {
- invoice_kind: invoiceForm.invoice_kind,
+ invoice_kind: formValue.invoice_kind,
+ quote_id: linkedQuoteId,
  vehicle_id: vehicleId,
  client_id: clientId,
- client_name: invoiceForm.client_name.trim(),
- client_email: invoiceForm.client_email.trim(),
- client_address: invoiceForm.client_address.trim(),
+ client_name: formValue.client_name.trim(),
+ client_email: formValue.client_email.trim(),
+ client_address: formValue.client_address.trim(),
  amount_usd: calculateTotal(validItems),
- currency: invoiceForm.currency,
- description: invoiceForm.description.trim(),
- notes: invoiceForm.notes.trim(),
- terms_and_conditions: invoiceForm.terms_and_conditions.trim(),
- due_date: invoiceForm.due_date,
- status: invoiceForm.status || 'Sent',
- batch: invoiceForm.batch.trim() || undefined,
+ currency: formValue.currency,
+ description: formValue.description.trim(),
+ notes: formValue.notes.trim(),
+ terms_and_conditions: formValue.terms_and_conditions.trim(),
+ due_date: formValue.due_date,
+ status: formValue.status || 'Sent',
+ batch: formValue.batch.trim() || undefined,
  items: validItems.map((item, index) => ({ ...item, line_number: index + 1 })),
  };
 
@@ -793,14 +833,12 @@ export const Financials: React.FC = () => {
  await dataService.updateInvoice(editingInvoice.id, payload);
  } else {
  await dataService.createInvoice(payload);
- 
- // If converting from quote, update quote status to Accepted
+
  if (convertingQuoteId) {
  try {
  await dataService.updateQuote(convertingQuoteId, { status: 'Accepted' });
  } catch (quoteError) {
  console.warn('Failed to update quote status:', quoteError);
- // Don't fail the whole operation if quote update fails
  }
  }
  }
@@ -809,11 +847,16 @@ export const Financials: React.FC = () => {
  await loadData(true);
  showToast(editingInvoice ? 'Invoice updated successfully!' : 'Invoice created successfully!', 'success');
  } catch (error: any) {
- console.error('[Financials] handleSubmitInvoice failed:', error);
+ console.error('[Financials] submitInvoice failed:', error);
  showToast(error?.message || `Failed to ${editingInvoice ? 'update' : 'create'} invoice`, 'error');
  } finally {
  setIsSubmittingInvoice(false);
  }
+ };
+
+ const handleSubmitInvoice = async (e: React.FormEvent) => {
+ e.preventDefault();
+ await submitInvoice();
  };
 
  const handlePreviewQuote = async (quote: Quote) => {
@@ -892,7 +935,9 @@ export const Financials: React.FC = () => {
  const handleRecordPayment = async (e: React.FormEvent<HTMLFormElement>) => {
  e.preventDefault();
 
- const clientId = paymentForm.client_id;
+ const clientId = clients.some((client) => client.id === paymentForm.client_id)
+ ? paymentForm.client_id
+ : '';
  const clientName = paymentForm.client_name.trim();
  const amount = parseFloat(paymentForm.amount) || 0;
  const method = paymentForm.method.trim();
@@ -936,7 +981,7 @@ export const Financials: React.FC = () => {
  // If no valid allocations to invoices, create an unallocated entry
  const hasInvoiceAllocations = draftedAllocations.some(a => a.invoice_id && a.amount_allocated > 0);
  
- let mergedAllocations: Array<{ invoice_id?: string; amount_allocated: number; currency: 'USD' | 'GBP'; status?: string }> = [];
+ let mergedAllocations: PaymentAllocationPayload[] = [];
  
  if (hasInvoiceAllocations) {
  // Group allocations by invoice_id
@@ -955,7 +1000,7 @@ export const Financials: React.FC = () => {
  });
  }
  return acc;
- }, new Map<string, { invoice_id: string; amount_allocated: number; currency: 'USD' | 'GBP'; status: string }>());
+ }, new Map<string, { invoice_id: string; amount_allocated: number; currency: 'USD' | 'GBP'; status: 'allocated' }>());
  
  mergedAllocations = Array.from(allocationsByInvoice.values());
  } else {
@@ -1329,18 +1374,24 @@ export const Financials: React.FC = () => {
 
  // Build client options from actual clients list (with IDs) plus names from invoices/quotes
  const clientOptions = useMemo(() => {
-   const clientMap = new Map<string, { id: string; name: string }>();
+   const clientMap = new Map<string, ClientOption>();
    
    // First add registered clients with IDs
    clients.forEach(client => {
-     clientMap.set(client.name, { id: client.id, name: client.name });
+     const key = normalizeClientName(client.name);
+     clientMap.set(key, { id: client.id, name: client.name, isRegistered: true });
    });
    
    // Then add names from invoices/quotes/receipts (may not have IDs)
    [...quotes, ...invoices, ...receipts].forEach(doc => {
      const name = doc.client_name?.trim();
-     if (name && !clientMap.has(name)) {
-       clientMap.set(name, { id: '', name });
+     const key = normalizeClientName(name);
+     if (name && key && !clientMap.has(key)) {
+       clientMap.set(key, {
+         id: `${UNREGISTERED_CLIENT_PREFIX}${key}`,
+         name,
+         isRegistered: false,
+       });
      }
    });
    
@@ -1616,677 +1667,79 @@ export const Financials: React.FC = () => {
  </div>
  </div>
 
- {showQuoteModal && (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
- <div className="absolute inset-0 backdrop-blur-sm" onClick={closeQuoteModal} style={{ backgroundColor: 'rgba(22, 22, 22, 0.4)' }} />
- <div className="relative max-h-[95vh] w-full max-w-2xl overflow-y-auto p-4 sm:p-8" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
- <div className="flex items-center justify-between mb-4 sm:mb-6">
- <h3 className="text-lg sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>
- {editingQuote ? `Edit Quote` : 'Create Quote'}
- </h3>
- <button
- type="button"
- onClick={closeQuoteModal}
- className="lg:hidden p-2 -mr-2" style={{ color: 'var(--cds-text-secondary, #525252)' }}
- aria-label="Close"
- >
- <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
- </svg>
- </button>
- </div>
- <form onSubmit={handleCreateQuote} className="space-y-3 sm:space-y-4">
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
- <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Vehicle (Optional)</label>
- <select
- value={quoteForm.vehicle_id}
- onChange={e => setQuoteForm({ ...quoteForm, vehicle_id: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="">No Vehicle</option>
- {vehicles.map(vehicle => (
- <option key={vehicle.id} value={vehicle.id}>
- {vehicle.make_model} ({vehicle.vin_number})
- </option>
- ))}
- </select>
- </div>
- <div>
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Saved Client</label>
- <div className="mb-2 flex items-center justify-between gap-3">
- <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Select an existing client or leave blank for a one-off quote.</span>
- <button
- type="button"
- onClick={() => openClientModal('quote')}
- className="px-3 py-1.5 text-xs font-bold" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }}
- >
- + Add Client
- </button>
- </div>
- <select
- value={quoteForm.client_id}
- onChange={e => {
- const client = clients.find(c => c.id === e.target.value);
- setQuoteForm({
- ...quoteForm,
- client_id: client?.id ?? '',
- client_name: client?.name ?? '',
- client_email: client?.email ?? '',
- client_address: client?.address ?? '',
- });
- }}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="">
- {clients.length === 0 ? 'No clients found - click "+ Add Client" to create one' : 'Select a client...'}
- </option>
- {clients.map(c => (
- <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
- ))}
- </select>
- </div>
- <div>
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Client Name *</label>
- <input
- required
- value={quoteForm.client_name}
- onChange={e =>
- setQuoteForm({
- ...quoteForm,
- client_id: '',
- client_name: e.target.value,
- })
- }
- placeholder="Enter client name..."
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Email</label>
- <input
- type="email"
- value={quoteForm.client_email}
- onChange={e => setQuoteForm({ ...quoteForm, client_email: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Address</label>
- <textarea
- rows={2}
- value={quoteForm.client_address}
- onChange={e => setQuoteForm({ ...quoteForm, client_address: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div>
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Valid Until</label>
- <input
- type="date"
- value={quoteForm.valid_until}
- onChange={e => setQuoteForm({ ...quoteForm, valid_until: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div>
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Currency</label>
- <select
- value={quoteForm.currency}
- onChange={e => setQuoteForm({ ...quoteForm, currency: e.target.value as 'USD' | 'GBP' })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="USD">USD ($)</option>
- <option value="GBP">GBP (£)</option>
- </select>
- </div>
- <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Notes</label>
- <input
- value={quoteForm.description}
- onChange={e => setQuoteForm({ ...quoteForm, description: e.target.value })}
- placeholder="Additional notes..."
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-2 mt-2 border-t pt-4">
- <div className="mb-3 flex items-center justify-between">
- <label className="text-sm font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Line Items</label>
- <button
- type="button"
- onClick={() => setQuoteLineItems([...quoteLineItems, createEmptyLineItem()])}
- className="px-3 py-1.5 text-xs font-bold" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-interactive, #0f62fe)' }}
- >
- + Add Line
- </button>
- </div>
 
- <div className="space-y-3">
- {quoteLineItems.map((item, index) => (
- <div key={index} className="p-3" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}>
- <div className="grid grid-cols-12 items-end gap-2">
- <div className="col-span-4">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Description</label>
- <input
- required
- value={item.description}
- onChange={e =>
- updateLineItem(quoteLineItems, setQuoteLineItems, index, 'description', e.target.value)
- }
- className="w-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Qty</label>
- <input
- type="number"
- min="1"
- value={item.quantity}
- onChange={e =>
- updateLineItem(
- quoteLineItems,
- setQuoteLineItems,
- index,
- 'quantity',
- parseFloat(e.target.value) || 1
- )
- }
- className="w-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-2">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Unit Price</label>
- <input
- type="number"
- step="0.01"
- value={item.unit_price}
- onChange={e =>
- updateLineItem(
- quoteLineItems,
- setQuoteLineItems,
- index,
- 'unit_price',
- parseFloat(e.target.value) || 0
- )
- }
- className="w-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-2">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Discount %</label>
- <input
- type="number"
- min="0"
- max="100"
- step="0.01"
- value={item.discount_percentage || 0}
- onChange={e =>
- updateLineItem(
- quoteLineItems,
- setQuoteLineItems,
- index,
- 'discount_percentage',
- clampDiscountPercentage(parseFloat(e.target.value) || 0)
- )
- }
- className="w-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-2">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Amount</label>
- <div className="px-3 py-2 text-sm font-semibold" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-text-primary, #161616)' }}>
- {formatMoney(calculateLineAmount(item), quoteForm.currency)}
- </div>
- </div>
- <div className="col-span-1 flex justify-end">
- {quoteLineItems.length > 1 && (
- <button
- type="button"
- onClick={() => setQuoteLineItems(quoteLineItems.filter((_, lineIndex) => lineIndex !== index))}
- className="w-full p-2 sm:p-2 touch-manipulation" style={{ color: 'var(--cds-support-error, #da1e28)' }}
- >
- <svg className="mx-auto h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path
- strokeLinecap="round"
- strokeLinejoin="round"
- strokeWidth={2}
- d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
- />
- </svg>
- </button>
- )}
- </div>
- </div>
- {(item.discount_percentage || 0) > 0 && (
- <p className="mt-2 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- Discount applied: {formatMoney(calculateLineDiscountAmount(item), quoteForm.currency)}
- </p>
- )}
- </div>
- ))}
- </div>
+      <CarbonQuoteModal
+        open={showQuoteModal}
+        editingQuote={editingQuote}
+        clients={clients}
+        vehicles={vehicles}
+        onClose={closeQuoteModal}
+        onSubmit={async ({ form, lineItems }) => {
+          const normalizedItems = lineItems.map((item) =>
+            normalizeLineItemForForm({
+              description: item.description,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              discount_percentage: item.discount_percentage,
+              tax_rate: item.tax_rate,
+            }),
+          );
 
- <div className="mt-4 flex justify-end border-t pt-3">
- <div className="text-right">
- <div className="space-y-1 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- <div>Subtotal: {formatMoney(quoteTotals.subtotal, quoteForm.currency)}</div>
- <div>Discounts: {formatMoney(quoteTotals.discount, quoteForm.currency)}</div>
- <div>Tax: {formatMoney(quoteTotals.tax, quoteForm.currency)}</div>
- </div>
- <div className="mt-2">
- <span className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total:</span>
- <span className="ml-3 text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>
- {formatMoney(quoteTotals.total, quoteForm.currency)}
- </span>
- </div>
- </div>
- </div>
- </div>
- </div>
- <div className="sticky bottom-0 -mx-4 sm:mx-0 -mb-4 sm:mb-0 pt-4 sm:pt-4 mt-4 sm:mt-4" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)', borderTopWidth: '1px', borderTopStyle: 'solid', borderTopColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
- <div className="flex gap-3">
- <button
- type="button"
- onClick={closeQuoteModal}
- className="flex-1 px-4 py-3 sm:py-3 text-sm font-bold touch-manipulation" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', color: 'var(--cds-text-secondary, #525252)' }}
- >
- Cancel
- </button>
- <Button
- type="submit"
- variant="primary"
- isLoading={isSubmittingQuote}
- disabled={isSubmittingQuote}
- className="flex-1"
- >
- {editingQuote ? 'Save' : 'Create'}
- </Button>
- </div>
- </div>
- </form>
- </div>
- </div>
- )}
+          await submitQuote(
+            {
+              vehicle_id: form.vehicle_id,
+              client_id: form.client_id,
+              client_name: form.client_name,
+              client_email: form.client_email,
+              client_address: form.client_address,
+              currency: form.currency,
+              description: form.description,
+              valid_until: form.valid_until,
+              status: form.status,
+            },
+            normalizedItems,
+          );
+        }}
+      />
 
- {showInvoiceModal && (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
- <div className="absolute inset-0 backdrop-blur-sm" onClick={closeInvoiceModal} style={{ backgroundColor: 'rgba(22, 22, 22, 0.4)' }} />
- <div className="relative max-h-[95vh] w-full max-w-2xl overflow-y-auto p-4 sm:p-8" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
- <div className="flex items-center justify-between mb-4 sm:mb-2">
- <h3 className="text-lg sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>
- {editingInvoice ? `Edit Invoice ${editingInvoice.invoice_number}` : 'Create Invoice'}
- </h3>
- <button
- type="button"
- onClick={closeInvoiceModal}
- className="lg:hidden p-2 -mr-2" style={{ color: 'var(--cds-text-secondary, #525252)' }}
- aria-label="Close"
- >
- <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
- </svg>
- </button>
- </div>
- <p className="mb-4 sm:mb-6 text-xs sm:text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- {editingInvoice
- ? 'Update the invoice details, currency, status, notes, and line items while keeping the existing invoice number.'
- : 'Build a polished customer invoice with itemized charges, tailored notes, and clear payment terms.'}
- </p>
- <form onSubmit={handleSubmitInvoice} className="space-y-4">
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
- {editingInvoice && (
- <div className="col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Invoice Number</label>
- <div className="px-4 py-3 font-mono text-sm font-bold" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-support-success, #24a148)' }}>
- {editingInvoice.invoice_number}
- </div>
- </div>
- )}
- <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Vehicle (Optional)</label>
- <select
- value={invoiceForm.vehicle_id}
- onChange={e => setInvoiceForm({ ...invoiceForm, vehicle_id: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="">No Vehicle (Custom Invoice)</option>
- {vehicles.map(vehicle => (
- <option key={vehicle.id} value={vehicle.id}>
- {vehicle.make_model} ({vehicle.vin_number})
- </option>
- ))}
- </select>
- </div>
- <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Saved Client</label>
- <div className="mb-2 flex items-center justify-between gap-3">
- <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Select an existing client or leave blank for a one-off invoice.</span>
- <button
- type="button"
- onClick={() => openClientModal('invoice')}
- className="px-3 py-1.5 text-xs font-bold" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-support-success, #24a148)', color: 'var(--cds-support-success, #24a148)' }}
- >
- + Add Client
- </button>
- </div>
- <select
- value={invoiceForm.client_id || ''}
- onChange={e => {
- const client = clients.find(c => c.id === e.target.value);
- console.log('[DEBUG] Client selected:', client, 'from', clients.length, 'clients');
- setInvoiceForm({
- ...invoiceForm,
- client_id: client?.id ?? '',
- client_name: client?.name ?? '',
- client_email: client?.email ?? '',
- client_address: client?.address ?? '',
- });
- }}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="">
- {clients.length === 0 ? 'No clients found - click "+ Add Client" to create one' : 'Select a client...'}
- </option>
- {clients.map(c => (
- <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
- ))}
- </select>
- </div>
- <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Client Name *</label>
- <input
- required
- value={invoiceForm.client_name}
- onChange={e =>
- setInvoiceForm({
- ...invoiceForm,
- client_id: '',
- client_name: e.target.value,
- })
- }
- placeholder="Enter client name..."
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Email</label>
- <input
- type="email"
- value={invoiceForm.client_email}
- onChange={e => setInvoiceForm({ ...invoiceForm, client_email: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Address</label>
- <textarea
- rows={2}
- value={invoiceForm.client_address}
- onChange={e => setInvoiceForm({ ...invoiceForm, client_address: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Type</label>
- <select
- value={invoiceForm.invoice_kind}
- onChange={e =>
- setInvoiceForm({
- ...invoiceForm,
- invoice_kind: e.target.value as 'Standard' | 'Deposit' | 'Final',
- })
- }
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="Standard">Standard</option>
- <option value="Deposit">Deposit</option>
- <option value="Final">Final</option>
- </select>
- </div>
- <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Currency</label>
- <select
- value={invoiceForm.currency}
- onChange={e => setInvoiceForm({ ...invoiceForm, currency: e.target.value as 'USD' | 'GBP' })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="USD">USD ($)</option>
- <option value="GBP">GBP (£)</option>
- </select>
- </div>
- <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Due Date *</label>
- <input
- type="date"
- required
- value={invoiceForm.due_date}
- onChange={e => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Batch</label>
- <input
- type="text"
- placeholder="MAR-2026"
- value={invoiceForm.batch}
- onChange={e => setInvoiceForm({ ...invoiceForm, batch: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Status</label>
- <select
- value={invoiceForm.status}
- onChange={e => setInvoiceForm({ ...invoiceForm, status: e.target.value as Invoice['status'] })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="Draft">Draft</option>
- <option value="Sent">Sent</option>
- <option value="Paid">Paid</option>
- <option value="Overdue">Overdue</option>
- <option value="Cancelled">Cancelled</option>
- </select>
- </div>
- <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Summary</label>
- <input
- value={invoiceForm.description}
- onChange={e => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
- placeholder="Short invoice summary..."
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Notes</label>
- <textarea
- rows={2}
- value={invoiceForm.notes}
- onChange={e => setInvoiceForm({ ...invoiceForm, notes: e.target.value })}
- placeholder="Optional notes..."
- className="w-full resize-none px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-2">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Terms</label>
- <textarea
- rows={2}
- value={invoiceForm.terms_and_conditions}
- onChange={e => setInvoiceForm({ ...invoiceForm, terms_and_conditions: e.target.value })}
- placeholder="Payment terms..."
- className="w-full resize-none px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}
- />
- </div>
- <div className="col-span-1 sm:col-span-2 mt-2 border-t pt-4">
- <div className="mb-3 flex items-center justify-between">
- <label className="text-sm font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Line Items</label>
- <button
- type="button"
- onClick={() => setInvoiceLineItems([...invoiceLineItems, createEmptyLineItem()])}
- className="px-3 py-2 text-xs font-bold" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-support-success, #24a148)' }}
- >
- + Add
- </button>
- </div>
+      <CarbonInvoiceModal
+        open={showInvoiceModal}
+        editingInvoice={editingInvoice}
+        clients={clients}
+        vehicles={vehicles}
+        onClose={closeInvoiceModal}
+        onSubmit={async ({ form, lineItems }) => {
+          const normalizedItems = lineItems.map((item) =>
+            normalizeLineItemForForm({
+              description: item.description,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              discount_percentage: item.discount_percentage,
+              tax_rate: item.tax_rate,
+            }),
+          );
 
- <div className="space-y-3">
- {invoiceLineItems.map((item, index) => (
- <div key={index} className="p-3" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}>
- <div className="grid grid-cols-2 md:grid-cols-12 gap-2 sm:gap-3">
- <div className="col-span-2 md:col-span-6">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Description</label>
- <input
- required
- value={item.description}
- onChange={e =>
- updateLineItem(invoiceLineItems, setInvoiceLineItems, index, 'description', e.target.value)
- }
- className="w-full px-3 py-2.5 sm:py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 md:col-span-2">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Qty</label>
- <input
- type="number"
- min="1"
- value={item.quantity}
- onChange={e =>
- updateLineItem(
- invoiceLineItems,
- setInvoiceLineItems,
- index,
- 'quantity',
- parseFloat(e.target.value) || 1
- )
- }
- className="w-full px-2 py-2.5 sm:py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-1 md:col-span-2">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Price</label>
- <input
- type="number"
- step="0.01"
- value={item.unit_price}
- onChange={e =>
- updateLineItem(
- invoiceLineItems,
- setInvoiceLineItems,
- index,
- 'unit_price',
- parseFloat(e.target.value) || 0
- )
- }
- className="w-full px-2 py-2.5 sm:py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="hidden md:block md:col-span-1">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Disc %</label>
- <input
- type="number"
- min="0"
- max="100"
- step="0.01"
- value={item.discount_percentage || 0}
- onChange={e =>
- updateLineItem(
- invoiceLineItems,
- setInvoiceLineItems,
- index,
- 'discount_percentage',
- clampDiscountPercentage(parseFloat(e.target.value) || 0)
- )
- }
- className="w-full px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="col-span-2 md:col-span-1">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total</label>
- <div className="px-2 py-2.5 sm:py-2 text-sm font-semibold" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', color: 'var(--cds-text-primary, #161616)' }}>
- {formatMoney(calculateLineAmount(item), invoiceForm.currency)}
- </div>
- </div>
- </div>
- {/* Mobile-only discount row */}
- <div className="mt-2 md:hidden">
- <label className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Discount %</label>
- <input
- type="number"
- min="0"
- max="100"
- step="0.01"
- value={item.discount_percentage || 0}
- onChange={e =>
- updateLineItem(
- invoiceLineItems,
- setInvoiceLineItems,
- index,
- 'discount_percentage',
- clampDiscountPercentage(parseFloat(e.target.value) || 0)
- )
- }
- className="w-24 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- {(item.discount_percentage || 0) > 0 && (
- <p className="mt-2 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- Discount: -{formatMoney(calculateLineDiscountAmount(item), invoiceForm.currency)}
- </p>
- )}
- {invoiceLineItems.length > 1 && (
- <button
- type="button"
- onClick={() =>
- setInvoiceLineItems(invoiceLineItems.filter((_, lineIndex) => lineIndex !== index))
- }
- className="mt-2 w-full py-3 sm:py-2 text-xs font-bold touch-manipulation" style={{ color: 'var(--cds-support-error, #da1e28)' }}
- >
- Remove Line
- </button>
- )}
- </div>
- ))}
- </div>
+          await submitInvoice(
+            {
+              invoice_kind: form.invoice_kind,
+              vehicle_id: form.vehicle_id,
+              client_id: form.client_id,
+              client_name: form.client_name,
+              client_email: form.client_email,
+              client_address: form.client_address,
+              currency: form.currency,
+              description: form.description,
+              notes: form.notes,
+              terms_and_conditions: form.terms_and_conditions,
+              due_date: form.due_date,
+              status: form.status,
+              batch: form.batch,
+            },
+            normalizedItems,
+          );
+        }}
+      />
 
- <div className="mt-4 flex justify-end border-t pt-3">
- <div className="text-right">
- <div className="space-y-1 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- <div>Subtotal: {formatMoney(invoiceTotals.subtotal, invoiceForm.currency)}</div>
- <div>Discounts: {formatMoney(invoiceTotals.discount, invoiceForm.currency)}</div>
- <div>Tax: {formatMoney(invoiceTotals.tax, invoiceForm.currency)}</div>
- </div>
- <div className="mt-2">
- <span className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total:</span>
- <span className="ml-3 text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>
- {formatMoney(invoiceTotals.total, invoiceForm.currency)}
- </span>
- </div>
- </div>
- </div>
- </div>
- </div>
- <div className="flex flex-col sm:flex-row gap-3 pt-4 sticky bottom-0 pt-4" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)', borderTopWidth: '1px', borderTopStyle: 'solid', borderTopColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
- <button
- type="button"
- onClick={closeInvoiceModal}
- className="flex-1 px-4 py-4 sm:py-3 text-base sm:text-sm font-bold" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', color: 'var(--cds-text-secondary, #525252)' }}
- >
- Cancel
- </button>
- <Button
- type="submit"
- variant="primary"
- isLoading={isSubmittingInvoice}
- disabled={isSubmittingInvoice}
- className="flex-1"
- >
- {editingInvoice ? 'Save Changes' : 'Create Invoice'}
- </Button>
- </div>
- </form>
- </div>
- </div>
- )}
 
  {showPaymentModal && (
  <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
@@ -2388,8 +1841,8 @@ export const Financials: React.FC = () => {
  >
  <option value="">Select client</option>
  {clientOptions.map(client => (
- <option key={client.id || client.name} value={client.id}>
- {client.name}{!client.id ? ' (unregistered)' : ''}
+ <option key={client.id} value={client.id}>
+ {client.name}{!client.isRegistered ? ' (unregistered)' : ''}
  </option>
  ))}
  </select>
@@ -2657,7 +2110,16 @@ export const Financials: React.FC = () => {
  )}
 
  <div className="overflow-hidden" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
- <FinancialsTabBar activeTab={activeTab} onChange={setActiveTab} />
+ <FinancialsTabBar 
+          activeTab={activeTab} 
+          onChange={setActiveTab}
+          counts={{
+            quotes: quotes.length,
+            invoices: invoices.length,
+            payments: payments.length,
+            receipts: receipts.length,
+          }}
+        />
 
  <div className="overflow-x-auto">
  {activeTab === 'quotes' && (

@@ -88,7 +88,7 @@ export const CarbonPaymentModal: React.FC<CarbonPaymentModalProps> = ({
         currency: editingPayment.currency || 'USD',
         method: editingPayment.method || 'Bank Transfer',
         date: editingPayment.date ? editingPayment.date.split('T')[0] : new Date().toISOString().split('T')[0],
-        notes: '',
+        notes: editingPayment?.notes || '',
       });
       // Convert allocations
       const paymentAllocations = editingPayment.allocations?.map(a => ({
@@ -110,10 +110,13 @@ export const CarbonPaymentModal: React.FC<CarbonPaymentModalProps> = ({
   const clientInvoices = useMemo(() => {
     if (!selectedClient) return [];
     return invoices.filter(
-      inv => 
-        inv.client_name.toLowerCase() === selectedClient.name.toLowerCase() &&
+      inv =>
+        // Primary: match by client_id
+        (inv.client_id === selectedClient.id ||
+          // Fallback: name match for invoices without client_id (legacy data only)
+          (!inv.client_id && inv.client_name?.toLowerCase() === selectedClient.name?.toLowerCase())) &&
         inv.currency === formData.currency &&
-        ['Draft', 'Sent', 'Overdue'].includes(inv.status)
+        inv.status !== 'Paid'
     );
   }, [selectedClient, invoices, formData.currency]);
 
@@ -152,7 +155,7 @@ export const CarbonPaymentModal: React.FC<CarbonPaymentModalProps> = ({
 
   const handleSubmit = async () => {
     if (!formData.client_id || !formData.amount) return;
-    
+
     setIsSubmitting(true);
     try {
       await onSubmit({
@@ -160,8 +163,11 @@ export const CarbonPaymentModal: React.FC<CarbonPaymentModalProps> = ({
         allocations: allocations.filter(a => a.invoice_id && parseFloat(a.amount) > 0),
         isUnallocated: allocations.length === 0 || totalAllocated === 0,
       });
-    } finally {
-      setIsSubmitting(false);
+      // onSubmit is expected to call onClose — don't reset state after success
+      // to avoid setting state on an unmounted component
+    } catch (err) {
+      setIsSubmitting(false); // only reset on error — success closes the modal
+      throw err;
     }
   };
 
@@ -225,7 +231,7 @@ export const CarbonPaymentModal: React.FC<CarbonPaymentModalProps> = ({
                   id="payment-amount"
                   label="Amount *"
                   value={formData.amount}
-                  onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                  onChange={(_e, { value }) => setFormData(prev => ({ ...prev, amount: String(value) }))}
                   step={0.01}
                   min={0}
                   hideSteppers
@@ -250,7 +256,9 @@ export const CarbonPaymentModal: React.FC<CarbonPaymentModalProps> = ({
                   onChange={(e) => setFormData(prev => ({ ...prev, method: e.target.value }))}
                 >
                   {PAYMENT_METHODS.map(method => (
-                    <SelectItem key={method} value={method} text={method} />
+                    <React.Fragment key={method}>
+                      <SelectItem value={method} text={method} />
+                    </React.Fragment>
                   ))}
                 </Select>
               </Column>
@@ -440,7 +448,7 @@ export const CarbonPaymentModal: React.FC<CarbonPaymentModalProps> = ({
                             id={`allocation-amount-${index}`}
                             label="Amount"
                             value={allocation.amount}
-                            onChange={(e) => updateAllocation(index, 'amount', e.target.value)}
+                            onChange={(_e, { value }) => updateAllocation(index, 'amount', String(value))}
                             step={0.01}
                             min={0}
                             hideSteppers

@@ -26,6 +26,13 @@ import {
   ResetPasswordSchema,
 } from './_schemas.js';
 
+const normaliseAccessRole = (raw: unknown, role: string): 'super_admin' | 'tenant_admin' | 'user' => {
+  if (raw === 'super_admin' || raw === 'tenant_admin' || raw === 'user') {
+    return raw;
+  }
+  return role === 'Admin' ? 'tenant_admin' : 'user';
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
@@ -75,15 +82,35 @@ async function login(req: VercelRequest, res: VercelResponse) {
     }
     
     const result = await authenticateUser(email, password);
-    
-    if (!result) {
+
+    if (result.success === false) {
+      const failure = result;
       await logAuditEvent({
         req,
         action: 'auth.login.failed',
         tableName: 'user_profiles',
-        newData: { email: email.toLowerCase() },
+        newData: {
+          email: email.toLowerCase(),
+          reason: failure.reason,
+        },
       });
-      return apiError(res, 401, 'Invalid email or password');
+
+      if (failure.reason === 'ACCOUNT_PENDING') {
+        return res.status(403).json({
+          success: false,
+          message: 'Account pending approval',
+        });
+      }
+
+      if (failure.reason === 'ACCOUNT_INACTIVE') {
+        return apiError(res, 403, failure.message);
+      }
+
+      if (failure.reason === 'TENANT_LINK_MISSING') {
+        return apiError(res, 400, failure.message);
+      }
+
+      return apiError(res, 401, failure.message);
     }
 
     await logAuditEvent({
@@ -119,7 +146,7 @@ async function register(req: VercelRequest, res: VercelResponse) {
 
 async function changePasswordHandler(req: VercelRequest, res: VercelResponse) {
   const authReq = req as AuthenticatedRequest;
-  if (!verifyToken(authReq, res)) return;
+  if (!(await verifyToken(authReq, res))) return;
 
   try {
     const { userId, currentPassword, newPassword } = ChangePasswordSchema.parse(req.body);
@@ -226,7 +253,7 @@ async function resetPasswordHandler(req: VercelRequest, res: VercelResponse) {
 
 async function me(req: VercelRequest, res: VercelResponse) {
   const authReq = req as AuthenticatedRequest;
-  if (!verifyToken(authReq, res)) return;
+  if (!(await verifyToken(authReq, res))) return;
 
   try {
     if (!authReq.user) {
@@ -234,7 +261,9 @@ async function me(req: VercelRequest, res: VercelResponse) {
     }
 
     const user = await getUserById(authReq.user.id);
-    if (!user || user.status !== 'Active') {
+    const normalisedStatus = String(user?.status || '').toLowerCase();
+    const isApprovedStatus = normalisedStatus === 'active' || normalisedStatus === 'approved';
+    if (!user || !isApprovedStatus) {
       return apiError(res, 401, 'Invalid or expired token');
     }
 
@@ -242,6 +271,11 @@ async function me(req: VercelRequest, res: VercelResponse) {
       id: user.id,
       email: user.email,
       role: user.role,
+      status: user.status,
+      accessRole: normaliseAccessRole((user as any).access_role, user.role),
+      tenantId: (user as any).tenant_id ?? null,
+      tenantStatus: (user as any).tenant_status ?? null,
+      tenantName: (user as any).tenant_name ?? null,
     });
   } catch (error) {
     return apiError(res, 500, 'Failed to load session', error);

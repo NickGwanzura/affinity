@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   AuthenticatedRequest,
   apiError,
+  getTenantId,
   handleCors,
   requireRole,
   setSecurityHeaders,
@@ -17,15 +18,11 @@ const isMissingTableError = (error: unknown, tableName: string): boolean =>
 const isMissingColumnError = (error: unknown, columnName: string, tableName: string): boolean =>
   error instanceof Error && error.message.includes(`column "${columnName}" of relation "${tableName}" does not exist`);
 
+// NOTE: Run once in DB: CREATE SEQUENCE IF NOT EXISTS receipt_number_seq START 1;
 async function generateReceiptNumber(): Promise<string> {
-  const year = new Date().getFullYear();
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase();
-    const candidate = `RCPT-${year}-${suffix}`;
-    const rows = await sql`SELECT id FROM public.receipts WHERE receipt_number = ${candidate} LIMIT 1`;
-    if (rows.length === 0) return candidate;
-  }
-  throw new Error('Failed to generate unique receipt number');
+  const result = await sql`SELECT nextval('receipt_number_seq') as n`;
+  const n = String(result[0].n).padStart(6, '0');
+  return `REC-${n}`;
 }
 
 function normalizeReceiptItems(items: Array<Record<string, unknown>> = []) {
@@ -62,21 +59,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
 
   const authReq = req as AuthenticatedRequest;
-  if (!verifyToken(authReq, res)) return;
+  if (!(await verifyToken(authReq, res))) return;
 
   try {
+    const tenantId = getTenantId(req);
     switch (req.method) {
       case 'GET':
-        return await listReceipts(res);
+        return await listReceipts(res, tenantId);
       case 'POST':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await createReceipt(req, res);
+        return await createReceipt(req, res, tenantId);
       case 'PUT':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await updateReceipt(req, res);
+        return await updateReceipt(req, res, tenantId);
       case 'DELETE':
         if (!requireRole(authReq, res, ['Admin'])) return;
-        return await deleteReceipt(req, res);
+        return await deleteReceipt(req, res, tenantId);
       default:
         return apiError(res, 405, 'Method not allowed');
     }
@@ -85,11 +83,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listReceipts(res: VercelResponse) {
+async function listReceipts(res: VercelResponse, tenantId: string) {
   try {
     const rows = await sql`
       SELECT *
       FROM public.receipts
+      WHERE tenant_id = ${tenantId}::uuid
       ORDER BY payment_date DESC, created_at DESC
     `;
     return res.status(200).json(rows);
@@ -101,7 +100,7 @@ async function listReceipts(res: VercelResponse) {
   }
 }
 
-async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
+async function createReceipt(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const user = req.user;
   try {
     const data = ReceiptSchema.parse(req.body);
@@ -112,7 +111,7 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
       const rows = await sql`
         INSERT INTO public.receipts (
           receipt_number, invoice_id, payment_id, client_name, client_email, client_address,
-          amount_received, currency, payment_method, payment_date, reference_number, notes, items, batch
+          amount_received, currency, payment_method, payment_date, reference_number, notes, items, batch, tenant_id
         )
         VALUES (
           ${receiptNumber},
@@ -128,10 +127,19 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
           ${data.reference_number || null},
           ${data.notes || null},
           ${normalizedItems.length > 0 ? JSON.stringify(normalizedItems) : null}::jsonb,
-          ${data.batch || null}
+          ${data.batch || null},
+          ${tenantId}::uuid
         )
         RETURNING *
       `;
+      await logAuditEvent({
+        req,
+        userId: user?.id,
+        action: 'receipt:create',
+        tableName: 'receipts',
+        recordId: rows[0].id,
+        newData: data,
+      });
       return res.status(201).json({
         ...rows[0],
         ...(normalizedItems.length > 0 ? { items: normalizedItems } : {}),
@@ -141,7 +149,7 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
         const rows = await sql`
           INSERT INTO public.receipts (
             receipt_number, invoice_id, payment_id, client_name, client_email, client_address,
-            amount_received, currency, payment_method, payment_date, reference_number, notes, batch
+            amount_received, currency, payment_method, payment_date, reference_number, notes, batch, tenant_id
           )
           VALUES (
             ${receiptNumber},
@@ -156,7 +164,8 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
             ${data.payment_date},
             ${data.reference_number || null},
             ${data.notes || null},
-            ${data.batch || null}
+            ${data.batch || null},
+            ${tenantId}::uuid
           )
           RETURNING *
         `;
@@ -181,7 +190,7 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const user = req.user;
   try {
     const { id } = req.query;
@@ -191,7 +200,7 @@ async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse) {
 
     const rows = await sql`
       DELETE FROM public.receipts
-      WHERE id = ${id}::uuid
+      WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid
       RETURNING id
     `;
 
@@ -214,7 +223,7 @@ async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const user = req.user;
   try {
     const data = ReceiptUpdateSchema.parse(req.body);
@@ -222,26 +231,56 @@ async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse) {
       ? normalizeReceiptItems(data.items as Array<Record<string, unknown>>)
       : null;
 
+    // Build dynamic SET clause — only include fields present in body
+    const updates: string[] = [];
+    const values: unknown[] = [];
+    let paramIdx = 1;
+    const body = req.body as Record<string, unknown>;
+
+    const fieldMap: Record<string, { value: unknown; cast?: string }> = {
+      invoice_id: { value: data.invoice_id ?? null, cast: '::uuid' },
+      payment_id: { value: data.payment_id ?? null, cast: '::uuid' },
+      client_name: { value: data.client_name },
+      client_email: { value: data.client_email },
+      client_address: { value: data.client_address },
+      amount_received: { value: data.amount_received },
+      currency: { value: data.currency },
+      payment_method: { value: data.payment_method },
+      payment_date: { value: data.payment_date },
+      reference_number: { value: data.reference_number },
+      notes: { value: data.notes },
+      batch: { value: data.batch },
+    };
+
+    for (const [field, meta] of Object.entries(fieldMap)) {
+      if (field in body) {
+        const cast = meta.cast ?? '';
+        updates.push(`${field} = $${paramIdx}${cast}`);
+        values.push(meta.value ?? null);
+        paramIdx++;
+      }
+    }
+
+    // Handle items column separately (may not exist in older schemas)
+    if (normalizedItems && 'items' in body) {
+      updates.push(`items = $${paramIdx}::jsonb`);
+      values.push(JSON.stringify(normalizedItems));
+      paramIdx++;
+    }
+
+    if (updates.length === 0) {
+      return apiError(res, 400, 'No fields to update');
+    }
+
+    values.push(req.query.id);
+    paramIdx++;
+    values.push(tenantId);
+
     try {
-      const rows = await sql`
-        UPDATE public.receipts
-        SET
-          invoice_id = COALESCE(${data.invoice_id || null}::uuid, invoice_id),
-          payment_id = COALESCE(${data.payment_id || null}::uuid, payment_id),
-          client_name = COALESCE(${data.client_name || null}, client_name),
-          client_email = COALESCE(${data.client_email || null}, client_email),
-          client_address = COALESCE(${data.client_address || null}, client_address),
-          amount_received = COALESCE(${data.amount_received || null}, amount_received),
-          currency = COALESCE(${data.currency || null}, currency),
-          payment_method = COALESCE(${data.payment_method || null}, payment_method),
-          payment_date = COALESCE(${data.payment_date || null}, payment_date),
-          reference_number = COALESCE(${data.reference_number || null}, reference_number),
-          notes = COALESCE(${data.notes || null}, notes),
-          items = COALESCE(${normalizedItems ? JSON.stringify(normalizedItems) : null}::jsonb, items),
-          batch = COALESCE(${data.batch || null}, batch)
-        WHERE id = ${req.query.id}::uuid
-        RETURNING *
-      `;
+      const rows = await sql.query(
+        `UPDATE public.receipts SET ${updates.join(', ')} WHERE id = $${paramIdx - 1}::uuid AND tenant_id = $${paramIdx}::uuid RETURNING *`,
+        values,
+      );
       if (rows.length === 0) return apiError(res, 404, 'Receipt not found');
 
       await logAuditEvent({
@@ -258,25 +297,30 @@ async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse) {
         ...(normalizedItems ? { items: normalizedItems } : {}),
       });
     } catch (error) {
-      if (isMissingColumnError(error, 'items', 'receipts')) {
-        const rows = await sql`
-          UPDATE public.receipts
-          SET
-            invoice_id = COALESCE(${data.invoice_id || null}::uuid, invoice_id),
-            payment_id = COALESCE(${data.payment_id || null}::uuid, payment_id),
-            client_name = COALESCE(${data.client_name || null}, client_name),
-            client_email = COALESCE(${data.client_email || null}, client_email),
-            client_address = COALESCE(${data.client_address || null}, client_address),
-            amount_received = COALESCE(${data.amount_received || null}, amount_received),
-            currency = COALESCE(${data.currency || null}, currency),
-            payment_method = COALESCE(${data.payment_method || null}, payment_method),
-            payment_date = COALESCE(${data.payment_date || null}, payment_date),
-            reference_number = COALESCE(${data.reference_number || null}, reference_number),
-            notes = COALESCE(${data.notes || null}, notes),
-            batch = COALESCE(${data.batch || null}, batch)
-          WHERE id = ${req.query.id}::uuid
-          RETURNING *
-        `;
+      if (isMissingColumnError(error, 'items', 'receipts') && normalizedItems) {
+        // Retry without items column
+        const retryUpdates = updates.filter(u => !u.startsWith('items ='));
+        const retryValues = [...values];
+        // Rebuild without items param — simplest to just redo
+        const ru: string[] = [];
+        const rv: unknown[] = [];
+        let rIdx = 1;
+        for (const [field, meta] of Object.entries(fieldMap)) {
+          if (field in body) {
+            const cast = meta.cast ?? '';
+            ru.push(`${field} = $${rIdx}${cast}`);
+            rv.push(meta.value ?? null);
+            rIdx++;
+          }
+        }
+        if (ru.length === 0) return apiError(res, 400, 'No fields to update');
+        rv.push(req.query.id);
+        rIdx++;
+        rv.push(tenantId);
+        const rows = await sql.query(
+          `UPDATE public.receipts SET ${ru.join(', ')} WHERE id = $${rIdx - 1}::uuid AND tenant_id = $${rIdx}::uuid RETURNING *`,
+          rv,
+        );
         if (rows.length === 0) return apiError(res, 404, 'Receipt not found');
         return res.status(200).json({
           ...rows[0],

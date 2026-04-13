@@ -1,13 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { PoolClient } from '@neondatabase/serverless';
 import { ZodError } from 'zod';
-import { 
-  AuthenticatedRequest, 
-  verifyToken, 
-  requireRole, 
-  setSecurityHeaders, 
-  handleCors, 
-  apiError 
+import {
+  AuthenticatedRequest,
+  verifyToken,
+  requireRole,
+  setSecurityHeaders,
+  handleCors,
+  apiError,
+  getTenantId,
 } from './_middleware.js';
 import { sql, withTransaction, validateOrderColumn } from './_db.js';
 import { logAuditEvent } from './_audit.js';
@@ -109,28 +110,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   
   const authReq = req as AuthenticatedRequest;
   
-  if (!verifyToken(authReq, res)) return;
+  if (!(await verifyToken(authReq, res))) return;
   
   try {
+    const tenantId = getTenantId(req);
     switch (req.method) {
       case 'GET':
         if (req.query.id) {
-          return await getQuote(authReq, res);
+          return await getQuote(authReq, res, tenantId);
         }
-        return await listQuotes(authReq, res);
-        
+        return await listQuotes(authReq, res, tenantId);
+
       case 'POST':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await createQuote(authReq, res);
-        
+        return await createQuote(authReq, res, tenantId);
+
       case 'PUT':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await updateQuote(authReq, res);
-        
+        return await updateQuote(authReq, res, tenantId);
+
       case 'DELETE':
         if (!requireRole(authReq, res, ['Admin'])) return;
-        return await deleteQuote(authReq, res);
-        
+        return await deleteQuote(authReq, res, tenantId);
+
       default:
         apiError(res, 405, 'Method not allowed');
     }
@@ -139,20 +141,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listQuotes(req: AuthenticatedRequest, res: VercelResponse) {
+async function listQuotes(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
-    
+
     let orderColumn = 'created_at';
     if (sortBy) {
       const validated = validateOrderColumn('quotes', sortBy);
       if (validated) orderColumn = validated;
     }
     const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
-    
+
     const [countResult, rows] = await Promise.all([
-      sql`SELECT COUNT(*) as total FROM quotes`,
+      sql`SELECT COUNT(*) as total FROM quotes WHERE tenant_id = ${tenantId}::uuid`,
       sql`
         SELECT q.*,
           COALESCE(
@@ -160,6 +162,7 @@ async function listQuotes(req: AuthenticatedRequest, res: VercelResponse) {
             '[]'::jsonb
           ) as items
         FROM quotes q
+        WHERE q.tenant_id = ${tenantId}::uuid
         ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
         LIMIT ${limit} OFFSET ${offset}
       `
@@ -179,9 +182,9 @@ async function listQuotes(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function getQuote(req: AuthenticatedRequest, res: VercelResponse) {
+async function getQuote(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const { id } = req.query;
-  
+
   const rows = await sql`
     SELECT q.*,
       COALESCE(
@@ -189,7 +192,7 @@ async function getQuote(req: AuthenticatedRequest, res: VercelResponse) {
         '[]'::jsonb
       ) as items
     FROM quotes q
-    WHERE q.id = ${id}::uuid
+    WHERE q.id = ${id}::uuid AND q.tenant_id = ${tenantId}::uuid
   `;
   
   if (rows.length === 0) {
@@ -256,7 +259,7 @@ async function insertQuoteItems(client: PoolClient, quoteId: string, items: Quot
   }
 }
 
-async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
+async function createQuote(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const user = req.user;
   try {
     const data = QuoteSchema.parse(req.body);
@@ -270,10 +273,10 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
         `
           INSERT INTO quotes (
             quote_number, vehicle_id, client_id, client_name, client_email, client_address,
-            amount_usd, currency, status, description, valid_until, items
+            amount_usd, currency, status, description, valid_until, items, tenant_id
           )
           VALUES (
-            $1, $2::uuid, $3::uuid, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb
+            $1, $2::uuid, $3::uuid, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::uuid
           )
           RETURNING *
         `,
@@ -290,6 +293,7 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
           data.description || null,
           data.valid_until || null,
           JSON.stringify(itemsSnapshot),
+          tenantId,
         ],
       );
 
@@ -315,7 +319,7 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateQuote(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const user = req.user;
   const { id } = req.query;
   
@@ -325,47 +329,61 @@ async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
     const result = await withTransaction(async (client) => {
       let totalAmount = undefined;
       let itemsSnapshot: QuoteItem[] | undefined;
-      if (data.items && data.items.length > 0) {
+      if (Array.isArray(data.items)) {
         totalAmount = calculateQuoteTotal(data.items);
         itemsSnapshot = buildQuoteItemsSnapshot(data.items);
 
         await client.query('DELETE FROM quote_items WHERE quote_id = $1::uuid', [id]);
-        await insertQuoteItems(client, String(id), data.items);
+        if (data.items.length > 0) {
+          await insertQuoteItems(client, String(id), data.items);
+        }
       }
 
+      // Build dynamic SET clause — only include fields present in body
+      const updates: string[] = ['updated_at = NOW()'];
+      const values: unknown[] = [];
+      let paramIdx = 1;
+
+      const bodyRecord = req.body as Record<string, unknown>;
+      const fieldMap: Record<string, { value: unknown; cast?: string }> = {
+        vehicle_id: { value: data.vehicle_id ?? null, cast: '::uuid' },
+        client_id: { value: data.client_id ?? null, cast: '::uuid' },
+        client_name: { value: data.client_name },
+        client_email: { value: data.client_email },
+        client_address: { value: data.client_address },
+        currency: { value: data.currency },
+        status: { value: data.status },
+        description: { value: data.description },
+        valid_until: { value: data.valid_until },
+      };
+
+      for (const [field, meta] of Object.entries(fieldMap)) {
+        if (field in bodyRecord) {
+          const cast = meta.cast ?? '';
+          updates.push(`${field} = $${paramIdx}${cast}`);
+          values.push(meta.value ?? null);
+          paramIdx++;
+        }
+      }
+
+      // Always update amount_usd and items if items were provided
+      if (totalAmount !== undefined) {
+        updates.push(`amount_usd = $${paramIdx}`);
+        values.push(totalAmount);
+        paramIdx++;
+      }
+      if (itemsSnapshot) {
+        updates.push(`items = $${paramIdx}::jsonb`);
+        values.push(JSON.stringify(itemsSnapshot));
+        paramIdx++;
+      }
+
+      values.push(id);
+      paramIdx++;
+      values.push(tenantId);
       const rows = await client.query(
-        `
-          UPDATE quotes
-          SET
-            vehicle_id = COALESCE($1::uuid, vehicle_id),
-            client_id = COALESCE($2::uuid, client_id),
-            client_name = COALESCE($3, client_name),
-            client_email = COALESCE($4, client_email),
-            client_address = COALESCE($5, client_address),
-            amount_usd = COALESCE($6, amount_usd),
-            currency = COALESCE($7, currency),
-            status = COALESCE($8, status),
-            description = COALESCE($9, description),
-            valid_until = COALESCE($10, valid_until),
-            items = COALESCE($11::jsonb, items),
-            updated_at = NOW()
-          WHERE id = $12::uuid
-          RETURNING *
-        `,
-        [
-          data.vehicle_id ?? null,
-          data.client_id ?? null,
-          data.client_name ?? null,
-          data.client_email ?? null,
-          data.client_address ?? null,
-          totalAmount ?? null,
-          data.currency ?? null,
-          data.status ?? null,
-          data.description ?? null,
-          data.valid_until ?? null,
-          itemsSnapshot ? JSON.stringify(itemsSnapshot) : null,
-          id,
-        ],
+        `UPDATE quotes SET ${updates.join(', ')} WHERE id = $${paramIdx - 1}::uuid AND tenant_id = $${paramIdx}::uuid RETURNING *`,
+        values,
       );
 
       if (rows.rows.length === 0) {
@@ -394,15 +412,21 @@ async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteQuote(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteQuote(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
   const user = req.user;
   const { id } = req.query;
-  
-  const oldQuote = await sql`SELECT * FROM quotes WHERE id = ${id}::uuid`;
+
+  const oldQuote = await sql`SELECT * FROM quotes WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid`;
+  if (oldQuote.length === 0) {
+    return apiError(res, 404, 'Not found');
+  }
 
   await withTransaction(async (client) => {
     await client.query('DELETE FROM quote_items WHERE quote_id = $1::uuid', [id]);
-    await client.query('DELETE FROM quotes WHERE id = $1::uuid', [id]);
+    const result = await client.query('DELETE FROM quotes WHERE id = $1::uuid AND tenant_id = $2::uuid RETURNING id', [id, tenantId]);
+    if (result.rows.length === 0) {
+      throw new Error('Not found');
+    }
   });
 
   await logAuditEvent({

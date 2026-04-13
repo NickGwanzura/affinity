@@ -3,6 +3,7 @@ export type Currency = 'GBP' | 'NAD' | 'USD' | 'BWP' | 'ZAR';
 export type VehicleStatus = 'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana' | 'Sold';
 export type ExpenseCategory = 'Shipping' | 'Fuel' | 'Tolls' | 'Duty' | 'Food' | 'Repairs' | 'Driver Disbursement' | 'Other';
 export type UserRole = 'Admin' | 'Driver' | 'Manager' | 'Accountant';
+export type AccessRole = 'super_admin' | 'tenant_admin' | 'user';
 export type QuoteStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected';
 export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
 export type TripStatus = 'Planned' | 'Assigned' | 'In Transit' | 'Delayed' | 'Completed' | 'Cancelled';
@@ -57,7 +58,22 @@ export interface AppUser {
   name: string;
   email: string;
   role: UserRole;
-  status: 'Active' | 'Inactive';
+  accessRole?: AccessRole;
+  tenantId?: string | null;
+  tenantStatus?: string | null;
+  tenantName?: string | null;
+  status: 'Active' | 'Inactive' | 'Pending';
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  status: 'pending' | 'active' | 'suspended';
+  user_count?: number;
+  pending_users?: number;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface AuthSession {
@@ -186,6 +202,7 @@ export interface Payment {
   currency?: 'USD' | 'GBP';
   method: string;
   date: string;
+  notes?: string;
   status?: 'allocated' | 'unallocated' | 'credit';
   // Audit fields for soft delete and tracking
   is_deleted?: boolean;

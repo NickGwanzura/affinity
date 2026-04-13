@@ -8,6 +8,78 @@
 @source "../services/**/*.{ts,tsx}";
 @source "../hooks/**/*.{ts,tsx}";
 
+/* ============================================
+   IBM CARBON DESIGN SYSTEM - CUSTOM OVERRIDES
+   ============================================ */
+
+/* Enforce sharp corners (Carbon principle) - scoped to Carbon components only */
+.cds--tile,
+.cds--data-table,
+.cds--data-table-container,
+.cds--modal-container,
+.cds--btn,
+.cds--tag,
+.cds--text-input,
+.cds--select-input,
+.cds--text-area,
+.cds--number input,
+.cds--search-input {
+  border-radius: 0 !important;
+}
+
+/* Allow 50% border-radius only on avatar elements */
+[class*="avatar"],
+[class*="Avatar"],
+img[alt*="avatar"],
+img[alt*="Avatar"] {
+  border-radius: 50% !important;
+}
+
+/* Carbon Spacing Utilities */
+.cds-spacing-01 { margin: 2px; }
+.cds-spacing-02 { margin: 4px; }
+.cds-spacing-03 { margin: 8px; }
+.cds-spacing-04 { margin: 12px; }
+.cds-spacing-05 { margin: 16px; }
+.cds-spacing-06 { margin: 24px; }
+.cds-spacing-07 { margin: 32px; }
+.cds-spacing-08 { margin: 40px; }
+.cds-spacing-09 { margin: 48px; }
+.cds-spacing-10 { margin: 64px; }
+
+/* Ensure proper focus states for Carbon components */
+.cds--btn:focus,
+.cds--text-input:focus,
+.cds--select-input:focus,
+.cds--text-area:focus,
+.cds--dropdown:focus {
+  outline: 2px solid var(--cds-focus, #0f62fe) !important;
+  outline-offset: -2px !important;
+}
+
+/* Modal backdrop styling */
+.cds--modal {
+  background-color: rgba(22, 22, 22, 0.5) !important;
+}
+
+/* DataTable header styling */
+.cds--table-header {
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.16px !important;
+  font-size: var(--cds-label-01-font-size, 0.75rem) !important;
+}
+
+/* Ensure proper overflow menu positioning */
+.cds--overflow-menu-options {
+  z-index: 9000 !important;
+}
+
+/* Tab active state */
+.cds--tabs__nav-item--selected {
+  border-bottom-color: var(--cds-interactive, #0f62fe) !important;
+}
+
 :root {
   --app-font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
 }
