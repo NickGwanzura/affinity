@@ -896,7 +896,8 @@ export const ClientDirectory: React.FC = () => {
                 <select
                   value={formData.opening_balance_currency}
                   onChange={(e) => setFormData({ ...formData, opening_balance_currency: e.target.value as 'USD' | 'GBP' })}
-                  className="w-full border border-[var(--cds-border-subtle,#c6c6c6)] px-3 py-2 text-sm bg-white"
+                  className="w-full border border-[var(--cds-border-subtle,#c6c6c6)] px-3 py-2 text-sm"
+                  style={{ background: 'var(--cds-background, #ffffff)' }}
                 >
                   <option value="USD">USD</option>
                   <option value="GBP">GBP</option>

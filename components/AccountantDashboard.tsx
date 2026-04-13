@@ -19,6 +19,8 @@ import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from 
 import PayslipsListView from './shared/PayslipsListView';
 import { dataService } from '../services/dataService';
 import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
+import { Button as CarbonButton, Tile } from '@carbon/react';
+import { Add, Document, Money, Wallet, ChartLine, Time } from '@carbon/icons-react';
 import { Button, StatCard, StatusBadge, SkeletonStatCards, SkeletonTable } from './ui';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
@@ -738,78 +740,49 @@ export const AccountantDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-zinc-900">Accountant Dashboard</h1>
-          <p className="text-zinc-500 mt-1">Financial overview and management</p>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Accountant Dashboard</h1>
+          <p className="mt-1" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Financial overview and management</p>
         </div>
-        <button 
-          onClick={() => setShowExpenseModal(true)}
-          className="bg-green-600 text-white px-4 sm:px-6 py-3 sm:py-2.5 font-bold text-sm hover:bg-green-700 transition-all shadow-xl shadow-green-100 flex items-center gap-2 min-h-[48px]"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <CarbonButton kind="primary" renderIcon={Add} onClick={() => setShowExpenseModal(true)}>
           Add Expense
-        </button>
+        </CarbonButton>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 shadow-sm border border-zinc-200">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Total Revenue</p>
-            <div className="w-10 h-10 bg-green-100 flex items-center justify-center">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-zinc-900">{formatCurrency(totalRevenue)}</p>
-          <p className="text-xs text-green-600 mt-2 font-semibold">From {invoices.filter(i => i.status === 'Paid').length} paid invoices</p>
-        </div>
-
-        <div className="bg-white p-6 shadow-sm border border-zinc-200">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Total Expenses</p>
-            <div className="w-10 h-10 bg-red-100 flex items-center justify-center">
-              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-zinc-900">{formatCurrency(totalExpenses)}</p>
-          <p className="text-xs text-red-600 mt-2 font-semibold">{expenses.length} expense entries</p>
-        </div>
-
-        <div className="bg-white p-6 shadow-sm border border-zinc-200">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Net Profit</p>
-            <div className={`w-10 h-10 ${netProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100'} flex items-center justify-center`}>
-              <svg className={`w-5 h-5 ${netProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-          </div>
-          <p className={`text-3xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-            {formatCurrency(netProfit)}
-          </p>
-          <p className="text-xs text-zinc-500 mt-2 font-semibold">Revenue - Expenses</p>
-        </div>
-
-        <div className="bg-white p-6 shadow-sm border border-zinc-200">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">Pending Invoices</p>
-            <div className="w-10 h-10 bg-yellow-100 flex items-center justify-center">
-              <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-zinc-900">{formatCurrency(totalPending)}</p>
-          <p className="text-xs text-yellow-600 mt-2 font-semibold">{pendingInvoices.length} outstanding</p>
-        </div>
+        <StatCard
+          title="Total Revenue"
+          value={formatCurrency(totalRevenue)}
+          subtitle={`From ${invoices.filter(i => i.status === 'Paid').length} paid invoices`}
+          icon={<Money size={20} />}
+          color="green"
+        />
+        <StatCard
+          title="Total Expenses"
+          value={formatCurrency(totalExpenses)}
+          subtitle={`${expenses.length} expense entries`}
+          icon={<Wallet size={20} />}
+          color="red"
+        />
+        <StatCard
+          title="Net Profit"
+          value={formatCurrency(netProfit)}
+          subtitle="Revenue - Expenses"
+          icon={<ChartLine size={20} />}
+          color={netProfit >= 0 ? 'blue' : 'amber'}
+        />
+        <StatCard
+          title="Pending Invoices"
+          value={formatCurrency(totalPending)}
+          subtitle={`${pendingInvoices.length} outstanding`}
+          icon={<Time size={20} />}
+          color="amber"
+        />
       </div>
 
       {/* Tabs */}
-      <div className="bg-white shadow-sm border border-zinc-200 overflow-hidden">
-        <div className="border-b border-zinc-200 bg-zinc-50">
+      <Tile style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ borderBottom: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-layer-02, #f4f4f4)' }}>
           <div className="p-3">
             <DashboardSectionSwitcher
               value={activeTab}
@@ -889,16 +862,12 @@ export const AccountantDashboard: React.FC = () => {
               {/* Header */}
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-bold text-zinc-900">Clients</h3>
-                  <p className="text-xs text-zinc-500 mt-0.5">{mergedClients.length} total — includes all clients from invoices</p>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Clients</h3>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{mergedClients.length} total — includes all clients from invoices</p>
                 </div>
-                <button
-                  onClick={() => { setEditingClient(null); setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' }); setShowClientModal(true); }}
-                  className="bg-green-600 text-white px-4 py-2 font-semibold hover:bg-green-700 flex items-center gap-2 text-sm"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg>
+                <CarbonButton kind="primary" size="sm" renderIcon={Add} onClick={() => { setEditingClient(null); setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' }); setShowClientModal(true); }}>
                   Add Client
-                </button>
+                </CarbonButton>
               </div>
 
               <AccountantClientsView
@@ -924,8 +893,8 @@ export const AccountantDashboard: React.FC = () => {
           {activeTab === 'payslips' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-zinc-900">Payslips</h3>
-                <button onClick={() => { setPayslipForm(createEmptyPayslipForm()); setShowPayslipModal(true); }} className="bg-pink-600 text-white px-4 py-2 font-semibold hover:bg-pink-700 flex items-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2.5" /></svg> Generate Payslip</button>
+                <h3 className="text-lg font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Payslips</h3>
+                <CarbonButton kind="primary" size="sm" renderIcon={Document} onClick={() => { setPayslipForm(createEmptyPayslipForm()); setShowPayslipModal(true); }}>Generate Payslip</CarbonButton>
               </div>
               <PayslipsListView
                 payslips={payslips}
@@ -982,7 +951,7 @@ export const AccountantDashboard: React.FC = () => {
             <AssetRegister userRole={userRole} />
           )}
         </div>
-      </div>
+      </Tile>
 
       <OperatingFundEntryModal
         isOpen={showFundModal}

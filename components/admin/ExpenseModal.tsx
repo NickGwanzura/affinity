@@ -195,18 +195,20 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
       />
 
       {/* Modal Content */}
-      <div className="relative bg-white p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+      <div className="relative p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto" style={{ background: 'var(--cds-background, #ffffff)' }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 
             id="expense-modal-title" 
-            className="text-2xl font-bold text-zinc-900"
+            className="text-2xl font-bold"
+            style={{ color: 'var(--cds-text-primary, #161616)' }}
           >
             Add Expense
           </h3>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-600 transition-colors p-2 hover:bg-zinc-100"
+            className="transition-colors p-2 hover:bg-zinc-100"
+            style={{ color: 'var(--cds-text-secondary, #525252)' }}
             aria-label="Close modal"
             type="button"
           >
@@ -222,16 +224,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
           <div>
             <label 
               htmlFor="expense-vehicle" 
-              className="text-sm font-semibold text-zinc-700 mb-2 block"
+              className="text-sm font-semibold mb-2 block"
+              style={{ color: 'var(--cds-text-secondary, #525252)' }}
             >
-              Vehicle Selection <span className="text-zinc-400 text-xs">(Optional)</span>
+              Vehicle Selection <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>(Optional)</span>
             </label>
             <select
               id="expense-vehicle"
               value={formData.vehicle_id}
               onChange={(e) => handleChange('vehicle_id', e.target.value)}
               disabled={isSubmitting}
-              className="w-full px-4 py-3 border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}
             >
               <option value="">None (General expense)</option>
               {vehicles.map((vehicle) => (
@@ -245,9 +249,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
           {/* Amount & Currency */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label 
-                htmlFor="expense-amount" 
-                className="text-sm font-semibold text-zinc-700 mb-2 block"
+              <label
+                htmlFor="expense-amount"
+                className="text-sm font-semibold mb-2 block"
+                style={{ color: 'var(--cds-text-secondary, #525252)' }}
               >
                 Amount <span className="text-red-500">*</span>
               </label>
@@ -261,11 +266,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 required
                 disabled={isSubmitting}
                 placeholder="0.00"
-                className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                  errors.amount 
-                    ? 'border-red-300 focus:ring-red-500' 
-                    : 'border-zinc-200 focus:ring-green-500'
+                className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                  errors.amount
+                    ? 'border-red-300 focus:ring-red-500'
+                    : 'focus:ring-green-500'
                 }`}
+                style={errors.amount ? undefined : { border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}
                 aria-invalid={!!errors.amount}
                 aria-describedby={errors.amount ? 'amount-error' : undefined}
               />
@@ -279,9 +285,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               )}
             </div>
             <div>
-              <label 
-                htmlFor="expense-currency" 
-                className="text-sm font-semibold text-zinc-700 mb-2 block"
+              <label
+                htmlFor="expense-currency"
+                className="text-sm font-semibold mb-2 block"
+                style={{ color: 'var(--cds-text-secondary, #525252)' }}
               >
                 Currency
               </label>
@@ -290,7 +297,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 value={formData.currency}
                 onChange={(e) => handleChange('currency', e.target.value as Currency)}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}
               >
                 {currencyOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -302,9 +310,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
           {/* Category & Location */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label 
-                htmlFor="expense-category" 
-                className="text-sm font-semibold text-zinc-700 mb-2 block"
+              <label
+                htmlFor="expense-category"
+                className="text-sm font-semibold mb-2 block"
+                style={{ color: 'var(--cds-text-secondary, #525252)' }}
               >
                 Category
               </label>
@@ -313,7 +322,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 value={formData.category}
                 onChange={(e) => handleChange('category', e.target.value as ExpenseCategory)}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}
               >
                 {categoryOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -321,9 +331,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               </select>
             </div>
             <div>
-              <label 
-                htmlFor="expense-location" 
-                className="text-sm font-semibold text-zinc-700 mb-2 block"
+              <label
+                htmlFor="expense-location"
+                className="text-sm font-semibold mb-2 block"
+                style={{ color: 'var(--cds-text-secondary, #525252)' }}
               >
                 Location
               </label>
@@ -332,7 +343,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 value={formData.location}
                 onChange={(e) => handleChange('location', e.target.value as VehicleStatus)}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 border border-zinc-200 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}
               >
                 {locationOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -356,11 +368,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 onChange={(e) => handleChange('driver_name', e.target.value)}
                 required={isDriverDisbursement}
                 disabled={isSubmitting}
-                className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                  errors.driver_name 
-                    ? 'border-red-300 focus:ring-red-500' 
+                className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                  errors.driver_name
+                    ? 'border-red-300 focus:ring-red-500'
                     : 'border-amber-300 focus:ring-amber-500'
                 }`}
+                style={{ background: 'var(--cds-background, #ffffff)' }}
                 aria-invalid={!!errors.driver_name}
                 aria-describedby={errors.driver_name ? 'driver-error' : 'driver-help'}
               >
@@ -389,9 +402,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
 
           {/* Description */}
           <div>
-            <label 
-              htmlFor="expense-description" 
-              className="text-sm font-semibold text-zinc-700 mb-2 block"
+            <label
+              htmlFor="expense-description"
+              className="text-sm font-semibold mb-2 block"
+              style={{ color: 'var(--cds-text-secondary, #525252)' }}
             >
               Description {formData.category === EXPENSE_CATEGORIES.OTHER && <span className="text-red-500">*</span>}
             </label>
@@ -399,17 +413,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               id="expense-description"
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
-              placeholder={formData.category === EXPENSE_CATEGORIES.OTHER 
-                ? "Please specify the type of expense" 
+              placeholder={formData.category === EXPENSE_CATEGORIES.OTHER
+                ? "Please specify the type of expense"
                 : "E.g. Full tank at Engen Windhoek"}
               rows={3}
               required={formData.category === EXPENSE_CATEGORIES.OTHER}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                errors.description 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-zinc-200 focus:ring-green-500'
+              className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                errors.description
+                  ? 'border-red-300 focus:ring-red-500'
+                  : 'focus:ring-green-500'
               }`}
+              style={errors.description ? undefined : { border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}
               aria-invalid={!!errors.description}
               aria-describedby={errors.description ? 'description-error' : undefined}
             />
@@ -429,7 +444,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 border font-semibold hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)', color: 'var(--cds-text-secondary, #525252)' }}
             >
               Cancel
             </button>

@@ -62,25 +62,25 @@ export const AdminTripsView: React.FC<AdminTripsViewProps> = ({ trips, onEditTri
         </div>
       </div>
 
-      <div className=" border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className=" border p-5" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
         <div className="mb-4">
-          <h3 className="text-xl font-black text-zinc-900">Departure Calendar</h3>
-          <p className="mt-1 text-sm text-zinc-500">Operational view of the next 7 days.</p>
+          <h3 className="text-xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>Departure Calendar</h3>
+          <p className="mt-1 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Operational view of the next 7 days.</p>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7 lg:grid-cols-7">
           {nextSevenDays.map((day) => (
-            <div key={day.isoDate} className={` border p-3 ${day.count > 0 ? 'border-blue-200 bg-blue-50' : 'border-zinc-200 bg-zinc-50'}`}>
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{day.label}</p>
-              <p className="mt-2 text-2xl font-black text-zinc-900">{day.dayNumber}</p>
-              <p className="mt-2 text-xs text-zinc-600">{day.count > 0 ? `${day.count} departure${day.count === 1 ? '' : 's'}` : 'No trips'}</p>
+            <div key={day.isoDate} className={` border p-3 ${day.count > 0 ? 'border-blue-200 bg-blue-50' : ''}`} style={day.count === 0 ? { border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-layer-01, #f4f4f4)' } : undefined}>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{day.label}</p>
+              <p className="mt-2 text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>{day.dayNumber}</p>
+              <p className="mt-2 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{day.count > 0 ? `${day.count} departure${day.count === 1 ? '' : 's'}` : 'No trips'}</p>
             </div>
           ))}
         </div>
       </div>
 
-      <div className=" border border-zinc-200 bg-white shadow-sm">
+      <div className=" border" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
         {trips.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500">No trips created yet. Add the first planned route to begin scheduling.</div>
+          <div className="p-8 text-center" style={{ color: 'var(--cds-text-secondary, #525252)' }}>No trips created yet. Add the first planned route to begin scheduling.</div>
         ) : (
           <div className="divide-y divide-zinc-200">
             {trips.map((trip) => (
@@ -88,28 +88,28 @@ export const AdminTripsView: React.FC<AdminTripsViewProps> = ({ trips, onEditTri
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-lg font-black text-zinc-900">{trip.title}</p>
+                      <p className="text-lg font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>{trip.title}</p>
                       <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${statusClasses[trip.status]}`}>
                         {trip.status}
                       </span>
-                      <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">
+                      <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'var(--cds-layer-01, #f4f4f4)', color: 'var(--cds-text-secondary, #525252)' }}>
                         {trip.trip_number}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-zinc-600">
+                    <p className="mt-2 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
                       {trip.route_origin} → {trip.route_destination}
                     </p>
-                    <div className="mt-3 flex flex-wrap gap-4 text-xs text-zinc-500">
+                    <div className="mt-3 flex flex-wrap gap-4 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
                       <span>Driver: {trip.assigned_driver_name || 'Unassigned'}</span>
                       <span>Vehicle: {trip.assigned_vehicle_label || 'Unassigned'}</span>
                       <span>Departure: {new Date(trip.departure_date).toLocaleString()}</span>
                       <span>ETA: {new Date(trip.eta_date).toLocaleString()}</span>
                     </div>
                     {trip.route_waypoints && trip.route_waypoints.length > 0 && (
-                      <p className="mt-2 text-xs text-zinc-500">Waypoints: {trip.route_waypoints.join(', ')}</p>
+                      <p className="mt-2 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Waypoints: {trip.route_waypoints.join(', ')}</p>
                     )}
                     {trip.notes && (
-                      <p className="mt-3 text-sm text-zinc-600">{trip.notes}</p>
+                      <p className="mt-3 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{trip.notes}</p>
                     )}
                   </div>
 

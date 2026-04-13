@@ -136,18 +136,20 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
       />
 
       {/* Modal Content */}
-      <div className="relative bg-white  p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+      <div className="relative p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto" style={{ background: 'var(--cds-background, #ffffff)' }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 
             id="vehicle-modal-title" 
-            className="text-2xl font-bold text-zinc-900"
+            className="text-2xl font-bold"
+            style={{ color: 'var(--cds-text-primary, #161616)' }}
           >
             {modalTitle}
           </h3>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-600 transition-colors p-2 hover:bg-zinc-100"
+            className="transition-colors p-2 hover:bg-zinc-100"
+            style={{ color: 'var(--cds-text-secondary, #525252)' }}
             aria-label="Close modal"
             type="button"
           >
@@ -161,9 +163,10 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* VIN Number Field */}
           <div>
-            <label 
-              htmlFor="vehicle-vin" 
-              className="text-sm font-semibold text-zinc-700 mb-2 block"
+            <label
+              htmlFor="vehicle-vin"
+              className="text-sm font-semibold mb-2 block"
+              style={{ color: 'var(--cds-text-secondary, #525252)' }}
             >
               VIN Number <span className="text-red-500">*</span>
             </label>
@@ -175,11 +178,12 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               required
               disabled={isSubmitting}
               placeholder="Enter VIN number"
-              className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                errors.vin_number 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-zinc-200 focus:ring-blue-500'
+              className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                errors.vin_number
+                  ? 'border-red-300 focus:ring-red-500'
+                  : 'focus:ring-blue-500'
               }`}
+              style={errors.vin_number ? undefined : { border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}
               aria-invalid={!!errors.vin_number}
               aria-describedby={errors.vin_number ? 'vin-error' : 'vin-help'}
             />
@@ -191,7 +195,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
                 {errors.vin_number}
               </p>
             ) : (
-              <p id="vin-help" className="text-xs text-zinc-400 mt-1">
+              <p id="vin-help" className="text-xs mt-1" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
                 Unique vehicle identification number
               </p>
             )}
@@ -199,9 +203,10 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
 
           {/* Make & Model Field */}
           <div>
-            <label 
-              htmlFor="vehicle-model" 
-              className="text-sm font-semibold text-zinc-700 mb-2 block"
+            <label
+              htmlFor="vehicle-model"
+              className="text-sm font-semibold mb-2 block"
+              style={{ color: 'var(--cds-text-secondary, #525252)' }}
             >
               Make & Model <span className="text-red-500">*</span>
             </label>
@@ -213,11 +218,12 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               required
               disabled={isSubmitting}
               placeholder="e.g. Toyota Land Cruiser V8"
-              className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                errors.make_model 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-zinc-200 focus:ring-blue-500'
+              className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                errors.make_model
+                  ? 'border-red-300 focus:ring-red-500'
+                  : 'focus:ring-blue-500'
               }`}
+              style={errors.make_model ? undefined : { border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}
               aria-invalid={!!errors.make_model}
               aria-describedby={errors.make_model ? 'model-error' : undefined}
             />
@@ -233,9 +239,10 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
 
           {/* Purchase Price Field */}
           <div>
-            <label 
-              htmlFor="vehicle-price" 
-              className="text-sm font-semibold text-zinc-700 mb-2 block"
+            <label
+              htmlFor="vehicle-price"
+              className="text-sm font-semibold mb-2 block"
+              style={{ color: 'var(--cds-text-secondary, #525252)' }}
             >
               Purchase Price (GBP) <span className="text-red-500">*</span>
             </label>
@@ -249,11 +256,12 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               required
               disabled={isSubmitting}
               placeholder="0.00"
-              className={`w-full px-4 py-3  border bg-white focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                errors.purchase_price_gbp 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-zinc-200 focus:ring-blue-500'
+              className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                errors.purchase_price_gbp
+                  ? 'border-red-300 focus:ring-red-500'
+                  : 'focus:ring-blue-500'
               }`}
+              style={errors.purchase_price_gbp ? undefined : { border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}
               aria-invalid={!!errors.purchase_price_gbp}
               aria-describedby={errors.purchase_price_gbp ? 'price-error' : 'price-help'}
             />
@@ -265,7 +273,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
                 {errors.purchase_price_gbp}
               </p>
             ) : (
-              <p id="price-help" className="text-xs text-zinc-400 mt-1">
+              <p id="price-help" className="text-xs mt-1" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
                 Purchase price in British Pounds
               </p>
             )}
@@ -289,7 +297,8 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3  border border-zinc-200 text-zinc-700 font-semibold hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 border font-semibold hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)', color: 'var(--cds-text-secondary, #525252)' }}
             >
               Cancel
             </button>

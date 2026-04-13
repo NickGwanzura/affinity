@@ -19,7 +19,7 @@ import {
  TableBody,
  TableCell,
 } from '@carbon/react';
-import { Settings as SettingsIcon, User, DocumentSecurity, Email, Renew, Add } from '@carbon/icons-react';
+import { Settings as SettingsIcon, User, DocumentSecurity, Email, Renew, Add, Password, Edit, TrashCan, SubtractAlt, Copy } from '@carbon/icons-react';
 import { CompanyDetails, AppUser, UserRole, UserInvite, RegistrationRequest, Client, AuditLog } from '../types';
 import { dataService } from '../services/dataService';
 import { authService } from '../services/authService';
@@ -485,11 +485,11 @@ export const Settings: React.FC = () => {
    <button
    onClick={() => setActiveTab('company')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'company'
-    ? 'bg-white'
+    ? ''
     : 'border-transparent'
     }`}
-   style={activeTab === 'company' 
-    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+   style={activeTab === 'company'
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)', background: 'var(--cds-background, #ffffff)' }
     : { color: 'var(--cds-text-secondary, #525252)' }
    }
    >
@@ -498,11 +498,11 @@ export const Settings: React.FC = () => {
    <button
    onClick={() => setActiveTab('users')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'users'
-    ? 'bg-white'
+    ? ''
     : 'border-transparent'
     }`}
-   style={activeTab === 'users' 
-    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+   style={activeTab === 'users'
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)', background: 'var(--cds-background, #ffffff)' }
     : { color: 'var(--cds-text-secondary, #525252)' }
    }
    >
@@ -511,11 +511,11 @@ export const Settings: React.FC = () => {
    <button
    onClick={() => setActiveTab('forensics')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'forensics'
-    ? 'bg-white'
+    ? ''
     : 'border-transparent'
     }`}
-   style={activeTab === 'forensics' 
-    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+   style={activeTab === 'forensics'
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)', background: 'var(--cds-background, #ffffff)' }
     : { color: 'var(--cds-text-secondary, #525252)' }
    }
    >
@@ -524,11 +524,11 @@ export const Settings: React.FC = () => {
    <button
    onClick={() => setActiveTab('requests')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'requests'
-    ? 'bg-white'
+    ? ''
     : 'border-transparent'
     }`}
-   style={activeTab === 'requests' 
-    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+   style={activeTab === 'requests'
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)', background: 'var(--cds-background, #ffffff)' }
     : { color: 'var(--cds-text-secondary, #525252)' }
    }
    >
@@ -541,11 +541,11 @@ export const Settings: React.FC = () => {
    <button
    onClick={() => setActiveTab('invites')}
    className={`px-6 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${activeTab === 'invites'
-    ? 'bg-white'
+    ? ''
     : 'border-transparent'
     }`}
-   style={activeTab === 'invites' 
-    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)' }
+   style={activeTab === 'invites'
+    ? { borderColor: 'var(--cds-interactive, #0f62fe)', color: 'var(--cds-interactive, #0f62fe)', background: 'var(--cds-background, #ffffff)' }
     : { color: 'var(--cds-text-secondary, #525252)' }
    }
    >
@@ -892,58 +892,38 @@ export const Settings: React.FC = () => {
         </td>
         <td className="px-4 lg:px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-1 lg:gap-2">
-         <button
-         onClick={() => openSetPasswordModal(user)}
-         className="p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
-         style={{ color: 'var(--cds-text-secondary, #525252)' }}
-         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-interactive, #0f62fe)')}
-         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
-         title="Set password"
-         >
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-         </svg>
-         </button>
-         <button
-         onClick={() => handleToggleUserStatus(user)}
-         className="p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
-         style={{ color: 'var(--cds-text-secondary, #525252)' }}
-         onMouseEnter={(e) => (e.currentTarget.style.color = user.status === 'Active' ? 'var(--cds-support-error, #da1e28)' : 'var(--cds-support-success, #24a148)')}
-         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
-         title={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
-         >
-         {user.status === 'Active' ? (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
-          </svg>
-         ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12M6 12h12" />
-          </svg>
-         )}
-         </button>
-         <button
-         onClick={() => openEditModal(user)}
-         className="p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
-         style={{ color: 'var(--cds-interactive, #0f62fe)' }}
-         title="Edit user role"
-         >
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-         </svg>
-         </button>
-         <button
-         onClick={() => openDeleteDialog(user)}
-         className="p-1.5 lg:p-1 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
-         style={{ color: 'var(--cds-text-secondary, #525252)' }}
-         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-support-error, #da1e28)')}
-         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
-         title="Delete user"
-         >
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-         </svg>
-         </button>
+         <Button
+          kind="ghost"
+          size="sm"
+          hasIconOnly
+          renderIcon={Password}
+          iconDescription="Set password"
+          onClick={() => openSetPasswordModal(user)}
+         />
+         <Button
+          kind="ghost"
+          size="sm"
+          hasIconOnly
+          renderIcon={user.status === 'Active' ? SubtractAlt : Add}
+          iconDescription={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
+          onClick={() => handleToggleUserStatus(user)}
+         />
+         <Button
+          kind="ghost"
+          size="sm"
+          hasIconOnly
+          renderIcon={Edit}
+          iconDescription="Edit user role"
+          onClick={() => openEditModal(user)}
+         />
+         <Button
+          kind="danger--ghost"
+          size="sm"
+          hasIconOnly
+          renderIcon={TrashCan}
+          iconDescription="Delete user"
+          onClick={() => openDeleteDialog(user)}
+         />
         </div>
         </td>
        </tr>
@@ -998,40 +978,30 @@ export const Settings: React.FC = () => {
         
         {/* Actions Dropdown Area */}
         <div className="flex items-center gap-1 flex-shrink-0">
-        <button
+        <Button
+         kind="ghost"
+         size="sm"
+         hasIconOnly
+         renderIcon={Password}
+         iconDescription="Set password"
          onClick={() => openSetPasswordModal(user)}
-         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-         style={{ color: 'var(--cds-text-secondary, #525252)' }}
-         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-interactive, #0f62fe)')}
-         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
-         title="Set password"
-        >
-         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-         </svg>
-        </button>
-        <button
+        />
+        <Button
+         kind="ghost"
+         size="sm"
+         hasIconOnly
+         renderIcon={Edit}
+         iconDescription="Edit user role"
          onClick={() => openEditModal(user)}
-         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-         style={{ color: 'var(--cds-interactive, #0f62fe)' }}
-         title="Edit user role"
-        >
-         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-         </svg>
-        </button>
-        <button
+        />
+        <Button
+         kind="danger--ghost"
+         size="sm"
+         hasIconOnly
+         renderIcon={TrashCan}
+         iconDescription="Delete user"
          onClick={() => openDeleteDialog(user)}
-         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-         style={{ color: 'var(--cds-text-secondary, #525252)' }}
-         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-support-error, #da1e28)')}
-         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
-         title="Delete user"
-        >
-         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-         </svg>
-        </button>
+        />
         </div>
        </div>
        
@@ -1046,36 +1016,22 @@ export const Settings: React.FC = () => {
         </Tag>
         </div>
         <div className="flex items-center gap-1">
-        <button
+        <Button
+         kind="ghost"
+         size="sm"
+         hasIconOnly
+         renderIcon={Password}
+         iconDescription="Set password"
          onClick={() => openSetPasswordModal(user)}
-         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-         style={{ color: 'var(--cds-text-secondary, #525252)' }}
-         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-interactive, #0f62fe)')}
-         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
-         title="Set password"
-        >
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-         </svg>
-        </button>
-        <button
+        />
+        <Button
+         kind="ghost"
+         size="sm"
+         hasIconOnly
+         renderIcon={user.status === 'Active' ? SubtractAlt : Add}
+         iconDescription={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
          onClick={() => handleToggleUserStatus(user)}
-         className="p-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-         style={{ color: 'var(--cds-text-secondary, #525252)' }}
-         onMouseEnter={(e) => (e.currentTarget.style.color = user.status === 'Active' ? 'var(--cds-support-error, #da1e28)' : 'var(--cds-support-success, #24a148)')}
-         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
-         title={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
-        >
-         {user.status === 'Active' ? (
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
-         </svg>
-         ) : (
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12M6 12h12" />
-         </svg>
-         )}
-        </button>
+        />
         </div>
        </div>
        </div>
@@ -1242,38 +1198,30 @@ export const Settings: React.FC = () => {
        <div className="flex items-center justify-end gap-2">
         {invite.status === 'Pending' && (
         <>
-         <button
-         onClick={() => handleCopyInviteLink(invite.inviteToken)}
-         className="p-1 transition-colors"
-         style={{ color: 'var(--cds-support-success, #24a148)' }}
-         title="Copy invite link"
-         >
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 10h6a2 2 0 002-2v-8a2 2 0 00-2-2h-6a2 2 0 00-2 2v8a2 2 0 002 2z" />
-         </svg>
-         </button>
-         <button
-         onClick={() => handleResendInvite(invite.id)}
-         className="p-1 transition-colors"
-         style={{ color: 'var(--cds-interactive, #0f62fe)' }}
-         title="Resend invitation"
-         >
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-         </svg>
-         </button>
-         <button
-         onClick={() => handleDeleteInvite(invite.id)}
-         className="p-1 transition-colors"
-         style={{ color: 'var(--cds-text-secondary, #525252)' }}
-         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cds-support-error, #da1e28)')}
-         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--cds-text-secondary, #525252)')}
-         title="Cancel invitation"
-         >
-         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-         </svg>
-         </button>
+         <Button
+          kind="ghost"
+          size="sm"
+          hasIconOnly
+          renderIcon={Copy}
+          iconDescription="Copy invite link"
+          onClick={() => handleCopyInviteLink(invite.inviteToken)}
+         />
+         <Button
+          kind="ghost"
+          size="sm"
+          hasIconOnly
+          renderIcon={Renew}
+          iconDescription="Resend invitation"
+          onClick={() => handleResendInvite(invite.id)}
+         />
+         <Button
+          kind="danger--ghost"
+          size="sm"
+          hasIconOnly
+          renderIcon={TrashCan}
+          iconDescription="Cancel invitation"
+          onClick={() => handleDeleteInvite(invite.id)}
+         />
         </>
         )}
        </div>
@@ -1411,24 +1359,24 @@ export const Settings: React.FC = () => {
     </div>
     </div>
     <div className="flex gap-3 pt-4">
-    <button
+    <Button
+     kind="secondary"
      type="button"
+     style={{ flex: 1 }}
      onClick={() => {
      setShowUserModal(false);
      setUserForm({ name: '', email: '', password: '', role: 'Driver', status: 'Active' });
      }}
-     className="flex-1 px-4 py-3 font-bold text-sm"
-     style={{ color: 'var(--cds-text-secondary, #525252)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
     >
      Cancel
-    </button>
-    <button
+    </Button>
+    <Button
+     kind="primary"
      type="submit"
-     className="flex-1 px-4 py-3 font-bold text-sm text-white"
-     style={{ background: 'var(--cds-interactive, #0f62fe)' }}
+     style={{ flex: 1 }}
     >
      Create User
-    </button>
+    </Button>
     </div>
    </form>
    </div>

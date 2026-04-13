@@ -18,7 +18,7 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
 // Map our variant names → Carbon Button kinds
 const kindMap: Record<ButtonVariant, 'primary' | 'secondary' | 'danger' | 'ghost' | 'tertiary'> = {
   primary:   'primary',
-  secondary: 'primary',   // Use primary instead of secondary to avoid faded look
+  secondary: 'tertiary',  // tertiary = border + transparent bg, clearly subordinate to primary
   danger:    'danger',
   success:   'primary',   // Carbon has no "success" kind; use primary (icon conveys success)
   ghost:     'ghost',

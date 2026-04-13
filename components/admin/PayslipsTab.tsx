@@ -130,7 +130,7 @@ export const PayslipsTab: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pink-600"></div>
-        <p className="text-zinc-500 font-bold animate-pulse uppercase tracking-widest text-xs">Loading Payslips</p>
+        <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Loading Payslips</p>
       </div>
     );
   }
@@ -155,41 +155,41 @@ export const PayslipsTab: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white  shadow-lg border border-zinc-200 overflow-hidden">
+      <div className="overflow-hidden shadow-lg" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
         <div className="space-y-3 p-3 sm:hidden">
           {payslips.length === 0 ? (
-            <div className="border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
+            <div className="px-4 py-8 text-center text-sm" style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-layer-01, #f4f4f4)', color: 'var(--cds-text-secondary, #525252)' }}>
               No payslips yet. Click &quot;Generate Payslip&quot; to get started.
             </div>
           ) : (
             payslips.map((payslip) => (
-              <div key={payslip.id} className="border border-zinc-100 bg-white p-4 shadow-sm">
+              <div key={payslip.id} className="p-4" style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-background, #ffffff)' }}>
                 <div className="mb-2 flex items-start justify-between">
                   <div>
-                    <div className="font-bold text-zinc-900">{payslip.employee?.name || 'N/A'}</div>
-                    <div className="font-mono text-xs text-zinc-500">{payslip.payslip_number}</div>
+                    <div className="font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{payslip.employee?.name || 'N/A'}</div>
+                    <div className="font-mono text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{payslip.payslip_number}</div>
                   </div>
-                  <span className={`inline-block px-2 py-0.5 text-xs font-semibold  ${
-                    payslip.status === 'Generated' ? 'bg-blue-100 text-blue-700' :
-                    payslip.status === 'Approved' ? 'bg-yellow-100 text-yellow-700' :
-                    payslip.status === 'Paid' ? 'bg-green-100 text-green-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
+                  <span className="inline-block px-2 py-0.5 text-xs font-semibold" style={
+                    payslip.status === 'Generated' ? { background: 'var(--cds-support-info-inverse, #edf5ff)', color: 'var(--cds-interactive, #0f62fe)' } :
+                    payslip.status === 'Approved' ? { background: 'var(--cds-support-warning-inverse, #fdf6dd)', color: 'var(--cds-support-warning-inverse, #b28600)' } :
+                    payslip.status === 'Paid' ? { background: 'var(--cds-support-success-inverse, #defbe6)', color: 'var(--cds-support-success, #24a148)' } :
+                    { background: 'var(--cds-support-error-inverse, #fff1f1)', color: 'var(--cds-support-error, #da1e28)' }
+                  }>
                     {payslip.status}
                   </span>
                 </div>
-                <div className="mb-1 text-xs text-zinc-500">{new Date(payslip.year, payslip.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+                <div className="mb-1 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{new Date(payslip.year, payslip.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
                 <div className="mb-3 text-sm">
-                  <span className="text-zinc-600">${payslip.gross_pay.toLocaleString()} gross</span>
-                  <span className="mx-1 text-zinc-400">&rarr;</span>
-                  <span className="font-bold text-green-600">${payslip.net_pay.toLocaleString()} net</span>
+                  <span style={{ color: 'var(--cds-text-secondary, #525252)' }}>${payslip.gross_pay.toLocaleString()} gross</span>
+                  <span className="mx-1" style={{ color: 'var(--cds-text-secondary, #525252)' }}>&rarr;</span>
+                  <span className="font-bold" style={{ color: 'var(--cds-support-success, #24a148)' }}>${payslip.net_pay.toLocaleString()} net</span>
                 </div>
                 <div className="flex flex-wrap gap-2 border-t border-zinc-50 pt-3">
                   {payslip.status === 'Generated' && (
-                    <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Approved')} className="px-2 py-1 text-xs font-bold text-yellow-600 hover:text-yellow-800">Approve</button>
+                    <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Approved')} className="px-2 py-1 text-xs font-bold" style={{ color: 'var(--cds-support-warning-inverse, #b28600)' }}>Approve</button>
                   )}
                   {payslip.status === 'Approved' && (
-                    <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Paid')} className="px-2 py-1 text-xs font-bold text-green-600 hover:text-green-800">Mark Paid</button>
+                    <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Paid')} className="px-2 py-1 text-xs font-bold" style={{ color: 'var(--cds-support-success, #24a148)' }}>Mark Paid</button>
                   )}
                   <button
                     onClick={() => handleDownloadPayslip(payslip)}
@@ -199,7 +199,7 @@ export const PayslipsTab: React.FC = () => {
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     PDF
                   </button>
-                  <button onClick={() => handleDeletePayslip(payslip.id)} className="px-2 py-1 text-xs font-bold text-red-600 hover:text-red-800">Delete</button>
+                  <button onClick={() => handleDeletePayslip(payslip.id)} className="px-2 py-1 text-xs font-bold" style={{ color: 'var(--cds-support-error, #da1e28)' }}>Delete</button>
                 </div>
               </div>
             ))
@@ -209,47 +209,47 @@ export const PayslipsTab: React.FC = () => {
           <table className="w-full">
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Payslip #</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Employee</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Period</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Gross Pay</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Net Pay</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-zinc-600 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Payslip #</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Employee</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Period</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Gross Pay</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Net Pay</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Status</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200">
               {payslips.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
+                  <td colSpan={7} className="px-6 py-12 text-center" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
                     No payslips yet. Click &quot;Generate Payslip&quot; to get started.
                   </td>
                 </tr>
               ) : (
                 payslips.map((payslip) => (
                   <tr key={payslip.id} className="hover:bg-zinc-50">
-                    <td className="px-6 py-4 font-mono text-sm text-zinc-600">{payslip.payslip_number}</td>
-                    <td className="px-6 py-4 font-semibold text-zinc-900">{payslip.employee?.name || 'N/A'}</td>
-                    <td className="px-6 py-4 text-zinc-600">{new Date(payslip.year, payslip.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td>
-                    <td className="px-6 py-4 text-zinc-900 font-semibold">${payslip.gross_pay.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-green-600 font-bold">${payslip.net_pay.toLocaleString()}</td>
+                    <td className="px-6 py-4 font-mono text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{payslip.payslip_number}</td>
+                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{payslip.employee?.name || 'N/A'}</td>
+                    <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{new Date(payslip.year, payslip.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td>
+                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>${payslip.gross_pay.toLocaleString()}</td>
+                    <td className="px-6 py-4 font-bold" style={{ color: 'var(--cds-support-success, #24a148)' }}>${payslip.net_pay.toLocaleString()}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-2 py-1 text-xs font-semibold  ${
-                        payslip.status === 'Generated' ? 'bg-blue-100 text-blue-700' :
-                        payslip.status === 'Approved' ? 'bg-yellow-100 text-yellow-700' :
-                        payslip.status === 'Paid' ? 'bg-green-100 text-green-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
+                      <span className="inline-block px-2 py-1 text-xs font-semibold" style={
+                        payslip.status === 'Generated' ? { background: 'var(--cds-support-info-inverse, #edf5ff)', color: 'var(--cds-interactive, #0f62fe)' } :
+                        payslip.status === 'Approved' ? { background: 'var(--cds-support-warning-inverse, #fdf6dd)', color: 'var(--cds-support-warning-inverse, #b28600)' } :
+                        payslip.status === 'Paid' ? { background: 'var(--cds-support-success-inverse, #defbe6)', color: 'var(--cds-support-success, #24a148)' } :
+                        { background: 'var(--cds-support-error-inverse, #fff1f1)', color: 'var(--cds-support-error, #da1e28)' }
+                      }>
                         {payslip.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {payslip.status === 'Generated' && (
-                          <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Approved')} className="text-yellow-600 hover:text-yellow-800 font-semibold text-sm">Approve</button>
+                          <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Approved')} className="font-semibold text-sm" style={{ color: 'var(--cds-support-warning-inverse, #b28600)' }}>Approve</button>
                         )}
                         {payslip.status === 'Approved' && (
-                          <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Paid')} className="text-green-600 hover:text-green-800 font-semibold text-sm">Mark Paid</button>
+                          <button onClick={() => handleUpdatePayslipStatus(payslip.id, 'Paid')} className="font-semibold text-sm" style={{ color: 'var(--cds-support-success, #24a148)' }}>Mark Paid</button>
                         )}
                         <button
                           onClick={() => handleDownloadPayslip(payslip)}
@@ -259,7 +259,7 @@ export const PayslipsTab: React.FC = () => {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                           PDF
                         </button>
-                        <button onClick={() => handleDeletePayslip(payslip.id)} className="text-red-600 hover:text-red-800 font-semibold text-sm">Delete</button>
+                        <button onClick={() => handleDeletePayslip(payslip.id)} className="font-semibold text-sm" style={{ color: 'var(--cds-support-error, #da1e28)' }}>Delete</button>
                       </div>
                     </td>
                   </tr>

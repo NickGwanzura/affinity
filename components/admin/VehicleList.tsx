@@ -55,8 +55,8 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
       {/* Asset / VIN Column */}
       <td className="px-8 py-6">
         <div className="flex flex-col">
-          <span className="font-black text-zinc-900 text-base">{vehicle.make_model}</span>
-          <span className="font-mono text-xs text-zinc-400 font-bold uppercase tracking-wider">
+          <span className="font-black text-base" style={{ color: 'var(--cds-text-primary, #161616)' }}>{vehicle.make_model}</span>
+          <span className="font-mono text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
             {vehicle.vin_number}
           </span>
         </div>
@@ -72,7 +72,7 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
       </td>
 
       {/* Purchase Cost Column */}
-      <td className="px-8 py-6 font-bold text-zinc-400 tracking-tight tabular-nums">
+      <td className="px-8 py-6 font-bold tracking-tight tabular-nums" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
         £{vehicle.purchase_price_gbp.toLocaleString()}
       </td>
 
@@ -80,10 +80,10 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
       <td className="px-8 py-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="font-black text-zinc-900 text-lg tabular-nums">
+            <span className="font-black text-lg tabular-nums" style={{ color: 'var(--cds-text-primary, #161616)' }}>
               ${vehicle.total_landed_cost_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </span>
-            <span className="text-xs text-zinc-400 font-bold uppercase tracking-widest">
+            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
               Total Valuation
             </span>
           </div>
@@ -138,9 +138,9 @@ export const VehicleList: React.FC<VehicleListProps> = memo(({ vehicles, onEdit,
 
   if (vehicles.length === 0) {
     return (
-      <div className="bg-white  shadow-sm border border-zinc-200 p-12 text-center">
-        <svg 
-          className="w-16 h-16 text-zinc-300 mx-auto mb-4" 
+      <div className="p-12 text-center" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
+        <svg
+          className="w-16 h-16 text-zinc-300 mx-auto mb-4"
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"
@@ -148,25 +148,25 @@ export const VehicleList: React.FC<VehicleListProps> = memo(({ vehicles, onEdit,
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
         </svg>
-        <h3 className="text-lg font-bold text-zinc-900 mb-2">No Vehicles Found</h3>
-        <p className="text-zinc-500">Add your first vehicle to start tracking your fleet.</p>
+        <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--cds-text-primary, #161616)' }}>No Vehicles Found</h3>
+        <p style={{ color: 'var(--cds-text-secondary, #525252)' }}>Add your first vehicle to start tracking your fleet.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white  shadow-sm border border-zinc-200 overflow-hidden">
+    <div className="overflow-hidden" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
       {/* Header */}
       <div className="px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/30">
         <div>
-          <h3 className="text-xl font-black text-zinc-900 tracking-tight">Current Inventory</h3>
-          <p className="text-sm text-zinc-500 mt-1">
+          <h3 className="text-xl font-black tracking-tight" style={{ color: 'var(--cds-text-primary, #161616)' }}>Current Inventory</h3>
+          <p className="text-sm mt-1" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
             {vehicles.length} vehicle{vehicles.length !== 1 ? 's' : ''} • {inTransitCount} in transit
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">Total Value</p>
-          <p className="text-2xl font-black text-zinc-900">
+          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total Value</p>
+          <p className="text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>
             ${totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </p>
         </div>
@@ -181,27 +181,31 @@ export const VehicleList: React.FC<VehicleListProps> = memo(({ vehicles, onEdit,
         >
           <thead>
             <tr className="bg-zinc-50 border-b border-zinc-100">
-              <th 
-                scope="col" 
-                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
+              <th
+                scope="col"
+                className="px-8 py-4 font-black uppercase tracking-widest text-xs"
+                style={{ color: 'var(--cds-text-secondary, #525252)' }}
               >
                 Asset / VIN
               </th>
-              <th 
-                scope="col" 
-                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
+              <th
+                scope="col"
+                className="px-8 py-4 font-black uppercase tracking-widest text-xs"
+                style={{ color: 'var(--cds-text-secondary, #525252)' }}
               >
                 Region
               </th>
-              <th 
-                scope="col" 
-                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
+              <th
+                scope="col"
+                className="px-8 py-4 font-black uppercase tracking-widest text-xs"
+                style={{ color: 'var(--cds-text-secondary, #525252)' }}
               >
                 Purchase Cost
               </th>
-              <th 
-                scope="col" 
-                className="px-8 py-4 font-black text-zinc-400 uppercase tracking-widest text-xs"
+              <th
+                scope="col"
+                className="px-8 py-4 font-black uppercase tracking-widest text-xs"
+                style={{ color: 'var(--cds-text-secondary, #525252)' }}
               >
                 Landed Cost
               </th>
