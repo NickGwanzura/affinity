@@ -16,8 +16,10 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Adapt Express req/res to the Vercel handler signature
-type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
+// Adapt Express req/res to the Vercel handler signature.
+// Vercel handlers commonly `return apiError(...)` which yields a VercelResponse,
+// so the return type must permit both void and VercelResponse.
+type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void | VercelResponse>;
 function mount(handler: Handler) {
   return (req: express.Request, res: express.Response) =>
     handler(req as unknown as VercelRequest, res as unknown as VercelResponse);
