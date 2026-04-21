@@ -3,7 +3,8 @@ import {
   AuthenticatedRequest,
   apiError,
   handleCors,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
@@ -40,6 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     const { action } = req.query;
@@ -59,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       case 'POST':
         if (action === 'recalculate') {
-          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
           return await recalculateClientBalance(authReq, res);
         }
         return apiError(res, 400, 'Invalid action. Use: recalculate');

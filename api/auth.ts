@@ -15,6 +15,8 @@ import {
   changePassword,
   createPasswordResetRequest,
   resetPassword,
+  recordResetTokenAttempt,
+  invalidateResetToken,
   getUserById,
 } from './_auth.js';
 import { isEmailTransportConfigured, sendPasswordResetEmail } from './_email.tsx';
@@ -225,9 +227,30 @@ async function forgotPassword(req: VercelRequest, res: VercelResponse) {
   }
 }
 
+const MAX_RESET_ATTEMPTS_PER_TOKEN = 5;
+
 async function resetPasswordHandler(req: VercelRequest, res: VercelResponse) {
   try {
     const { token, newPassword } = ResetPasswordSchema.parse(req.body);
+
+    // Rate limit: max 10 attempts per IP per 15 minutes.
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (!checkRateLimit(`reset:${clientIp}`, 10, 15 * 60 * 1000)) {
+      return apiError(res, 429, 'Too many password reset attempts. Please try again later.');
+    }
+
+    // Rate limit: max 5 attempts per token (then invalidate).
+    const attempts = await recordResetTokenAttempt(token);
+    if (attempts > MAX_RESET_ATTEMPTS_PER_TOKEN) {
+      await invalidateResetToken(token);
+      await logAuditEvent({
+        req,
+        action: 'auth.password_reset.token_invalidated',
+        tableName: 'password_resets',
+        newData: { token, attempts },
+      });
+      return apiError(res, 429, 'Too many attempts against this reset token. Please request a new one.');
+    }
 
     await resetPassword(token, newPassword);
 

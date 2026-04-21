@@ -1,11 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { 
-  AuthenticatedRequest, 
-  verifyToken, 
-  requireRole, 
-  setSecurityHeaders, 
-  handleCors, 
-  apiError 
+import {
+  AuthenticatedRequest,
+  verifyToken,
+  requireAccessRole,
+  requirePasswordCurrent,
+  setSecurityHeaders,
+  handleCors,
+  apiError
 } from './_middleware.js';
 import { sql, validateOrderColumn } from './_db.js';
 import { ClientSchema, ClientUpdateSchema, PaginationSchema } from './_schemas.js';
@@ -17,7 +18,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const authReq = req as AuthenticatedRequest;
   
   if (!(await verifyToken(authReq, res))) return;
-  
+  if (!requirePasswordCurrent(authReq, res)) return;
+
   try {
     switch (req.method) {
       case 'GET':
@@ -25,17 +27,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return await getClient(authReq, res);
         }
         return await listClients(authReq, res);
-        
+
       case 'POST':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await createClient(authReq, res);
-        
+
       case 'PUT':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updateClient(authReq, res);
-        
+
       case 'DELETE':
-        if (!requireRole(authReq, res, ['Admin'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deleteClient(authReq, res);
         
       default:

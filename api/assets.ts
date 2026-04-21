@@ -22,6 +22,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { sql } from './_db.js';
 import {
   AuthenticatedRequest,
+  AccessRole,
+  requirePasswordCurrent,
   verifyToken as verifyRequestToken,
 } from './_middleware.js';
 
@@ -91,8 +93,8 @@ function json(res: VercelResponse, status: number, body: unknown) {
   res.status(status).json(body);
 }
 
-function requireRole(role: string, required: string[]): boolean {
-  return required.includes(role);
+function hasAccessRole(accessRole: AccessRole, required: AccessRole[]): boolean {
+  return required.includes(accessRole);
 }
 
 // ─── Asset Handlers ─────────────────────────────────────────────────────────
@@ -106,10 +108,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyRequestToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   const user = {
     userId: authReq.user!.id,
-    role: authReq.user!.role,
+    accessRole: authReq.user!.accessRole,
     name: 'User',
   };
 
@@ -148,7 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── POST ────────────────────────────────────────────────────────────────
     if (method === 'POST') {
-      if (!requireRole(user.role, ['Admin', 'Manager'])) {
+      if (!hasAccessRole(user.accessRole, ['super_admin', 'admin', 'user'])) {
         return json(res, 403, { error: 'Forbidden' });
       }
       const { name, description, category, serial_number, status, location, purchase_date, purchase_value, condition } = body as Record<string, unknown>;
@@ -177,7 +180,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── PUT ─────────────────────────────────────────────────────────────────
     if (method === 'PUT') {
-      if (!requireRole(user.role, ['Admin', 'Manager'])) {
+      if (!hasAccessRole(user.accessRole, ['super_admin', 'admin', 'user'])) {
         return json(res, 403, { error: 'Forbidden' });
       }
       if (!id) return json(res, 400, { error: 'id query parameter is required' });
@@ -204,7 +207,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── DELETE ──────────────────────────────────────────────────────────────
     if (method === 'DELETE') {
-      if (!requireRole(user.role, ['Admin'])) {
+      if (!hasAccessRole(user.accessRole, ['super_admin', 'admin'])) {
         return json(res, 403, { error: 'Forbidden' });
       }
       if (!id) return json(res, 400, { error: 'id query parameter is required' });
@@ -224,9 +227,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 // ─── Asset Request Handlers ─────────────────────────────────────────────────
 
 async function handleAssetRequests(
-  req: VercelRequest, 
-  res: VercelResponse, 
-  user: { userId: string; role: string; name: string },
+  req: VercelRequest,
+  res: VercelResponse,
+  user: { userId: string; accessRole: AccessRole; name: string },
   method: string,
   query: Record<string, string | string[] | undefined>,
   body: Record<string, unknown>,
@@ -251,7 +254,7 @@ async function handleAssetRequests(
 
   // ── POST ────────────────────────────────────────────────────────────────
   if (method === 'POST') {
-    if (!requireRole(user.role, ['Admin', 'Manager', 'Accountant'])) {
+    if (!hasAccessRole(user.accessRole, ['super_admin', 'admin', 'user'])) {
       return json(res, 403, { error: 'Forbidden' });
     }
     const { 
@@ -307,12 +310,12 @@ async function handleAssetRequests(
 
   // ── PUT ─────────────────────────────────────────────────────────────────
   if (method === 'PUT') {
-    if (!requireRole(user.role, ['Admin', 'Manager'])) {
+    if (!hasAccessRole(user.accessRole, ['super_admin', 'admin', 'user'])) {
       return json(res, 403, { error: 'Forbidden' });
     }
     if (!id) return json(res, 400, { error: 'id query parameter is required' });
 
-    const { 
+    const {
       asset_id, requested_by, requester_email, requester_department,
       requested_take_date, approved_by, approval_date,
       actual_take_date, expected_return_date, actual_return_date,
@@ -377,7 +380,7 @@ async function handleAssetRequests(
 
   // ── DELETE ──────────────────────────────────────────────────────────────
   if (method === 'DELETE') {
-    if (!requireRole(user.role, ['Admin'])) {
+    if (!hasAccessRole(user.accessRole, ['super_admin', 'admin'])) {
       return json(res, 403, { error: 'Forbidden' });
     }
     if (!id) return json(res, 400, { error: 'id query parameter is required' });

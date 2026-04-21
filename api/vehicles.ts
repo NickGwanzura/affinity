@@ -2,7 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   AuthenticatedRequest,
   verifyToken,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
   apiError,
@@ -23,6 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const authReq = req as AuthenticatedRequest;
 
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     switch (req.method) {
@@ -40,26 +42,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       case 'POST':
         if (req.query.type === 'shipment') {
-          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
           return await createShipment(authReq, res);
         }
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await createVehicle(authReq, res);
 
       case 'PUT':
         if (req.query.type === 'shipment') {
-          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
           return await updateShipment(authReq, res);
         }
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updateVehicle(authReq, res);
 
       case 'DELETE':
         if (req.query.type === 'shipment') {
-          if (!requireRole(authReq, res, ['Admin'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
           return await deleteShipment(authReq, res);
         }
-        if (!requireRole(authReq, res, ['Admin'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deleteVehicle(authReq, res);
 
       default:

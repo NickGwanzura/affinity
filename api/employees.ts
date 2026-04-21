@@ -3,7 +3,8 @@ import {
   AuthenticatedRequest,
   apiError,
   handleCors,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
@@ -16,19 +17,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     switch (req.method) {
       case 'GET':
         return await listEmployees(res);
       case 'POST':
-        if (!requireRole(authReq, res, ['Admin'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await createEmployee(req, res);
       case 'PUT':
-        if (!requireRole(authReq, res, ['Admin'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await updateEmployee(req, res);
       case 'DELETE':
-        if (!requireRole(authReq, res, ['Admin'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deleteEmployee(req, res);
       default:
         return apiError(res, 405, 'Method not allowed');

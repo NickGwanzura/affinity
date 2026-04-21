@@ -5,7 +5,8 @@ import {
   AuthenticatedRequest,
   apiError,
   handleCors,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
@@ -218,11 +219,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     const action = typeof req.query.action === 'string' ? req.query.action : '';
     if (action === 'allocations' && req.method === 'POST') {
-      if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+      if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
       return await replaceAllocations(req, res);
     }
 
@@ -230,13 +232,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'GET':
         return await listPayments(res);
       case 'POST':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await createPayment(req, res);
       case 'PUT':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updatePayment(req, res);
       case 'DELETE':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deletePayment(req, res);
       default:
         return apiError(res, 405, 'Method not allowed');

@@ -3,7 +3,8 @@ import {
   AuthenticatedRequest,
   apiError,
   handleCors,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
@@ -18,19 +19,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     switch (req.method) {
       case 'GET':
         return await listPayslips(req, res);
       case 'POST':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await createPayslip(authReq, res);
       case 'PUT':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updatePayslipStatus(req, res);
       case 'DELETE':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deletePayslip(req, res);
       default:
         return apiError(res, 405, 'Method not allowed');

@@ -48,6 +48,7 @@ export interface AuthenticatedRequest extends VercelRequest {
     id: string;
     role: string;
     accessRole: AccessRole;
+    forcePasswordChange: boolean;
   };
 }
 
@@ -56,6 +57,7 @@ type UserContextRow = {
   role: string;
   status: string | null;
   access_role?: string | null;
+  force_password_change?: boolean | null;
 };
 
 function parsePathname(req: VercelRequest): string {
@@ -86,7 +88,8 @@ async function getUserContext(userId: string): Promise<UserContextRow | null> {
       u.id,
       u.role,
       u.status,
-      u.access_role
+      u.access_role,
+      u.force_password_change
     FROM user_profiles u
     WHERE u.id = ${userId}::uuid
     LIMIT 1
@@ -165,6 +168,7 @@ export async function verifyToken(req: AuthenticatedRequest, res: VercelResponse
       id: decoded.sub,
       role: userContext.role,
       accessRole,
+      forcePasswordChange: !!userContext.force_password_change,
     };
     return true;
   };
@@ -182,23 +186,6 @@ export async function verifyToken(req: AuthenticatedRequest, res: VercelResponse
   }
 }
 
-/**
- * Check if user has required role
- */
-export function requireRole(req: AuthenticatedRequest, res: VercelResponse, roles: string[]): boolean {
-  if (!req.user) {
-    res.status(401).json({ error: 'Authentication required' });
-    return false;
-  }
-
-  if (!roles.includes(req.user.role)) {
-    res.status(403).json({ error: 'Insufficient permissions' });
-    return false;
-  }
-
-  return true;
-}
-
 export function requireAccessRole(req: AuthenticatedRequest, res: VercelResponse, roles: AccessRole[]): boolean {
   if (!req.user) {
     res.status(401).json({ error: 'Authentication required' });
@@ -207,6 +194,28 @@ export function requireAccessRole(req: AuthenticatedRequest, res: VercelResponse
 
   if (!roles.includes(req.user.accessRole)) {
     res.status(403).json({ error: 'Access denied' });
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Block authenticated requests from users who still need to change
+ * their initial password. Callers should invoke this immediately
+ * after verifyToken, *except* on the change-password/me/logout paths.
+ *
+ * Returns true when the request is allowed to proceed; false when a
+ * 403 has already been sent.
+ */
+export function requirePasswordCurrent(req: AuthenticatedRequest, res: VercelResponse): boolean {
+  if (!req.user) {
+    res.status(401).json({ error: 'Authentication required' });
+    return false;
+  }
+
+  if (req.user.forcePasswordChange) {
+    res.status(403).json({ error: 'password_change_required' });
     return false;
   }
 
