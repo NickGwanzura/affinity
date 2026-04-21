@@ -1,19 +1,36 @@
-
 export type Currency = 'GBP' | 'NAD' | 'USD' | 'BWP' | 'ZAR';
 export type VehicleStatus = 'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana' | 'Sold';
-export type ExpenseCategory = 'Shipping' | 'Fuel' | 'Tolls' | 'Duty' | 'Food' | 'Repairs' | 'Driver Disbursement' | 'Other';
+export type VehiclePurpose = 'Resale' | 'Client';
+export type ExpenseCategory =
+  | 'Shipping'
+  | 'Fuel'
+  | 'Tolls'
+  | 'Duty'
+  | 'Food'
+  | 'Repairs'
+  | 'Driver Disbursement'
+  | 'Other';
 export type UserRole = 'Admin' | 'Driver' | 'Manager' | 'Accountant';
 export type AccessRole = 'super_admin' | 'admin' | 'user';
 export type QuoteStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected';
 export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
-export type TripStatus = 'Planned' | 'Assigned' | 'In Transit' | 'Delayed' | 'Completed' | 'Cancelled';
+export type TripStatus =
+  | 'Planned'
+  | 'Assigned'
+  | 'In Transit'
+  | 'Delayed'
+  | 'Completed'
+  | 'Cancelled';
 
 export interface Vehicle {
   id: string;
   vin_number: string;
+  reg_number: string;
   make_model: string;
   purchase_price_gbp: number;
   status: VehicleStatus;
+  purpose: VehiclePurpose;
+  cbca_applied: boolean;
   created_at: string;
 }
 
@@ -184,7 +201,14 @@ export interface Payment {
   reference_id: string; // Linked to Invoice or Expense (auto-generated for unallocated)
   client_name?: string;
   client_id?: string; // Direct link to client record - PRIMARY KEY FOR JOINS
-  type: 'Inbound' | 'Outbound' | 'Invoice Payment' | 'Quote Payment' | 'Deposit' | 'Refund' | 'Other';
+  type:
+    | 'Inbound'
+    | 'Outbound'
+    | 'Invoice Payment'
+    | 'Quote Payment'
+    | 'Deposit'
+    | 'Refund'
+    | 'Other';
   amount_usd: number;
   currency?: 'USD' | 'GBP';
   method: string;
@@ -349,7 +373,13 @@ export interface Asset {
   updated_at: string;
 }
 
-export type AssetRequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Taken' | 'Returned' | 'Overdue';
+export type AssetRequestStatus =
+  | 'Pending'
+  | 'Approved'
+  | 'Rejected'
+  | 'Taken'
+  | 'Returned'
+  | 'Overdue';
 
 export interface AssetRequest {
   id: string;
@@ -382,7 +412,7 @@ export interface Payslip {
   employee_id: string;
   month: number;
   year: number;
-  
+
   // Earnings
   base_pay: number;
   overtime_hours?: number;
@@ -391,28 +421,28 @@ export interface Payslip {
   bonus?: number;
   allowances?: number;
   commission?: number;
-  
+
   // Deductions
   tax_deduction?: number;
   pension_deduction?: number;
   health_insurance?: number;
   other_deductions?: number;
-  
+
   // Totals
   gross_pay: number;
   total_deductions: number;
   net_pay: number;
-  
+
   currency: 'USD' | 'NAD' | 'GBP' | 'BWP';
   payment_date?: string;
   payment_method?: 'Bank Transfer' | 'Cash' | 'Cheque' | 'Mobile Money';
   status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled';
   notes?: string;
-  
+
   generated_by?: string;
   created_at: string;
   updated_at?: string;
-  
+
   // Populated fields
   employee?: Employee;
 }

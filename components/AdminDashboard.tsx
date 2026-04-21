@@ -1,10 +1,27 @@
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { DollarSign, Car, Users, User, FileText, Map } from 'lucide-react';
-import { LandedCostSummary, VehicleStatus, Currency, Client, Employee, Payslip, CompanyDetails, OperatingFund, UserRole, AppUser, Expense, Vehicle, ExpenseCategory, Trip } from '../types';
+import {
+  LandedCostSummary,
+  VehicleStatus,
+  Currency,
+  Client,
+  Employee,
+  Payslip,
+  CompanyDetails,
+  OperatingFund,
+  UserRole,
+  AppUser,
+  Expense,
+  Vehicle,
+  ExpenseCategory,
+  Trip,
+} from '../types';
 import { dataService } from '../services/dataService';
 import { AssetRegister } from './AssetRegister';
-import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload } from '../services/pdfService';
+import {
+  generateDriverFundsReportPDFAndDownload,
+  generatePayslipPDFAndDownload,
+} from '../services/pdfService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 import { Button } from './ui';
@@ -14,13 +31,25 @@ import AdminEmployeesView from './admin/AdminEmployeesView';
 import AdminOverviewView from './admin/AdminOverviewView';
 import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
 import DashboardSectionSwitcher from './shared/DashboardSectionSwitcher';
-import EmployeeFormModal, { createEmptyEmployeeForm, toEmployeeFormValue, type EmployeeFormValue } from './shared/EmployeeFormModal';
+import EmployeeFormModal, {
+  createEmptyEmployeeForm,
+  toEmployeeFormValue,
+  type EmployeeFormValue,
+} from './shared/EmployeeFormModal';
 import ReportsTab from './admin/ReportsTab';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
-import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
-import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from './shared/PayslipFormModal';
+import OperatingFundEntryModal, {
+  type OperatingFundFormValue,
+} from './shared/OperatingFundEntryModal';
+import PayslipFormModal, {
+  createEmptyPayslipForm,
+  type PayslipFormValue,
+} from './shared/PayslipFormModal';
 import PayslipsListView from './shared/PayslipsListView';
-import TripPlannerModal, { createEmptyTripForm, type TripFormValue } from './shared/TripPlannerModal';
+import TripPlannerModal, {
+  createEmptyTripForm,
+  type TripFormValue,
+} from './shared/TripPlannerModal';
 import VehicleFormModal, { type VehicleFormValue } from './shared/VehicleFormModal';
 import AdminTripsView from './admin/AdminTripsView';
 import { buildDriverFundsReportData } from '../utils/driverFunds';
@@ -29,8 +58,11 @@ import { tripPlannerFormSchema, getFirstValidationMessage } from '../utils/clien
 import { ZodError } from 'zod';
 
 export const AdminDashboard: React.FC = () => {
-  const truncateValue = (value: string | null | undefined, length: number, fallback: string = '-') =>
-    value ? value.slice(0, length) : fallback;
+  const truncateValue = (
+    value: string | null | undefined,
+    length: number,
+    fallback: string = '-'
+  ) => (value ? value.slice(0, length) : fallback);
   const { showToast, ToastContainer } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
 
@@ -39,8 +71,14 @@ export const AdminDashboard: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showDeleteVehicleDialog, setShowDeleteVehicleDialog] = useState(false);
-  const [vehicleToDelete, setVehicleToDelete] = useState<{ id: string; make_model: string; vin_number: string } | null>(null);
-  const [activeView, setActiveView] = useState<'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'trips' | 'assets'>('dashboard');
+  const [vehicleToDelete, setVehicleToDelete] = useState<{
+    id: string;
+    make_model: string;
+    vin_number: string;
+  } | null>(null);
+  const [activeView, setActiveView] = useState<
+    'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'trips' | 'assets'
+  >('dashboard');
   const [userRole, setUserRole] = useState<UserRole>('Admin');
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
@@ -49,7 +87,12 @@ export const AdminDashboard: React.FC = () => {
   const [showClientModal, setShowClientModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [clientForm, setClientForm] = useState({
-    name: '', email: '', phone: '', address: '', company: '', notes: ''
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    company: '',
+    notes: '',
   });
 
   // Employees state
@@ -65,7 +108,11 @@ export const AdminDashboard: React.FC = () => {
 
   // Operating Funds state - Track money received from office and disbursements
   const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
-  const [fundsBalance, setFundsBalance] = useState<{ received: number; disbursed: number; balance: number }>({ received: 0, disbursed: 0, balance: 0 });
+  const [fundsBalance, setFundsBalance] = useState<{
+    received: number;
+    disbursed: number;
+    balance: number;
+  }>({ received: 0, disbursed: 0, balance: 0 });
   const [showFundsModal, setShowFundsModal] = useState(false);
   const [fundsForm, setFundsForm] = useState({
     type: 'Received' as 'Received' | 'Disbursed',
@@ -74,13 +121,16 @@ export const AdminDashboard: React.FC = () => {
     description: '',
     reference: '',
     recipient: '',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
   });
 
   // Vehicle Form State
   const [newVin, setNewVin] = useState('');
+  const [newReg, setNewReg] = useState('');
   const [newModel, setNewModel] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [newPurpose, setNewPurpose] = useState<'Resale' | 'Client'>('Resale');
+  const [newCbcaApplied, setNewCbcaApplied] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<VehicleEditorRecord | null>(null);
 
   // Expense Form State
@@ -126,42 +176,60 @@ export const AdminDashboard: React.FC = () => {
 
   const operatingFundFormValue: OperatingFundFormValue = { ...fundsForm };
   const handleOperatingFundFormChange = (updates: Partial<OperatingFundFormValue>) => {
-    setFundsForm((prev) => ({ ...prev, ...updates }));
+    setFundsForm(prev => ({ ...prev, ...updates }));
   };
 
   const clientFormValue: ClientFormValue = { ...clientForm };
   const handleClientFormChange = (updates: Partial<ClientFormValue>) => {
-    setClientForm((prev) => ({ ...prev, ...updates }));
+    setClientForm(prev => ({ ...prev, ...updates }));
   };
 
   const handleEmployeeFormChange = (updates: Partial<EmployeeFormValue>) => {
-    setEmployeeForm((prev) => ({ ...prev, ...updates }));
+    setEmployeeForm(prev => ({ ...prev, ...updates }));
   };
 
   const handlePayslipFormChange = (updates: Partial<PayslipFormValue>) => {
-    setPayslipForm((prev) => ({ ...prev, ...updates }));
+    setPayslipForm(prev => ({ ...prev, ...updates }));
   };
 
   const vehicleFormValue: VehicleFormValue = {
     vin: newVin,
+    reg: newReg,
     model: newModel,
     price: newPrice,
+    purpose: newPurpose,
+    cbcaApplied: newCbcaApplied,
   };
   const handleVehicleFormChange = (updates: Partial<VehicleFormValue>) => {
     if (updates.vin !== undefined) setNewVin(updates.vin);
+    if (updates.reg !== undefined) setNewReg(updates.reg);
     if (updates.model !== undefined) setNewModel(updates.model);
     if (updates.price !== undefined) setNewPrice(updates.price);
+    if (updates.purpose !== undefined) setNewPurpose(updates.purpose);
+    if (updates.cbcaApplied !== undefined) setNewCbcaApplied(updates.cbcaApplied);
   };
 
   const handleTripFormChange = (updates: Partial<TripFormValue>) => {
-    setTripForm((prev) => ({ ...prev, ...updates }));
+    setTripForm(prev => ({ ...prev, ...updates }));
   };
 
   // FIX: fetchData now throws errors instead of swallowing them silently
   // This ensures callers can handle refresh failures appropriately
   const fetchData = async (throwOnError = false) => {
     try {
-      const [data, vehicleData, expenseData, clientData, employeeData, payslipData, companyData, fundsData, balanceData, userData, tripData] = await Promise.all([
+      const [
+        data,
+        vehicleData,
+        expenseData,
+        clientData,
+        employeeData,
+        payslipData,
+        companyData,
+        fundsData,
+        balanceData,
+        userData,
+        tripData,
+      ] = await Promise.all([
         dataService.getLandedCostSummaries(),
         dataService.getVehicles(),
         dataService.getExpenses(),
@@ -172,7 +240,7 @@ export const AdminDashboard: React.FC = () => {
         dataService.getOperatingFunds(),
         dataService.getOperatingFundsBalance(),
         dataService.getUsers(),
-        dataService.getTrips()
+        dataService.getTrips(),
       ]);
       setSummaries(data);
       setVehicles(vehicleData);
@@ -183,7 +251,7 @@ export const AdminDashboard: React.FC = () => {
       setCompany(companyData);
       setOperatingFunds(fundsData);
       setFundsBalance(balanceData);
-      setDrivers(userData.filter((user) => user.role === 'Driver' && user.status === 'Active'));
+      setDrivers(userData.filter(user => user.role === 'Driver' && user.status === 'Active'));
       setTrips(tripData);
       setLoading(false);
     } catch (error: any) {
@@ -200,11 +268,14 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     fetchData();
     // Get current user role
-    dataService.getSession().then(session => {
-      if (session?.user?.role) {
-        setUserRole(session.user.role);
-      }
-    }).catch((err: unknown) => console.error('[AdminDashboard] getSession failed:', err));
+    dataService
+      .getSession()
+      .then(session => {
+        if (session?.user?.role) {
+          setUserRole(session.user.role);
+        }
+      })
+      .catch((err: unknown) => console.error('[AdminDashboard] getSession failed:', err));
   }, []);
 
   const handleSaveVehicle = async (e: React.FormEvent) => {
@@ -212,9 +283,12 @@ export const AdminDashboard: React.FC = () => {
     try {
       const vehicleData = {
         vin_number: newVin,
+        reg_number: newReg,
         make_model: newModel,
         purchase_price_gbp: parseFloat(newPrice),
-        status: editingVehicle ? editingVehicle.status : 'UK'
+        status: editingVehicle ? editingVehicle.status : 'UK',
+        purpose: newPurpose,
+        cbca_applied: newCbcaApplied,
       };
 
       if (editingVehicle) {
@@ -225,8 +299,11 @@ export const AdminDashboard: React.FC = () => {
 
       // Reset form state
       setNewVin('');
+      setNewReg('');
       setNewModel('');
       setNewPrice('');
+      setNewPurpose('Resale');
+      setNewCbcaApplied(false);
       setEditingVehicle(null);
       setShowAddModal(false);
 
@@ -234,11 +311,20 @@ export const AdminDashboard: React.FC = () => {
       // This ensures user is notified if vehicle was saved but list refresh failed
       try {
         await fetchData(true);
-        notifySuccess(editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
+        notifySuccess(
+          editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!'
+        );
       } catch (refreshError: any) {
         // Vehicle was saved but refresh failed - notify user to manually refresh
-        console.error('[AdminDashboard] handleSaveVehicle: Vehicle saved but refresh failed:', refreshError);
-        showToast('Vehicle saved but failed to refresh list. Please refresh the page.', 'warning', 6000);
+        console.error(
+          '[AdminDashboard] handleSaveVehicle: Vehicle saved but refresh failed:',
+          refreshError
+        );
+        showToast(
+          'Vehicle saved but failed to refresh list. Please refresh the page.',
+          'warning',
+          6000
+        );
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveVehicle: Error saving vehicle:', error);
@@ -249,8 +335,11 @@ export const AdminDashboard: React.FC = () => {
   const openAddVehicleModal = () => {
     setEditingVehicle(null);
     setNewVin('');
+    setNewReg('');
     setNewModel('');
     setNewPrice('');
+    setNewPurpose('Resale');
+    setNewCbcaApplied(false);
     setShowAddModal(true);
   };
 
@@ -311,7 +400,7 @@ export const AdminDashboard: React.FC = () => {
         route_destination: tripForm.route_destination.trim(),
         route_waypoints: tripForm.route_waypoints
           .split(',')
-          .map((value) => value.trim())
+          .map(value => value.trim())
           .filter(Boolean),
         departure_date: tripForm.departure_date,
         eta_date: tripForm.eta_date,
@@ -365,17 +454,19 @@ export const AdminDashboard: React.FC = () => {
     const vehicleRecord = toVehicleEditorRecord(vehicle);
     setEditingVehicle(vehicleRecord);
     setNewVin(vehicleRecord.vin_number);
+    setNewReg(vehicleRecord.reg_number || '');
     setNewModel(vehicleRecord.make_model);
     setNewPrice(vehicleRecord.purchase_price_gbp.toString());
+    setNewPurpose(vehicleRecord.purpose || 'Resale');
+    setNewCbcaApplied(vehicleRecord.cbca_applied || false);
     setShowAddModal(true);
   };
-
 
   const openDeleteVehicleDialog = (vehicle: LandedCostSummary) => {
     setVehicleToDelete({
       id: vehicle.vehicle_id,
       make_model: vehicle.make_model,
-      vin_number: vehicle.vin_number
+      vin_number: vehicle.vin_number,
     });
     setShowDeleteVehicleDialog(true);
   };
@@ -403,7 +494,7 @@ export const AdminDashboard: React.FC = () => {
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!expenseAmount) return;
-    
+
     // Validate driver selection for Driver Disbursement
     if (expenseCategory === 'Driver Disbursement' && !expenseDriver) {
       notifyWarning('Please select a driver for the disbursement');
@@ -413,7 +504,7 @@ export const AdminDashboard: React.FC = () => {
     try {
       await dataService.addExpense({
         vehicle_id: expenseVehicle || undefined,
-        description: expenseDriver 
+        description: expenseDriver
           ? `Driver Disbursement - ${expenseDriver}: ${expenseDesc || 'Trip funds'}`
           : expenseDesc,
         amount: parseFloat(expenseAmount),
@@ -422,7 +513,7 @@ export const AdminDashboard: React.FC = () => {
         location: expenseLocation,
         exchange_rate_to_usd: expenseCurrency === 'USD' ? 1 : undefined,
         receipt_url: 'https://picsum.photos/400/600',
-        driver_name: expenseDriver || undefined
+        driver_name: expenseDriver || undefined,
       });
 
       setExpenseVehicle('');
@@ -433,9 +524,11 @@ export const AdminDashboard: React.FC = () => {
       setExpenseLocation('Namibia');
       setExpenseDriver('');
       setShowExpenseModal(false);
-      notifySuccess(expenseDriver 
-        ? `Disbursement to ${expenseDriver} recorded successfully!` 
-        : 'Expense added successfully!');
+      notifySuccess(
+        expenseDriver
+          ? `Disbursement to ${expenseDriver} recorded successfully!`
+          : 'Expense added successfully!'
+      );
     } catch (error) {
       console.error('Error adding expense:', error);
       notifyError('Failed to add expense. Please try again.');
@@ -454,14 +547,23 @@ export const AdminDashboard: React.FC = () => {
       setShowClientModal(false);
       setEditingClient(null);
       setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' });
-      
+
       // FIX: Await fetchData and handle refresh errors
       try {
         await fetchData(true);
-        notifySuccess(editingClient ? 'Client updated successfully!' : 'Client created successfully!');
+        notifySuccess(
+          editingClient ? 'Client updated successfully!' : 'Client created successfully!'
+        );
       } catch (refreshError) {
-        console.error('[AdminDashboard] handleSaveClient: Client saved but refresh failed:', refreshError);
-        showToast('Client saved but failed to refresh list. Please refresh the page.', 'warning', 6000);
+        console.error(
+          '[AdminDashboard] handleSaveClient: Client saved but refresh failed:',
+          refreshError
+        );
+        showToast(
+          'Client saved but failed to refresh list. Please refresh the page.',
+          'warning',
+          6000
+        );
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveClient: Error saving client:', error);
@@ -495,7 +597,7 @@ export const AdminDashboard: React.FC = () => {
     try {
       const payload = {
         ...employeeForm,
-        base_pay_usd: parseFloat(employeeForm.base_pay_usd) || 0
+        base_pay_usd: parseFloat(employeeForm.base_pay_usd) || 0,
       };
       if (editingEmployee) {
         await dataService.updateEmployee(editingEmployee.id, payload);
@@ -505,14 +607,23 @@ export const AdminDashboard: React.FC = () => {
       setShowEmployeeModal(false);
       setEditingEmployee(null);
       setEmployeeForm(createEmptyEmployeeForm());
-      
+
       // FIX: Await fetchData and handle refresh errors
       try {
         await fetchData(true);
-        notifySuccess(editingEmployee ? 'Employee updated successfully!' : 'Employee created successfully!');
+        notifySuccess(
+          editingEmployee ? 'Employee updated successfully!' : 'Employee created successfully!'
+        );
       } catch (refreshError) {
-        console.error('[AdminDashboard] handleSaveEmployee: Employee saved but refresh failed:', refreshError);
-        showToast('Employee saved but failed to refresh list. Please refresh the page.', 'warning', 6000);
+        console.error(
+          '[AdminDashboard] handleSaveEmployee: Employee saved but refresh failed:',
+          refreshError
+        );
+        showToast(
+          'Employee saved but failed to refresh list. Please refresh the page.',
+          'warning',
+          6000
+        );
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveEmployee: Error saving employee:', error);
@@ -560,20 +671,27 @@ export const AdminDashboard: React.FC = () => {
         other_deductions: parseFloat(payslipForm.other_deductions) || 0,
         payment_date: payslipForm.payment_date,
         payment_method: payslipForm.payment_method,
-        notes: payslipForm.notes
+        notes: payslipForm.notes,
       };
       const newPayslip = await dataService.generatePayslip(payload);
-      
+
       setShowPayslipModal(false);
       setPayslipForm(createEmptyPayslipForm());
-      
+
       // FIX: Await fetchData and handle refresh errors
       try {
         await fetchData(true);
         notifySuccess('Payslip generated successfully!');
       } catch (refreshError) {
-        console.error('[AdminDashboard] handleGeneratePayslip: Payslip saved but refresh failed:', refreshError);
-        showToast('Payslip generated but failed to refresh list. Please refresh the page.', 'warning', 6000);
+        console.error(
+          '[AdminDashboard] handleGeneratePayslip: Payslip saved but refresh failed:',
+          refreshError
+        );
+        showToast(
+          'Payslip generated but failed to refresh list. Please refresh the page.',
+          'warning',
+          6000
+        );
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleGeneratePayslip: Error generating payslip:', error);
@@ -581,14 +699,25 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleUpdatePayslipStatus = async (id: string, status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled') => {
+  const handleUpdatePayslipStatus = async (
+    id: string,
+    status: 'Generated' | 'Approved' | 'Paid' | 'Cancelled'
+  ) => {
     try {
       await dataService.updatePayslipStatus(id, status);
       await fetchData(true);
-      const statusLabel = status === 'Approved' ? 'approved' : status === 'Paid' ? 'marked as paid' : status.toLowerCase();
+      const statusLabel =
+        status === 'Approved'
+          ? 'approved'
+          : status === 'Paid'
+            ? 'marked as paid'
+            : status.toLowerCase();
       notifySuccess(`Payslip ${statusLabel} successfully.`);
     } catch (error: any) {
-      console.error('[AdminDashboard] handleUpdatePayslipStatus: Error updating payslip status:', error);
+      console.error(
+        '[AdminDashboard] handleUpdatePayslipStatus: Error updating payslip status:',
+        error
+      );
       notifyError(error?.message || 'Failed to update payslip status.');
     }
   };
@@ -641,11 +770,11 @@ export const AdminDashboard: React.FC = () => {
         description: fundsForm.description,
         reference: fundsForm.reference || undefined,
         recipient: fundsForm.type === 'Disbursed' ? fundsForm.recipient : undefined,
-        date: fundsForm.date
+        date: fundsForm.date,
       };
-      
+
       await dataService.addOperatingFund(payload);
-      
+
       setShowFundsModal(false);
       setFundsForm({
         type: 'Received',
@@ -654,17 +783,26 @@ export const AdminDashboard: React.FC = () => {
         description: '',
         reference: '',
         recipient: '',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
       });
-      
+
       try {
         await fetchData(true);
-        notifySuccess(fundsForm.type === 'Received' 
-          ? 'Funds received recorded successfully!' 
-          : 'Disbursement recorded successfully!');
+        notifySuccess(
+          fundsForm.type === 'Received'
+            ? 'Funds received recorded successfully!'
+            : 'Disbursement recorded successfully!'
+        );
       } catch (refreshError) {
-        console.error('[AdminDashboard] handleAddOperatingFund: Saved but refresh failed:', refreshError);
-        showToast('Transaction saved but failed to refresh. Please refresh the page.', 'warning', 6000);
+        console.error(
+          '[AdminDashboard] handleAddOperatingFund: Saved but refresh failed:',
+          refreshError
+        );
+        showToast(
+          'Transaction saved but failed to refresh. Please refresh the page.',
+          'warning',
+          6000
+        );
       }
     } catch (error: any) {
       console.error('[AdminDashboard] handleAddOperatingFund: Error:', error);
@@ -704,7 +842,7 @@ export const AdminDashboard: React.FC = () => {
         operatingFunds,
         drivers,
         vehicles,
-        company,
+        company
       );
       notifySuccess('Driver funds report PDF downloaded!');
     } catch (error: any) {
@@ -713,30 +851,69 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const statusData = useMemo(() => ([
-    { name: 'UK', value: summaries.filter(s => s.status === 'UK').length },
-    { name: 'Namibia', value: summaries.filter(s => s.status === 'Namibia').length },
-    { name: 'Zimbabwe', value: summaries.filter(s => s.status === 'Zimbabwe').length },
-    { name: 'Botswana', value: summaries.filter(s => s.status === 'Botswana').length },
-    { name: 'Sold', value: summaries.filter(s => s.status === 'Sold').length },
-  ]), [summaries]);
+  const statusData = useMemo(
+    () => [
+      { name: 'UK', value: summaries.filter(s => s.status === 'UK').length },
+      { name: 'Namibia', value: summaries.filter(s => s.status === 'Namibia').length },
+      { name: 'Zimbabwe', value: summaries.filter(s => s.status === 'Zimbabwe').length },
+      { name: 'Botswana', value: summaries.filter(s => s.status === 'Botswana').length },
+      { name: 'Sold', value: summaries.filter(s => s.status === 'Sold').length },
+    ],
+    [summaries]
+  );
 
   const driverFundsReport = useMemo(
     () => buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles),
-    [drivers, expenses, operatingFunds, vehicles],
+    [drivers, expenses, operatingFunds, vehicles]
   );
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '24rem', gap: '1rem' }}>
-        <div className="animate-spin" style={{ width: '3rem', height: '3rem', border: '2px solid #2563eb', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
-        <p style={{ color: '#525252', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.75rem' }}>Initializing Fleet Data</p>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '24rem',
+          gap: '1rem',
+        }}
+      >
+        <div
+          className="animate-spin"
+          style={{
+            width: '3rem',
+            height: '3rem',
+            border: '2px solid #2563eb',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+          }}
+        ></div>
+        <p
+          style={{
+            color: '#525252',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            fontSize: '0.75rem',
+          }}
+        >
+          Initializing Fleet Data
+        </p>
       </div>
     );
   }
 
   const adminViewOptions: Array<{
-    id: 'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'trips' | 'assets';
+    id:
+      | 'dashboard'
+      | 'reports'
+      | 'clients'
+      | 'employees'
+      | 'payslips'
+      | 'funds'
+      | 'trips'
+      | 'assets';
     label: string;
     icon: React.ReactNode;
   }> = [
@@ -784,10 +961,17 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="md:flex-row md:items-center md:justify-between">
+      <div
+        style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+        className="md:flex-row md:items-center md:justify-between"
+      >
         <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#161616', margin: 0 }}>Admin Dashboard</h2>
-          <p style={{ color: '#525252', margin: '0.25rem 0 0' }}>Fleet, clients, employees & payroll management</p>
+          <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#161616', margin: 0 }}>
+            Admin Dashboard
+          </h2>
+          <p style={{ color: '#525252', margin: '0.25rem 0 0' }}>
+            Fleet, clients, employees & payroll management
+          </p>
         </div>
         <DashboardSectionSwitcher
           value={activeView}
@@ -808,11 +992,7 @@ export const AdminDashboard: React.FC = () => {
           >
             Add Expense
           </Button>
-          <Button
-            type="button"
-            onClick={openAddVehicleModal}
-            leftIcon={<Car size={20} />}
-          >
+          <Button type="button" onClick={openAddVehicleModal} leftIcon={<Car size={20} />}>
             Add Vehicle
           </Button>
         </div>
@@ -824,7 +1004,14 @@ export const AdminDashboard: React.FC = () => {
             type="button"
             onClick={() => {
               setEditingClient(null);
-              setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' });
+              setClientForm({
+                name: '',
+                email: '',
+                phone: '',
+                address: '',
+                company: '',
+                notes: '',
+              });
               setShowClientModal(true);
             }}
             leftIcon={<Users size={20} />}
@@ -877,7 +1064,7 @@ export const AdminDashboard: React.FC = () => {
                 description: '',
                 reference: '',
                 recipient: '',
-                date: new Date().toISOString().split('T')[0]
+                date: new Date().toISOString().split('T')[0],
               });
               setShowFundsModal(true);
             }}
@@ -890,11 +1077,7 @@ export const AdminDashboard: React.FC = () => {
 
       {activeView === 'trips' && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Button
-            type="button"
-            onClick={openCreateTripModal}
-            leftIcon={<Map size={20} />}
-          >
+          <Button type="button" onClick={openCreateTripModal} leftIcon={<Map size={20} />}>
             Create Trip
           </Button>
         </div>
@@ -915,7 +1098,7 @@ export const AdminDashboard: React.FC = () => {
       {activeView === 'clients' && (
         <AdminClientsView
           clients={clients}
-          onEditClient={(client) => {
+          onEditClient={client => {
             setEditingClient(client);
             setClientForm({
               name: client.name,
@@ -935,7 +1118,7 @@ export const AdminDashboard: React.FC = () => {
       {activeView === 'employees' && (
         <AdminEmployeesView
           employees={employees}
-          onEditEmployee={(employee) => {
+          onEditEmployee={employee => {
             setEditingEmployee(employee);
             setEmployeeForm(toEmployeeFormValue(employee));
             setShowEmployeeModal(true);
@@ -948,8 +1131,8 @@ export const AdminDashboard: React.FC = () => {
       {activeView === 'payslips' && (
         <PayslipsListView
           payslips={payslips}
-          onApprove={(id) => handleUpdatePayslipStatus(id, 'Approved')}
-          onMarkPaid={(id) => handleUpdatePayslipStatus(id, 'Paid')}
+          onApprove={id => handleUpdatePayslipStatus(id, 'Approved')}
+          onMarkPaid={id => handleUpdatePayslipStatus(id, 'Paid')}
           onDownload={handleDownloadPayslip}
           onDelete={handleDeletePayslip}
         />
@@ -975,9 +1158,7 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* Asset Register View */}
-      {activeView === 'assets' && (
-        <AssetRegister userRole={userRole} />
-      )}
+      {activeView === 'assets' && <AssetRegister userRole={userRole} />}
 
       <TripPlannerModal
         isOpen={showTripModal}
@@ -1002,7 +1183,7 @@ export const AdminDashboard: React.FC = () => {
         currencyOptions={['USD', 'NAD', 'GBP', 'BWP']}
         accent="emerald"
         typeSelectorVariant="cards"
-        submitLabel={(type) => (type === 'Received' ? 'Record Receipt' : 'Record Disbursement')}
+        submitLabel={type => (type === 'Received' ? 'Record Receipt' : 'Record Disbursement')}
       />
 
       <VehicleFormModal
@@ -1061,25 +1242,50 @@ export const AdminDashboard: React.FC = () => {
       {/* Delete Vehicle Confirmation Dialog */}
       {showDeleteVehicleDialog && vehicleToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm" onClick={() => setShowDeleteVehicleDialog(false)}></div>
+          <div
+            className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
+            onClick={() => setShowDeleteVehicleDialog(false)}
+          ></div>
           <div className="relative bg-white  p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg
+                className="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
             </div>
             <h3 className="text-2xl font-black text-zinc-900 mb-2">Delete Vehicle?</h3>
             <p className="text-zinc-600 mb-4">
-              Are you sure you want to delete <span className="font-bold">{vehicleToDelete.make_model}</span> (VIN: {vehicleToDelete.vin_number})?
+              Are you sure you want to delete{' '}
+              <span className="font-bold">{vehicleToDelete.make_model}</span> (VIN:{' '}
+              {vehicleToDelete.vin_number})?
             </p>
             <div className="bg-amber-50 border border-amber-200  p-4 mb-6">
               <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <div>
                   <p className="text-sm font-bold text-amber-800">Warning</p>
-                  <p className="text-xs text-amber-700 mt-1">This action cannot be undone. All associated expenses will also be deleted.</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    This action cannot be undone. All associated expenses will also be deleted.
+                  </p>
                 </div>
               </div>
             </div>

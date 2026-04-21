@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { LandedCostSummary, Currency, ExpenseCategory, VehicleStatus, AppUser, Vehicle, Expense } from '../../types';
+import {
+  LandedCostSummary,
+  Currency,
+  ExpenseCategory,
+  VehicleStatus,
+  AppUser,
+  Vehicle,
+  Expense,
+} from '../../types';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../Toast';
 import { Button, InsightPanel, MetricBarList, RankedMetricList, DashboardCard } from '../ui';
@@ -21,12 +29,19 @@ export const VehiclesTab: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<VehicleEditorRecord | null>(null);
   const [newVin, setNewVin] = useState('');
+  const [newReg, setNewReg] = useState('');
   const [newModel, setNewModel] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [newPurpose, setNewPurpose] = useState<'Resale' | 'Client'>('Resale');
+  const [newCbcaApplied, setNewCbcaApplied] = useState(false);
 
   // Delete dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [vehicleToDelete, setVehicleToDelete] = useState<{ id: string; make_model: string; vin_number: string } | null>(null);
+  const [vehicleToDelete, setVehicleToDelete] = useState<{
+    id: string;
+    make_model: string;
+    vin_number: string;
+  } | null>(null);
 
   // Expense modal state
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -64,14 +79,20 @@ export const VehiclesTab: React.FC = () => {
 
   const vehicleFormValue: VehicleFormValue = {
     vin: newVin,
+    reg: newReg,
     model: newModel,
     price: newPrice,
+    purpose: newPurpose,
+    cbcaApplied: newCbcaApplied,
   };
 
   const handleVehicleFormChange = (updates: Partial<VehicleFormValue>) => {
     if (updates.vin !== undefined) setNewVin(updates.vin);
+    if (updates.reg !== undefined) setNewReg(updates.reg);
     if (updates.model !== undefined) setNewModel(updates.model);
     if (updates.price !== undefined) setNewPrice(updates.price);
+    if (updates.purpose !== undefined) setNewPurpose(updates.purpose);
+    if (updates.cbcaApplied !== undefined) setNewCbcaApplied(updates.cbcaApplied);
   };
 
   const fetchData = async () => {
@@ -85,7 +106,7 @@ export const VehiclesTab: React.FC = () => {
       setSummaries(summaryData);
       setVehicles(vehicleData);
       setExpenses(expenseData);
-      setDrivers(userData.filter((user) => user.role === 'Driver' && user.status === 'Active'));
+      setDrivers(userData.filter(user => user.role === 'Driver' && user.status === 'Active'));
     } catch (err: any) {
       console.error('[VehiclesTab] fetchData error:', err);
     } finally {
@@ -93,15 +114,20 @@ export const VehiclesTab: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   // ── Vehicle handlers ──────────────────────────────────────────────────────
 
   const openAddVehicleModal = () => {
     setEditingVehicle(null);
     setNewVin('');
+    setNewReg('');
     setNewModel('');
     setNewPrice('');
+    setNewPurpose('Resale');
+    setNewCbcaApplied(false);
     setShowAddModal(true);
   };
 
@@ -109,13 +135,20 @@ export const VehiclesTab: React.FC = () => {
     const vehicleRecord = toVehicleEditorRecord(vehicle);
     setEditingVehicle(vehicleRecord);
     setNewVin(vehicleRecord.vin_number);
+    setNewReg(vehicleRecord.reg_number || '');
     setNewModel(vehicleRecord.make_model);
     setNewPrice(vehicleRecord.purchase_price_gbp.toString());
+    setNewPurpose(vehicleRecord.purpose || 'Resale');
+    setNewCbcaApplied(vehicleRecord.cbca_applied || false);
     setShowAddModal(true);
   };
 
   const openDeleteDialog = (vehicle: LandedCostSummary) => {
-    setVehicleToDelete({ id: vehicle.vehicle_id, make_model: vehicle.make_model, vin_number: vehicle.vin_number });
+    setVehicleToDelete({
+      id: vehicle.vehicle_id,
+      make_model: vehicle.make_model,
+      vin_number: vehicle.vin_number,
+    });
     setShowDeleteDialog(true);
   };
 
@@ -124,21 +157,31 @@ export const VehiclesTab: React.FC = () => {
     try {
       const payload = {
         vin_number: newVin,
+        reg_number: newReg,
         make_model: newModel,
         purchase_price_gbp: parseFloat(newPrice),
-        status: editingVehicle ? editingVehicle.status : 'UK'
+        status: editingVehicle ? editingVehicle.status : 'UK',
+        purpose: newPurpose,
+        cbca_applied: newCbcaApplied,
       };
       if (editingVehicle) {
         await dataService.updateVehicle(editingVehicle.id, payload);
       } else {
         await dataService.addVehicle(payload);
       }
-      setNewVin(''); setNewModel(''); setNewPrice('');
+      setNewVin('');
+      setNewReg('');
+      setNewModel('');
+      setNewPrice('');
+      setNewPurpose('Resale');
+      setNewCbcaApplied(false);
       setEditingVehicle(null);
       setShowAddModal(false);
       try {
         await fetchData();
-        notifySuccess(editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
+        notifySuccess(
+          editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!'
+        );
       } catch {
         notifyWarning('Vehicle saved but failed to refresh list. Please refresh the page.');
       }
@@ -191,13 +234,19 @@ export const VehiclesTab: React.FC = () => {
         receipt_url: 'https://picsum.photos/400/600',
         driver_name: expenseDriver || undefined,
       });
-      setExpenseVehicle(''); setExpenseDesc(''); setExpenseAmount('');
-      setExpenseCurrency('NAD'); setExpenseCategory('Fuel');
-      setExpenseLocation('Namibia'); setExpenseDriver('');
+      setExpenseVehicle('');
+      setExpenseDesc('');
+      setExpenseAmount('');
+      setExpenseCurrency('NAD');
+      setExpenseCategory('Fuel');
+      setExpenseLocation('Namibia');
+      setExpenseDriver('');
       setShowExpenseModal(false);
-      notifySuccess(expenseDriver
-        ? `Disbursement to ${expenseDriver} recorded successfully!`
-        : 'Expense added successfully!');
+      notifySuccess(
+        expenseDriver
+          ? `Disbursement to ${expenseDriver} recorded successfully!`
+          : 'Expense added successfully!'
+      );
       await fetchData();
     } catch (err) {
       console.error('[VehiclesTab] handleAddExpense error:', err);
@@ -207,13 +256,16 @@ export const VehiclesTab: React.FC = () => {
 
   // ── Chart data ────────────────────────────────────────────────────────────
 
-  const statusData = useMemo(() => ([
-    { name: 'UK', value: summaries.filter(s => s.status === 'UK').length },
-    { name: 'Namibia', value: summaries.filter(s => s.status === 'Namibia').length },
-    { name: 'Zimbabwe', value: summaries.filter(s => s.status === 'Zimbabwe').length },
-    { name: 'Botswana', value: summaries.filter(s => s.status === 'Botswana').length },
-    { name: 'Sold', value: summaries.filter(s => s.status === 'Sold').length },
-  ]), [summaries]);
+  const statusData = useMemo(
+    () => [
+      { name: 'UK', value: summaries.filter(s => s.status === 'UK').length },
+      { name: 'Namibia', value: summaries.filter(s => s.status === 'Namibia').length },
+      { name: 'Zimbabwe', value: summaries.filter(s => s.status === 'Zimbabwe').length },
+      { name: 'Botswana', value: summaries.filter(s => s.status === 'Botswana').length },
+      { name: 'Sold', value: summaries.filter(s => s.status === 'Sold').length },
+    ],
+    [summaries]
+  );
 
   const totalValuation = summaries.reduce((acc, s) => acc + s.total_landed_cost_usd, 0);
   const inTransitCount = summaries.filter(s => s.status !== 'Sold').length;
@@ -222,7 +274,9 @@ export const VehiclesTab: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <div className="animate-spin w-10 h-10 border-2 border-[#0f62fe] border-t-transparent rounded-full"></div>
-        <p className="text-[#525252] font-semibold uppercase tracking-widest text-xs">Loading Fleet Data</p>
+        <p className="text-[#525252] font-semibold uppercase tracking-widest text-xs">
+          Loading Fleet Data
+        </p>
       </div>
     );
   }
@@ -239,17 +293,16 @@ export const VehiclesTab: React.FC = () => {
         >
           Add Expense
         </Button>
-        <Button
-          type="button"
-          onClick={openAddVehicleModal}
-          leftIcon={<Car size={20} />}
-        >
+        <Button type="button" onClick={openAddVehicleModal} leftIcon={<Car size={20} />}>
           Add Vehicle
         </Button>
       </div>
 
       {/* Analytics Cards */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+      <div
+        className="grid gap-4"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}
+      >
         <DashboardCard
           title="Total Asset Valuation"
           value={`$${totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
@@ -290,7 +343,10 @@ export const VehiclesTab: React.FC = () => {
       </div>
 
       {/* Analytics Panels */}
-      <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
+      <div
+        className="grid gap-6"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}
+      >
         <InsightPanel
           title="Landed Cost Breakdown"
           subtitle="Top vehicles ranked by total landed cost, with transit spend called out."
@@ -299,7 +355,7 @@ export const VehiclesTab: React.FC = () => {
             items={[...summaries]
               .sort((a, b) => (b.total_landed_cost_usd || 0) - (a.total_landed_cost_usd || 0))
               .slice(0, 6)
-              .map((summary) => ({
+              .map(summary => ({
                 label: summary.make_model,
                 value: `$${(summary.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
                 helper: `${summary.vin_number} • transit $${(summary.total_expenses_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
@@ -315,13 +371,25 @@ export const VehiclesTab: React.FC = () => {
         >
           <MetricBarList
             items={statusData
-              .filter((item) => item.value > 0)
-              .map((item) => ({
+              .filter(item => item.value > 0)
+              .map(item => ({
                 label: item.name,
                 value: `${item.value} vehicles`,
-                helper: summaries.length > 0 ? `${((item.value / summaries.length) * 100).toFixed(1)}% of fleet` : '0% of fleet',
+                helper:
+                  summaries.length > 0
+                    ? `${((item.value / summaries.length) * 100).toFixed(1)}% of fleet`
+                    : '0% of fleet',
                 percent: summaries.length > 0 ? (item.value / summaries.length) * 100 : 0,
-                tone: item.name === 'Sold' ? 'red' : item.name === 'Namibia' ? 'green' : item.name === 'Zimbabwe' ? 'teal' : item.name === 'Botswana' ? 'purple' : 'blue',
+                tone:
+                  item.name === 'Sold'
+                    ? 'red'
+                    : item.name === 'Namibia'
+                      ? 'green'
+                      : item.name === 'Zimbabwe'
+                        ? 'teal'
+                        : item.name === 'Botswana'
+                          ? 'purple'
+                          : 'blue',
               }))}
             emptyMessage="No distribution data available yet."
           />
@@ -334,11 +402,14 @@ export const VehiclesTab: React.FC = () => {
           <div>
             <h3 className="m-0 text-base font-semibold text-[#161616]">Current Inventory</h3>
             <p className="mt-1 text-sm text-[#525252]">
-              {summaries.length} vehicle{summaries.length !== 1 ? 's' : ''} &bull; {inTransitCount} in transit
+              {summaries.length} vehicle{summaries.length !== 1 ? 's' : ''} &bull; {inTransitCount}{' '}
+              in transit
             </p>
           </div>
           <div className="text-right">
-            <p className="m-0 text-xs text-[#525252] uppercase tracking-wider font-semibold">Total Value</p>
+            <p className="m-0 text-xs text-[#525252] uppercase tracking-wider font-semibold">
+              Total Value
+            </p>
             <p className="mt-1 text-xl font-semibold text-[#161616] tabular-nums">
               ${totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
@@ -348,14 +419,22 @@ export const VehiclesTab: React.FC = () => {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-[#f4f4f4] border-b border-[#e0e0e0]">
-                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">Asset / VIN</th>
-                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">Region</th>
-                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">Purchase Cost</th>
-                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">Landed Cost</th>
+                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">
+                  Asset / VIN
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">
+                  Region
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">
+                  Purchase Cost
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">
+                  Landed Cost
+                </th>
               </tr>
             </thead>
             <tbody>
-              {summaries.map((s) => (
+              {summaries.map(s => (
                 <tr
                   key={s.vehicle_id}
                   className="border-b border-[#e0e0e0] hover:bg-[#f4f4f4] transition-colors group"
@@ -363,7 +442,9 @@ export const VehiclesTab: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="font-semibold text-[#161616]">{s.make_model}</span>
-                      <span className="font-mono text-xs text-[#525252] uppercase">{s.vin_number}</span>
+                      <span className="font-mono text-xs text-[#525252] uppercase">
+                        {s.vin_number}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -374,16 +455,13 @@ export const VehiclesTab: React.FC = () => {
                           s.status === 'UK'
                             ? '#e0e0e0'
                             : s.status === 'Namibia'
-                            ? '#f1c21b'
-                            : s.status === 'Zimbabwe'
-                            ? '#24a148'
-                            : s.status === 'Botswana'
-                            ? '#8a3ffc'
-                            : '#0f62fe',
-                        color:
-                          s.status === 'UK' || s.status === 'Namibia'
-                            ? '#161616'
-                            : '#ffffff',
+                              ? '#f1c21b'
+                              : s.status === 'Zimbabwe'
+                                ? '#24a148'
+                                : s.status === 'Botswana'
+                                  ? '#8a3ffc'
+                                  : '#0f62fe',
+                        color: s.status === 'UK' || s.status === 'Namibia' ? '#161616' : '#ffffff',
                       }}
                     >
                       {s.status}
@@ -396,9 +474,14 @@ export const VehiclesTab: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
                         <span className="font-semibold text-[#161616] tabular-nums">
-                          ${s.total_landed_cost_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          $
+                          {s.total_landed_cost_usd.toLocaleString(undefined, {
+                            maximumFractionDigits: 0,
+                          })}
                         </span>
-                        <span className="text-xs text-[#525252] uppercase tracking-wider">Total Valuation</span>
+                        <span className="text-xs text-[#525252] uppercase tracking-wider">
+                          Total Valuation
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
@@ -468,7 +551,8 @@ export const VehiclesTab: React.FC = () => {
                   </p>
                   <div className="p-4" style={{ background: '#f1c21b' }}>
                     <p className="m-0 text-sm font-semibold text-[#161616]">
-                      Warning: This action cannot be undone. All associated expenses will also be deleted.
+                      Warning: This action cannot be undone. All associated expenses will also be
+                      deleted.
                     </p>
                   </div>
                 </>

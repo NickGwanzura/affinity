@@ -1,6 +1,6 @@
 /**
  * Server-Side Database Service
- * 
+ *
  * This module ONLY runs server-side in API routes.
  * Database credentials are never exposed to the browser.
  */
@@ -43,7 +43,7 @@ export const sql = Object.assign(
   {
     query: (queryText: string, params?: any[]) => getSql().query(queryText, params),
     unsafe: (value: string) => (getSql() as any).unsafe(value),
-  },
+  }
 );
 
 // Connection check
@@ -59,15 +59,43 @@ export async function checkConnection(): Promise<boolean> {
 
 // Column validation for ORDER BY clauses
 const ALLOWED_COLUMNS: Record<string, string[]> = {
-  vehicles: ['id', 'vin_number', 'make_model', 'purchase_price_gbp', 'status', 'created_at'],
+  vehicles: [
+    'id',
+    'vin_number',
+    'reg_number',
+    'make_model',
+    'purchase_price_gbp',
+    'status',
+    'purpose',
+    'cbca_applied',
+    'created_at',
+  ],
   expenses: ['id', 'vehicle_id', 'description', 'amount', 'currency', 'category', 'created_at'],
   quotes: ['id', 'quote_number', 'client_name', 'amount_usd', 'status', 'created_at'],
-  invoices: ['id', 'invoice_number', 'client_name', 'amount_usd', 'status', 'due_date', 'created_at'],
+  invoices: [
+    'id',
+    'invoice_number',
+    'client_name',
+    'amount_usd',
+    'status',
+    'due_date',
+    'created_at',
+  ],
   payments: ['id', 'reference_id', 'client_name', 'amount_usd', 'date', 'created_at'],
   clients: ['id', 'name', 'email', 'company', 'created_at'],
   employees: ['id', 'employee_number', 'name', 'department', 'status', 'created_at'],
   user_profiles: ['id', 'name', 'email', 'role', 'access_role', 'status', 'created_at'],
-  trips: ['id', 'trip_number', 'title', 'status', 'route_origin', 'route_destination', 'departure_date', 'eta_date', 'created_at'],
+  trips: [
+    'id',
+    'trip_number',
+    'title',
+    'status',
+    'route_origin',
+    'route_destination',
+    'departure_date',
+    'eta_date',
+    'created_at',
+  ],
 };
 
 export function validateOrderColumn(table: string, column: string): string | null {
@@ -78,7 +106,7 @@ export function validateOrderColumn(table: string, column: string): string | nul
 
 // Transaction helper
 export async function withTransaction<T>(
-  operations: (client: import('@neondatabase/serverless').PoolClient) => Promise<T>,
+  operations: (client: import('@neondatabase/serverless').PoolClient) => Promise<T>
 ): Promise<T> {
   const pool = new Pool({ connectionString: getDatabaseUrl() });
   const client = await pool.connect();
@@ -99,15 +127,15 @@ export async function withTransaction<T>(
 
 // Query helpers with authorization
 export async function queryWithAuth(
-  userId: string, 
-  userRole: string, 
+  userId: string,
+  userRole: string,
   queryFn: () => Promise<any>
 ): Promise<any> {
   // Admin can access everything
   if (userRole === 'Admin') {
     return queryFn();
   }
-  
+
   // Other roles have filtered access
   // This is where row-level filtering would be applied
   return queryFn();
@@ -116,7 +144,11 @@ export async function queryWithAuth(
 // NOTE: This in-memory rate limiter resets on cold starts and is not shared across serverless instances. For production, replace with Redis-based rate limiting (e.g. Upstash).
 const rateLimits = new Map<string, { count: number; resetTime: number }>();
 
-export function checkRateLimit(identifier: string, maxRequests: number = 100, windowMs: number = 60000): boolean {
+export function checkRateLimit(
+  identifier: string,
+  maxRequests: number = 100,
+  windowMs: number = 60000
+): boolean {
   const now = Date.now();
 
   // Lazy cleanup: prune expired entries before checking

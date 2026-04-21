@@ -1,21 +1,27 @@
 /**
  * Zod Validation Schemas
- * 
+ *
  * Input validation for all API endpoints
  */
 
 import { z } from 'zod';
 
-const DateLikeSchema = z.string().min(1).refine((value) => !Number.isNaN(Date.parse(value)), {
-  message: 'Invalid date value',
-});
+const DateLikeSchema = z
+  .string()
+  .min(1)
+  .refine(value => !Number.isNaN(Date.parse(value)), {
+    message: 'Invalid date value',
+  });
 
 // Vehicle schemas
 export const VehicleSchema = z.object({
   vin_number: z.string().min(1).max(100),
+  reg_number: z.string().min(0).max(50).default(''),
   make_model: z.string().min(1).max(200),
   purchase_price_gbp: z.number().positive(),
   status: z.enum(['UK', 'Namibia', 'Zimbabwe', 'Botswana', 'Sold']).default('UK'),
+  purpose: z.enum(['Resale', 'Client']).default('Resale'),
+  cbca_applied: z.boolean().default(false),
 });
 
 export const VehicleUpdateSchema = VehicleSchema.partial();
