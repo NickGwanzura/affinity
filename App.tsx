@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Login } from './components/Login';
@@ -11,29 +10,39 @@ import { AuthSession } from './types';
 import { authService } from './services/authService';
 
 const AdminDashboard = lazy(() =>
-  import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard }))
+  import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard }))
 );
 const AccountantDashboard = lazy(() =>
-  import('./components/AccountantDashboard').then((module) => ({ default: module.AccountantDashboard }))
+  import('./components/AccountantDashboard').then(module => ({
+    default: module.AccountantDashboard,
+  }))
 );
 const DriverPortal = lazy(() =>
-  import('./components/DriverPortal').then((module) => ({ default: module.DriverPortal }))
+  import('./components/DriverPortal').then(module => ({ default: module.DriverPortal }))
 );
 const Settings = lazy(() =>
-  import('./components/Settings').then((module) => ({ default: module.Settings }))
+  import('./components/Settings').then(module => ({ default: module.Settings }))
 );
 const Financials = lazy(() =>
-  import('./components/Financials').then((module) => ({ default: module.Financials }))
+  import('./components/Financials').then(module => ({ default: module.Financials }))
 );
 const Documents = lazy(() =>
-  import('./components/Documents').then((module) => ({ default: module.Documents }))
+  import('./components/Documents').then(module => ({ default: module.Documents }))
 );
 const ClientDirectory = lazy(() =>
-  import('./components/ClientDirectory').then((module) => ({ default: module.ClientDirectory }))
+  import('./components/ClientDirectory').then(module => ({ default: module.ClientDirectory }))
+);
+const Shipments = lazy(() =>
+  import('./components/Shipments').then(module => ({ default: module.Shipments }))
+);
+const UpdateCenter = lazy(() =>
+  import('./components/UpdateCenter').then(module => ({ default: module.UpdateCenter }))
 );
 
 const ScreenLoader = () => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+  <div
+    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}
+  >
     <div className="flex items-center gap-2 text-gray-500">
       <Loader2 className="animate-spin" size={20} />
       <span className="text-sm">Loading workspace...</span>
@@ -80,14 +89,14 @@ export default function App() {
     const hash = window.location.hash;
     const search = window.location.search;
     const fullUrl = hash + search;
-    
+
     // Neon Auth can send different formats:
     // #type=recovery&token=xxx
     // #access_token=xxx&type=recovery
     // ?type=recovery&token=xxx
     if (
       fullUrl.includes('type=recovery') ||
-      fullUrl.includes('token=') && (fullUrl.includes('reset') || fullUrl.includes('recovery'))
+      (fullUrl.includes('token=') && (fullUrl.includes('reset') || fullUrl.includes('recovery')))
     ) {
       setIsResetPassword(true);
     }
@@ -173,6 +182,10 @@ export default function App() {
         return <Documents />;
       case 'clients':
         return <ClientDirectory />;
+      case 'shipments':
+        return <Shipments />;
+      case 'updates':
+        return <UpdateCenter />;
       default:
         return <AdminDashboard />;
     }
@@ -235,9 +248,7 @@ export default function App() {
         user={session.user}
         onLogout={handleLogout}
       >
-        <Suspense fallback={<ScreenLoader />}>
-          {renderCurrentView()}
-        </Suspense>
+        <Suspense fallback={<ScreenLoader />}>{renderCurrentView()}</Suspense>
       </Layout>
     );
   }

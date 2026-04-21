@@ -10,6 +10,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Package,
+  Mail,
 } from 'lucide-react';
 import { AppUser, UserRole } from '../types';
 
@@ -20,7 +22,9 @@ export type AppView =
   | 'settings'
   | 'financials'
   | 'documents'
-  | 'clients';
+  | 'clients'
+  | 'shipments'
+  | 'updates';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -47,6 +51,8 @@ const navItems: {
   { id: 'documents', label: 'Documents', roles: ['Admin', 'Manager', 'Driver'], Icon: FileText },
   { id: 'driver', label: 'Driver Portal', roles: ['Admin', 'Driver'], Icon: Truck },
   { id: 'clients', label: 'Clients', roles: ['Admin', 'Accountant'], Icon: Users },
+  { id: 'shipments', label: 'Shipments', roles: ['Admin', 'Manager', 'Accountant'], Icon: Package },
+  { id: 'updates', label: 'Updates', roles: ['Admin'], Icon: Mail },
   { id: 'settings', label: 'Settings', roles: ['Admin'], Icon: Settings },
 ];
 
