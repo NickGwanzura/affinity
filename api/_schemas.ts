@@ -23,6 +23,7 @@ export const VehicleSchema = z.object({
   purpose: z.enum(['Resale', 'Client']).default('Resale'),
   client_id: z.string().uuid().optional().nullable(),
   cbca_applied: z.boolean().default(false),
+  reg_book_url: z.string().url().optional().or(z.literal('')),
 });
 
 export const VehicleUpdateSchema = VehicleSchema.partial();

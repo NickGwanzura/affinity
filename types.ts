@@ -33,6 +33,7 @@ export interface Vehicle {
   purpose: VehiclePurpose;
   client_id?: string;
   cbca_applied: boolean;
+  reg_book_url?: string;
   created_at: string;
 }
 

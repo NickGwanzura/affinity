@@ -9,7 +9,9 @@ export interface VehicleEditorRecord {
   purchase_price_gbp: number;
   status: Vehicle['status'];
   purpose: VehiclePurpose;
+  client_id?: string;
   cbca_applied: boolean;
+  reg_book_url?: string;
 }
 
 export const toVehicleEditorRecord = (
@@ -25,7 +27,9 @@ export const toVehicleEditorRecord = (
       purchase_price_gbp: vehicle.purchase_price_gbp,
       status: vehicle.status,
       purpose: (vehicle as any).purpose || 'Resale',
+      client_id: (vehicle as any).client_id,
       cbca_applied: (vehicle as any).cbca_applied || false,
+      reg_book_url: (vehicle as any).reg_book_url,
     };
   }
 
@@ -37,6 +41,8 @@ export const toVehicleEditorRecord = (
     purchase_price_gbp: vehicle.purchase_price_gbp,
     status: vehicle.status,
     purpose: vehicle.purpose || 'Resale',
+    client_id: vehicle.client_id,
     cbca_applied: vehicle.cbca_applied || false,
+    reg_book_url: vehicle.reg_book_url,
   };
 };

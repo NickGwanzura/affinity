@@ -87,7 +87,7 @@ async function listVehicles(req: AuthenticatedRequest, res: VercelResponse) {
     const [countResult, rows] = await Promise.all([
       sql`SELECT COUNT(*) as total FROM vehicles`,
       sql`
-        SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
+        SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, reg_book_url, created_at
         FROM vehicles
         ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
         LIMIT ${limit} OFFSET ${offset}
@@ -112,7 +112,7 @@ async function getVehicle(req: AuthenticatedRequest, res: VercelResponse) {
   const { id } = req.query;
 
   const rows = await sql`
-    SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
+    SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, reg_book_url, created_at
     FROM vehicles
     WHERE id = ${id}::uuid
   `;
@@ -129,8 +129,8 @@ async function createVehicle(req: AuthenticatedRequest, res: VercelResponse) {
     const data = VehicleSchema.parse(req.body);
 
     const rows = await sql`
-      INSERT INTO vehicles (vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied)
-      VALUES (${data.vin_number}, ${data.reg_number}, ${data.make_model}, ${data.purchase_price_gbp}, ${data.status}, ${data.purpose}, ${data.client_id ?? null}, ${data.cbca_applied})
+      INSERT INTO vehicles (vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, reg_book_url)
+      VALUES (${data.vin_number}, ${data.reg_number}, ${data.make_model}, ${data.purchase_price_gbp}, ${data.status}, ${data.purpose}, ${data.client_id ?? null}, ${data.cbca_applied}, ${data.reg_book_url ?? null})
       RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
     `;
 
@@ -160,6 +160,7 @@ async function updateVehicle(req: AuthenticatedRequest, res: VercelResponse) {
         purpose = COALESCE(${data.purpose ?? null}, purpose),
         client_id = ${data.client_id ?? null},
         cbca_applied = COALESCE(${data.cbca_applied ?? null}, cbca_applied),
+        reg_book_url = COALESCE(${data.reg_book_url ?? null}, reg_book_url),
         updated_at = NOW()
       WHERE id = ${id}::uuid
       RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
