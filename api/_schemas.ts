@@ -16,14 +16,17 @@ const DateLikeSchema = z
 // Vehicle schemas
 export const VehicleSchema = z.object({
   vin_number: z.string().min(1).max(100),
-  reg_number: z.string().min(0).max(50).default(''),
+  reg_number: z.string().max(50).default(''),
   make_model: z.string().min(1).max(200),
   purchase_price_gbp: z.number().positive(),
   status: z.enum(['UK', 'Namibia', 'Zimbabwe', 'Botswana', 'Sold']).default('UK'),
   purpose: z.enum(['Resale', 'Client']).default('Resale'),
   client_id: z.string().uuid().optional().nullable(),
   cbca_applied: z.boolean().default(false),
-  reg_book_url: z.string().url().optional().or(z.literal('')),
+  reg_book_url: z
+    .union([z.string().url(), z.literal(''), z.null()])
+    .optional()
+    .transform(value => (value === '' ? null : value)),
 });
 
 export const VehicleUpdateSchema = VehicleSchema.partial();
@@ -36,8 +39,8 @@ export const ShipmentSchema = z.object({
   origin: z.string().min(1).max(200),
   destination: z.string().min(1).max(200),
   status: z.enum(['Pending', 'In Transit', 'Delivered', 'Cancelled']).default('Pending'),
-  shipping_date: z.string().optional(),
-  delivery_date: z.string().optional(),
+  shipping_date: DateLikeSchema.optional().nullable(),
+  delivery_date: DateLikeSchema.optional().nullable(),
 });
 
 export const ShipmentUpdateSchema = ShipmentSchema.partial();

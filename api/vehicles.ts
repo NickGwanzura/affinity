@@ -131,7 +131,7 @@ async function createVehicle(req: AuthenticatedRequest, res: VercelResponse) {
     const rows = await sql`
       INSERT INTO vehicles (vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, reg_book_url)
       VALUES (${data.vin_number}, ${data.reg_number}, ${data.make_model}, ${data.purchase_price_gbp}, ${data.status}, ${data.purpose}, ${data.client_id ?? null}, ${data.cbca_applied}, ${data.reg_book_url ?? null})
-      RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
+      RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, reg_book_url, created_at
     `;
 
     res.status(201).json(rows[0]);
@@ -160,10 +160,13 @@ async function updateVehicle(req: AuthenticatedRequest, res: VercelResponse) {
         purpose = COALESCE(${data.purpose ?? null}, purpose),
         client_id = ${data.client_id ?? null},
         cbca_applied = COALESCE(${data.cbca_applied ?? null}, cbca_applied),
-        reg_book_url = COALESCE(${data.reg_book_url ?? null}, reg_book_url),
+        reg_book_url = CASE WHEN ${data.reg_book_url === undefined}::boolean
+                            THEN reg_book_url
+                            ELSE ${data.reg_book_url ?? null}
+                       END,
         updated_at = NOW()
       WHERE id = ${id}::uuid
-      RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
+      RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, reg_book_url, created_at
     `;
 
     if (rows.length === 0) {
@@ -268,9 +271,12 @@ async function updateShipment(req: AuthenticatedRequest, res: VercelResponse) {
 
     const rows = await sql`
       UPDATE shipments
-      SET 
+      SET
         client_id = COALESCE(${data.client_id ?? null}, client_id),
-        vehicle_id = ${data.vehicle_id ?? null},
+        vehicle_id = CASE WHEN ${data.vehicle_id === undefined}::boolean
+                          THEN vehicle_id
+                          ELSE ${data.vehicle_id ?? null}
+                     END,
         description = COALESCE(${data.description ?? null}, description),
         origin = COALESCE(${data.origin ?? null}, origin),
         destination = COALESCE(${data.destination ?? null}, destination),

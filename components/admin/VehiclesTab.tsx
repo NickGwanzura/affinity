@@ -34,6 +34,7 @@ export const VehiclesTab: React.FC = () => {
   const [newPrice, setNewPrice] = useState('');
   const [newPurpose, setNewPurpose] = useState<'Resale' | 'Client'>('Resale');
   const [newCbcaApplied, setNewCbcaApplied] = useState(false);
+  const [newRegBookUrl, setNewRegBookUrl] = useState('');
 
   // Delete dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -84,6 +85,7 @@ export const VehiclesTab: React.FC = () => {
     price: newPrice,
     purpose: newPurpose,
     cbcaApplied: newCbcaApplied,
+    regBookUrl: newRegBookUrl,
   };
 
   const handleVehicleFormChange = (updates: Partial<VehicleFormValue>) => {
@@ -93,6 +95,7 @@ export const VehiclesTab: React.FC = () => {
     if (updates.price !== undefined) setNewPrice(updates.price);
     if (updates.purpose !== undefined) setNewPurpose(updates.purpose);
     if (updates.cbcaApplied !== undefined) setNewCbcaApplied(updates.cbcaApplied);
+    if (updates.regBookUrl !== undefined) setNewRegBookUrl(updates.regBookUrl);
   };
 
   const fetchData = async () => {
@@ -128,6 +131,7 @@ export const VehiclesTab: React.FC = () => {
     setNewPrice('');
     setNewPurpose('Resale');
     setNewCbcaApplied(false);
+    setNewRegBookUrl('');
     setShowAddModal(true);
   };
 
@@ -140,6 +144,7 @@ export const VehiclesTab: React.FC = () => {
     setNewPrice(vehicleRecord.purchase_price_gbp.toString());
     setNewPurpose(vehicleRecord.purpose || 'Resale');
     setNewCbcaApplied(vehicleRecord.cbca_applied || false);
+    setNewRegBookUrl(vehicleRecord.reg_book_url || '');
     setShowAddModal(true);
   };
 
@@ -163,6 +168,7 @@ export const VehiclesTab: React.FC = () => {
         status: editingVehicle ? editingVehicle.status : 'UK',
         purpose: newPurpose,
         cbca_applied: newCbcaApplied,
+        reg_book_url: newRegBookUrl || null,
       };
       if (editingVehicle) {
         await dataService.updateVehicle(editingVehicle.id, payload);
@@ -175,6 +181,7 @@ export const VehiclesTab: React.FC = () => {
       setNewPrice('');
       setNewPurpose('Resale');
       setNewCbcaApplied(false);
+      setNewRegBookUrl('');
       setEditingVehicle(null);
       setShowAddModal(false);
       try {
