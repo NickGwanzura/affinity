@@ -1,9 +1,14 @@
 /* global process */
 
 import nodemailer from 'nodemailer';
-import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import React from 'react';
+import {
+  getResendClient,
+  getAppBaseUrl,
+  getEmailFromAddress,
+  isResendConfigured,
+} from './_email-utils.js';
 
 type MailConfig = {
   host: string;
@@ -30,7 +35,6 @@ type PasswordResetEmailArgs = {
 };
 
 let transporterPromise: Promise<nodemailer.Transporter> | null = null;
-let resend: Resend | null = null;
 
 const getMailConfig = (): MailConfig | null => {
   const host = process.env.SMTP_HOST;
@@ -55,19 +59,6 @@ const getMailConfig = (): MailConfig | null => {
 };
 
 export const isEmailTransportConfigured = (): boolean => getMailConfig() !== null;
-
-const getAppBaseUrl = (): string => {
-  const explicitBaseUrl = process.env.APP_BASE_URL || process.env.PUBLIC_APP_URL;
-  if (explicitBaseUrl) {
-    return explicitBaseUrl.replace(/\/+$/, '');
-  }
-
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-
-  return 'http://localhost:5173';
-};
 
 const getTransporter = async (): Promise<nodemailer.Transporter> => {
   if (!transporterPromise) {
@@ -137,20 +128,6 @@ export async function sendPasswordResetEmail({
   });
 }
 
-const getResend = (): Resend | null => {
-  if (!resend) {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (apiKey) {
-      resend = new Resend(apiKey);
-    }
-  }
-  return resend;
-};
-
-const getEmailFromAddress = (): string => {
-  return process.env.EMAIL_FROM_ADDRESS || 'noreply@affinitylogsitics.site';
-};
-
 const InviteEmailTemplate: React.FC<InviteEmailArgs> = ({ name, role, inviteToken, invitedBy }) => (
   <div
     style={{
@@ -204,15 +181,14 @@ export async function sendInviteEmail({
   inviteToken,
   invitedBy,
 }: InviteEmailArgs): Promise<void> {
-  const resendClient = getResend();
   const fromAddress = getEmailFromAddress();
 
-  if (resendClient) {
+  if (isResendConfigured()) {
     const html = await render(
       React.createElement(InviteEmailTemplate, { name, role, inviteToken, invitedBy })
     );
 
-    await resendClient.emails.send({
+    await getResendClient().emails.send({
       from: fromAddress,
       to,
       subject: `You're invited to join Affinity Logistics as ${role}`,

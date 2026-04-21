@@ -7,26 +7,32 @@ import {
   handleCors,
   apiError,
 } from './_middleware.js';
-import { sql, validateOrderColumn } from './_db.js';
+import { sql } from './_db.js';
 import { PaginationSchema } from './_schemas.js';
-import { Resend } from 'resend';
+import { z } from 'zod';
+import { getResendClient, getEmailFromAddress } from './_email-utils.js';
 
-const resend = new Resend(process.env.RESEND_API_KEY || '');
+const EmailQueueFilterSchema = PaginationSchema.extend({
+  status: z.enum(['pending', 'sent', 'failed']).optional(),
+  type: z.string().max(50).optional(),
+});
 
-const getEmailFromAddress = (): string => {
-  return process.env.EMAIL_FROM_ADDRESS || 'noreply@affinitylogsitics.site';
-};
+const SendEmailSchema = z.object({
+  to_email: z.string().email(),
+  to_name: z.string().max(200).optional().nullable(),
+  subject: z.string().min(1).max(500).optional(),
+  body: z.string().min(1).optional(),
+  type: z.string().max(50).optional(),
+  template_id: z.string().uuid().optional(),
+});
 
-const getAppBaseUrl = (): string => {
-  const explicitBaseUrl = process.env.APP_BASE_URL || process.env.PUBLIC_APP_URL;
-  if (explicitBaseUrl) {
-    return explicitBaseUrl.replace(/\/+$/, '');
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return 'http://localhost:5173';
-};
+const TemplateSchema = z.object({
+  name: z.string().min(1).max(200),
+  type: z.string().min(1).max(50),
+  subject: z.string().min(1).max(500),
+  body: z.string().min(1),
+  is_active: z.boolean().optional(),
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);
@@ -39,9 +45,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     switch (req.method) {
       case 'GET':
         if (req.query.type === 'templates') {
+          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
           return await listEmailTemplates(authReq, res);
         }
         if (req.query.type === 'queue') {
+          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
           return await listEmailQueue(authReq, res);
         }
         return apiError(res, 400, 'Invalid query');
@@ -108,15 +116,11 @@ async function listEmailTemplates(req: AuthenticatedRequest, res: VercelResponse
 
 async function createEmailTemplate(req: AuthenticatedRequest, res: VercelResponse) {
   try {
-    const { name, type, subject, body } = req.body;
-
-    if (!name || !type || !subject || !body) {
-      return apiError(res, 400, 'Missing required fields');
-    }
+    const data = TemplateSchema.parse(req.body);
 
     const rows = await sql`
       INSERT INTO email_templates (name, type, subject, body, created_by)
-      VALUES (${name}, ${type}, ${subject}, ${body}, ${req.user?.id ?? null})
+      VALUES (${data.name}, ${data.type}, ${data.subject}, ${data.body}, ${req.user?.id ?? null})
       RETURNING id, name, type, subject, body, is_active, created_at
     `;
 
@@ -130,15 +134,15 @@ async function updateEmailTemplate(req: AuthenticatedRequest, res: VercelRespons
   const { id } = req.query;
 
   try {
-    const { name, type, subject, body, is_active } = req.body;
+    const data = TemplateSchema.partial().parse(req.body);
 
     const rows = await sql`
       UPDATE email_templates
-      SET name = COALESCE(${name ?? null}, name),
-          type = COALESCE(${type ?? null}, type),
-          subject = COALESCE(${subject ?? null}, subject),
-          body = COALESCE(${body ?? null}, body),
-          is_active = COALESCE(${is_active ?? null}, is_active),
+      SET name = COALESCE(${data.name ?? null}, name),
+          type = COALESCE(${data.type ?? null}, type),
+          subject = COALESCE(${data.subject ?? null}, subject),
+          body = COALESCE(${data.body ?? null}, body),
+          is_active = COALESCE(${data.is_active ?? null}, is_active),
           updated_at = NOW()
       WHERE id = ${id}::uuid
       RETURNING id, name, type, subject, body, is_active, created_at
@@ -164,33 +168,25 @@ async function deleteEmailTemplate(req: AuthenticatedRequest, res: VercelRespons
 
 async function listEmailQueue(req: AuthenticatedRequest, res: VercelResponse) {
   try {
-    const { page, limit, status, type } = PaginationSchema.parse(req.query);
+    const { page, limit, status, type } = EmailQueueFilterSchema.parse(req.query);
     const offset = (page - 1) * limit;
 
-    let whereClause = '';
-    const params: any[] = [];
-
-    if (status) {
-      params.push(status);
-      whereClause += ` WHERE status = $${params.length}`;
-    }
-
-    if (type) {
-      params.push(type);
-      whereClause +=
-        params.length > 0 ? ` AND type = $${params.length}` : ` WHERE type = $${params.length}`;
-    }
-
-    const countResult =
-      await sql`SELECT COUNT(*) as total FROM email_queue ${sql.unsafe(whereClause)}`;
-    const rows = await sql`
-      SELECT eq.*, up.name as creator_name
-      FROM email_queue eq
-      LEFT JOIN user_profiles up ON eq.created_by = up.id
-      ${sql.unsafe(whereClause)}
-      ORDER BY eq.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `;
+    const [countResult, rows] = await Promise.all([
+      sql`
+        SELECT COUNT(*) as total FROM email_queue
+        WHERE (${status ?? null}::text IS NULL OR status = ${status ?? null})
+          AND (${type ?? null}::text IS NULL OR type = ${type ?? null})
+      `,
+      sql`
+        SELECT eq.*, up.name as creator_name
+        FROM email_queue eq
+        LEFT JOIN user_profiles up ON eq.created_by = up.id
+        WHERE (${status ?? null}::text IS NULL OR eq.status = ${status ?? null})
+          AND (${type ?? null}::text IS NULL OR eq.type = ${type ?? null})
+        ORDER BY eq.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+    ]);
 
     res.status(200).json({
       data: rows,
@@ -205,14 +201,14 @@ async function listEmailQueue(req: AuthenticatedRequest, res: VercelResponse) {
 
 async function sendEmail(req: AuthenticatedRequest, res: VercelResponse) {
   try {
-    const { to_email, to_name, subject, body, type, template_id } = req.body;
+    const payload = SendEmailSchema.parse(req.body);
 
-    let emailSubject = subject;
-    let emailBody = body;
+    let emailSubject = payload.subject;
+    let emailBody = payload.body;
 
-    if (template_id) {
+    if (payload.template_id) {
       const templateRows = await sql`
-        SELECT subject, body FROM email_templates WHERE id = ${template_id}::uuid AND is_active = true
+        SELECT subject, body FROM email_templates WHERE id = ${payload.template_id}::uuid AND is_active = true
       `;
 
       if (templateRows.length > 0) {
@@ -221,33 +217,44 @@ async function sendEmail(req: AuthenticatedRequest, res: VercelResponse) {
       }
     }
 
-    if (!to_email || !emailSubject || !emailBody) {
-      return apiError(res, 400, 'Missing required fields');
+    if (!emailSubject || !emailBody) {
+      return apiError(res, 400, 'Missing subject or body (provide both, or a valid template_id)');
     }
 
     const fromAddress = getEmailFromAddress();
 
-    let sentResult;
+    let sendError: unknown = null;
     try {
-      sentResult = await resend.emails.send({
+      const result = await getResendClient().emails.send({
         from: fromAddress,
-        to: to_email,
+        to: payload.to_email,
         subject: emailSubject,
         html: emailBody,
       });
+      if (result.error) sendError = result.error;
     } catch (resendError) {
       console.error('Resend error:', resendError);
-      sentResult = { error: resendError };
+      sendError = resendError;
     }
 
+    const sentAt = sendError ? null : new Date().toISOString();
     const queueRows = await sql`
       INSERT INTO email_queue (to_email, to_name, subject, body, type, status, sent_at, created_by)
-      VALUES (${to_email}, ${to_name ?? null}, ${emailSubject}, ${emailBody}, ${type ?? 'manual'}, ${sentResult.error ? 'failed' : 'sent'}, ${sentResult.error ? null : NOW()}, ${req.user?.id ?? null})
+      VALUES (
+        ${payload.to_email},
+        ${payload.to_name ?? null},
+        ${emailSubject},
+        ${emailBody},
+        ${payload.type ?? 'manual'},
+        ${sendError ? 'failed' : 'sent'},
+        ${sentAt},
+        ${req.user?.id ?? null}
+      )
       RETURNING id, to_email, to_name, subject, type, status, sent_at, created_at
     `;
 
-    if (sentResult.error) {
-      return apiError(res, 500, 'Failed to send email', sentResult.error);
+    if (sendError) {
+      return apiError(res, 502, 'Failed to send email', sendError);
     }
 
     res.status(201).json(queueRows[0]);

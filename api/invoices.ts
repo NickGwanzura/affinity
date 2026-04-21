@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { PoolClient } from '@neondatabase/serverless';
 import { ZodError } from 'zod';
-import { Resend } from 'resend';
 import {
   AuthenticatedRequest,
   verifyToken,
@@ -13,26 +12,13 @@ import {
 import { sql, withTransaction, validateOrderColumn } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { InvoiceSchema, InvoiceUpdateSchema, PaginationSchema } from './_schemas.js';
+import { getResendClient, getEmailFromAddress } from './_email-utils.js';
 import type { InvoiceItem } from '../types';
-
-const resend = new Resend(process.env.RESEND_API_KEY || '');
-
-const getAppBaseUrl = (): string => {
-  const explicitBaseUrl = process.env.APP_BASE_URL || process.env.PUBLIC_APP_URL;
-  if (explicitBaseUrl) return explicitBaseUrl.replace(/\/+$/, '');
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return 'http://localhost:5173';
-};
-
-const getEmailFromAddress = (): string => {
-  return process.env.EMAIL_FROM_ADDRESS || 'noreply@affinitylogsitics.site';
-};
 
 const sendInvoiceEmail = async (invoice: any, type: 'invoice' | 'statement' | 'quote') => {
   if (!invoice.client_email) return;
 
   const fromAddress = getEmailFromAddress();
-  const appUrl = getAppBaseUrl();
 
   const subject =
     type === 'invoice'
@@ -90,7 +76,7 @@ const sendInvoiceEmail = async (invoice: any, type: 'invoice' | 'statement' | 'q
   `;
 
   try {
-    await resend.emails.send({
+    await getResendClient().emails.send({
       from: fromAddress,
       to: invoice.client_email,
       subject,

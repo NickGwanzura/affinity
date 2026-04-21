@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
+import { api } from '../services/apiClient';
 import { useToast } from './Toast';
 import { Button, DashboardCard } from './ui';
-import { Mail, Send, FileText, Users, Plus, Edit, Trash2, CheckCircle, Clock } from 'lucide-react';
+import { Mail, Send, FileText, Plus, Edit, Trash2, CheckCircle, Clock } from 'lucide-react';
 
 interface EmailTemplate {
   id: string;
@@ -75,12 +76,8 @@ export const UpdateCenter: React.FC = () => {
   const fetchData = async () => {
     try {
       const [templateData, queueData, clientData] = await Promise.all([
-        fetch('/api/emails?type=templates')
-          .then(r => r.json())
-          .catch(() => ({ data: [] })),
-        fetch('/api/emails?type=queue')
-          .then(r => r.json())
-          .catch(() => ({ data: [] })),
+        api.request<{ data: EmailTemplate[] }>('/emails?type=templates').catch(() => ({ data: [] })),
+        api.request<{ data: EmailQueueItem[] }>('/emails?type=queue').catch(() => ({ data: [] })),
         dataService.getClients(),
       ]);
       setTemplates(templateData.data || []);
@@ -96,18 +93,14 @@ export const UpdateCenter: React.FC = () => {
   const handleSaveTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const method = editingTemplate ? 'PUT' : 'POST';
-      const url = editingTemplate
-        ? `/api/emails?type=templates&id=${editingTemplate.id}`
-        : '/api/emails?type=templates';
+      const endpoint = editingTemplate
+        ? `/emails?type=templates&id=${editingTemplate.id}`
+        : '/emails?type=templates';
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
+      await api.request(endpoint, {
+        method: editingTemplate ? 'PUT' : 'POST',
         body: JSON.stringify(templateForm),
       });
-
-      if (!res.ok) throw new Error('Failed to save');
 
       showToast(editingTemplate ? 'Template updated' : 'Template created', 'success');
       setShowTemplateModal(false);
@@ -122,7 +115,7 @@ export const UpdateCenter: React.FC = () => {
   const handleDeleteTemplate = async (id: string) => {
     if (!confirm('Delete this template?')) return;
     try {
-      await fetch(`/api/emails?type=templates&id=${id}`, { method: 'DELETE' });
+      await api.request(`/emails?type=templates&id=${id}`, { method: 'DELETE' });
       showToast('Template deleted', 'success');
       fetchData();
     } catch {
@@ -133,13 +126,10 @@ export const UpdateCenter: React.FC = () => {
   const handleSendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/emails?action=send', {
+      await api.request('/emails?action=send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sendForm),
       });
-
-      if (!res.ok) throw new Error('Failed to send');
 
       showToast('Email sent successfully', 'success');
       setShowSendModal(false);
