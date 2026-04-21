@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { PoolClient } from '@neondatabase/serverless';
 import { ZodError } from 'zod';
+import { Resend } from 'resend';
 import {
   AuthenticatedRequest,
   verifyToken,
@@ -13,6 +14,92 @@ import { sql, withTransaction, validateOrderColumn } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { InvoiceSchema, InvoiceUpdateSchema, PaginationSchema } from './_schemas.js';
 import type { InvoiceItem } from '../types';
+
+const resend = new Resend(process.env.RESEND_API_KEY || '');
+
+const getAppBaseUrl = (): string => {
+  const explicitBaseUrl = process.env.APP_BASE_URL || process.env.PUBLIC_APP_URL;
+  if (explicitBaseUrl) return explicitBaseUrl.replace(/\/+$/, '');
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:5173';
+};
+
+const getEmailFromAddress = (): string => {
+  return process.env.EMAIL_FROM_ADDRESS || 'noreply@affinitylogsitics.site';
+};
+
+const sendInvoiceEmail = async (invoice: any, type: 'invoice' | 'statement' | 'quote') => {
+  if (!invoice.client_email) return;
+
+  const fromAddress = getEmailFromAddress();
+  const appUrl = getAppBaseUrl();
+
+  const subject =
+    type === 'invoice'
+      ? `Invoice ${invoice.invoice_number} from Affinity Logistics`
+      : type === 'statement'
+        ? `Statement from Affinity Logistics`
+        : `Quote ${invoice.quote_number || invoice.invoice_number} from Affinity Logistics`;
+
+  const html = `
+    <div style="font-family: 'Geist Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #000; font-size: 24px; font-weight: 600; margin: 0;">AFFINITY LOGISTICS</h1>
+        <p style="color: #666; font-size: 12px; letter-spacing: 2px; margin: 5px 0 0;">CROSS-BORDER VEHICLE LOGISTICS</p>
+      </div>
+      
+      <h2 style="color: #000; font-size: 20px; margin-bottom: 20px;">
+        ${type === 'invoice' ? `Invoice ${invoice.invoice_number}` : type === 'statement' ? 'Your Statement' : 'Quote'}
+      </h2>
+      
+      <p style="color: #333; font-size: 14px; line-height: 1.6;">
+        Dear ${invoice.client_name || 'Valued Client'},
+      </p>
+      
+      <p style="color: #333; font-size: 14px; line-height: 1.6;">
+        ${
+          type === 'invoice'
+            ? `Please find attached Invoice ${invoice.invoice_number} for $${invoice.amount_usd?.toFixed(2)}.`
+            : type === 'statement'
+              ? 'Please find your current statement attached.'
+              : 'Please find your quote attached. This quote is valid for 30 days.'
+        }
+      </p>
+      
+      ${invoice.description ? `<p style="color: #333; font-size: 14px; line-height: 1.6;">${invoice.description}</p>` : ''}
+      
+      <div style="margin: 30px 0; padding: 20px; background: #f8f8f8; border-radius: 8px;">
+        <p style="margin: 0;">
+          <strong style="color: #000;">Amount:</strong> 
+          <span style="color: #000; font-size: 18px; font-weight: 600;">$${invoice.amount_usd?.toFixed(2)}</span>
+        </p>
+      </div>
+      
+      <p style="color: #666; font-size: 13px; line-height: 1.6;">
+        If you have any questions about this ${type}, please contact us.
+      </p>
+      
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #999; font-size: 12px; margin: 0;">
+          Affinity Logistics<br/>
+          Cross-Border Vehicle Logistics<br/>
+          SADC Region
+        </p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: fromAddress,
+      to: invoice.client_email,
+      subject,
+      html,
+    });
+  } catch (error) {
+    console.error('Failed to send invoice email:', error);
+  }
+};
 
 type InvoiceLineItemInput = {
   description: string;
@@ -61,7 +148,10 @@ const buildInvoiceItemsSnapshot = (items: InvoiceLineItemInput[]): InvoiceItem[]
 const calculateInvoiceTotal = (items: InvoiceLineItemInput[]): number =>
   items.reduce((sum, item) => sum + computeInvoiceLineItemAmounts(item).total, 0);
 
-const getInvoiceInputErrorMessage = (error: unknown, fallbackMessage: string): { status: number; message: string } => {
+const getInvoiceInputErrorMessage = (
+  error: unknown,
+  fallbackMessage: string
+): { status: number; message: string } => {
   if (error instanceof ZodError) {
     const firstIssue = error.issues[0];
     return {
@@ -90,7 +180,10 @@ const getInvoiceInputErrorMessage = (error: unknown, fallbackMessage: string): {
     };
   }
 
-  if (databaseError.code === '23505' && databaseError.constraint === 'invoices_invoice_number_key') {
+  if (
+    databaseError.code === '23505' &&
+    databaseError.constraint === 'invoices_invoice_number_key'
+  ) {
     return {
       status: 409,
       message: 'Invoice number collision detected. Please try again.',
@@ -106,11 +199,11 @@ const getInvoiceInputErrorMessage = (error: unknown, fallbackMessage: string): {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
-  
+
   const authReq = req as AuthenticatedRequest;
-  
+
   if (!(await verifyToken(authReq, res))) return;
-  
+
   try {
     switch (req.method) {
       case 'GET':
@@ -162,17 +255,17 @@ async function listInvoices(req: AuthenticatedRequest, res: VercelResponse) {
         FROM invoices i
         ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
         LIMIT ${limit} OFFSET ${offset}
-      `
+      `,
     ]);
-    
+
     const total = parseInt(countResult[0].total);
-    
+
     res.status(200).json({
       data: rows,
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     apiError(res, 400, 'Invalid query parameters', error);
@@ -191,22 +284,24 @@ async function getInvoice(req: AuthenticatedRequest, res: VercelResponse) {
     FROM invoices i
     WHERE i.id = ${id}::uuid
   `;
-  
+
   if (rows.length === 0) {
     return apiError(res, 404, 'Invoice not found');
   }
-  
+
   res.status(200).json(rows[0]);
 }
 
 async function generateInvoiceNumber(client: PoolClient): Promise<string> {
   const year = new Date().getFullYear();
   const sequenceCheck = await client.query<{ sequence_name: string | null }>(
-    "SELECT to_regclass('public.invoice_number_seq')::text AS sequence_name",
+    "SELECT to_regclass('public.invoice_number_seq')::text AS sequence_name"
   );
 
   if (sequenceCheck.rows[0]?.sequence_name) {
-    const result = await client.query<{ next_value: string }>("SELECT nextval('public.invoice_number_seq')::text AS next_value");
+    const result = await client.query<{ next_value: string }>(
+      "SELECT nextval('public.invoice_number_seq')::text AS next_value"
+    );
     const nextValue = parseInt(result.rows[0]?.next_value || '0', 10);
     return `INV-${year}-${String(nextValue).padStart(4, '0')}`;
   }
@@ -219,14 +314,18 @@ async function generateInvoiceNumber(client: PoolClient): Promise<string> {
       FROM invoices
       WHERE invoice_number ~ $2
     `,
-    [`^INV-${year}-(\\d+)$`, `^INV-${year}-\\d+$`],
+    [`^INV-${year}-(\\d+)$`, `^INV-${year}-\\d+$`]
   );
   const nextValue = parseInt(fallbackResult.rows[0]?.max_value || '0', 10) + 1;
 
   return `INV-${year}-${String(nextValue).padStart(4, '0')}`;
 }
 
-async function insertInvoiceItems(client: PoolClient, invoiceId: string, items: InvoiceLineItemInput[]) {
+async function insertInvoiceItems(
+  client: PoolClient,
+  invoiceId: string,
+  items: InvoiceLineItemInput[]
+) {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const amounts = computeInvoiceLineItemAmounts(item);
@@ -251,7 +350,7 @@ async function insertInvoiceItems(client: PoolClient, invoiceId: string, items: 
         amounts.taxRate,
         amounts.taxAmount,
         item.notes || null,
-      ],
+      ]
     );
   }
 }
@@ -264,7 +363,7 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
     const totalAmount = calculateInvoiceTotal(data.items);
     const itemsSnapshot = buildInvoiceItemsSnapshot(data.items);
 
-    const result = await withTransaction(async (client) => {
+    const result = await withTransaction(async client => {
       const invoiceNumber = await generateInvoiceNumber(client);
       const invoiceResult = await client.query(
         `
@@ -296,7 +395,7 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
           data.due_date,
           JSON.stringify(itemsSnapshot),
           data.batch || null,
-        ],
+        ]
       );
 
       const invoice = invoiceResult.rows[0];
@@ -314,6 +413,12 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
       newData: data,
     });
 
+    // Send email notification to client if email provided and not a draft
+    if (result.client_email && result.status !== 'Draft' && result.invoice_kind) {
+      const emailType = result.invoice_kind === 'Statement' ? 'statement' : 'invoice';
+      sendInvoiceEmail(result, emailType);
+    }
+
     res.status(201).json(result);
   } catch (error) {
     const { status, message } = getInvoiceInputErrorMessage(error, 'Failed to create invoice');
@@ -324,11 +429,11 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
 async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
   const user = req.user;
   const { id } = req.query;
-  
+
   try {
     const data = InvoiceUpdateSchema.parse(req.body);
-    
-    const result = await withTransaction(async (client) => {
+
+    const result = await withTransaction(async client => {
       let totalAmount = undefined;
       let itemsSnapshot: InvoiceItem[] | undefined;
       if (Array.isArray(data.items)) {
@@ -388,7 +493,7 @@ async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
       values.push(id);
       const rows = await client.query(
         `UPDATE invoices SET ${updates.join(', ')} WHERE id = $${paramIdx}::uuid RETURNING *`,
-        values,
+        values
       );
 
       if (rows.rows.length === 0) {
@@ -427,14 +532,19 @@ async function deleteInvoice(req: AuthenticatedRequest, res: VercelResponse) {
   }
 
   // Check for existing payment allocations
-  const allocationCount = await sql`SELECT COUNT(*) as cnt FROM payment_allocations WHERE invoice_id = ${id}::uuid`;
+  const allocationCount =
+    await sql`SELECT COUNT(*) as cnt FROM payment_allocations WHERE invoice_id = ${id}::uuid`;
   if (Number(allocationCount[0]?.cnt) > 0) {
-    return res.status(409).json({ error: 'Cannot delete invoice with existing payment allocations' });
+    return res
+      .status(409)
+      .json({ error: 'Cannot delete invoice with existing payment allocations' });
   }
 
-  await withTransaction(async (client) => {
+  await withTransaction(async client => {
     await client.query('DELETE FROM invoice_items WHERE invoice_id = $1::uuid', [id]);
-    const result = await client.query('DELETE FROM invoices WHERE id = $1::uuid RETURNING id', [id]);
+    const result = await client.query('DELETE FROM invoices WHERE id = $1::uuid RETURNING id', [
+      id,
+    ]);
     if (result.rows.length === 0) {
       throw new Error('Not found');
     }

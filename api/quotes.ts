@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { PoolClient } from '@neondatabase/serverless';
 import { ZodError } from 'zod';
+import { Resend } from 'resend';
 import {
   AuthenticatedRequest,
   verifyToken,
@@ -13,6 +14,85 @@ import { sql, withTransaction, validateOrderColumn } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { QuoteSchema, QuoteUpdateSchema, PaginationSchema } from './_schemas.js';
 import type { QuoteItem } from '../types';
+
+const resend = new Resend(process.env.RESEND_API_KEY || '');
+
+const getAppBaseUrl = (): string => {
+  const explicitBaseUrl = process.env.APP_BASE_URL || process.env.PUBLIC_APP_URL;
+  if (explicitBaseUrl) return explicitBaseUrl.replace(/\/+$/, '');
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:5173';
+};
+
+const getEmailFromAddress = (): string => {
+  return process.env.EMAIL_FROM_ADDRESS || 'noreply@affinitylogsitics.site';
+};
+
+const sendQuoteEmail = async (quote: any) => {
+  if (!quote.client_email) return;
+
+  const fromAddress = getEmailFromAddress();
+  const appUrl = getAppBaseUrl();
+
+  const html = `
+    <div style="font-family: 'Geist Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #000; font-size: 24px; font-weight: 600; margin: 0;">AFFINITY LOGISTICS</h1>
+        <p style="color: #666; font-size: 12px; letter-spacing: 2px; margin: 5px 0 0;">CROSS-BORDER VEHICLE LOGISTICS</p>
+      </div>
+      
+      <h2 style="color: #000; font-size: 20px; margin-bottom: 20px;">
+        Quote ${quote.quote_number}
+      </h2>
+      
+      <p style="color: #333; font-size: 14px; line-height: 1.6;">
+        Dear ${quote.client_name || 'Valued Client'},
+      </p>
+      
+      <p style="color: #333; font-size: 14px; line-height: 1.6;">
+        Please find your quote attached. This quote is valid for 30 days.
+      </p>
+      
+      ${quote.description ? `<p style="color: #333; font-size: 14px; line-height: 1.6;">${quote.description}</p>` : ''}
+      
+      <div style="margin: 30px 0; padding: 20px; background: #f8f8f8; border-radius: 8px;">
+        <p style="margin: 0;">
+          <strong style="color: #000;">Amount:</strong> 
+          <span style="color: #000; font-size: 18px; font-weight: 600;">$${quote.amount_usd?.toFixed(2)}</span>
+        </p>
+      </div>
+      
+      <div style="margin: 30px 0;">
+        <a href="${appUrl}" style="display: inline-block; background: #000; color: #fff; padding: 12px 24px; text-decoration: none; font-weight: 600;">
+          View Quote Online
+        </a>
+      </div>
+      
+      <p style="color: #666; font-size: 13px; line-height: 1.6;">
+        If you have any questions about this quote, please contact us.
+      </p>
+      
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #999; font-size: 12px; margin: 0;">
+          Affinity Logistics<br/>
+          Cross-Border Vehicle Logistics<br/>
+          SADC Region
+        </p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: fromAddress,
+      to: quote.client_email,
+      subject: `Quote ${quote.quote_number} from Affinity Logistics`,
+      html,
+    });
+  } catch (error) {
+    console.error('Failed to send quote email:', error);
+  }
+};
 
 type QuoteLineItemInput = {
   description: string;
@@ -62,7 +142,10 @@ const buildQuoteItemsSnapshot = (items: QuoteLineItemInput[]): QuoteItem[] =>
 const calculateQuoteTotal = (items: QuoteLineItemInput[]): number =>
   items.reduce((sum, item) => sum + computeQuoteLineItemAmounts(item).total, 0);
 
-const getQuoteInputErrorMessage = (error: unknown, fallbackMessage: string): { status: number; message: string } => {
+const getQuoteInputErrorMessage = (
+  error: unknown,
+  fallbackMessage: string
+): { status: number; message: string } => {
   if (error instanceof ZodError) {
     const firstIssue = error.issues[0];
     return {
@@ -106,11 +189,11 @@ const getQuoteInputErrorMessage = (error: unknown, fallbackMessage: string): { s
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
-  
+
   const authReq = req as AuthenticatedRequest;
-  
+
   if (!(await verifyToken(authReq, res))) return;
-  
+
   try {
     switch (req.method) {
       case 'GET':
@@ -162,17 +245,17 @@ async function listQuotes(req: AuthenticatedRequest, res: VercelResponse) {
         FROM quotes q
         ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
         LIMIT ${limit} OFFSET ${offset}
-      `
+      `,
     ]);
-    
+
     const total = parseInt(countResult[0].total);
-    
+
     res.status(200).json({
       data: rows,
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     apiError(res, 400, 'Invalid query parameters', error);
@@ -191,22 +274,24 @@ async function getQuote(req: AuthenticatedRequest, res: VercelResponse) {
     FROM quotes q
     WHERE q.id = ${id}::uuid
   `;
-  
+
   if (rows.length === 0) {
     return apiError(res, 404, 'Quote not found');
   }
-  
+
   res.status(200).json(rows[0]);
 }
 
 async function generateQuoteNumber(client: PoolClient): Promise<string> {
   const year = new Date().getFullYear();
   const sequenceCheck = await client.query<{ sequence_name: string | null }>(
-    "SELECT to_regclass('public.quote_number_seq')::text AS sequence_name",
+    "SELECT to_regclass('public.quote_number_seq')::text AS sequence_name"
   );
 
   if (sequenceCheck.rows[0]?.sequence_name) {
-    const result = await client.query<{ next_value: string }>("SELECT nextval('public.quote_number_seq')::text AS next_value");
+    const result = await client.query<{ next_value: string }>(
+      "SELECT nextval('public.quote_number_seq')::text AS next_value"
+    );
     const nextValue = parseInt(result.rows[0]?.next_value || '0', 10);
     return `QT-${year}-${String(nextValue).padStart(4, '0')}`;
   }
@@ -219,7 +304,7 @@ async function generateQuoteNumber(client: PoolClient): Promise<string> {
       FROM quotes
       WHERE quote_number ~ $2
     `,
-    [`^QT-${year}-(\\d+)$`, `^QT-${year}-\\d+$`],
+    [`^QT-${year}-(\\d+)$`, `^QT-${year}-\\d+$`]
   );
   const nextValue = parseInt(fallbackResult.rows[0]?.max_value || '0', 10) + 1;
 
@@ -251,7 +336,7 @@ async function insertQuoteItems(client: PoolClient, quoteId: string, items: Quot
         amounts.taxRate,
         amounts.taxAmount,
         item.notes || null,
-      ],
+      ]
     );
   }
 }
@@ -264,7 +349,7 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
     const totalAmount = calculateQuoteTotal(data.items);
     const itemsSnapshot = buildQuoteItemsSnapshot(data.items);
 
-    const result = await withTransaction(async (client) => {
+    const result = await withTransaction(async client => {
       const quoteNumber = await generateQuoteNumber(client);
       const quoteResult = await client.query(
         `
@@ -290,7 +375,7 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
           data.description || null,
           data.valid_until || null,
           JSON.stringify(itemsSnapshot),
-        ],
+        ]
       );
 
       const quote = quoteResult.rows[0];
@@ -308,6 +393,11 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
       newData: data,
     });
 
+    // Send email notification to client if email provided and status is Sent
+    if (result.client_email && result.status === 'Sent') {
+      sendQuoteEmail(result);
+    }
+
     res.status(201).json(result);
   } catch (error) {
     const { status, message } = getQuoteInputErrorMessage(error, 'Failed to create quote');
@@ -318,11 +408,11 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
 async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
   const user = req.user;
   const { id } = req.query;
-  
+
   try {
     const data = QuoteUpdateSchema.parse(req.body);
-    
-    const result = await withTransaction(async (client) => {
+
+    const result = await withTransaction(async client => {
       let totalAmount = undefined;
       let itemsSnapshot: QuoteItem[] | undefined;
       if (Array.isArray(data.items)) {
@@ -377,7 +467,7 @@ async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
       values.push(id);
       const rows = await client.query(
         `UPDATE quotes SET ${updates.join(', ')} WHERE id = $${paramIdx}::uuid RETURNING *`,
-        values,
+        values
       );
 
       if (rows.rows.length === 0) {
@@ -415,7 +505,7 @@ async function deleteQuote(req: AuthenticatedRequest, res: VercelResponse) {
     return apiError(res, 404, 'Not found');
   }
 
-  await withTransaction(async (client) => {
+  await withTransaction(async client => {
     await client.query('DELETE FROM quote_items WHERE quote_id = $1::uuid', [id]);
     const result = await client.query('DELETE FROM quotes WHERE id = $1::uuid RETURNING id', [id]);
     if (result.rows.length === 0) {
