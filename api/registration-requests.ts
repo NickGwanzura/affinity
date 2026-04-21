@@ -4,20 +4,19 @@ import {
   apiError,
   handleCors,
   requireRole,
-  requireTenantContext,
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
 import { logAuditEvent } from './_audit.js';
 import { RegistrationRequestSchema } from './_schemas.js';
 import { sql } from './_db.js';
+import { sendInviteEmail } from './_email.tsx';
 
 type RegistrationRequestRecord = {
   id: string;
   name: string;
   email: string;
   role: 'Admin' | 'Manager' | 'Accountant' | 'Driver';
-  tenant_id?: string | null;
   status: 'Pending' | 'Approved' | 'Rejected';
   requested_at: string;
   reviewed_at?: string;
@@ -28,7 +27,6 @@ type InviteRecord = {
   id: string;
   email: string;
   role: string;
-  tenant_id?: string | null;
   name?: string;
   status: string;
   invited_by?: string | null;
@@ -52,7 +50,6 @@ const ensureRegistrationRequestSchema = async (): Promise<void> => {
           name text NOT NULL,
           email text NOT NULL,
           role text NOT NULL,
-          tenant_id uuid NULL REFERENCES tenants(id) ON DELETE SET NULL,
           status text NOT NULL DEFAULT 'Pending',
           requested_at timestamptz NOT NULL DEFAULT NOW(),
           reviewed_at timestamptz NULL,
@@ -68,7 +65,7 @@ const ensureRegistrationRequestSchema = async (): Promise<void> => {
         ON registration_requests (LOWER(email))
         WHERE status = 'Pending'
       `;
-    })().catch((error) => {
+    })().catch(error => {
       ensureSchemaPromise = null;
       throw error;
     });
@@ -82,60 +79,35 @@ const toRegistrationRequest = (row: RegistrationRequestRecord) => ({
   name: row.name,
   email: row.email,
   role: row.role,
-  tenantId: row.tenant_id ?? null,
   status: row.status,
   requested_at: row.requested_at,
   reviewed_at: row.reviewed_at,
   reviewed_by: row.reviewed_by,
 });
 
-async function findPendingInvite(email: string, tenantId: string | null) {
+async function findPendingInvite(email: string) {
   try {
-    const rows = tenantId
-      ? await sql`
-          SELECT id, email, role, tenant_id, name, status, invited_by, invite_token, expires_at, created_at
-          FROM invites
-          WHERE LOWER(email) = ${email.toLowerCase()}
-            AND tenant_id = ${tenantId}::uuid
-            AND status = 'Pending'
-            AND expires_at > NOW()
-          ORDER BY created_at DESC
-          LIMIT 1
-        `
-      : await sql`
-          SELECT id, email, role, tenant_id, name, status, invited_by, invite_token, expires_at, created_at
-          FROM invites
-          WHERE LOWER(email) = ${email.toLowerCase()}
-            AND tenant_id IS NULL
-            AND status = 'Pending'
-            AND expires_at > NOW()
-          ORDER BY created_at DESC
-          LIMIT 1
-        `;
+    const rows = await sql`
+      SELECT id, email, role, name, status, invited_by, invite_token, expires_at, created_at
+      FROM invites
+      WHERE LOWER(email) = ${email.toLowerCase()}
+        AND status = 'Pending'
+        AND expires_at > NOW()
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
     return rows[0] as InviteRecord | undefined;
   } catch (error) {
     if (isMissingColumnError(error, 'name') || isMissingColumnError(error, 'invite_token')) {
-      const rows = tenantId
-        ? await sql`
-            SELECT id, email, role, tenant_id, status, invited_by, token, expires_at, created_at
-            FROM invites
-            WHERE LOWER(email) = ${email.toLowerCase()}
-              AND tenant_id = ${tenantId}::uuid
-              AND status = 'Pending'
-              AND expires_at > NOW()
-            ORDER BY created_at DESC
-            LIMIT 1
-          `
-        : await sql`
-            SELECT id, email, role, tenant_id, status, invited_by, token, expires_at, created_at
-            FROM invites
-            WHERE LOWER(email) = ${email.toLowerCase()}
-              AND tenant_id IS NULL
-              AND status = 'Pending'
-              AND expires_at > NOW()
-            ORDER BY created_at DESC
-            LIMIT 1
-          `;
+      const rows = await sql`
+        SELECT id, email, role, status, invited_by, token, expires_at, created_at
+        FROM invites
+        WHERE LOWER(email) = ${email.toLowerCase()}
+          AND status = 'Pending'
+          AND expires_at > NOW()
+        ORDER BY created_at DESC
+        LIMIT 1
+      `;
       return rows[0] as InviteRecord | undefined;
     }
     throw error;
@@ -143,18 +115,7 @@ async function findPendingInvite(email: string, tenantId: string | null) {
 }
 
 async function createInviteForRequest(request: RegistrationRequestRecord, reviewerId: string) {
-  let tenantId = request.tenant_id ?? null;
-  if (!tenantId) {
-    const baseTenantRows = await sql`
-      SELECT id
-      FROM tenants
-      ORDER BY created_at ASC
-      LIMIT 1
-    `;
-    tenantId = (baseTenantRows[0]?.id as string | undefined) ?? null;
-  }
-
-  const existingInvite = await findPendingInvite(request.email, tenantId);
+  const existingInvite = await findPendingInvite(request.email);
   if (existingInvite) {
     return existingInvite;
   }
@@ -165,35 +126,47 @@ async function createInviteForRequest(request: RegistrationRequestRecord, review
 
   try {
     const rows = await sql`
-      INSERT INTO invites (email, role, tenant_id, name, invited_by, invite_token, expires_at, status)
+      INSERT INTO invites (email, role, name, invited_by, invite_token, expires_at, status)
       VALUES (
         ${request.email.toLowerCase()},
         ${request.role},
-        ${tenantId}::uuid,
         ${request.name},
         ${reviewerId},
         ${token},
         ${expiresAt.toISOString()},
         'Pending'
       )
-      RETURNING id, email, role, tenant_id, name, status, invited_by, invite_token, expires_at, created_at
+      RETURNING id, email, role, name, status, invited_by, invite_token, expires_at, created_at
     `;
+    await sendInviteEmail({
+      to: request.email.toLowerCase(),
+      name: request.name,
+      role: request.role,
+      inviteToken: token,
+      invitedBy: reviewerId,
+    });
     return rows[0] as InviteRecord;
   } catch (error) {
     if (isMissingColumnError(error, 'name') || isMissingColumnError(error, 'invite_token')) {
       const rows = await sql`
-        INSERT INTO invites (email, role, tenant_id, invited_by, token, expires_at, status)
+        INSERT INTO invites (email, role, invited_by, token, expires_at, status)
         VALUES (
           ${request.email.toLowerCase()},
           ${request.role},
-          ${tenantId}::uuid,
           ${reviewerId},
           ${token},
           ${expiresAt.toISOString()},
           'Pending'
         )
-        RETURNING id, email, role, tenant_id, status, invited_by, token, expires_at, created_at
+        RETURNING id, email, role, status, invited_by, token, expires_at, created_at
       `;
+      await sendInviteEmail({
+        to: request.email.toLowerCase(),
+        name: request.name,
+        role: request.role,
+        inviteToken: token,
+        invitedBy: reviewerId,
+      });
       return rows[0] as InviteRecord;
     }
     throw error;
@@ -215,12 +188,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const authReq = req as AuthenticatedRequest;
     if (!(await verifyToken(authReq, res))) return;
-    if (!requireTenantContext(authReq, res)) return;
     if (!requireRole(authReq, res, ['Admin'])) return;
 
     switch (req.method) {
       case 'GET':
-        return await listRegistrationRequests(authReq, res);
+        return await listRegistrationRequests(res);
       case 'POST':
         if (action === 'approve') return await approveRegistrationRequest(authReq, res);
         if (action === 'reject') return await rejectRegistrationRequest(authReq, res);
@@ -233,14 +205,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listRegistrationRequests(req: AuthenticatedRequest, res: VercelResponse) {
-  const tenantId = req.user?.tenantId;
-  if (!tenantId) return apiError(res, 400, 'User not linked to tenant');
-
+async function listRegistrationRequests(res: VercelResponse) {
   const rows = await sql`
-    SELECT id, name, email, role, tenant_id, status, requested_at, reviewed_at, reviewed_by
+    SELECT id, name, email, role, status, requested_at, reviewed_at, reviewed_by
     FROM registration_requests
-    WHERE tenant_id = ${tenantId}::uuid
     ORDER BY requested_at DESC
   `;
   return res.status(200).json((rows as RegistrationRequestRecord[]).map(toRegistrationRequest));
@@ -249,10 +217,6 @@ async function listRegistrationRequests(req: AuthenticatedRequest, res: VercelRe
 async function createRegistrationRequestHandler(req: VercelRequest, res: VercelResponse) {
   try {
     const data = RegistrationRequestSchema.parse(req.body);
-    const requestedTenantId =
-      typeof (req.body as Record<string, unknown>)?.tenantId === 'string'
-        ? ((req.body as Record<string, unknown>).tenantId as string)
-        : null;
 
     const existingUser = await sql`
       SELECT id FROM user_profiles WHERE LOWER(email) = ${data.email.toLowerCase()}
@@ -270,29 +234,17 @@ async function createRegistrationRequestHandler(req: VercelRequest, res: VercelR
       return apiError(res, 409, 'A pending registration request already exists for this email');
     }
 
-    let tenantId = requestedTenantId;
-    if (!tenantId) {
-      const baseTenantRows = await sql`
-        SELECT id
-        FROM tenants
-        ORDER BY created_at ASC
-        LIMIT 1
-      `;
-      tenantId = (baseTenantRows[0]?.id as string | undefined) ?? null;
-    }
-
     const rows = await sql`
-      INSERT INTO registration_requests (id, name, email, role, tenant_id, status, requested_at)
+      INSERT INTO registration_requests (id, name, email, role, status, requested_at)
       VALUES (
         ${crypto.randomUUID()}::uuid,
         ${data.name},
         ${data.email.toLowerCase()},
         ${data.role},
-        ${tenantId}::uuid,
         'Pending',
         NOW()
       )
-      RETURNING id, name, email, role, tenant_id, status, requested_at, reviewed_at, reviewed_by
+      RETURNING id, name, email, role, status, requested_at, reviewed_at, reviewed_by
     `;
 
     await logAuditEvent({
@@ -311,15 +263,14 @@ async function createRegistrationRequestHandler(req: VercelRequest, res: VercelR
 
 async function approveRegistrationRequest(req: AuthenticatedRequest, res: VercelResponse) {
   if (!req.user) return apiError(res, 401, 'Unauthorized');
-  if (!req.user.tenantId) return apiError(res, 400, 'User not linked to tenant');
 
   const requestId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!requestId) return apiError(res, 400, 'Missing registration request id');
 
   const rows = await sql`
-    SELECT id, name, email, role, tenant_id, status, requested_at, reviewed_at, reviewed_by
+    SELECT id, name, email, role, status, requested_at, reviewed_at, reviewed_by
     FROM registration_requests
-    WHERE id = ${requestId}::uuid AND tenant_id = ${req.user.tenantId}::uuid
+    WHERE id = ${requestId}::uuid
   `;
   const request = rows[0] as RegistrationRequestRecord | undefined;
 
@@ -344,7 +295,7 @@ async function approveRegistrationRequest(req: AuthenticatedRequest, res: Vercel
       reviewed_at = NOW(),
       reviewed_by = ${req.user.id}::uuid
     WHERE id = ${request.id}::uuid
-    RETURNING id, name, email, role, tenant_id, status, requested_at, reviewed_at, reviewed_by
+    RETURNING id, name, email, role, status, requested_at, reviewed_at, reviewed_by
   `;
 
   await logAuditEvent({
@@ -375,7 +326,6 @@ async function approveRegistrationRequest(req: AuthenticatedRequest, res: Vercel
 
 async function rejectRegistrationRequest(req: AuthenticatedRequest, res: VercelResponse) {
   if (!req.user) return apiError(res, 401, 'Unauthorized');
-  if (!req.user.tenantId) return apiError(res, 400, 'User not linked to tenant');
 
   const requestId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!requestId) return apiError(res, 400, 'Missing registration request id');
@@ -386,8 +336,8 @@ async function rejectRegistrationRequest(req: AuthenticatedRequest, res: VercelR
       status = 'Rejected',
       reviewed_at = NOW(),
       reviewed_by = ${req.user.id}::uuid
-    WHERE id = ${requestId}::uuid AND tenant_id = ${req.user.tenantId}::uuid AND status = 'Pending'
-    RETURNING id, name, email, role, tenant_id, status, requested_at, reviewed_at, reviewed_by
+    WHERE id = ${requestId}::uuid AND status = 'Pending'
+    RETURNING id, name, email, role, status, requested_at, reviewed_at, reviewed_by
   `;
 
   if (rows.length === 0) {

@@ -1,35 +1,19 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { Button } from '../ui/Button';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from '../ui/Tabs';
+import { OverflowMenu, OverflowMenuItem } from '../ui/OverflowMenu';
+import { Skeleton } from '../ui/Skeleton';
 import {
-  DataTable,
-  Table,
-  TableHead,
-  TableRow,
-  TableHeader,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableToolbar,
-  TableToolbarContent,
-  TableToolbarSearch,
-  Button,
-  Tabs,
-  Tab,
-  TabPanels,
-  TabPanel,
-  Tile,
-  Grid,
-  Column,
-  Tag,
-  OverflowMenu,
-  OverflowMenuItem,
-  DatePicker,
-  DatePickerInput,
-  Stack,
-  Layer,
-  SkeletonPlaceholder,
-  InlineLoading,
-} from '@carbon/react';
-import { Add, DocumentDownload, Edit, TrashCan, Money, Document, ShoppingCart, Activity } from '@carbon/icons-react';
+  Plus,
+  Download,
+  Pencil,
+  Trash2,
+  DollarSign,
+  FileText,
+  ShoppingCart,
+  Activity,
+  Search,
+} from 'lucide-react';
 import type { Client, Invoice, Quote, Payment, CompanyDetails } from '../../types';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../Toast';
@@ -63,11 +47,12 @@ const formatMoney = (amount: number, currency = 'USD') => {
 };
 
 const getStatusTag = (type: string) => {
+  const base = 'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded';
   switch (type) {
-    case 'opening': return <Tag type="gray" size="sm">Opening</Tag>;
-    case 'invoice': return <Tag type="blue" size="sm">Invoice</Tag>;
-    case 'payment': return <Tag type="green" size="sm">Payment</Tag>;
-    default: return <Tag size="sm">{type}</Tag>;
+    case 'opening': return <span className={`${base} bg-gray-100 text-gray-700`}>Opening</span>;
+    case 'invoice': return <span className={`${base} bg-blue-100 text-blue-700`}>Invoice</span>;
+    case 'payment': return <span className={`${base} bg-green-100 text-green-700`}>Payment</span>;
+    default: return <span className={`${base} bg-gray-100 text-gray-700`}>{type}</span>;
   }
 };
 
@@ -86,6 +71,9 @@ export const CarbonClientDirectory: React.FC = () => {
   // Selection states
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+
+  // Search state for client list
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Statement date range
   const [statementDateRange, setStatementDateRange] = useState<[Date | null, Date | null]>([null, null]);
@@ -214,9 +202,9 @@ export const CarbonClientDirectory: React.FC = () => {
   const getFilteredLedger = (client: Client): LedgerEntry[] => {
     const ledger = generateLedger(client);
     const [startDate, endDate] = statementDateRange;
-    
+
     if (!startDate && !endDate) return ledger;
-    
+
     return ledger.filter(entry => {
       const entryDate = entry.date;
       if (startDate && entryDate < startDate) return false;
@@ -228,7 +216,7 @@ export const CarbonClientDirectory: React.FC = () => {
   // Generate and download statement
   const handleDownloadStatement = async () => {
     if (!selectedClient || !company) return;
-    
+
     setIsGeneratingStatement(true);
     try {
       const stats = getClientStats(selectedClient);
@@ -242,7 +230,7 @@ export const CarbonClientDirectory: React.FC = () => {
       );
 
       const [startDate, endDate] = statementDateRange;
-      
+
       const filteredInvoices = clientInvoices.filter(inv => {
         if (!startDate && !endDate) return true;
         const invDate = new Date(inv.created_at);
@@ -293,16 +281,6 @@ export const CarbonClientDirectory: React.FC = () => {
     }
   };
 
-  // Table headers
-  const headers = [
-    { key: 'name', header: 'Client Name' },
-    { key: 'company', header: 'Company' },
-    { key: 'outstanding', header: 'Balance' },
-    { key: 'invoices', header: 'Invoices' },
-    { key: 'payments', header: 'Payments' },
-    { key: 'actions', header: '' },
-  ];
-
   // Table rows
   const rows = useMemo(() => {
     return clients.map(client => {
@@ -314,11 +292,11 @@ export const CarbonClientDirectory: React.FC = () => {
         outstanding: {
           value: stats.outstanding,
           display: (
-            <span style={{ 
-              color: stats.outstanding > 0 
-                ? 'var(--cds-support-error, #da1e28)' 
-                : stats.outstanding < 0 
-                  ? 'var(--cds-support-success, #24a148)' 
+            <span style={{
+              color: stats.outstanding > 0
+                ? 'var(--cds-support-error, #da1e28)'
+                : stats.outstanding < 0
+                  ? 'var(--cds-support-success, #24a148)'
                   : 'var(--cds-text-primary, #161616)',
               fontWeight: 600,
             }}>
@@ -334,24 +312,30 @@ export const CarbonClientDirectory: React.FC = () => {
     });
   }, [clients, invoices, payments, quotes]);
 
+  // Filtered rows for search
+  const filteredRows = useMemo(() => {
+    if (!searchQuery.trim()) return rows;
+    const q = searchQuery.toLowerCase();
+    return rows.filter(r =>
+      r.name.toLowerCase().includes(q) ||
+      r.company.toLowerCase().includes(q)
+    );
+  }, [rows, searchQuery]);
+
   if (loading) {
     return (
       <div style={{ padding: 'var(--cds-spacing-05, 1rem)' }}>
-        <Stack gap={5}>
-          <div style={{ height: '3rem', width: '100%' }}>
-            <SkeletonPlaceholder />
-          </div>
-          <div style={{ height: '20rem', width: '100%' }}>
-            <SkeletonPlaceholder />
-          </div>
-        </Stack>
+        <div className="flex flex-col gap-5">
+          <Skeleton variant="rectangular" width="100%" height="3rem" />
+          <Skeleton variant="rectangular" width="100%" height="20rem" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
+    <div style={{
+      minHeight: '100vh',
       backgroundColor: 'var(--cds-layer-01, #ffffff)',
       padding: 'var(--cds-spacing-05, 1rem)'
     }}>
@@ -359,68 +343,68 @@ export const CarbonClientDirectory: React.FC = () => {
       <ConfirmDialog />
 
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 'var(--cds-spacing-06, 1.5rem)'
       }}>
         <div>
-          <h1 style={{ 
-            fontSize: 'var(--cds-productive-heading-05-font-size, 2rem)', 
+          <h1 style={{
+            fontSize: 'var(--cds-productive-heading-05-font-size, 2rem)',
             fontWeight: 600,
             color: 'var(--cds-text-primary, #161616)'
           }}>
             Client Directory
           </h1>
-          <p style={{ 
-            fontSize: 'var(--cds-body-01-font-size, 0.875rem)', 
+          <p style={{
+            fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
             color: 'var(--cds-text-secondary, #525252)',
             marginTop: 'var(--cds-spacing-02, 0.25rem)'
           }}>
             {clients.length} registered clients
           </p>
         </div>
-        <Button renderIcon={Add}>
+        <Button leftIcon={<Plus size={14} />}>
           Add Client
         </Button>
       </div>
 
       {selectedClient ? (
         // Client Detail View
-        <Stack gap={5}>
+        <div className="flex flex-col gap-5">
           {/* Back button */}
-          <Button kind="ghost" onClick={() => setSelectedClient(null)}>
+          <Button variant="ghost" onClick={() => setSelectedClient(null)}>
             ← Back to Client List
           </Button>
 
           {/* Client Header */}
-          <Layer>
-            <Tile style={{ padding: 'var(--cds-spacing-06, 1.5rem)' }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
+          <div>
+            <div style={{ padding: 'var(--cds-spacing-06, 1.5rem)' }} className="bg-white border border-gray-200">
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
                 alignItems: 'flex-start',
                 marginBottom: 'var(--cds-spacing-05, 1rem)'
               }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--cds-spacing-03, 0.5rem)' }}>
-                    <h2 style={{ 
-                      fontSize: 'var(--cds-productive-heading-04-font-size, 1.75rem)', 
-                      fontWeight: 600 
+                    <h2 style={{
+                      fontSize: 'var(--cds-productive-heading-04-font-size, 1.75rem)',
+                      fontWeight: 600
                     }}>
                       {selectedClient.name}
                     </h2>
-                    <Tag type="green" size="sm">Active</Tag>
+                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded bg-green-100 text-green-700">Active</span>
                   </div>
                   {selectedClient.company && (
                     <p style={{ color: 'var(--cds-text-secondary, #525252)', marginTop: 'var(--cds-spacing-02, 0.25rem)' }}>
                       {selectedClient.company}
                     </p>
                   )}
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: 'var(--cds-spacing-05, 1rem)', 
+                  <div style={{
+                    display: 'flex',
+                    gap: 'var(--cds-spacing-05, 1rem)',
                     marginTop: 'var(--cds-spacing-03, 0.5rem)',
                     fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
                     color: 'var(--cds-text-secondary, #525252)'
@@ -430,15 +414,15 @@ export const CarbonClientDirectory: React.FC = () => {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--cds-spacing-03, 0.5rem)' }}>
-                  <Button kind="ghost" renderIcon={Edit} iconDescription="Edit client" hasIconOnly />
-                  <Button kind="danger--ghost" renderIcon={TrashCan} iconDescription="Delete client" hasIconOnly />
+                  <Button variant="ghost" leftIcon={<Pencil size={14} />} aria-label="Edit client" />
+                  <Button variant="danger" leftIcon={<Trash2 size={14} />} aria-label="Delete client" />
                 </div>
               </div>
 
               {/* Stats Grid */}
-              <Grid narrow>
-                <Column sm={4} md={4} lg={3}>
-                  <Tile light style={{ padding: 'var(--cds-spacing-05, 1rem)' }}>
+              <div className="grid grid-cols-12 gap-4">
+                <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+                  <div style={{ padding: 'var(--cds-spacing-05, 1rem)' }} className="bg-white border border-gray-200">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--cds-spacing-03, 0.5rem)', marginBottom: 'var(--cds-spacing-02, 0.25rem)' }}>
                       <Activity size={16} />
                       <span style={{ fontSize: 'var(--cds-label-01-font-size, 0.75rem)', fontWeight: 600 }}>OPENING BALANCE</span>
@@ -446,48 +430,48 @@ export const CarbonClientDirectory: React.FC = () => {
                     <p style={{ fontSize: 'var(--cds-productive-heading-03-font-size, 1.25rem)', fontWeight: 600 }}>
                       {formatMoney(getClientStats(selectedClient).openingBalance)}
                     </p>
-                  </Tile>
-                </Column>
-                <Column sm={4} md={4} lg={3}>
-                  <Tile light style={{ padding: 'var(--cds-spacing-05, 1rem)' }}>
+                  </div>
+                </div>
+                <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+                  <div style={{ padding: 'var(--cds-spacing-05, 1rem)' }} className="bg-white border border-gray-200">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--cds-spacing-03, 0.5rem)', marginBottom: 'var(--cds-spacing-02, 0.25rem)' }}>
-                      <Document size={16} />
+                      <FileText size={16} />
                       <span style={{ fontSize: 'var(--cds-label-01-font-size, 0.75rem)', fontWeight: 600 }}>TOTAL BILLED</span>
                     </div>
                     <p style={{ fontSize: 'var(--cds-productive-heading-03-font-size, 1.25rem)', fontWeight: 600 }}>
                       {formatMoney(getClientStats(selectedClient).totalBilled)}
                     </p>
-                  </Tile>
-                </Column>
-                <Column sm={4} md={4} lg={3}>
-                  <Tile light style={{ padding: 'var(--cds-spacing-05, 1rem)' }}>
+                  </div>
+                </div>
+                <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+                  <div style={{ padding: 'var(--cds-spacing-05, 1rem)' }} className="bg-white border border-gray-200">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--cds-spacing-03, 0.5rem)', marginBottom: 'var(--cds-spacing-02, 0.25rem)' }}>
-                      <Money size={16} />
+                      <DollarSign size={16} />
                       <span style={{ fontSize: 'var(--cds-label-01-font-size, 0.75rem)', fontWeight: 600 }}>TOTAL PAID</span>
                     </div>
                     <p style={{ fontSize: 'var(--cds-productive-heading-03-font-size, 1.25rem)', fontWeight: 600, color: 'var(--cds-support-success, #24a148)' }}>
                       {formatMoney(getClientStats(selectedClient).totalPaid)}
                     </p>
-                  </Tile>
-                </Column>
-                <Column sm={4} md={4} lg={3}>
-                  <Tile 
-                    light 
-                    style={{ 
+                  </div>
+                </div>
+                <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+                  <div
+                    style={{
                       padding: 'var(--cds-spacing-05, 1rem)',
                       borderLeft: '3px solid var(--cds-interactive, #0f62fe)'
                     }}
+                    className="bg-white border border-gray-200"
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--cds-spacing-03, 0.5rem)', marginBottom: 'var(--cds-spacing-02, 0.25rem)' }}>
                       <ShoppingCart size={16} />
                       <span style={{ fontSize: 'var(--cds-label-01-font-size, 0.75rem)', fontWeight: 600 }}>OUTSTANDING</span>
                     </div>
-                    <p style={{ 
-                      fontSize: 'var(--cds-productive-heading-03-font-size, 1.25rem)', 
+                    <p style={{
+                      fontSize: 'var(--cds-productive-heading-03-font-size, 1.25rem)',
                       fontWeight: 600,
-                      color: getClientStats(selectedClient).outstanding > 0 
-                        ? 'var(--cds-support-error, #da1e28)' 
-                        : getClientStats(selectedClient).outstanding < 0 
+                      color: getClientStats(selectedClient).outstanding > 0
+                        ? 'var(--cds-support-error, #da1e28)'
+                        : getClientStats(selectedClient).outstanding < 0
                           ? 'var(--cds-support-success, #24a148)'
                           : 'var(--cds-text-primary, #161616)'
                     }}>
@@ -498,25 +482,25 @@ export const CarbonClientDirectory: React.FC = () => {
                         </span>
                       )}
                     </p>
-                  </Tile>
-                </Column>
-              </Grid>
-            </Tile>
-          </Layer>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Tabs */}
           <Tabs selectedIndex={activeTab} onChange={({ selectedIndex }) => setActiveTab(selectedIndex)}>
-            <Tab label={`Invoices (${invoices.filter(i => i.client_name.toLowerCase() === selectedClient.name.toLowerCase()).length})`} />
-            <Tab label={`Payments (${payments.filter(p => p.client_name?.toLowerCase() === selectedClient.name.toLowerCase()).length})`} />
-            <Tab label={`Quotes (${quotes.filter(q => q.client_name.toLowerCase() === selectedClient.name.toLowerCase()).length})`} />
-            <Tab label="Statement" />
-          </Tabs>
+            <TabList>
+              <Tab>{`Invoices (${invoices.filter(i => i.client_name.toLowerCase() === selectedClient.name.toLowerCase()).length})`}</Tab>
+              <Tab>{`Payments (${payments.filter(p => p.client_name?.toLowerCase() === selectedClient.name.toLowerCase()).length})`}</Tab>
+              <Tab>{`Quotes (${quotes.filter(q => q.client_name.toLowerCase() === selectedClient.name.toLowerCase()).length})`}</Tab>
+              <Tab>Statement</Tab>
+            </TabList>
 
-          <TabPanels>
-            {/* Invoices Tab */}
-            <TabPanel>
-              <Layer>
-                <Tile>
+            <TabPanels>
+              {/* Invoices Tab */}
+              <TabPanel>
+                <div className="bg-white border border-gray-200">
                   {(() => {
                     const clientInvoices = invoices.filter(
                       i => i.client_name.toLowerCase() === selectedClient.name.toLowerCase()
@@ -525,47 +509,48 @@ export const CarbonClientDirectory: React.FC = () => {
                       return <p style={{ textAlign: 'center', padding: 'var(--cds-spacing-09, 3rem)', color: 'var(--cds-text-secondary, #525252)' }}>No invoices for this client</p>;
                     }
                     return (
-                      <Table size="lg">
-                        <TableHead>
-                          <TableRow>
-                            <TableHeader>Invoice #</TableHeader>
-                            <TableHeader>Date</TableHeader>
-                            <TableHeader>Due Date</TableHeader>
-                            <TableHeader>Status</TableHeader>
-                            <TableHeader style={{ textAlign: 'right' }}>Amount</TableHeader>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody {...({} as any)}>
-                          {clientInvoices.map(inv => (
-                            <TableRow key={inv.id}>
-                              <TableCell>{inv.invoice_number}</TableCell>
-                              <TableCell>{new Date(inv.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{new Date(inv.due_date).toLocaleDateString()}</TableCell>
-                              <TableCell>
-                                <Tag 
-                                  type={inv.status === 'Paid' ? 'green' : inv.status === 'Overdue' ? 'red' : 'blue'} 
-                                  size="sm"
-                                >
-                                  {inv.status}
-                                </Tag>
-                              </TableCell>
-                              <TableCell style={{ textAlign: 'right', fontWeight: 600 }}>
-                                {formatMoney(inv.amount_usd, inv.currency)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <div className="bg-white border border-gray-200 overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Invoice #</th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Date</th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Due Date</th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Status</th>
+                              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {clientInvoices.map(inv => (
+                              <tr key={inv.id}>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{inv.invoice_number}</td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{new Date(inv.created_at).toLocaleDateString()}</td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{new Date(inv.due_date).toLocaleDateString()}</td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">
+                                  <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${
+                                    inv.status === 'Paid' ? 'bg-green-100 text-green-700' :
+                                    inv.status === 'Overdue' ? 'bg-red-100 text-red-700' :
+                                    'bg-blue-100 text-blue-700'
+                                  }`}>
+                                    {inv.status}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100 text-right font-semibold">
+                                  {formatMoney(inv.amount_usd, inv.currency)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     );
                   })()}
-                </Tile>
-              </Layer>
-            </TabPanel>
+                </div>
+              </TabPanel>
 
-            {/* Payments Tab */}
-            <TabPanel>
-              <Layer>
-                <Tile>
+              {/* Payments Tab */}
+              <TabPanel>
+                <div className="bg-white border border-gray-200">
                   {(() => {
                     const clientPayments = payments.filter(
                       p => p.client_name?.toLowerCase() === selectedClient.name.toLowerCase()
@@ -574,47 +559,46 @@ export const CarbonClientDirectory: React.FC = () => {
                       return <p style={{ textAlign: 'center', padding: 'var(--cds-spacing-09, 3rem)', color: 'var(--cds-text-secondary, #525252)' }}>No payments for this client</p>;
                     }
                     return (
-                      <Table size="lg">
-                        <TableHead>
-                          <TableRow>
-                            <TableHeader>Reference</TableHeader>
-                            <TableHeader>Date</TableHeader>
-                            <TableHeader>Method</TableHeader>
-                            <TableHeader>Status</TableHeader>
-                            <TableHeader style={{ textAlign: 'right' }}>Amount</TableHeader>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody {...({} as any)}>
-                          {clientPayments.map(pay => (
-                            <TableRow key={pay.id}>
-                              <TableCell>{pay.reference_id || '-'}</TableCell>
-                              <TableCell>{new Date(pay.date).toLocaleDateString()}</TableCell>
-                              <TableCell>{pay.method}</TableCell>
-                              <TableCell>
-                                <Tag 
-                                  type={pay.status === 'unallocated' ? 'warm-gray' : 'green'} 
-                                  size="sm"
-                                >
-                                  {pay.status === 'unallocated' ? 'Unallocated' : 'Allocated'}
-                                </Tag>
-                              </TableCell>
-                              <TableCell style={{ textAlign: 'right', fontWeight: 600, color: 'var(--cds-support-success, #24a148)' }}>
-                                {formatMoney(pay.amount_usd, pay.currency)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <div className="bg-white border border-gray-200 overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Reference</th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Date</th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Method</th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Status</th>
+                              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {clientPayments.map(pay => (
+                              <tr key={pay.id}>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{pay.reference_id || '-'}</td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{new Date(pay.date).toLocaleDateString()}</td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{pay.method}</td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">
+                                  <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${
+                                    pay.status === 'unallocated' ? 'bg-gray-100 text-gray-700' : 'bg-green-100 text-green-700'
+                                  }`}>
+                                    {pay.status === 'unallocated' ? 'Unallocated' : 'Allocated'}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 text-sm border-t border-gray-100 text-right font-semibold" style={{ color: 'var(--cds-support-success, #24a148)' }}>
+                                  {formatMoney(pay.amount_usd, pay.currency)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     );
                   })()}
-                </Tile>
-              </Layer>
-            </TabPanel>
+                </div>
+              </TabPanel>
 
-            {/* Quotes Tab */}
-            <TabPanel>
-              <Layer>
-                <Tile>
+              {/* Quotes Tab */}
+              <TabPanel>
+                <div className="bg-white border border-gray-200">
                   {(() => {
                     const clientQuotes = quotes.filter(
                       q => q.client_name.toLowerCase() === selectedClient.name.toLowerCase()
@@ -623,244 +607,249 @@ export const CarbonClientDirectory: React.FC = () => {
                       return <p style={{ textAlign: 'center', padding: 'var(--cds-spacing-09, 3rem)', color: 'var(--cds-text-secondary, #525252)' }}>No quotes for this client</p>;
                     }
                     return (
-                      <Table size="lg">
-                        <TableHead>
-                          <TableRow>
-                            <TableHeader>Quote #</TableHeader>
-                            <TableHeader>Date</TableHeader>
-                            <TableHeader>Valid Until</TableHeader>
-                            <TableHeader>Status</TableHeader>
-                            <TableHeader style={{ textAlign: 'right' }}>Amount</TableHeader>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody {...({} as any)}>
-                          {clientQuotes.map(q => (
-                            <TableRow key={q.id}>
-                              <TableCell>{q.quote_number}</TableCell>
-                              <TableCell>{new Date(q.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '-'}</TableCell>
-                              <TableCell>
-                                <Tag 
-                                  type={q.status === 'Accepted' ? 'green' : q.status === 'Rejected' ? 'red' : 'blue'} 
-                                  size="sm"
-                                >
-                                  {q.status}
-                                </Tag>
-                              </TableCell>
-                              <TableCell style={{ textAlign: 'right', fontWeight: 600 }}>
-                                {formatMoney(q.amount_usd, q.currency)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <div className="bg-white border border-gray-200 overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Quote #</th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Date</th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Valid Until</th>
+                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Status</th>
+                              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {clientQuotes.map(q => (
+                              <tr key={q.id}>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{q.quote_number}</td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{new Date(q.created_at).toLocaleDateString()}</td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '-'}</td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">
+                                  <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${
+                                    q.status === 'Accepted' ? 'bg-green-100 text-green-700' :
+                                    q.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                    'bg-blue-100 text-blue-700'
+                                  }`}>
+                                    {q.status}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100 text-right font-semibold">
+                                  {formatMoney(q.amount_usd, q.currency)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     );
                   })()}
-                </Tile>
-              </Layer>
-            </TabPanel>
+                </div>
+              </TabPanel>
 
-            {/* Statement Tab */}
-            <TabPanel>
-              <Stack gap={5}>
-                {/* Statement Actions */}
-                <Layer>
-                  <Tile style={{ padding: 'var(--cds-spacing-05, 1rem)' }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
+              {/* Statement Tab */}
+              <TabPanel>
+                <div className="flex flex-col gap-5">
+                  {/* Statement Actions */}
+                  <div className="bg-white border border-gray-200" style={{ padding: 'var(--cds-spacing-05, 1rem)' }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
                       alignItems: 'flex-end',
                       flexWrap: 'wrap',
                       gap: 'var(--cds-spacing-04, 0.75rem)'
                     }}>
                       <div style={{ display: 'flex', gap: 'var(--cds-spacing-04, 0.75rem)', alignItems: 'flex-end' }}>
-                        <DatePicker
-                          datePickerType="range"
-                          value={statementDateRange}
-                          onChange={(range: [Date | null, Date | null]) => setStatementDateRange(range)}
-                        >
-                          <DatePickerInput
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="date-from" className="text-xs font-medium text-gray-700">From</label>
+                          <input
                             id="date-from"
-                            labelText="From"
-                            placeholder="dd/mm/yyyy"
+                            type="date"
+                            className="border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onChange={e => {
+                              const val = e.target.value ? new Date(e.target.value) : null;
+                              setStatementDateRange([val, statementDateRange[1]]);
+                            }}
                           />
-                          <DatePickerInput
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="date-to" className="text-xs font-medium text-gray-700">To</label>
+                          <input
                             id="date-to"
-                            labelText="To"
-                            placeholder="dd/mm/yyyy"
+                            type="date"
+                            className="border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onChange={e => {
+                              const val = e.target.value ? new Date(e.target.value) : null;
+                              setStatementDateRange([statementDateRange[0], val]);
+                            }}
                           />
-                        </DatePicker>
+                        </div>
                       </div>
                       <Button
-                        renderIcon={isGeneratingStatement ? undefined : DocumentDownload}
+                        leftIcon={isGeneratingStatement ? undefined : <Download size={14} />}
                         onClick={handleDownloadStatement}
                         disabled={isGeneratingStatement}
+                        isLoading={isGeneratingStatement}
                       >
-                        {isGeneratingStatement ? (
-                          <InlineLoading description="Generating..." />
-                        ) : (
-                          'Download PDF Statement'
-                        )}
+                        {isGeneratingStatement ? 'Generating...' : 'Download PDF Statement'}
                       </Button>
                     </div>
-                  </Tile>
-                </Layer>
+                  </div>
 
-                {/* Statement Ledger */}
-                <Layer>
-                  <Tile>
+                  {/* Statement Ledger */}
+                  <div className="bg-white border border-gray-200">
                     {(() => {
                       const ledger = getFilteredLedger(selectedClient);
                       if (ledger.length === 0) {
                         return <p style={{ textAlign: 'center', padding: 'var(--cds-spacing-09, 3rem)', color: 'var(--cds-text-secondary, #525252)' }}>No entries for the selected date range</p>;
                       }
                       return (
-                        <Table size="lg">
-                          <TableHead>
-                            <TableRow>
-                              <TableHeader>Date</TableHeader>
-                              <TableHeader>Type</TableHeader>
-                              <TableHeader>Reference</TableHeader>
-                              <TableHeader style={{ textAlign: 'right' }}>Debit</TableHeader>
-                              <TableHeader style={{ textAlign: 'right' }}>Credit</TableHeader>
-                              <TableHeader style={{ textAlign: 'right' }}>Balance</TableHeader>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody {...({} as any)}>
-                            {ledger.map((entry, index) => (
-                              <TableRow key={index}>
-                                <TableCell>{entry.date.toLocaleDateString()}</TableCell>
-                                <TableCell>{getStatusTag(entry.type)}</TableCell>
-                                <TableCell>{entry.reference}</TableCell>
-                                <TableCell style={{ textAlign: 'right', color: 'var(--cds-support-error, #da1e28)' }}>
-                                  {entry.debit > 0 ? formatMoney(entry.debit) : '-'}
-                                </TableCell>
-                                <TableCell style={{ textAlign: 'right', color: 'var(--cds-support-success, #24a148)' }}>
-                                  {entry.credit > 0 ? formatMoney(entry.credit) : '-'}
-                                </TableCell>
-                                <TableCell style={{ 
-                                  textAlign: 'right', 
-                                  fontWeight: 600,
-                                  color: entry.balance > 0 
-                                    ? 'var(--cds-support-error, #da1e28)' 
-                                    : entry.balance < 0 
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr>
+                                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Date</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Type</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Reference</th>
+                                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Debit</th>
+                                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Credit</th>
+                                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Balance</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {ledger.map((entry, index) => (
+                                <tr key={index}>
+                                  <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{entry.date.toLocaleDateString()}</td>
+                                  <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{getStatusTag(entry.type)}</td>
+                                  <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">{entry.reference}</td>
+                                  <td className="px-3 py-2 text-sm border-t border-gray-100 text-right" style={{ color: 'var(--cds-support-error, #da1e28)' }}>
+                                    {entry.debit > 0 ? formatMoney(entry.debit) : '-'}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm border-t border-gray-100 text-right" style={{ color: 'var(--cds-support-success, #24a148)' }}>
+                                    {entry.credit > 0 ? formatMoney(entry.credit) : '-'}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm border-t border-gray-100 text-right font-semibold" style={{
+                                    color: entry.balance > 0
+                                      ? 'var(--cds-support-error, #da1e28)'
+                                      : entry.balance < 0
+                                        ? 'var(--cds-support-success, #24a148)'
+                                        : 'var(--cds-text-primary, #161616)'
+                                  }}>
+                                    {formatMoney(Math.abs(entry.balance))}
+                                    {entry.balance !== 0 && (
+                                      <span style={{ marginLeft: 'var(--cds-spacing-02, 0.25rem)' }}>
+                                        {entry.balance > 0 ? 'DR' : 'CR'}
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                              <tr style={{
+                                backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
+                                borderTop: '2px solid var(--cds-border-strong, #8d8d8d)'
+                              }}>
+                                <td colSpan={5} className="px-3 py-2 text-sm text-gray-800">
+                                  <span style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Current Balance
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 text-right" style={{
+                                  fontWeight: 700,
+                                  fontSize: 'var(--cds-productive-heading-03-font-size, 1.25rem)',
+                                  color: getClientStats(selectedClient).outstanding > 0
+                                    ? 'var(--cds-support-error, #da1e28)'
+                                    : getClientStats(selectedClient).outstanding < 0
                                       ? 'var(--cds-support-success, #24a148)'
                                       : 'var(--cds-text-primary, #161616)'
                                 }}>
-                                  {formatMoney(Math.abs(entry.balance))}
-                                  {entry.balance !== 0 && (
-                                    <span style={{ marginLeft: 'var(--cds-spacing-02, 0.25rem)' }}>
-                                      {entry.balance > 0 ? 'DR' : 'CR'}
+                                  {formatMoney(Math.abs(getClientStats(selectedClient).outstanding))}
+                                  {getClientStats(selectedClient).outstanding !== 0 && (
+                                    <span style={{ marginLeft: 'var(--cds-spacing-02, 0.25rem)', fontSize: 'var(--cds-body-01-font-size, 0.875rem)' }}>
+                                      {getClientStats(selectedClient).outstanding > 0 ? 'DR' : 'CR'}
                                     </span>
                                   )}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            <TableRow style={{ 
-                              backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
-                              borderTop: '2px solid var(--cds-border-strong, #8d8d8d)'
-                            }}>
-                              <TableCell colSpan={5}>
-                                <span style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                  Current Balance
-                                </span>
-                              </TableCell>
-                              <TableCell style={{ 
-                                textAlign: 'right', 
-                                fontWeight: 700,
-                                fontSize: 'var(--cds-productive-heading-03-font-size, 1.25rem)',
-                                color: getClientStats(selectedClient).outstanding > 0 
-                                  ? 'var(--cds-support-error, #da1e28)' 
-                                  : getClientStats(selectedClient).outstanding < 0 
-                                    ? 'var(--cds-support-success, #24a148)'
-                                    : 'var(--cds-text-primary, #161616)'
-                              }}>
-                                {formatMoney(Math.abs(getClientStats(selectedClient).outstanding))}
-                                {getClientStats(selectedClient).outstanding !== 0 && (
-                                  <span style={{ marginLeft: 'var(--cds-spacing-02, 0.25rem)', fontSize: 'var(--cds-body-01-font-size, 0.875rem)' }}>
-                                    {getClientStats(selectedClient).outstanding > 0 ? 'DR' : 'CR'}
-                                  </span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
                       );
                     })()}
-                  </Tile>
-                </Layer>
-              </Stack>
-            </TabPanel>
-          </TabPanels>
-        </Stack>
+                  </div>
+                </div>
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
+        </div>
       ) : (
         // Client List View
-        <DataTable rows={rows} headers={headers}>
-          {({
-            rows,
-            headers,
-            getHeaderProps,
-            getRowProps,
-            getTableProps,
-            onInputChange,
-          }) => (
-            <TableContainer title="Clients" description="Manage your client relationships and financial history">
-              <TableToolbar>
-                <TableToolbarContent>
-                  <TableToolbarSearch onChange={onInputChange} placeholder="Search by name or company" />
-                </TableToolbarContent>
-              </TableToolbar>
-              <Table {...getTableProps()}>
-                <TableHead>
-                  <TableRow>
-                    {headers.map(header => (
-                      <TableHeader {...getHeaderProps({ header })} key={header.key}>
-                        {header.header}
-                      </TableHeader>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody {...({} as any)}>
-                  {rows.map(row => (
-                    (() => {
-                      const rowClient = clients.find((candidate) => candidate.id === row.id);
-                      if (!rowClient) return null;
-                      return (
-                    <TableRow {...getRowProps({ row })} key={row.id}>
-                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
+        <div className="bg-white border border-gray-200">
+          {/* Toolbar */}
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200">
+            <div className="flex-1">
+              <h2 className="text-base font-semibold text-gray-900">Clients</h2>
+              <p className="text-xs text-gray-500">Manage your client relationships and financial history</p>
+            </div>
+            <div className="relative">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="search"
+                placeholder="Search by name or company"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-8 pr-3 py-1.5 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+              />
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Client Name</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Company</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Balance</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Invoices</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Payments</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map(row => {
+                  const rowClient = clients.find(candidate => candidate.id === row.id);
+                  if (!rowClient) return null;
+                  return (
+                    <tr key={row.id}>
+                      <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100" onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
                         <div style={{ fontWeight: 600, color: 'var(--cds-interactive, #0f62fe)' }}>
-                          {row.cells[0].value}
+                          {row.name}
                         </div>
-                      </TableCell>
-                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
-                        {row.cells[1].value}
-                      </TableCell>
-                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
-                        {row.cells[2].value.display}
-                      </TableCell>
-                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
-                        {row.cells[3].value}
-                      </TableCell>
-                      <TableCell onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
-                        {row.cells[4].value}
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100" onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
+                        {row.company}
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100" onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
+                        {row.outstanding.display}
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100" onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
+                        {row.invoices}
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100" onClick={() => setSelectedClient(rowClient)} style={{ cursor: 'pointer' }}>
+                        {row.payments}
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-800 border-t border-gray-100">
                         <OverflowMenu flipped>
                           <OverflowMenuItem itemText="View Details" onClick={() => setSelectedClient(rowClient)} />
                           <OverflowMenuItem itemText="Edit Client" />
                           <OverflowMenuItem itemText="View Statement" onClick={() => { setSelectedClient(rowClient); setActiveTab(3); }} />
                           <OverflowMenuItem itemText="Delete" hasDivider isDelete />
                         </OverflowMenu>
-                      </TableCell>
-                    </TableRow>
-                      );
-                    })()
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </DataTable>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
   );

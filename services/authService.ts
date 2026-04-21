@@ -5,7 +5,7 @@
  * No direct database access
  */
 
-import { api, clearViewTenantId, getToken, removeToken, setToken } from './apiClient';
+import { api, getToken, removeToken, setToken } from './apiClient';
 import type { AuthSession, AppUser } from '../types';
 
 const USER_CACHE_KEY = 'affinity_user_cache';
@@ -42,6 +42,7 @@ export const authService = {
       return {
         user: response.user as AppUser,
         token: response.token,
+        forcePasswordChange: !!response.user.forcePasswordChange,
       };
     } catch (error) {
       removeToken();
@@ -68,7 +69,6 @@ export const authService = {
    */
   async logout(): Promise<void> {
     removeToken();
-    clearViewTenantId();
     localStorage.removeItem(USER_CACHE_KEY);
   },
 
@@ -100,9 +100,6 @@ export const authService = {
         email: validatedUser.email,
         role: validatedUser.role as AppUser['role'],
         accessRole: validatedUser.accessRole,
-        tenantId: validatedUser.tenantId ?? null,
-        tenantStatus: validatedUser.tenantStatus ?? null,
-        tenantName: validatedUser.tenantName ?? null,
         name:
           cachedUser?.id === validatedUser.id && typeof cachedUser.name === 'string' && cachedUser.name.trim()
             ? cachedUser.name
@@ -116,7 +113,7 @@ export const authService = {
       };
 
       localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
-      return { user, token };
+      return { user, token, forcePasswordChange: !!validatedUser.forcePasswordChange };
     } catch (error) {
       if (error instanceof Error && 'status' in error) {
         const apiError = error as Error & { status?: number };

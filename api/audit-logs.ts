@@ -4,7 +4,6 @@ import {
   apiError,
   handleCors,
   requireAccessRole,
-  requireTenantContext,
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
@@ -32,8 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
-  if (!requireTenantContext(authReq, res)) return;
-  if (!requireAccessRole(authReq, res, ['tenant_admin'])) return;
+  if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
 
   if (req.method !== 'GET') {
     return apiError(res, 405, 'Method not allowed');
@@ -62,11 +60,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           up.email AS user_email
         FROM audit_logs al
         LEFT JOIN user_profiles up ON up.id = al.user_id
-        WHERE up.tenant_id = $2::uuid
         ORDER BY al.created_at DESC
         LIMIT $1
       `,
-      [limit, authReq.user?.tenantId],
+      [limit],
     );
 
     return res.status(200).json(

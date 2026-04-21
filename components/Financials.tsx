@@ -16,6 +16,7 @@ import { useToast } from './Toast';
 import { ClientFormModal, type ClientFormValue } from './shared/ClientFormModal';
 import { CarbonInvoiceModal } from './shared/CarbonInvoiceModal';
 import { CarbonQuoteModal } from './shared/CarbonQuoteModal';
+import { CarbonPaymentModal } from './shared/CarbonPaymentModal';
 import {
  FinancialsTabBar,
  InvoicesSection,
@@ -208,6 +209,7 @@ export const Financials: React.FC = () => {
  currency: 'USD' as 'USD' | 'GBP',
  amount: '',
  method: 'Bank Transfer',
+ date: new Date().toISOString().split('T')[0],
  notes: '',
  });
  const [paymentAllocationForm, setPaymentAllocationForm] = useState<PaymentAllocationDraft[]>([createEmptyPaymentAllocationDraft()]);
@@ -403,6 +405,7 @@ export const Financials: React.FC = () => {
  currency: 'USD',
  amount: '',
  method: 'Bank Transfer',
+ date: new Date().toISOString().split('T')[0],
  notes: '',
  });
  setPaymentAllocationForm([createEmptyPaymentAllocationDraft()]);
@@ -506,6 +509,7 @@ export const Financials: React.FC = () => {
  currency: normalizeDocumentCurrency(payment.currency || linkedReceipt?.currency),
  amount: payment.amount_usd.toFixed(2),
  method: payment.method || 'Bank Transfer',
+ date: payment.date ? new Date(payment.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
  notes: linkedReceipt?.notes || '',
  });
  setPaymentAllocationForm(allocationDrafts);
@@ -1035,8 +1039,11 @@ export const Financials: React.FC = () => {
 
  setIsSubmittingPayment(true);
  
- const paymentPayload = editingPayment
- ? {
+ const paymentDate = paymentForm.date
+ ? new Date(paymentForm.date + 'T00:00:00').toISOString()
+ : new Date().toISOString();
+
+ const paymentPayload = {
  reference_id: referenceId,
  client_id: clientId || undefined,
  client_name: primaryInvoice?.client_name || clientName,
@@ -1044,18 +1051,7 @@ export const Financials: React.FC = () => {
  amount_usd: amount,
  currency: selectedCurrency,
  method,
- date: editingPayment.date,
- allocations: mergedAllocations,
- }
- : {
- reference_id: referenceId,
- client_id: clientId || undefined,
- client_name: primaryInvoice?.client_name || clientName,
- type: 'Inbound' as const,
- amount_usd: amount,
- currency: selectedCurrency,
- method,
- date: new Date().toISOString(),
+ date: paymentDate,
  allocations: mergedAllocations,
  };
  
@@ -1065,8 +1061,6 @@ export const Financials: React.FC = () => {
  const payment = editingPayment
  ? await dataService.updatePayment(editingPayment.id, paymentPayload)
  : await dataService.addPayment(paymentPayload);
-
- await dataService.replacePaymentAllocations(payment.id, mergedAllocations);
 
  const receiptItems = buildReceiptItemsSnapshot(
  allocatedInvoices,
@@ -1079,12 +1073,12 @@ export const Financials: React.FC = () => {
  invoice_id: allocatedInvoices.length === 1 ? primaryInvoice.id : undefined,
  payment_id: payment.id,
  client_name: primaryInvoice?.client_name || clientName,
- client_email: primaryInvoice?.client_email,
- client_address: primaryInvoice?.client_address,
+ client_email: primaryInvoice?.client_email || undefined,
+ client_address: primaryInvoice?.client_address || undefined,
  amount_received: amount,
  currency: selectedCurrency,
  payment_method: method,
- payment_date: payment.date,
+ payment_date: payment.date ? new Date(payment.date).toISOString() : new Date().toISOString(),
  reference_number:
  allocatedInvoices.length === 1
  ? primaryInvoice.invoice_number
@@ -1453,20 +1447,39 @@ export const Financials: React.FC = () => {
  return true; // Draft, Sent, Overdue are always eligible
  };
  
+ // Resolve the client record for the current paymentForm selection
+ const paymentFormClient = paymentForm.client_id
+ ? clients.find(c => c.id === paymentForm.client_id)
+ : clients.find(c => normalizeClientName(c.name) === normalizeClientName(paymentForm.client_name));
+
  const paymentAllocationCandidates = paymentForm.client_name
  ? invoices
- .filter(
- invoice =>
- normalizeClientName(invoice.client_name?.trim()) === normalizeClientName(paymentForm.client_name) &&
- normalizeDocumentCurrency(invoice.currency) === normalizeDocumentCurrency(paymentForm.currency) &&
- canInvoiceReceivePayments(invoice)
- )
+ .filter(invoice => {
+ // Only exclude Cancelled invoices
+ if (invoice.status === 'Cancelled') return false;
+
+ // Currency must match
+ const currencyMatch =
+ normalizeDocumentCurrency(invoice.currency) === normalizeDocumentCurrency(paymentForm.currency);
+ if (!currencyMatch) return false;
+
+ // Primary: match by client_id (reliable, survives name changes)
+ if (paymentFormClient && invoice.client_id && invoice.client_id === paymentFormClient.id) {
+ return true;
+ }
+ // Fallback: name match (legacy invoices without client_id, or unregistered clients)
+ return normalizeClientName(invoice.client_name?.trim()) === normalizeClientName(paymentForm.client_name);
+ })
  .map(invoice => ({
  invoice,
  outstandingAmount: getInvoiceOutstandingAmount(invoice),
  }))
- .filter(({ outstandingAmount }) => outstandingAmount > 0)
- .sort((a, b) => new Date(a.invoice.due_date).getTime() - new Date(b.invoice.due_date).getTime())
+ .sort((a, b) => {
+ // Show invoices with outstanding balance first, then by due date
+ if (a.outstandingAmount > 0 && b.outstandingAmount <= 0) return -1;
+ if (a.outstandingAmount <= 0 && b.outstandingAmount > 0) return 1;
+ return new Date(a.invoice.due_date).getTime() - new Date(b.invoice.due_date).getTime();
+ })
  : [];
  
  // Debug: Log when no candidates found but client has invoices
@@ -1550,9 +1563,6 @@ export const Financials: React.FC = () => {
  }))
  });
  };
- const selectedPaymentAllocationInvoiceIds = new Set(
- paymentAllocationForm.map(allocation => allocation.invoice_id).filter(Boolean)
- );
  const getPaymentAllocationSummary = (payment: Payment): string | null => {
  if (!payment.allocations || payment.allocations.length === 0) {
  return null;
@@ -1741,324 +1751,35 @@ export const Financials: React.FC = () => {
       />
 
 
- {showPaymentModal && (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
- <div className="absolute inset-0 backdrop-blur-sm" onClick={closePaymentModal} style={{ backgroundColor: 'rgba(22, 22, 22, 0.4)' }} />
- <div className="relative max-h-[95vh] w-full max-w-xl overflow-y-auto p-4 sm:p-8" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
- <div className="flex items-center justify-between mb-3 sm:mb-2">
- <h3 className="text-lg sm:text-2xl font-black" style={{ color: 'var(--cds-text-primary, #161616)' }}>{editingPayment ? 'Edit Payment' : 'Record Payment'}</h3>
- <button
- type="button"
- onClick={closePaymentModal}
- className="lg:hidden p-2 -mr-2" style={{ color: 'var(--cds-text-secondary, #525252)' }}
- aria-label="Close"
- >
- <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
- <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
- </svg>
- </button>
- </div>
- <p className="mb-4 sm:mb-6 text-xs sm:text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- {editingPayment
- ? 'Update the payment, reallocate it across invoices, and refresh the linked receipt.'
- : 'Record an inbound payment and immediately create a receipt.'}
- </p>
- 
- {/* Client Balance Display - Shows unified balance */}
- {paymentForm.client_name && (() => {
-   const balanceInfo = getClientBalanceForPayment(paymentForm.client_name, paymentForm.client_id);
-   if (!balanceInfo) return null;
-   
-   return (
-     <div className="mb-4 p-4" style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
-       <div className="flex items-center justify-between mb-2">
-         <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Client Balance Summary</span>
-         <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Formula: Opening + Invoiced - Paid</span>
-       </div>
-       <div className="grid grid-cols-4 gap-2 text-center">
-         <div>
-           <div className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Opening</div>
-           <div className="font-bold">{formatMoney(balanceInfo.openingBalance, balanceInfo.currency)}</div>
-         </div>
-         <div>
-           <div className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Invoiced</div>
-           <div className="font-bold">{formatMoney(balanceInfo.totalInvoiced, balanceInfo.currency)}</div>
-         </div>
-         <div>
-           <div className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Paid</div>
-           <div className="font-bold" style={{ color: 'var(--cds-support-success, #24a148)' }}>{formatMoney(balanceInfo.totalPaid, balanceInfo.currency)}</div>
-         </div>
-         <div>
-           <div className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
-             {balanceInfo.balance > 0 ? 'Due' : balanceInfo.credit > 0 ? 'Credit' : 'Balance'}
-           </div>
-           <div className="font-bold text-lg" style={{ 
-             color: balanceInfo.balance > 0 ? 'var(--cds-support-error, #da1e28)' : 
-                    balanceInfo.credit > 0 ? 'var(--cds-support-success, #24a148)' : 
-                    'inherit'
-           }}>
-             {balanceInfo.balance > 0 
-               ? formatMoney(balanceInfo.balance, balanceInfo.currency)
-               : balanceInfo.credit > 0 
-                 ? formatMoney(balanceInfo.credit, balanceInfo.currency)
-                 : formatMoney(0, balanceInfo.currency)}
-           </div>
-         </div>
-       </div>
-       {balanceInfo.balance <= 0 && balanceInfo.credit === 0 && (
-         <div className="mt-2 p-2 text-xs" style={{ backgroundColor: 'var(--cds-support-warning-light, #fcf4d6)', color: 'var(--cds-support-warning, #f1c21b)' }}>
-           ⚠️ Client has no outstanding balance. Payment will be recorded as credit.
-         </div>
-       )}
-     </div>
-   );
- })()}
- 
- <form onSubmit={handleRecordPayment} className="space-y-3 sm:space-y-4">
- <div>
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Client *</label>
- <select
- required
- value={paymentForm.client_id}
- onChange={e => {
- const selectedClient = clientOptions.find(c => c.id === e.target.value);
- if (selectedClient) {
- setPaymentForm(current => ({
- ...current,
- client_id: selectedClient.id,
- client_name: selectedClient.name,
- }));
- } else {
- setPaymentForm(current => ({
- ...current,
- client_id: '',
- client_name: '',
- }));
+ <CarbonPaymentModal
+ open={showPaymentModal}
+ editingPayment={editingPayment}
+ clientOptions={clientOptions}
+ allocationCandidates={paymentAllocationCandidates}
+ formData={paymentForm}
+ allocations={paymentAllocationForm}
+ isSubmitting={isSubmittingPayment}
+ clientBalance={paymentForm.client_name ? getClientBalanceForPayment(paymentForm.client_name, paymentForm.client_id) : null}
+ onFormChange={(updates) => {
+ setPaymentForm(current => ({ ...current, ...updates }));
+ if (updates.currency) {
+ setPaymentAllocationForm(current => {
+ const filtered = current.filter(allocation => {
+ const invoice = invoices.find(candidate => candidate.id === allocation.invoice_id);
+ return invoice ? normalizeDocumentCurrency(invoice.currency) === updates.currency : true;
+ });
+ return filtered.length > 0 ? filtered : [createEmptyPaymentAllocationDraft()];
+ });
  }
+ }}
+ onClientChange={(clientId, clientName) => {
+ setPaymentForm(current => ({ ...current, client_id: clientId, client_name: clientName }));
  setPaymentAllocationForm([createEmptyPaymentAllocationDraft()]);
  }}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="">Select client</option>
- {clientOptions.map(client => (
- <option key={client.id} value={client.id}>
- {client.name}{!client.isRegistered ? ' (unregistered)' : ''}
- </option>
- ))}
- </select>
- </div>
- <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
- <div className="col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Amount *</label>
- <input
- required
- value={paymentForm.amount}
- onChange={e => setPaymentForm({ ...paymentForm, amount: e.target.value })}
- type="number"
- step="0.01"
- placeholder="0.00"
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
+ onAllocationsChange={setPaymentAllocationForm}
+ onClose={closePaymentModal}
+ onSubmit={() => handleRecordPayment({ preventDefault: () => {} } as React.FormEvent<HTMLFormElement>)}
  />
- </div>
- <div className="col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Currency</label>
- <select
- value={paymentForm.currency}
- onChange={e => {
- const nextCurrency = e.target.value as 'USD' | 'GBP';
- setPaymentForm({ ...paymentForm, currency: nextCurrency });
- setPaymentAllocationForm(current =>
- current.filter(allocation => {
- const invoice = invoices.find(candidate => candidate.id === allocation.invoice_id);
- return invoice ? normalizeDocumentCurrency(invoice.currency) === nextCurrency : true;
- }).length > 0
- ? current.filter(allocation => {
- const invoice = invoices.find(candidate => candidate.id === allocation.invoice_id);
- return invoice ? normalizeDocumentCurrency(invoice.currency) === nextCurrency : true;
- })
- : [createEmptyPaymentAllocationDraft()]
- );
- }}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="USD">USD ($)</option>
- <option value="GBP">GBP (£)</option>
- </select>
- </div>
- <div className="col-span-2 sm:col-span-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Method</label>
- <select
- value={paymentForm.method}
- onChange={e => setPaymentForm({ ...paymentForm, method: e.target.value })}
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="Bank Transfer">Bank Transfer</option>
- <option value="Cash">Cash</option>
- <option value="Card">Card</option>
- <option value="Check">Check</option>
- <option value="Other">Other</option>
- </select>
- </div>
- </div>
- <div className="p-3 sm:p-4" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}>
- <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
- <div className="flex-1">
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Allocations (Optional)</label>
- <p className="mt-1 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Split this payment across open invoices.</p>
- </div>
- <button
- type="button"
- onClick={() => setPaymentAllocationForm(current => [...current, createEmptyPaymentAllocationDraft()])}
- disabled={!paymentForm.client_name}
- className="w-full sm:w-auto px-3 py-3 sm:py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-support-success, #24a148)', color: 'var(--cds-support-success, #24a148)' }}
- >
- + Add
- </button>
- </div>
- <div className="mt-4 space-y-3">
- {paymentAllocationForm.map((allocation, index) => {
- const selectedInvoice = invoices.find(invoice => invoice.id === allocation.invoice_id);
- const selectedInvoiceOutstanding = selectedInvoice ? getInvoiceOutstandingAmount(selectedInvoice) : 0;
- const invoiceOptions = paymentAllocationCandidates.filter(
- ({ invoice }) =>
- !selectedPaymentAllocationInvoiceIds.has(invoice.id) || invoice.id === allocation.invoice_id
- );
-
- return (
- <div key={`${allocation.invoice_id || 'new'}-${index}`} className="p-3 sm:p-4" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', backgroundColor: 'var(--cds-layer-01, #ffffff)' }}>
- <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.6fr,0.9fr,auto]">
- <div>
- <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Invoice</label>
- <select
- value={allocation.invoice_id}
- onChange={e => {
- const nextInvoiceId = e.target.value;
- const matchedInvoice = invoices.find(invoice => invoice.id === nextInvoiceId);
- setPaymentAllocationForm(current =>
- current.map((entry, entryIndex) =>
- entryIndex === index
- ? {
- ...entry,
- invoice_id: nextInvoiceId,
- amount:
- entry.amount ||
- (matchedInvoice ? String(getInvoiceOutstandingAmount(matchedInvoice).toFixed(2)) : ''),
- }
- : entry
- )
- );
- }}
- className="w-full px-4 py-3 outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- >
- <option value="">Select invoice</option>
- {invoiceOptions.map(({ invoice, outstandingAmount }) => (
- <option key={invoice.id} value={invoice.id}>
- {invoice.invoice_number} · {formatMoney(outstandingAmount, invoice.currency)} due
- </option>
- ))}
- </select>
- </div>
- <div>
- <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Allocated Amount</label>
- <input
- value={allocation.amount}
- onChange={e =>
- setPaymentAllocationForm(current =>
- current.map((entry, entryIndex) =>
- entryIndex === index ? { ...entry, amount: e.target.value } : entry
- )
- )
- }
- type="number"
- step="0.01"
- placeholder="0.00"
- className="w-full px-4 py-3 outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- {selectedInvoice ? (
- <p className="mt-1 text-[11px]" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- Outstanding: {formatMoney(selectedInvoiceOutstanding, selectedInvoice.currency)}
- </p>
- ) : null}
- </div>
- <div className="flex items-end">
- <button
- type="button"
- onClick={() =>
- setPaymentAllocationForm(current =>
- current.length === 1
- ? [createEmptyPaymentAllocationDraft()]
- : current.filter((_, entryIndex) => entryIndex !== index)
- )
- }
- className="px-3 py-3 sm:py-2 text-xs font-bold touch-manipulation" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-support-error, #da1e28)', color: 'var(--cds-support-error, #da1e28)' }}
- >
- Remove
- </button>
- </div>
- </div>
- </div>
- );
- })}
- {!paymentForm.client_name ? (
- <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Choose a client first to allocate this payment to invoices.</p>
- ) : paymentAllocationCandidates.length === 0 ? (
- <div className="p-3" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
- <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- No pending invoices found for this client in {paymentForm.currency}.
- </p>
- <p className="mt-2 text-xs font-semibold" style={{ color: 'var(--cds-support-warning, #f1c21b)' }}>
- This payment will be recorded as UNALLOCATED (client credit).
- </p>
- <p className="mt-1 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
- The payment will reduce the client&apos;s balance and can be allocated to invoices later.
- </p>
- </div>
- ) : null}
- <div className="flex items-center justify-between px-4 py-3 text-sm text-white" style={{ backgroundColor: 'var(--cds-text-primary, #161616)' }}>
- <span className="font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Allocated Total</span>
- <span className="font-black">
- {formatMoney(
- paymentAllocationForm.reduce((sum, allocation) => sum + (parseFloat(allocation.amount) || 0), 0),
- paymentForm.currency
- )}
- </span>
- </div>
- </div>
- </div>
- <div>
- <label className="text-sm font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Notes</label>
- <textarea
- rows={2}
- value={paymentForm.notes}
- onChange={e => setPaymentForm({ ...paymentForm, notes: e.target.value })}
- placeholder="Optional receipt notes..."
- className="w-full px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-green-500" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
- />
- </div>
- <div className="sticky bottom-0 -mx-4 sm:mx-0 -mb-4 sm:mb-0 pt-4 sm:pt-4 mt-4 sm:mt-4" style={{ backgroundColor: 'var(--cds-layer-01, #ffffff)', borderTopWidth: '1px', borderTopStyle: 'solid', borderTopColor: 'var(--cds-border-subtle, #c6c6c6)' }}>
- <div className="flex gap-3">
- <button
- type="button"
- onClick={closePaymentModal}
- className="flex-1 px-4 py-3 sm:py-3 text-sm font-bold touch-manipulation" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--cds-border-subtle, #c6c6c6)', color: 'var(--cds-text-secondary, #525252)' }}
- >
- Cancel
- </button>
- <Button
- type="submit"
- variant="primary"
- isLoading={isSubmittingPayment}
- disabled={isSubmittingPayment}
- className="flex-1"
- >
- {editingPayment ? 'Save' : 'Record'}
- </Button>
- </div>
- </div>
- </form>
- </div>
- </div>
- )}
 
  <ClientFormModal
  isOpen={showClientModal}
@@ -2160,6 +1881,7 @@ export const Financials: React.FC = () => {
  getPaymentAllocationSummary={getPaymentAllocationSummary}
  onEdit={openEditPaymentModal}
  onDelete={handleDeletePayment}
+ onRecordPayment={openPaymentModal}
  />
  )}
 

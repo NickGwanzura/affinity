@@ -1,56 +1,71 @@
 import React from 'react';
-import { ContentSwitcher, Switch, Select } from '@carbon/react';
+import { Select, SelectItem } from '../ui';
 
 export interface DashboardSectionOption<T extends string> {
-  id: T;
-  label: string;
+  id:             T;
+  label:          string;
   activeClasses?: string;
-  icon?: React.ReactNode;
+  icon?:          React.ReactNode;
 }
 
 interface DashboardSectionSwitcherProps<T extends string> {
-  value: T;
+  value:    T;
   onChange: (value: T) => void;
-  label: string;
-  options: Array<DashboardSectionOption<T>>;
+  label:    string;
+  options:  Array<DashboardSectionOption<T>>;
 }
 
 export const DashboardSectionSwitcher = <T extends string>({
-  value,
-  onChange,
-  label,
-  options,
-}: DashboardSectionSwitcherProps<T>) => (
-  <div style={{ width: '100%' }}>
-    {/* Mobile: Carbon Select */}
-    <div className="md:hidden">
-      <Select
-        id={`section-switcher-select-${label.replace(/\s+/g, '-').toLowerCase()}`}
-        labelText={label}
-        hideLabel
-        value={value}
-        onChange={(e) => onChange(e.target.value as T)}
-      >
-        {options.map((option) => (
-          <option key={String(option.id)} value={String(option.id)}>{option.label}</option>
-        ))}
-      </Select>
-    </div>
+  value, onChange, label, options,
+}: DashboardSectionSwitcherProps<T>) => {
+  const slug = label.replace(/\s+/g, '-').toLowerCase();
 
-    {/* Desktop: Carbon ContentSwitcher */}
-    <div className="hidden md:block">
-      <ContentSwitcher
-        selectedIndex={options.findIndex((o) => o.id === value)}
-        onChange={({ name }: { name?: string | number }) => {
-          if (typeof name === 'string') onChange(name as T);
-        }}
+  return (
+    <div className="w-full">
+      {/* Mobile: native select */}
+      <div className="md:hidden">
+        <Select
+          id={`section-switcher-select-${slug}`}
+          labelText={label}
+          hideLabel
+          value={value}
+          onChange={(e) => onChange(e.target.value as T)}
+        >
+          {options.map((opt) => (
+            <SelectItem key={String(opt.id)} value={String(opt.id)} text={opt.label} />
+          ))}
+        </Select>
+      </div>
+
+      {/* Desktop: segmented control */}
+      <div
+        role="tablist"
+        aria-label={label}
+        className="hidden md:inline-flex border border-gray-300 bg-white"
       >
-        {options.map((option) => (
-          <Switch key={option.id} name={option.id} text={option.label} />
-        ))}
-      </ContentSwitcher>
+        {options.map((opt) => {
+          const isActive = opt.id === value;
+          return (
+            <button
+              key={String(opt.id)}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onChange(opt.id)}
+              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border-r border-gray-300 last:border-r-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 ${
+                isActive
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {opt.icon}
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default DashboardSectionSwitcher;

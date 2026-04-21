@@ -9,7 +9,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Token storage
 const TOKEN_KEY = 'affinity_auth_token';
-const VIEW_TENANT_KEY = 'affinity_view_tenant_id';
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -29,22 +28,6 @@ export function setToken(token: string): void {
 
 export function removeToken(): void {
   localStorage.removeItem(TOKEN_KEY);
-}
-
-export function getViewTenantId(): string | null {
-  return localStorage.getItem(VIEW_TENANT_KEY);
-}
-
-export function setViewTenantId(tenantId: string | null): void {
-  if (!tenantId) {
-    localStorage.removeItem(VIEW_TENANT_KEY);
-    return;
-  }
-  localStorage.setItem(VIEW_TENANT_KEY, tenantId);
-}
-
-export function clearViewTenantId(): void {
-  localStorage.removeItem(VIEW_TENANT_KEY);
 }
 
 // API Error class
@@ -88,11 +71,6 @@ async function apiRequest<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const tenantContext = getViewTenantId();
-  if (tenantContext) {
-    headers['X-Tenant-Context'] = tenantContext;
-  }
-  
   const config: globalThis.RequestInit = {
     ...options,
     headers,
@@ -157,10 +135,8 @@ export const api = {
         email: string;
         role: string;
         status?: string;
-        accessRole?: 'super_admin' | 'tenant_admin' | 'user';
-        tenantId?: string | null;
-        tenantStatus?: string | null;
-        tenantName?: string | null;
+        accessRole?: 'super_admin' | 'admin' | 'user';
+        forcePasswordChange?: boolean;
       }>('/auth?action=me'),
     
     register: (name: string, email: string, password: string, role: string) =>
@@ -467,27 +443,10 @@ export const api = {
   admin: {
     metrics: () => apiRequest<any>('/admin/metrics'),
     system: () => apiRequest<any>('/admin/system'),
-    logs: (params?: { limit?: number; action?: string; tenantId?: string }) =>
+    logs: (params?: { limit?: number; action?: string }) =>
       apiRequest<any[]>(`/admin/logs${toQueryString(params as Record<string, string | number | boolean | null | undefined>)}`),
-    tenants: {
-      list: () => apiRequest<any[]>('/admin/tenants'),
-      create: (data: { name: string; status?: 'pending' | 'active' | 'suspended' }) =>
-        apiRequest<any>('/admin/tenants', {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }),
-      update: (id: string, data: { name?: string; status?: 'pending' | 'active' | 'suspended' }) =>
-        apiRequest<any>(`/admin/tenants?id=${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        }),
-      delete: (id: string) =>
-        apiRequest<void>(`/admin/tenants?id=${id}`, {
-          method: 'DELETE',
-        }),
-    },
     users: {
-      list: (params?: { tenantId?: string; status?: string }) =>
+      list: (params?: { status?: string }) =>
         apiRequest<any[]>(`/admin/users${toQueryString(params as Record<string, string | number | boolean | null | undefined>)}`),
       update: (id: string, data: any) =>
         apiRequest<any>(`/admin/users?id=${id}`, {
@@ -507,7 +466,7 @@ export const api = {
         }),
     },
     submissions: {
-      list: (params?: { tenantId?: string; status?: string; type?: 'all' | 'registration_request' | 'questionnaire_submission' }) =>
+      list: (params?: { status?: string; type?: 'all' | 'registration_request' | 'questionnaire_submission' }) =>
         apiRequest<any>(`/admin/submissions${toQueryString(params as Record<string, string | number | boolean | null | undefined>)}`),
     },
   },

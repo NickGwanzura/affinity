@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   AuthenticatedRequest,
   apiError,
-  getTenantId,
   handleCors,
   requireRole,
   setSecurityHeaders,
@@ -10,6 +9,7 @@ import {
 } from './_middleware.js';
 import { sql } from './_db.js';
 import { logAuditEvent } from './_audit.js';
+import { z } from 'zod';
 import { ReceiptSchema, ReceiptUpdateSchema } from './_schemas.js';
 
 const isMissingTableError = (error: unknown, tableName: string): boolean =>
@@ -62,19 +62,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!(await verifyToken(authReq, res))) return;
 
   try {
-    const tenantId = getTenantId(req);
     switch (req.method) {
       case 'GET':
-        return await listReceipts(res, tenantId);
+        return await listReceipts(res);
       case 'POST':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await createReceipt(req, res, tenantId);
+        return await createReceipt(req, res);
       case 'PUT':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await updateReceipt(req, res, tenantId);
+        return await updateReceipt(req, res);
       case 'DELETE':
         if (!requireRole(authReq, res, ['Admin'])) return;
-        return await deleteReceipt(req, res, tenantId);
+        return await deleteReceipt(req, res);
       default:
         return apiError(res, 405, 'Method not allowed');
     }
@@ -83,12 +82,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listReceipts(res: VercelResponse, tenantId: string) {
+async function listReceipts(res: VercelResponse) {
   try {
     const rows = await sql`
       SELECT *
       FROM public.receipts
-      WHERE tenant_id = ${tenantId}::uuid
       ORDER BY payment_date DESC, created_at DESC
     `;
     return res.status(200).json(rows);
@@ -100,7 +98,7 @@ async function listReceipts(res: VercelResponse, tenantId: string) {
   }
 }
 
-async function createReceipt(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
   const user = req.user;
   try {
     const data = ReceiptSchema.parse(req.body);
@@ -111,7 +109,7 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
       const rows = await sql`
         INSERT INTO public.receipts (
           receipt_number, invoice_id, payment_id, client_name, client_email, client_address,
-          amount_received, currency, payment_method, payment_date, reference_number, notes, items, batch, tenant_id
+          amount_received, currency, payment_method, payment_date, reference_number, notes, items, batch
         )
         VALUES (
           ${receiptNumber},
@@ -127,8 +125,7 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
           ${data.reference_number || null},
           ${data.notes || null},
           ${normalizedItems.length > 0 ? JSON.stringify(normalizedItems) : null}::jsonb,
-          ${data.batch || null},
-          ${tenantId}::uuid
+          ${data.batch || null}
         )
         RETURNING *
       `;
@@ -149,7 +146,7 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
         const rows = await sql`
           INSERT INTO public.receipts (
             receipt_number, invoice_id, payment_id, client_name, client_email, client_address,
-            amount_received, currency, payment_method, payment_date, reference_number, notes, batch, tenant_id
+            amount_received, currency, payment_method, payment_date, reference_number, notes, batch
           )
           VALUES (
             ${receiptNumber},
@@ -164,8 +161,7 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
             ${data.payment_date},
             ${data.reference_number || null},
             ${data.notes || null},
-            ${data.batch || null},
-            ${tenantId}::uuid
+            ${data.batch || null}
           )
           RETURNING *
         `;
@@ -186,11 +182,17 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
       throw error;
     }
   } catch (error) {
-    return apiError(res, 400, 'Invalid receipt data', error);
+    if (error instanceof z.ZodError) {
+      const issues = error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ');
+      console.error('[Receipts API] Validation error:', issues);
+      return apiError(res, 400, `Invalid receipt data: ${issues}`, error);
+    }
+    console.error('[Receipts API] createReceipt error:', error);
+    return apiError(res, 500, 'Failed to create receipt', error);
   }
 }
 
-async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse) {
   const user = req.user;
   try {
     const { id } = req.query;
@@ -200,7 +202,7 @@ async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
 
     const rows = await sql`
       DELETE FROM public.receipts
-      WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid
+      WHERE id = ${id}::uuid
       RETURNING id
     `;
 
@@ -223,7 +225,7 @@ async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
   }
 }
 
-async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse) {
   const user = req.user;
   try {
     const data = ReceiptUpdateSchema.parse(req.body);
@@ -273,12 +275,10 @@ async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
     }
 
     values.push(req.query.id);
-    paramIdx++;
-    values.push(tenantId);
 
     try {
       const rows = await sql.query(
-        `UPDATE public.receipts SET ${updates.join(', ')} WHERE id = $${paramIdx - 1}::uuid AND tenant_id = $${paramIdx}::uuid RETURNING *`,
+        `UPDATE public.receipts SET ${updates.join(', ')} WHERE id = $${paramIdx}::uuid RETURNING *`,
         values,
       );
       if (rows.length === 0) return apiError(res, 404, 'Receipt not found');
@@ -299,8 +299,6 @@ async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
     } catch (error) {
       if (isMissingColumnError(error, 'items', 'receipts') && normalizedItems) {
         // Retry without items column
-        const retryUpdates = updates.filter(u => !u.startsWith('items ='));
-        const retryValues = [...values];
         // Rebuild without items param — simplest to just redo
         const ru: string[] = [];
         const rv: unknown[] = [];
@@ -315,10 +313,8 @@ async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse, ten
         }
         if (ru.length === 0) return apiError(res, 400, 'No fields to update');
         rv.push(req.query.id);
-        rIdx++;
-        rv.push(tenantId);
         const rows = await sql.query(
-          `UPDATE public.receipts SET ${ru.join(', ')} WHERE id = $${rIdx - 1}::uuid AND tenant_id = $${rIdx}::uuid RETURNING *`,
+          `UPDATE public.receipts SET ${ru.join(', ')} WHERE id = $${rIdx}::uuid RETURNING *`,
           rv,
         );
         if (rows.length === 0) return apiError(res, 404, 'Receipt not found');

@@ -22,7 +22,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { sql } from './_db.js';
 import {
   AuthenticatedRequest,
-  requireTenantContext,
   verifyToken as verifyRequestToken,
 } from './_middleware.js';
 
@@ -102,12 +101,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS for local dev
   res.setHeader('Access-Control-Allow-Origin', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Tenant-Context');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyRequestToken(authReq, res))) return;
-  if (!requireTenantContext(authReq, res)) return;
 
   const user = {
     userId: authReq.user!.id,

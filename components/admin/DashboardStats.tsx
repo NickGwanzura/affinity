@@ -1,5 +1,4 @@
 import React, { memo, useMemo } from 'react';
-import { Tile } from '@carbon/react';
 import { VEHICLE_STATUS } from '../../constants';
 import type { LandedCostSummary } from '../../types';
 import { StatCard } from '../ui';
@@ -23,68 +22,35 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
   const clamped = Math.max(0, Math.min(100, efficiencyRate));
   const statusColor =
     clamped >= 90
-      ? 'var(--cds-support-success, #24a148)'
+      ? '#24a148'
       : clamped >= 70
-      ? 'var(--cds-support-warning, #f1c21b)'
-      : 'var(--cds-support-error, #da1e28)';
+      ? '#f1c21b'
+      : '#da1e28';
   const statusLabel =
     clamped >= 90 ? 'Excellent performance' : clamped >= 70 ? 'Good performance' : 'Needs attention';
 
   return (
-    <Tile
+    <div
       role="region"
       aria-label="Fleet Efficiency"
-      style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden' }}
+      className="bg-white p-6 relative overflow-hidden"
     >
       {/* Left accent bar */}
       <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: 4,
-          height: '100%',
-          background: statusColor,
-        }}
+        className="absolute top-0 left-0 w-1 h-full"
+        style={{ background: statusColor }}
       />
-      <div style={{ paddingLeft: '0.5rem' }}>
-        <p
-          style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            color: 'var(--cds-text-secondary, #525252)',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            margin: '0 0 0.75rem',
-          }}
-        >
+      <div className="pl-2">
+        <p className="text-xs font-semibold text-[#525252] tracking-wider uppercase mb-3">
           Fleet Efficiency
         </p>
-        <p
-          style={{
-            fontSize: '2rem',
-            fontWeight: 300,
-            color: 'var(--cds-text-primary, #161616)',
-            fontVariantNumeric: 'tabular-nums',
-            lineHeight: 1.1,
-            margin: '0 0 1rem',
-          }}
-        >
+        <p className="text-3xl font-light text-[#161616] tabular-nums leading-tight mb-4">
           {clamped}%
         </p>
 
         {/* Progress bar */}
-        <div style={{ marginBottom: '0.75rem' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: '0.75rem',
-              color: 'var(--cds-text-secondary, #525252)',
-              marginBottom: '0.375rem',
-              fontWeight: 600,
-            }}
-          >
+        <div className="mb-3">
+          <div className="flex justify-between text-xs text-[#525252] mb-1 font-semibold">
             <span>0%</span>
             <span>Target: 95%</span>
           </div>
@@ -94,35 +60,31 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label="Fleet efficiency percentage"
-            style={{
-              height: 8,
-              background: 'var(--cds-layer-02, #e0e0e0)',
-              overflow: 'hidden',
-            }}
+            className="h-2 bg-[#e0e0e0] overflow-hidden"
           >
             <div
+              className="h-full transition-all duration-500"
               style={{
-                height: '100%',
                 width: `${clamped}%`,
                 background: statusColor,
-                transition: 'width 600ms cubic-bezier(0.2, 0, 0.38, 0.9)',
               }}
             />
           </div>
         </div>
 
         {/* Status indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="flex items-center gap-2">
           <span
             aria-hidden="true"
-            style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor, flexShrink: 0 }}
+            className="w-2 h-2 rounded-full shrink-0"
+            style={{ background: statusColor }}
           />
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--cds-text-secondary, #525252)' }}>
+          <span className="text-xs font-semibold text-[#525252]">
             {statusLabel}
           </span>
         </div>
       </div>
-    </Tile>
+    </div>
   );
 });
 

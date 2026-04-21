@@ -1,27 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ComposedModal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+  Modal,
   TextInput,
   TextArea,
   Select,
   SelectItem,
   Button,
+  IconButton,
   Stack,
   Grid,
   Column,
-  Dropdown,
   NumberInput,
-  DatePicker,
-  DatePickerInput,
   Tag,
-  Section,
-  Heading,
-} from '@carbon/react';
-import { Add, TrashCan, Currency } from '@carbon/icons-react';
-import type { Invoice, Client, Vehicle, LineItem } from '../../types';
+} from '../ui';
+import { Plus, Trash2, DollarSign } from 'lucide-react';
+import type { Invoice, Client, Vehicle } from '../../types';
 
 interface LineItemDraft {
   id: string;
@@ -207,7 +200,7 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
 
   const handleSubmit = async () => {
     if (!formData.client_name.trim() || !formData.due_date) return;
-    
+
     const validItems = lineItems.filter(item => item.description.trim());
     if (validItems.length === 0) return;
 
@@ -224,488 +217,473 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
     }
   };
 
-  const clientDropdownItems = clients.map(c => ({
-    id: c.id,
-    label: c.company ? `${c.name} — ${c.company}` : c.name,
-    client: c,
-  }));
-
-  const vehicleDropdownItems = [
-    { id: '', label: 'No Vehicle (Custom Invoice)' },
-    ...vehicles.map(v => ({
-      id: v.id,
-      label: `${v.make_model} (${v.vin_number})`,
-    })),
-  ];
-
-  const canSubmit = 
-    formData.client_name.trim() && 
-    formData.due_date && 
+  const canSubmit =
+    formData.client_name.trim() &&
+    formData.due_date &&
     lineItems.some(item => item.description.trim()) &&
     !isSubmitting;
 
   return (
-    <ComposedModal
-      open={open}
+    <Modal
+      isOpen={open}
       onClose={onClose}
+      title={editingInvoice ? `Edit Invoice ${editingInvoice.invoice_number}` : 'Create Invoice'}
+      label={editingInvoice
+        ? 'Update invoice details, line items, and status'
+        : 'Create a new invoice with itemized charges and payment terms'
+      }
       size="lg"
       preventCloseOnClickOutside
+      footer={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+          >
+            {isSubmitting ? 'Saving...' : (editingInvoice ? 'Save Changes' : 'Create Invoice')}
+          </Button>
+        </div>
+      }
     >
-      <ModalHeader
-        title={editingInvoice ? `Edit Invoice ${editingInvoice.invoice_number}` : 'Create Invoice'}
-        subtitle={editingInvoice 
-          ? 'Update invoice details, line items, and status'
-          : 'Create a new invoice with itemized charges and payment terms'
-        }
-      />
-      
-      <ModalBody hasScrollingContent>
-        <Stack gap={7}>
-          {/* Invoice Number (when editing) */}
-          {editingInvoice && (
-            <Section>
-              <div
+      <Stack gap={7}>
+        {/* Invoice Number (when editing) */}
+        {editingInvoice && (
+          <section>
+            <div
+              style={{
+                padding: '0.75rem 1rem',
+                backgroundColor: '#f4f4f4',
+                borderLeft: '3px solid #24a148',
+              }}
+            >
+              <span
                 style={{
-                  padding: 'var(--cds-spacing-04, 0.75rem) var(--cds-spacing-05, 1rem)',
-                  backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
-                  borderLeft: '3px solid var(--cds-support-success, #24a148)',
+                  fontFamily: 'IBM Plex Mono, monospace',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#24a148',
                 }}
               >
-                <span
-                  style={{
-                    fontFamily: 'IBM Plex Mono, monospace',
-                    fontSize: 'var(--cds-heading-01-font-size, 0.875rem)',
-                    fontWeight: 600,
-                    color: 'var(--cds-support-success, #24a148)',
-                  }}
-                >
-                  {editingInvoice.invoice_number}
-                </span>
-                <Tag type="blue" size="sm" style={{ marginLeft: 'var(--cds-spacing-03, 0.5rem)' }}>
-                  {formData.invoice_kind}
-                </Tag>
-              </div>
-            </Section>
-          )}
+                {editingInvoice.invoice_number}
+              </span>
+              <Tag type="blue" size="sm" style={{ marginLeft: '0.5rem' }}>
+                {formData.invoice_kind}
+              </Tag>
+            </div>
+          </section>
+        )}
 
-          {/* Client Section */}
-          <Section>
-            <Heading
-              style={{
-                fontSize: 'var(--cds-heading-01-font-size, 0.875rem)',
-                fontWeight: 600,
-                marginBottom: 'var(--cds-spacing-04, 0.75rem)',
-                color: 'var(--cds-text-primary, #161616)',
-              }}
-            >
-              Client Information
-            </Heading>
-            
-            <Stack gap={5}>
-              <Dropdown
-                id="invoice-client"
-                titleText="Saved Client"
-                label="Select an existing client or leave blank for a one-off invoice"
-                items={clientDropdownItems}
-                itemToString={(item) => item?.label || ''}
-                selectedItem={clientDropdownItems.find(c => c.id === formData.client_id) || null}
-                onChange={({ selectedItem }) => handleClientChange(selectedItem?.id || '')}
-              />
-              
-              <Grid narrow>
-                <Column sm={4} md={8} lg={8}>
-                  <TextInput
-                    id="invoice-client-name"
-                    labelText="Client Name *"
-                    value={formData.client_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
-                    required
-                  />
-                </Column>
-                <Column sm={4} md={8} lg={8}>
-                  <TextInput
-                    id="invoice-client-email"
-                    labelText="Email"
-                    type="email"
-                    value={formData.client_email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, client_email: e.target.value }))}
-                  />
-                </Column>
-              </Grid>
-              
-              <TextArea
-                id="invoice-client-address"
-                labelText="Address"
-                value={formData.client_address}
-                onChange={(e) => setFormData(prev => ({ ...prev, client_address: e.target.value }))}
-                rows={2}
-              />
-            </Stack>
-          </Section>
+        {/* Client Section */}
+        <section>
+          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+            Client Information
+          </h2>
 
-          {/* Invoice Details */}
-          <Section>
-            <Heading
-              style={{
-                fontSize: 'var(--cds-heading-01-font-size, 0.875rem)',
-                fontWeight: 600,
-                marginBottom: 'var(--cds-spacing-04, 0.75rem)',
-                color: 'var(--cds-text-primary, #161616)',
-              }}
+          <Stack gap={5}>
+            <Select
+              id="invoice-client"
+              labelText="Saved Client"
+              value={formData.client_id}
+              onChange={(e) => handleClientChange(e.target.value)}
             >
-              Invoice Details
-            </Heading>
-            
+              <SelectItem value="" text="Select an existing client or leave blank for a one-off invoice" />
+              {clients.map(c => (
+                <SelectItem
+                  key={c.id}
+                  value={c.id}
+                  text={c.company ? `${c.name} — ${c.company}` : c.name}
+                />
+              ))}
+            </Select>
+
             <Grid narrow>
-              <Column sm={4} md={4} lg={8}>
-                <Select
-                  id="invoice-kind"
-                  labelText="Invoice Type"
-                  value={formData.invoice_kind}
-                  onChange={(e) => setFormData(prev => ({ ...prev, invoice_kind: e.target.value as any }))}
-                >
-                  <SelectItem value="Standard" text="Standard" />
-                  <SelectItem value="Deposit" text="Deposit" />
-                  <SelectItem value="Final" text="Final" />
-                </Select>
-              </Column>
-              
-              <Column sm={4} md={4} lg={8}>
-                <Dropdown
-                  id="invoice-vehicle"
-                  titleText="Vehicle (Optional)"
-                  label="Select vehicle"
-                  items={vehicleDropdownItems}
-                  itemToString={(item) => item?.label || ''}
-                  selectedItem={vehicleDropdownItems.find(v => v.id === formData.vehicle_id) || vehicleDropdownItems[0]}
-                  onChange={({ selectedItem }) => setFormData(prev => ({ ...prev, vehicle_id: selectedItem?.id || '' }))}
+              <Column sm={4} md={8} lg={8}>
+                <TextInput
+                  id="invoice-client-name"
+                  labelText="Client Name *"
+                  value={formData.client_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
+                  required
                 />
               </Column>
-              
-              <Column sm={4} md={4} lg={8}>
-                <Select
-                  id="invoice-currency"
-                  labelText="Currency"
-                  value={formData.currency}
-                  onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value as any }))}
-                >
-                  <SelectItem value="USD" text="USD ($)" />
-                  <SelectItem value="GBP" text="GBP (£)" />
-                </Select>
-              </Column>
-              
-              <Column sm={4} md={4} lg={8}>
-                <DatePicker
-                  datePickerType="single"
-                  value={formData.due_date}
-                  onChange={([date]: Date[]) => {
-                    if (date) {
-                      setFormData(prev => ({ ...prev, due_date: date.toISOString().split('T')[0] }));
-                    }
-                  }}
-                >
-                  <DatePickerInput
-                    id="invoice-due-date"
-                    labelText="Due Date *"
-                    placeholder="yyyy-mm-dd"
-                    required
-                  />
-                </DatePicker>
-              </Column>
-              
-              <Column sm={4} md={4} lg={8}>
-                {editingInvoice ? (
-                  <Select
-                    id="invoice-status"
-                    labelText="Status"
-                    value={formData.status}
-                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                  >
-                    <SelectItem value="Draft" text="Draft" />
-                    <SelectItem value="Sent" text="Sent" />
-                    <SelectItem value="Paid" text="Paid" />
-                    <SelectItem value="Overdue" text="Overdue" />
-                    <SelectItem value="Cancelled" text="Cancelled" />
-                  </Select>
-                ) : (
-                  <Select
-                    id="invoice-status"
-                    labelText="Status"
-                    value={formData.status}
-                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                  >
-                    <SelectItem value="Draft" text="Draft" />
-                    <SelectItem value="Sent" text="Sent" />
-                  </Select>
-                )}
-              </Column>
-              
-              <Column sm={4} md={4} lg={8}>
+              <Column sm={4} md={8} lg={8}>
                 <TextInput
-                  id="invoice-batch"
-                  labelText="Batch Code (Optional)"
-                  value={formData.batch}
-                  onChange={(e) => setFormData(prev => ({ ...prev, batch: e.target.value }))}
-                  placeholder="e.g., BATCH-001"
+                  id="invoice-client-email"
+                  labelText="Email"
+                  type="email"
+                  value={formData.client_email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, client_email: e.target.value }))}
                 />
               </Column>
             </Grid>
-          </Section>
 
-          {/* Line Items */}
-          <Section>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 'var(--cds-spacing-04, 0.75rem)',
-              }}
+            <TextArea
+              id="invoice-client-address"
+              labelText="Address"
+              value={formData.client_address}
+              onChange={(e) => setFormData(prev => ({ ...prev, client_address: e.target.value }))}
+              rows={2}
+            />
+          </Stack>
+        </section>
+
+        {/* Invoice Details */}
+        <section>
+          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+            Invoice Details
+          </h2>
+
+          <Grid narrow>
+            <Column sm={4} md={4} lg={8}>
+              <Select
+                id="invoice-kind"
+                labelText="Invoice Type"
+                value={formData.invoice_kind}
+                onChange={(e) => setFormData(prev => ({ ...prev, invoice_kind: e.target.value as any }))}
+              >
+                <SelectItem value="Standard" text="Standard" />
+                <SelectItem value="Deposit" text="Deposit" />
+                <SelectItem value="Final" text="Final" />
+              </Select>
+            </Column>
+
+            <Column sm={4} md={4} lg={8}>
+              <Select
+                id="invoice-vehicle"
+                labelText="Vehicle (Optional)"
+                value={formData.vehicle_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, vehicle_id: e.target.value }))}
+              >
+                <SelectItem value="" text="No Vehicle (Custom Invoice)" />
+                {vehicles.map(v => (
+                  <SelectItem
+                    key={v.id}
+                    value={v.id}
+                    text={`${v.make_model} (${v.vin_number})`}
+                  />
+                ))}
+              </Select>
+            </Column>
+
+            <Column sm={4} md={4} lg={8}>
+              <Select
+                id="invoice-currency"
+                labelText="Currency"
+                value={formData.currency}
+                onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value as any }))}
+              >
+                <SelectItem value="USD" text="USD ($)" />
+                <SelectItem value="GBP" text="GBP (£)" />
+              </Select>
+            </Column>
+
+            <Column sm={4} md={4} lg={8}>
+              <TextInput
+                id="invoice-due-date"
+                labelText="Due Date *"
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                required
+              />
+            </Column>
+
+            <Column sm={4} md={4} lg={8}>
+              {editingInvoice ? (
+                <Select
+                  id="invoice-status"
+                  labelText="Status"
+                  value={formData.status}
+                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                >
+                  <SelectItem value="Draft" text="Draft" />
+                  <SelectItem value="Sent" text="Sent" />
+                  <SelectItem value="Paid" text="Paid" />
+                  <SelectItem value="Overdue" text="Overdue" />
+                  <SelectItem value="Cancelled" text="Cancelled" />
+                </Select>
+              ) : (
+                <Select
+                  id="invoice-status"
+                  labelText="Status"
+                  value={formData.status}
+                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                >
+                  <SelectItem value="Draft" text="Draft" />
+                  <SelectItem value="Sent" text="Sent" />
+                </Select>
+              )}
+            </Column>
+
+            <Column sm={4} md={4} lg={8}>
+              <TextInput
+                id="invoice-batch"
+                labelText="Batch Code (Optional)"
+                value={formData.batch}
+                onChange={(e) => setFormData(prev => ({ ...prev, batch: e.target.value }))}
+                placeholder="e.g., BATCH-001"
+              />
+            </Column>
+          </Grid>
+        </section>
+
+        {/* Line Items */}
+        <section>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.75rem',
+            }}
+          >
+            <h2 className="text-base font-semibold text-gray-900">
+              Line Items
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              renderIcon={Plus}
+              onClick={addLineItem}
             >
-              <Heading
+              Add Line Item
+            </Button>
+          </div>
+
+          <Stack gap={4}>
+            {lineItems.map((item, index) => (
+              <div
+                key={item.id || index}
                 style={{
-                  fontSize: 'var(--cds-heading-01-font-size, 0.875rem)',
-                  fontWeight: 600,
-                  color: 'var(--cds-text-primary, #161616)',
+                  padding: '0.75rem',
+                  backgroundColor: '#f4f4f4',
+                  borderLeft: '3px solid #c6c6c6',
                 }}
               >
-                Line Items
-              </Heading>
-              <Button
-                kind="ghost"
-                size="sm"
-                renderIcon={Add}
-                onClick={addLineItem}
-              >
-                Add Line Item
-              </Button>
-            </div>
-
-            <Stack gap={4}>
-              {lineItems.map((item, index) => (
-                <div
-                  key={item.id || index}
-                  style={{
-                    padding: 'var(--cds-spacing-04, 0.75rem)',
-                    backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
-                    borderLeft: '3px solid var(--cds-border-subtle, #c6c6c6)',
-                  }}
-                >
-                  <Grid narrow>
-                    <Column sm={4} md={6} lg={8}>
-                      <TextInput
-                        id={`line-desc-${index}`}
-                        labelText="Description *"
-                        value={item.description}
-                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                        placeholder="Item description"
-                      />
-                    </Column>
-                    <Column sm={2} md={3} lg={3}>
-                      <NumberInput
-                        id={`line-qty-${index}`}
-                        label="Qty"
-                        value={item.quantity}
-                        onChange={(_e, { value }) => updateLineItem(index, 'quantity', Number(value))}
-                        min={1}
-                        step={1}
-                        hideSteppers
-                      />
-                    </Column>
-                    <Column sm={3} md={4} lg={4}>
-                      <NumberInput
-                        id={`line-price-${index}`}
-                        label="Unit Price"
-                        value={item.unit_price}
-                        onChange={(_e, { value }) => updateLineItem(index, 'unit_price', Number(value))}
-                        min={0}
-                        step={0.01}
-                        hideSteppers
-                      />
-                    </Column>
-                    <Column sm={3} md={4} lg={4}>
-                      <NumberInput
-                        id={`line-discount-${index}`}
-                        label="Discount %"
-                        value={item.discount_percentage}
-                        onChange={(_e, { value }) => updateLineItem(index, 'discount_percentage', clampDiscount(Number(value)))}
-                        min={0}
-                        max={100}
-                        step={0.01}
-                        hideSteppers
-                      />
-                    </Column>
-                    <Column sm={3} md={4} lg={4}>
-                      <NumberInput
-                        id={`line-tax-${index}`}
-                        label="Tax %"
-                        value={item.tax_rate}
-                        onChange={(_e, { value }) => updateLineItem(index, 'tax_rate', Number(value))}
-                        min={0}
-                        step={0.01}
-                        hideSteppers
-                      />
-                    </Column>
-                    <Column sm={3} md={4} lg={4}>
-                      <div
-                        style={{
-                          padding: 'var(--cds-spacing-04, 0.75rem)',
-                          backgroundColor: 'var(--cds-layer-01, #ffffff)',
-                          fontWeight: 600,
-                          textAlign: 'right',
-                        }}
-                      >
-                        <div style={{ fontSize: 'var(--cds-label-01-font-size, 0.75rem)', color: 'var(--cds-text-secondary, #525252)' }}>
-                          Amount
-                        </div>
-                        <div style={{ color: 'var(--cds-text-primary, #161616)' }}>
-                          {formatMoney(calculateLineAmount(item), formData.currency)}
-                        </div>
-                      </div>
-                    </Column>
-                    <Column sm={1} md={1} lg={1} style={{ display: 'flex', alignItems: 'flex-end' }}>
-                      {lineItems.length > 1 && (
-                        <Button
-                          kind="danger--ghost"
-                          size="sm"
-                          renderIcon={TrashCan}
-                          iconDescription="Remove line item"
-                          hasIconOnly
-                          onClick={() => removeLineItem(index)}
-                        />
-                      )}
-                    </Column>
-                  </Grid>
-                  
-                  {item.discount_percentage > 0 && (
-                    <p
+                <Grid narrow>
+                  <Column sm={4} md={6} lg={8}>
+                    <TextInput
+                      id={`line-desc-${index}`}
+                      labelText="Description *"
+                      value={item.description}
+                      onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                      placeholder="Item description"
+                    />
+                  </Column>
+                  <Column sm={2} md={3} lg={3}>
+                    <NumberInput
+                      id={`line-qty-${index}`}
+                      labelText="Qty"
+                      value={item.quantity}
+                      onChange={(_e, { value }) => updateLineItem(index, 'quantity', Number(value))}
+                      min={1}
+                      step={1}
+                    />
+                  </Column>
+                  <Column sm={3} md={4} lg={4}>
+                    <NumberInput
+                      id={`line-price-${index}`}
+                      labelText="Unit Price"
+                      value={item.unit_price}
+                      onChange={(_e, { value }) => updateLineItem(index, 'unit_price', Number(value))}
+                      min={0}
+                      step={0.01}
+                    />
+                  </Column>
+                  <Column sm={3} md={4} lg={4}>
+                    <NumberInput
+                      id={`line-discount-${index}`}
+                      labelText="Discount %"
+                      value={item.discount_percentage}
+                      onChange={(_e, { value }) => updateLineItem(index, 'discount_percentage', clampDiscount(Number(value)))}
+                      min={0}
+                      max={100}
+                      step={0.01}
+                    />
+                  </Column>
+                  <Column sm={3} md={4} lg={4}>
+                    <NumberInput
+                      id={`line-tax-${index}`}
+                      labelText="Tax %"
+                      value={item.tax_rate}
+                      onChange={(_e, { value }) => updateLineItem(index, 'tax_rate', Number(value))}
+                      min={0}
+                      step={0.01}
+                    />
+                  </Column>
+                  <Column sm={3} md={4} lg={4}>
+                    <div
                       style={{
-                        fontSize: 'var(--cds-caption-01-font-size, 0.75rem)',
-                        color: 'var(--cds-text-secondary, #525252)',
-                        marginTop: 'var(--cds-spacing-02, 0.25rem)',
+                        padding: '0.75rem',
+                        backgroundColor: '#ffffff',
+                        fontWeight: 600,
+                        textAlign: 'right',
                       }}
                     >
-                      Discount: {formatMoney((item.quantity * item.unit_price * item.discount_percentage) / 100, formData.currency)}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </Stack>
+                      <div style={{ fontSize: '0.75rem', color: '#525252' }}>
+                        Amount
+                      </div>
+                      <div style={{ color: '#161616' }}>
+                        {formatMoney(calculateLineAmount(item), formData.currency)}
+                      </div>
+                    </div>
+                  </Column>
+                  <Column sm={1} md={1} lg={1} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    {lineItems.length > 1 && (
+                      <IconButton
+                        variant="ghost"
+                        size="sm"
+                        icon={<Trash2 size={14} />}
+                        label="Remove line item"
+                        onClick={() => removeLineItem(index)}
+                        style={{ color: '#da1e28' }}
+                      />
+                    )}
+                  </Column>
+                </Grid>
 
-            {/* Totals */}
-            <div
-              style={{
-                marginTop: 'var(--cds-spacing-05, 1rem)',
-                padding: 'var(--cds-spacing-04, 0.75rem) var(--cds-spacing-05, 1rem)',
-                backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
-                borderTop: '2px solid var(--cds-border-subtle, #c6c6c6)',
-              }}
-            >
-              <div style={{ maxWidth: '300px', marginLeft: 'auto' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
-                    color: 'var(--cds-text-secondary, #525252)',
-                    marginBottom: 'var(--cds-spacing-02, 0.25rem)',
-                  }}
-                >
-                  <span>Subtotal:</span>
-                  <span>{formatMoney(totals.subtotal, formData.currency)}</span>
-                </div>
-                {totals.discount > 0 && (
-                  <div
+                {item.discount_percentage > 0 && (
+                  <p
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
-                      color: 'var(--cds-support-success, #24a148)',
-                      marginBottom: 'var(--cds-spacing-02, 0.25rem)',
+                      fontSize: '0.75rem',
+                      color: '#525252',
+                      marginTop: '0.25rem',
                     }}
                   >
-                    <span>Discounts:</span>
-                    <span>-{formatMoney(totals.discount, formData.currency)}</span>
-                  </div>
+                    Discount: {formatMoney((item.quantity * item.unit_price * item.discount_percentage) / 100, formData.currency)}
+                  </p>
                 )}
-                {totals.tax > 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
-                      color: 'var(--cds-text-secondary, #525252)',
-                      marginBottom: 'var(--cds-spacing-02, 0.25rem)',
-                    }}
-                  >
-                    <span>Tax:</span>
-                    <span>{formatMoney(totals.tax, formData.currency)}</span>
-                  </div>
-                )}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: 'var(--cds-heading-03-font-size, 1.25rem)',
-                    fontWeight: 600,
-                    color: 'var(--cds-text-primary, #161616)',
-                    paddingTop: 'var(--cds-spacing-03, 0.5rem)',
-                    borderTop: '1px solid var(--cds-border-subtle, #c6c6c6)',
-                    marginTop: 'var(--cds-spacing-03, 0.5rem)',
-                  }}
-                >
-                  <span>Total:</span>
-                  <span>{formatMoney(totals.total, formData.currency)}</span>
-                </div>
               </div>
-            </div>
-          </Section>
+            ))}
+          </Stack>
 
-          {/* Notes & Terms */}
-          <Section>
-            <Heading
+          {/* Summary Strip */}
+          <div
+            style={{
+              marginTop: '1rem',
+              display: 'grid',
+              gridTemplateColumns: totals.discount > 0 && totals.tax > 0
+                ? 'repeat(4, 1fr)'
+                : totals.discount > 0 || totals.tax > 0
+                  ? 'repeat(3, 1fr)'
+                  : 'repeat(2, 1fr)',
+              gap: '1px',
+              background: '#e0e0e0',
+              border: '1px solid #e0e0e0',
+            }}
+          >
+            <InvoiceSummaryCell label="Subtotal" value={formatMoney(totals.subtotal, formData.currency)} />
+            {totals.discount > 0 && (
+              <InvoiceSummaryCell label="Discounts" value={`-${formatMoney(totals.discount, formData.currency)}`} accent="success" />
+            )}
+            {totals.tax > 0 && (
+              <InvoiceSummaryCell label="Tax" value={formatMoney(totals.tax, formData.currency)} />
+            )}
+            <InvoiceSummaryCell label="Total" value={formatMoney(totals.total, formData.currency)} emphasis />
+          </div>
+
+          {/* Dark Total Bar */}
+          <div
+            style={{
+              marginTop: '0.75rem',
+              padding: '0.75rem 1rem',
+              backgroundColor: '#161616',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span
               style={{
-                fontSize: 'var(--cds-heading-01-font-size, 0.875rem)',
                 fontWeight: 600,
-                marginBottom: 'var(--cds-spacing-04, 0.75rem)',
-                color: 'var(--cds-text-primary, #161616)',
+                fontSize: '0.875rem',
+                color: '#525252',
               }}
             >
-              Notes & Terms
-            </Heading>
-            
-            <Stack gap={5}>
-              <TextArea
-                id="invoice-notes"
-                labelText="Internal Notes"
-                value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                rows={3}
-                placeholder="Internal notes (not shown on invoice)"
-              />
-              
-              <TextArea
-                id="invoice-terms"
-                labelText="Terms & Conditions"
-                value={formData.terms_and_conditions}
-                onChange={(e) => setFormData(prev => ({ ...prev, terms_and_conditions: e.target.value }))}
-                rows={3}
-                placeholder="Payment terms and conditions"
-              />
-            </Stack>
-          </Section>
-        </Stack>
-      </ModalBody>
+              Invoice Total
+            </span>
+            <span style={{ fontWeight: 700, fontSize: '1.125rem', color: '#ffffff' }}>
+              {formatMoney(totals.total, formData.currency)}
+            </span>
+          </div>
+        </section>
 
-      <ModalFooter
-        primaryButtonText={isSubmitting ? 'Saving...' : (editingInvoice ? 'Save Changes' : 'Create Invoice')}
-        primaryButtonDisabled={!canSubmit}
-        secondaryButtonText="Cancel"
-        onRequestSubmit={handleSubmit}
-        onRequestClose={onClose}
-      />
-    </ComposedModal>
+        {/* Notes & Terms */}
+        <section>
+          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+            Notes & Terms
+          </h2>
+
+          <Stack gap={5}>
+            <TextArea
+              id="invoice-notes"
+              labelText="Internal Notes"
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              rows={3}
+              placeholder="Internal notes (not shown on invoice)"
+            />
+
+            <TextArea
+              id="invoice-terms"
+              labelText="Terms & Conditions"
+              value={formData.terms_and_conditions}
+              onChange={(e) => setFormData(prev => ({ ...prev, terms_and_conditions: e.target.value }))}
+              rows={3}
+              placeholder="Payment terms and conditions"
+            />
+          </Stack>
+        </section>
+      </Stack>
+    </Modal>
   );
 };
+
+// ── Summary cell helper (matches CarbonPaymentModal style) ─────────────────
+
+const invoiceAccentColor = {
+  error: '#da1e28',
+  success: '#24a148',
+  warning: '#8e4e00',
+};
+
+const InvoiceSummaryCell: React.FC<{
+  label: string;
+  value: string;
+  emphasis?: boolean;
+  accent?: 'error' | 'success' | 'warning';
+}> = ({ label, value, emphasis, accent }) => (
+  <div
+    style={{
+      background: '#f4f4f4',
+      padding: '0.875rem 1rem',
+      textAlign: 'center',
+    }}
+  >
+    <div
+      style={{
+        fontSize: '0.6875rem',
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        color: '#525252',
+        marginBottom: '0.25rem',
+      }}
+    >
+      {label}
+    </div>
+    <div
+      style={{
+        fontSize: emphasis ? '1.125rem' : '0.9375rem',
+        fontWeight: 700,
+        color: accent ? invoiceAccentColor[accent] : '#161616',
+      }}
+    >
+      {value}
+    </div>
+  </div>
+);
 
 export default CarbonInvoiceModal;

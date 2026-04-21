@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
           output: {
             manualChunks: {
               'vendor': ['react', 'react-dom'],
-              'ui': ['@carbon/react'],
+              'ui': ['lucide-react'],
               'pdf': ['jspdf', 'jspdf-autotable'],
             }
           }

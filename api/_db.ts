@@ -5,7 +5,13 @@
  * Database credentials are never exposed to the browser.
  */
 
-import { neon, NeonQueryFunction, Pool } from '@neondatabase/serverless';
+import { neon, neonConfig, NeonQueryFunction, Pool } from '@neondatabase/serverless';
+import ws from 'ws';
+
+// Required for Node.js environments (Railway, local server).
+// Neon's serverless driver uses WebSockets for Pool connections;
+// in Node.js there is no built-in WebSocket so we supply the ws package.
+neonConfig.webSocketConstructor = ws;
 
 let sqlInstance: NeonQueryFunction<false, false> | null = null;
 
@@ -60,7 +66,7 @@ const ALLOWED_COLUMNS: Record<string, string[]> = {
   payments: ['id', 'reference_id', 'client_name', 'amount_usd', 'date', 'created_at'],
   clients: ['id', 'name', 'email', 'company', 'created_at'],
   employees: ['id', 'employee_number', 'name', 'department', 'status', 'created_at'],
-  user_profiles: ['id', 'name', 'email', 'role', 'access_role', 'tenant_id', 'status', 'created_at'],
+  user_profiles: ['id', 'name', 'email', 'role', 'access_role', 'status', 'created_at'],
   trips: ['id', 'trip_number', 'title', 'status', 'route_origin', 'route_destination', 'departure_date', 'eta_date', 'created_at'],
 };
 

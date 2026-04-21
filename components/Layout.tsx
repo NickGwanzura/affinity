@@ -1,31 +1,17 @@
 import React, { useRef, useState } from 'react';
 import {
-  Header,
-  HeaderMenuButton,
-  HeaderName,
-  HeaderNavigation,
-  HeaderMenuItem,
-  HeaderGlobalBar,
-  HeaderGlobalAction,
-  SkipToContent,
-  SideNav,
-  SideNavItems,
-  SideNavLink,
-  Content,
-  Tag,
-} from '@carbon/react';
-import {
-  ChartBar,
+  BarChart3,
   Calculator,
-  Money,
-  Document,
-  Van,
-  UserMultiple,
+  DollarSign,
+  FileText,
+  Truck,
+  Users,
   Settings,
-  Logout,
-  UserAvatar,
-  Close,
-} from '@carbon/icons-react';
+  LogOut,
+  UserCircle,
+  X,
+  Menu,
+} from 'lucide-react';
 import { AppUser, UserRole } from '../types';
 
 export type AppView = 'admin' | 'driver' | 'accountant' | 'settings' | 'financials' | 'documents' | 'clients';
@@ -44,20 +30,20 @@ const navItems: {
   roles: UserRole[];
   Icon: React.ComponentType<{ size?: number }>;
 }[] = [
-  { id: 'admin',      label: 'Dashboard',    roles: ['Admin', 'Manager'],                       Icon: ChartBar },
+  { id: 'admin',      label: 'Dashboard',    roles: ['Admin', 'Manager'],                       Icon: BarChart3 },
   { id: 'accountant', label: 'Accountant',   roles: ['Admin', 'Accountant'],                    Icon: Calculator },
-  { id: 'financials', label: 'Financials',   roles: ['Admin', 'Manager', 'Accountant'],         Icon: Money },
-  { id: 'documents',  label: 'Documents',    roles: ['Admin', 'Manager', 'Driver'],             Icon: Document },
-  { id: 'driver',     label: 'Driver Portal',roles: ['Admin', 'Driver'],                        Icon: Van },
-  { id: 'clients',    label: 'Clients',      roles: ['Admin', 'Accountant'],                    Icon: UserMultiple },
+  { id: 'financials', label: 'Financials',   roles: ['Admin', 'Manager', 'Accountant'],         Icon: DollarSign },
+  { id: 'documents',  label: 'Documents',    roles: ['Admin', 'Manager', 'Driver'],             Icon: FileText },
+  { id: 'driver',     label: 'Driver Portal',roles: ['Admin', 'Driver'],                        Icon: Truck },
+  { id: 'clients',    label: 'Clients',      roles: ['Admin', 'Accountant'],                    Icon: Users },
   { id: 'settings',   label: 'Settings',     roles: ['Admin'],                                  Icon: Settings },
 ];
 
-const roleTagType: Record<UserRole, 'purple' | 'blue' | 'teal' | 'warm-gray'> = {
-  Admin:      'purple',
-  Manager:    'blue',
-  Accountant: 'teal',
-  Driver:     'warm-gray',
+const roleTagClass: Record<UserRole, string> = {
+  Admin:      'bg-purple-100 text-purple-800',
+  Manager:    'bg-blue-100 text-blue-800',
+  Accountant: 'bg-teal-100 text-teal-800',
+  Driver:     'bg-gray-100 text-gray-800',
 };
 
 export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, user, onLogout }) => {
@@ -85,77 +71,83 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
 
   return (
     <>
-      <Header aria-label="Affinity Logistics">
-        <SkipToContent />
-        <HeaderMenuButton
+      {/* Skip to content */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[9000] focus:bg-white focus:px-4 focus:py-2 focus:text-black"
+      >
+        Skip to main content
+      </a>
+
+      <header className="fixed top-0 left-0 right-0 z-[8000] flex h-12 items-center bg-[#161616] text-white">
+        {/* Hamburger menu button */}
+        <button
+          type="button"
           aria-label={isSideNavExpanded ? 'Close navigation menu' : 'Open navigation menu'}
-          onClick={() => setIsSideNavExpanded(o => !o)}
-          isActive={isSideNavExpanded}
           aria-expanded={isSideNavExpanded}
-        />
-        <HeaderName
-          href="#"
-          prefix=""
-          onClick={e => e.preventDefault()}
-          style={{ fontWeight: 700, letterSpacing: '0.02em', maxWidth: 'min(200px, calc(100vw - 7rem))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          onClick={() => setIsSideNavExpanded(o => !o)}
+          className="inline-flex h-12 w-12 items-center justify-center hover:bg-[#353535] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
         >
-          Affinity&nbsp;<span style={{ color: 'var(--cds-link-inverse, #78a9ff)', fontWeight: 400 }}>Logistics</span>
-        </HeaderName>
+          {isSideNavExpanded ? <X size={20} /> : <Menu size={20} />}
+        </button>
+
+        {/* Logo / HeaderName */}
+        <a
+          href="#"
+          onClick={e => e.preventDefault()}
+          className="px-4 text-sm font-bold tracking-wide"
+          style={{ maxWidth: 'min(200px, calc(100vw - 7rem))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >
+          Affinity&nbsp;<span className="font-normal text-blue-300">Logistics</span>
+        </a>
 
         {/* Desktop navigation */}
-        <HeaderNavigation aria-label="Affinity Logistics navigation" className="hidden lg:flex">
+        <nav aria-label="Affinity Logistics navigation" className="hidden lg:flex">
           {visible.map(({ id, label }) => (
-            <HeaderMenuItem
+            <a
               key={id}
               href="#"
-              isCurrentPage={currentView === id}
               onClick={(e: React.MouseEvent) => { e.preventDefault(); navigate(id); }}
+              className={`px-4 py-3 text-sm ${currentView === id ? 'border-b-2 border-white font-semibold' : 'hover:bg-[#353535]'}`}
+              aria-current={currentView === id ? 'page' : undefined}
             >
               {label}
-            </HeaderMenuItem>
+            </a>
           ))}
-        </HeaderNavigation>
+        </nav>
 
-        <HeaderGlobalBar>
+        {/* Global bar */}
+        <div className="ml-auto flex h-full items-center">
           {/* User identity chip */}
-          <div
-            className="hidden xl:flex"
-            style={{
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0 1rem',
-              borderLeft: '1px solid var(--cds-border-subtle, #393939)',
-              height: '100%',
-              color: 'var(--cds-text-on-color, #fff)',
-              fontSize: '0.875rem',
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>{user.name}</span>
-            <Tag type={roleTagType[user.role] || 'gray'} size="sm">
+          <div className="hidden h-full items-center gap-2 border-l border-gray-600 px-4 text-sm xl:flex">
+            <span className="font-semibold">{user.name}</span>
+            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${roleTagClass[user.role] || 'bg-gray-100 text-gray-800'}`}>
               {user.role}
-            </Tag>
+            </span>
           </div>
 
           {/* User menu toggle */}
-          <HeaderGlobalAction
+          <button
+            type="button"
             aria-label={userPanelOpen ? 'Close account menu' : 'Open account menu'}
             aria-expanded={userPanelOpen}
             onClick={() => setUserPanelOpen(o => !o)}
-            isActive={userPanelOpen}
+            className={`inline-flex h-12 w-12 items-center justify-center ${userPanelOpen ? 'bg-[#353535]' : 'hover:bg-[#353535]'} focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white`}
           >
-            {userPanelOpen ? <Close size={20} /> : <UserAvatar size={20} />}
-          </HeaderGlobalAction>
+            {userPanelOpen ? <X size={20} /> : <UserCircle size={20} />}
+          </button>
 
           {/* Logout action */}
-          <HeaderGlobalAction
+          <button
+            type="button"
             aria-label={isLoggingOut ? 'Signing out…' : 'Logout'}
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="hidden md:flex"
+            className="hidden h-12 w-12 items-center justify-center hover:bg-[#353535] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white md:inline-flex"
           >
-            <Logout size={20} />
-          </HeaderGlobalAction>
-        </HeaderGlobalBar>
+            <LogOut size={20} />
+          </button>
+        </div>
 
         {/* User detail panel */}
         {userPanelOpen && (
@@ -163,35 +155,32 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
             ref={userPanelRef}
             role="dialog"
             aria-label="Account details"
-            className="fixed left-2 right-2 top-14 sm:left-auto sm:right-2"
+            className="fixed left-2 right-2 top-12 z-[8000] p-4 sm:left-auto sm:right-2 sm:w-80"
             style={{
               width: 'min(320px, calc(100vw - 1rem))',
-              background: 'var(--cds-layer-01, #f4f4f4)',
-              border: '1px solid var(--cds-border-subtle, #e0e0e0)',
-              zIndex: 8000,
-              padding: '1rem',
+              background: '#f4f4f4',
+              border: '1px solid #e0e0e0',
               boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-              
             }}
           >
-            <p style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
               Signed in as
             </p>
-            <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--cds-text-primary, #161616)', marginBottom: '0.25rem' }}>
-              {user.name}
-            </p>
-            <p style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)', marginBottom: '1rem' }}>
-              {user.email}
-            </p>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <Tag type={roleTagType[user.role] || 'gray'}>{user.role}</Tag>
-              <Tag type={user.status === 'Active' ? 'green' : 'gray'}>{user.status}</Tag>
+            <p className="mb-1 text-sm font-semibold text-gray-900">{user.name}</p>
+            <p className="mb-4 text-xs text-gray-500">{user.email}</p>
+            <div className="flex flex-wrap gap-2">
+              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${roleTagClass[user.role] || 'bg-gray-100 text-gray-800'}`}>
+                {user.role}
+              </span>
+              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${user.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                {user.status}
+              </span>
             </div>
             <button
               type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center  border border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer,#fff)] px-4 py-3 text-sm font-semibold text-[var(--cds-text-primary,#161616)] transition-colors hover:bg-[var(--cds-layer-hover,#e8e8e8)] md:hidden"
+              className="mt-4 inline-flex h-11 w-full items-center justify-center border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 md:hidden"
             >
               {isLoggingOut ? 'Signing out…' : 'Sign out'}
             </button>
@@ -199,41 +188,51 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
         )}
 
         {/* Mobile / overlay SideNav */}
-        <SideNav
-          aria-label="Side navigation"
-          expanded={isSideNavExpanded}
-          onOverlayClick={() => setIsSideNavExpanded(false)}
-          isPersistent={false}
-        >
-          <SideNavItems>
-            <div className="border-b border-[var(--cds-border-subtle,#393939)] px-4 py-4 text-[var(--cds-text-on-color,#fff)] lg:hidden">
-              <p className="text-xs uppercase tracking-[0.12em]" style={{ color: 'rgba(244, 244, 244, 0.7)' }}>Signed in as</p>
-              <p className="mt-2 text-sm font-semibold">{user.name}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Tag type={roleTagType[user.role] || 'gray'} size="sm">
-                  {user.role}
-                </Tag>
-                <Tag type={user.status === 'Active' ? 'green' : 'gray'} size="sm">
-                  {user.status}
-                </Tag>
+        {isSideNavExpanded && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 z-[7500] bg-black/50"
+              onClick={() => setIsSideNavExpanded(false)}
+              aria-hidden="true"
+            />
+            <nav
+              aria-label="Side navigation"
+              className="fixed top-12 left-0 bottom-0 z-[7600] w-64 bg-[#161616] text-white"
+            >
+              <div className="border-b border-gray-700 px-4 py-4 lg:hidden">
+                <p className="text-xs uppercase tracking-widest text-gray-400">Signed in as</p>
+                <p className="mt-2 text-sm font-semibold">{user.name}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${roleTagClass[user.role] || 'bg-gray-100 text-gray-800'}`}>
+                    {user.role}
+                  </span>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${user.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                    {user.status}
+                  </span>
+                </div>
               </div>
-            </div>
-            {visible.map(({ id, label, Icon }) => (
-              <SideNavLink
-                key={id}
-                href="#"
-                renderIcon={Icon}
-                isActive={currentView === id}
-                onClick={(e: React.MouseEvent) => { e.preventDefault(); navigate(id); }}
-              >
-                {label}
-              </SideNavLink>
-            ))}
-          </SideNavItems>
-        </SideNav>
-      </Header>
+              <div className="flex flex-col py-2">
+                {visible.map(({ id, label, Icon }) => (
+                  <a
+                    key={id}
+                    href="#"
+                    onClick={(e: React.MouseEvent) => { e.preventDefault(); navigate(id); }}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm ${currentView === id ? 'border-l-4 border-white bg-[#353535] font-semibold' : 'hover:bg-[#353535]'}`}
+                    aria-current={currentView === id ? 'page' : undefined}
+                  >
+                    <Icon size={18} />
+                    {label}
+                  </a>
+                ))}
+              </div>
+            </nav>
+          </>
+        )}
+      </header>
 
-      <div className="fixed inset-x-0 bottom-0 z-[7000] border-t border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-01,#f4f4f4)]/95 backdrop-blur md:hidden">
+      {/* Mobile bottom nav */}
+      <div className="fixed inset-x-0 bottom-0 z-[7000] border-t border-gray-300 bg-white/95 backdrop-blur md:hidden">
         <nav aria-label="Primary mobile navigation" className="overflow-x-auto px-2 py-2">
           <div className="flex min-w-max items-stretch gap-2">
             {visible.map(({ id, label, Icon }) => {
@@ -243,10 +242,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
                   key={id}
                   type="button"
                   onClick={() => navigate(id)}
-                  className={`inline-flex min-h-[52px] min-w-[88px] flex-col items-center justify-center  px-3 py-2 text-[11px] font-semibold transition-colors ${
+                  className={`inline-flex min-h-[52px] min-w-[88px] flex-col items-center justify-center px-3 py-2 text-[11px] font-semibold transition-colors ${
                     isActive
-                      ? 'bg-[var(--cds-layer-selected,#d0e2ff)] text-[var(--cds-text-primary,#161616)]'
-                      : 'bg-transparent text-[var(--cds-text-secondary,#525252)]'
+                      ? 'bg-blue-100 text-gray-900'
+                      : 'bg-transparent text-gray-500'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
                 >
@@ -259,9 +258,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
         </nav>
       </div>
 
-      <Content id="main-content" className="pb-24 md:pb-0">
+      <main id="main-content" className="pt-12 pb-24 md:pb-0">
         {children}
-      </Content>
+      </main>
     </>
   );
 };

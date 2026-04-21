@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button as CarbonButton, InlineLoading } from '@carbon/react';
+import { Loader2 } from 'lucide-react';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success' | 'ghost' | 'warning';
 export type ButtonSize    = 'sm' | 'md' | 'lg';
@@ -15,21 +15,19 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
   renderIcon?: React.ComponentType<{ size?: number }>;
 }
 
-// Map our variant names → Carbon Button kinds
-const kindMap: Record<ButtonVariant, 'primary' | 'secondary' | 'danger' | 'ghost' | 'tertiary'> = {
-  primary:   'primary',
-  secondary: 'tertiary',  // tertiary = border + transparent bg, clearly subordinate to primary
-  danger:    'danger',
-  success:   'primary',   // Carbon has no "success" kind; use primary (icon conveys success)
-  ghost:     'ghost',
-  warning:   'tertiary',  // Carbon has no "warning" kind; use tertiary
+const variantClasses: Record<ButtonVariant, string> = {
+  primary:   'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+  secondary: 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500',
+  danger:    'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+  success:   'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
+  ghost:     'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+  warning:   'bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500',
 };
 
-// Map our size names → Carbon Button sizes
-const sizeMap: Record<ButtonSize, 'sm' | 'md' | 'lg'> = {
-  sm: 'sm',
-  md: 'md',
-  lg: 'lg',
+const sizeClasses: Record<ButtonSize, string> = {
+  sm: 'h-8 px-3 text-sm',
+  md: 'h-10 px-4 text-sm',
+  lg: 'h-12 px-6 text-base',
 };
 
 export const Button: React.FC<ButtonProps> = ({
@@ -42,39 +40,33 @@ export const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   disabled,
   className = '',
-  renderIcon,
+  renderIcon: RenderIcon,
   style,
   ...props
 }) => {
-  if (isLoading) {
-    return (
-      <CarbonButton
-        kind={kindMap[variant]}
-        size={sizeMap[size]}
-        disabled
-        style={{ ...(fullWidth ? { width: '100%', maxWidth: '100%' } : {}), ...style }}
-        className={className}
-      >
-        <InlineLoading status="active" style={{ display: 'inline-flex', marginRight: '0.5rem' }} />
-        {children}
-      </CarbonButton>
-    );
-  }
+  const baseClasses = [
+    'inline-flex items-center justify-center gap-2 font-medium transition-colors',
+    'focus:outline-none focus:ring-2 focus:ring-offset-1',
+    'disabled:opacity-60 disabled:cursor-not-allowed',
+    variantClasses[variant],
+    sizeClasses[size],
+    fullWidth ? 'w-full' : '',
+    className,
+  ].join(' ');
 
   return (
-    <CarbonButton
-      kind={kindMap[variant]}
-      size={sizeMap[size]}
-      disabled={disabled}
-      renderIcon={renderIcon as React.ComponentType | undefined}
-      style={{ ...(fullWidth ? { width: '100%', maxWidth: '100%' } : {}), ...style }}
-      className={className}
-      {...(props as Record<string, unknown>)}
+    <button
+      className={baseClasses}
+      disabled={disabled || isLoading}
+      style={style}
+      {...props}
     >
-      {leftIcon && <span style={{ marginRight: '0.5rem', display: 'inline-flex', alignItems: 'center' }}>{leftIcon}</span>}
+      {isLoading && <Loader2 className="animate-spin" size={size === 'sm' ? 14 : 16} />}
+      {!isLoading && leftIcon && <span className="inline-flex items-center">{leftIcon}</span>}
+      {!isLoading && RenderIcon && <RenderIcon size={size === 'sm' ? 14 : 16} />}
       {children}
-      {rightIcon && <span style={{ marginLeft: '0.5rem', display: 'inline-flex', alignItems: 'center' }}>{rightIcon}</span>}
-    </CarbonButton>
+      {!isLoading && rightIcon && <span className="inline-flex items-center">{rightIcon}</span>}
+    </button>
   );
 };
 
@@ -96,22 +88,30 @@ export const IconButton: React.FC<IconButtonProps> = ({
   className = '',
   disabled,
   ...props
-}) => (
-  <CarbonButton
-    kind={kindMap[variant]}
-    size={sizeMap[size]}
-    hasIconOnly
-    iconDescription={label}
-    renderIcon={() => (isLoading ? (
-      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
-        <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
-    ) : (
-      <span style={{ display: 'inline-flex', alignItems: 'center' }}>{icon}</span>
-    ))}
-    disabled={isLoading || disabled}
-    className={`min-w-[44px] min-h-[44px] ${className}`}
-    {...(props as Record<string, unknown>)}
-  />
-);
+}) => {
+  const sizeMap = { sm: 'h-8 w-8', md: 'h-10 w-10', lg: 'h-12 w-12' };
+  const baseClasses = [
+    'inline-flex items-center justify-center transition-colors',
+    'focus:outline-none focus:ring-2 focus:ring-offset-1',
+    'disabled:opacity-60 disabled:cursor-not-allowed',
+    variantClasses[variant],
+    sizeMap[size],
+    className,
+  ].join(' ');
+
+  return (
+    <button
+      className={baseClasses}
+      disabled={isLoading || disabled}
+      title={label}
+      aria-label={label}
+      {...props}
+    >
+      {isLoading ? (
+        <Loader2 className="animate-spin" size={size === 'sm' ? 14 : 16} />
+      ) : (
+        <span className="inline-flex items-center">{icon}</span>
+      )}
+    </button>
+  );
+};

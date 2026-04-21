@@ -4,22 +4,13 @@ import {
  TextInput,
  TextArea,
  Button,
- Tabs,
- Tab,
  Tag,
  Tile,
  Stack,
  Checkbox,
  InlineNotification,
- DataTable,
- Table,
- TableHead,
- TableRow,
- TableHeader,
- TableBody,
- TableCell,
-} from '@carbon/react';
-import { Settings as SettingsIcon, User, DocumentSecurity, Email, Renew, Add, Password, Edit, TrashCan, SubtractAlt, Copy } from '@carbon/icons-react';
+} from './ui';
+import { Settings as SettingsIcon, User, ShieldCheck, Mail, RefreshCw, Plus, KeyRound, Pencil, Trash2, Minus, Copy } from 'lucide-react';
 import { CompanyDetails, AppUser, UserRole, UserInvite, RegistrationRequest, Client, AuditLog } from '../types';
 import { dataService } from '../services/dataService';
 import { authService } from '../services/authService';
@@ -633,7 +624,7 @@ export const Settings: React.FC = () => {
      </Tile>
     )}
     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingTop: '1rem' }}>
-     <Button type="submit" renderIcon={SettingsIcon}>Save Business Details</Button>
+     <Button type="submit" leftIcon={<SettingsIcon size={14} />}>Save Business Details</Button>
      {saveStatus && <InlineNotification kind="success" title="Saved" subtitle={saveStatus} hideCloseButton />}
     </div>
     </Stack>
@@ -705,7 +696,7 @@ export const Settings: React.FC = () => {
      {/* Primary Action - Full width on mobile */}
      <Button
      onClick={() => setShowUserModal(true)}
-     renderIcon={Add}
+     leftIcon={<Plus size={14} />}
      className="w-full sm:w-auto"
      >
      Add New User
@@ -714,7 +705,7 @@ export const Settings: React.FC = () => {
      {/* Secondary Actions - Row on mobile, inline on tablet+ */}
      <div className="flex flex-wrap gap-2">
      <Button
-      kind="secondary"
+      variant="secondary"
       size="sm"
       onClick={async () => {
       setLoading(true);
@@ -733,14 +724,14 @@ export const Settings: React.FC = () => {
       }
       setLoading(false);
       }}
-      renderIcon={Renew}
+      leftIcon={<RefreshCw size={14} />}
       disabled={isBulkUpdating}
       className="flex-1 sm:flex-none"
      >
       Sync & Refresh
      </Button>
      <Button
-      kind={selectedUserIds.length === 0 || isBulkUpdating ? 'ghost' : 'primary'}
+      variant={selectedUserIds.length === 0 || isBulkUpdating ? 'ghost' : 'primary'}
       size="sm"
       onClick={() => { setBulkTargetStatus('Active'); handleBulkUpdateStatus('Active'); }}
       disabled={selectedUserIds.length === 0 || isBulkUpdating}
@@ -749,7 +740,7 @@ export const Settings: React.FC = () => {
       {isBulkUpdating && bulkTargetStatus === 'Active' ? 'Activating…' : 'Activate'}
      </Button>
      <Button
-      kind={selectedUserIds.length === 0 || isBulkUpdating ? 'ghost' : 'danger'}
+      variant={selectedUserIds.length === 0 || isBulkUpdating ? 'ghost' : 'danger'}
       size="sm"
       onClick={() => { setBulkTargetStatus('Inactive'); handleBulkUpdateStatus('Inactive'); }}
       disabled={selectedUserIds.length === 0 || isBulkUpdating}
@@ -806,7 +797,7 @@ export const Settings: React.FC = () => {
        }
        setLoading(false);
        }}
-       renderIcon={Renew}
+       leftIcon={<RefreshCw size={14} />}
        className="min-h-[44px]"
       >
        Sync My Profile
@@ -893,35 +884,31 @@ export const Settings: React.FC = () => {
         <td className="px-4 lg:px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-1 lg:gap-2">
          <Button
-          kind="ghost"
+          variant="ghost"
           size="sm"
-          hasIconOnly
-          renderIcon={Password}
-          iconDescription="Set password"
+          title="Set password"
+          leftIcon={<KeyRound size={14} />}
           onClick={() => openSetPasswordModal(user)}
          />
          <Button
-          kind="ghost"
+          variant="ghost"
           size="sm"
-          hasIconOnly
-          renderIcon={user.status === 'Active' ? SubtractAlt : Add}
-          iconDescription={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
+          title={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
+          leftIcon={user.status === 'Active' ? <Minus size={14} /> : <Plus size={14} />}
           onClick={() => handleToggleUserStatus(user)}
          />
          <Button
-          kind="ghost"
+          variant="ghost"
           size="sm"
-          hasIconOnly
-          renderIcon={Edit}
-          iconDescription="Edit user role"
+          title="Edit user role"
+          leftIcon={<Pencil size={14} />}
           onClick={() => openEditModal(user)}
          />
          <Button
-          kind="danger--ghost"
+          variant="danger"
           size="sm"
-          hasIconOnly
-          renderIcon={TrashCan}
-          iconDescription="Delete user"
+          title="Delete user"
+          leftIcon={<Trash2 size={14} />}
           onClick={() => openDeleteDialog(user)}
          />
         </div>
@@ -979,27 +966,24 @@ export const Settings: React.FC = () => {
         {/* Actions Dropdown Area */}
         <div className="flex items-center gap-1 flex-shrink-0">
         <Button
-         kind="ghost"
+         variant="ghost"
          size="sm"
-         hasIconOnly
-         renderIcon={Password}
-         iconDescription="Set password"
+         title="Set password"
+         leftIcon={<KeyRound size={14} />}
          onClick={() => openSetPasswordModal(user)}
         />
         <Button
-         kind="ghost"
+         variant="ghost"
          size="sm"
-         hasIconOnly
-         renderIcon={Edit}
-         iconDescription="Edit user role"
+         title="Edit user role"
+         leftIcon={<Pencil size={14} />}
          onClick={() => openEditModal(user)}
         />
         <Button
-         kind="danger--ghost"
+         variant="danger"
          size="sm"
-         hasIconOnly
-         renderIcon={TrashCan}
-         iconDescription="Delete user"
+         title="Delete user"
+         leftIcon={<Trash2 size={14} />}
          onClick={() => openDeleteDialog(user)}
         />
         </div>
@@ -1017,19 +1001,17 @@ export const Settings: React.FC = () => {
         </div>
         <div className="flex items-center gap-1">
         <Button
-         kind="ghost"
+         variant="ghost"
          size="sm"
-         hasIconOnly
-         renderIcon={Password}
-         iconDescription="Set password"
+         title="Set password"
+         leftIcon={<KeyRound size={14} />}
          onClick={() => openSetPasswordModal(user)}
         />
         <Button
-         kind="ghost"
+         variant="ghost"
          size="sm"
-         hasIconOnly
-         renderIcon={user.status === 'Active' ? SubtractAlt : Add}
-         iconDescription={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
+         title={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}
+         leftIcon={user.status === 'Active' ? <Minus size={14} /> : <Plus size={14} />}
          onClick={() => handleToggleUserStatus(user)}
         />
         </div>
@@ -1106,14 +1088,14 @@ export const Settings: React.FC = () => {
        {request.status === 'Pending' && (
         <div className="flex items-center justify-end gap-2">
         <Button
-         kind="primary"
+         variant="primary"
          size="sm"
          onClick={() => handleApproveRequest(request.id)}
         >
          Approve
         </Button>
         <Button
-         kind="danger"
+         variant="danger"
          size="sm"
          onClick={() => handleRejectRequest(request.id)}
         >
@@ -1145,7 +1127,7 @@ export const Settings: React.FC = () => {
     </div>
     <Button
      onClick={() => setShowInviteModal(true)}
-     renderIcon={Email}
+     leftIcon={<Mail size={14} />}
     >
      Send Invitation
     </Button>
@@ -1199,27 +1181,24 @@ export const Settings: React.FC = () => {
         {invite.status === 'Pending' && (
         <>
          <Button
-          kind="ghost"
+          variant="ghost"
           size="sm"
-          hasIconOnly
-          renderIcon={Copy}
-          iconDescription="Copy invite link"
+          title="Copy invite link"
+          leftIcon={<Copy size={14} />}
           onClick={() => handleCopyInviteLink(invite.inviteToken)}
          />
          <Button
-          kind="ghost"
+          variant="ghost"
           size="sm"
-          hasIconOnly
-          renderIcon={Renew}
-          iconDescription="Resend invitation"
+          title="Resend invitation"
+          leftIcon={<RefreshCw size={14} />}
           onClick={() => handleResendInvite(invite.id)}
          />
          <Button
-          kind="danger--ghost"
+          variant="danger"
           size="sm"
-          hasIconOnly
-          renderIcon={TrashCan}
-          iconDescription="Cancel invitation"
+          title="Cancel invitation"
+          leftIcon={<Trash2 size={14} />}
           onClick={() => handleDeleteInvite(invite.id)}
          />
         </>
@@ -1360,7 +1339,7 @@ export const Settings: React.FC = () => {
     </div>
     <div className="flex gap-3 pt-4">
     <Button
-     kind="secondary"
+     variant="secondary"
      type="button"
      style={{ flex: 1 }}
      onClick={() => {
@@ -1371,7 +1350,7 @@ export const Settings: React.FC = () => {
      Cancel
     </Button>
     <Button
-     kind="primary"
+     variant="primary"
      type="submit"
      style={{ flex: 1 }}
     >

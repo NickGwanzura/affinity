@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Button,
-  Form,
-  TextInput,
-  PasswordInput,
-  InlineNotification,
-  Stack,
-  Tag,
-} from '@carbon/react';
-import { Login as LoginIcon, Email } from '@carbon/icons-react';
+import { LogIn, Mail, X } from 'lucide-react';
+import { Button } from './ui';
 import { authService } from '../services/authService';
 import { AuthSession } from '../types';
 import { useToast } from './Toast';
@@ -105,7 +97,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           {/* Logo mark */}
           <div className="login-shell__brand-lockup">
             <div className="login-shell__logo-mark">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f62fe" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
@@ -164,7 +156,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   Sign in, review trip operations, and move through the platform cleanly from any device.
                 </p>
               </div>
-              <Tag type="blue">Carbon UI</Tag>
+              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                Affinity
+              </span>
             </div>
           </div>
 
@@ -197,54 +191,71 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           {/* Notifications */}
           {error && (
             <div className="login-shell__notice">
-              <InlineNotification
-                kind="error"
-                title="Error:"
-                subtitle={error}
-                lowContrast
-                hideCloseButton={false}
-                onClose={() => setError('')}
-              />
+              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 text-red-800 text-sm">
+                <span className="font-semibold shrink-0">Error:</span>
+                <span className="flex-1">{error}</span>
+                <button
+                  type="button"
+                  onClick={() => setError('')}
+                  className="shrink-0 text-red-600 hover:text-red-800"
+                  aria-label="Dismiss"
+                >
+                  <X size={14} />
+                </button>
+              </div>
             </div>
           )}
           {success && (
             <div className="login-shell__notice">
-              <InlineNotification
-                kind="success"
-                title="Success:"
-                subtitle={success}
-                lowContrast
-                hideCloseButton={false}
-                onClose={() => setSuccess('')}
-              />
+              <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 text-green-800 text-sm">
+                <span className="font-semibold shrink-0">Success:</span>
+                <span className="flex-1">{success}</span>
+                <button
+                  type="button"
+                  onClick={() => setSuccess('')}
+                  className="shrink-0 text-green-600 hover:text-green-800"
+                  aria-label="Dismiss"
+                >
+                  <X size={14} />
+                </button>
+              </div>
             </div>
           )}
 
-          <Form onSubmit={onSubmit}>
-            <Stack gap={6}>
-              <TextInput
-                id="login-email"
-                labelText="Work email"
-                type="email"
-                placeholder="email@affinity-logistics.com"
-                autoComplete="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
+          <form onSubmit={onSubmit}>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="login-email" className="text-sm font-medium text-gray-900">
+                  Work email
+                </label>
+                <input
+                  id="login-email"
+                  type="email"
+                  placeholder="email@affinity-logistics.com"
+                  autoComplete="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
 
               {mode === 'login' && (
-                <PasswordInput
-                  id="login-password"
-                  labelText="Password"
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  showPasswordLabel="Show password"
-                  hidePasswordLabel="Hide password"
-                />
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="login-password" className="text-sm font-medium text-gray-900">
+                    Password
+                  </label>
+                  <input
+                    id="login-password"
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
               )}
 
               {mode === 'forgot' && (
@@ -256,9 +267,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <Button
                 type="submit"
                 disabled={loading}
-                renderIcon={mode === 'login' ? LoginIcon : Email}
+                renderIcon={mode === 'login' ? LogIn : Mail}
                 size="lg"
-                style={{ width: '100%', maxWidth: '100%' }}
+                fullWidth
               >
                 {submitLabel[mode]}
               </Button>
@@ -272,8 +283,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   Forgot your password?
                 </button>
               )}
-            </Stack>
-          </Form>
+            </div>
+          </form>
           </div>
         </div>
       </div>

@@ -17,19 +17,12 @@ type RegistrationSubmissionRow = {
   email: string;
   role: string;
   status: string;
-  tenant_id: string | null;
-  tenant_name: string | null;
   requested_at: string;
   reviewed_at: string | null;
 };
 
 type GenericRecordRow = {
   record: Record<string, unknown>;
-};
-
-type TenantNameRow = {
-  id: string;
-  name: string;
 };
 
 const VALID_TYPES = ['all', 'registration_request', 'questionnaire_submission'] as const;
@@ -59,35 +52,13 @@ async function tableExists(tableName: string): Promise<boolean> {
   return typeof rows[0]?.regclass === 'string' && rows[0].regclass.length > 0;
 }
 
-async function loadTenantNameMap(tenantIds: string[]): Promise<Record<string, string>> {
-  const uniqueTenantIds = Array.from(new Set(tenantIds.filter(Boolean)));
-  if (uniqueTenantIds.length === 0) return {};
-
-  const result = await sql.query(
-    `
-      SELECT id::text AS id, name
-      FROM tenants
-      WHERE id::text = ANY($1)
-    `,
-    [uniqueTenantIds],
-  );
-
-  return toRows<TenantNameRow>(result).reduce<Record<string, string>>((acc, row) => {
-    if (row.id) acc[row.id] = row.name;
-    return acc;
-  }, {});
-}
-
 async function loadRegistrationSubmissions(
-  tenantId: string | null,
   status: string | null,
 ): Promise<
   Array<{
     id: string;
     type: SubmissionType;
     status: string;
-    tenant_id: string | null;
-    tenant_name: string | null;
     submitted_at: string | null;
     reviewed_at: string | null;
     title: string | null;
@@ -101,11 +72,6 @@ async function loadRegistrationSubmissions(
 
   const clauses: string[] = [];
   const params: any[] = [];
-
-  if (tenantId) {
-    params.push(tenantId);
-    clauses.push(`rr.tenant_id = $${params.length}::uuid`);
-  }
 
   if (status) {
     params.push(status);
@@ -122,12 +88,9 @@ async function loadRegistrationSubmissions(
         rr.email,
         rr.role,
         rr.status,
-        rr.tenant_id::text AS tenant_id,
-        t.name AS tenant_name,
         rr.requested_at,
         rr.reviewed_at
       FROM registration_requests rr
-      LEFT JOIN tenants t ON t.id = rr.tenant_id
       ${whereClause}
       ORDER BY rr.requested_at DESC
       LIMIT 500
@@ -139,8 +102,6 @@ async function loadRegistrationSubmissions(
     id: row.id,
     type: 'registration_request',
     status: row.status || 'Unknown',
-    tenant_id: row.tenant_id || null,
-    tenant_name: row.tenant_name || null,
     submitted_at: row.requested_at || null,
     reviewed_at: row.reviewed_at || null,
     title: 'Registration request',
@@ -152,15 +113,11 @@ async function loadRegistrationSubmissions(
   }));
 }
 
-async function loadQuestionnaires(
-  tenantId: string | null,
-): Promise<
+async function loadQuestionnaires(): Promise<
   Array<{
     id: string;
     title: string;
     status: string;
-    tenant_id: string | null;
-    tenant_name: string | null;
     created_at: string | null;
     updated_at: string | null;
     raw: Record<string, unknown>;
@@ -178,42 +135,28 @@ async function loadQuestionnaires(
   );
 
   const records = toRows<GenericRecordRow>(result).map((row) => row.record || {});
-  const tenantIds = records
-    .map((record) => asString(record.tenant_id))
-    .filter((value): value is string => Boolean(value));
-  const tenantMap = await loadTenantNameMap(tenantIds);
 
-  return records
-    .map((record) => {
-      const recordTenantId = asString(record.tenant_id);
-      return {
-        id: asString(record.id) || fallbackId('questionnaire'),
-        title:
-          asString(record.title) ||
-          asString(record.name) ||
-          asString(record.questionnaire_name) ||
-          'Untitled questionnaire',
-        status: asString(record.status) || 'unknown',
-        tenant_id: recordTenantId,
-        tenant_name: recordTenantId ? tenantMap[recordTenantId] || null : null,
-        created_at: asString(record.created_at),
-        updated_at: asString(record.updated_at),
-        raw: record,
-      };
-    })
-    .filter((item) => (tenantId ? item.tenant_id === tenantId : true));
+  return records.map((record) => ({
+    id: asString(record.id) || fallbackId('questionnaire'),
+    title:
+      asString(record.title) ||
+      asString(record.name) ||
+      asString(record.questionnaire_name) ||
+      'Untitled questionnaire',
+    status: asString(record.status) || 'unknown',
+    created_at: asString(record.created_at),
+    updated_at: asString(record.updated_at),
+    raw: record,
+  }));
 }
 
 async function loadQuestionnaireSubmissions(
-  tenantId: string | null,
   status: string | null,
 ): Promise<
   Array<{
     id: string;
     type: SubmissionType;
     status: string;
-    tenant_id: string | null;
-    tenant_name: string | null;
     submitted_at: string | null;
     reviewed_at: string | null;
     title: string | null;
@@ -234,21 +177,14 @@ async function loadQuestionnaireSubmissions(
   );
 
   const records = toRows<GenericRecordRow>(result).map((row) => row.record || {});
-  const tenantIds = records
-    .map((record) => asString(record.tenant_id))
-    .filter((value): value is string => Boolean(value));
-  const tenantMap = await loadTenantNameMap(tenantIds);
 
   return records
     .map((record) => {
-      const recordTenantId = asString(record.tenant_id);
       const recordStatus = asString(record.status) || 'unknown';
       return {
         id: asString(record.id) || asString(record.submission_id) || fallbackId('questionnaire_submission'),
         type: 'questionnaire_submission' as const,
         status: recordStatus,
-        tenant_id: recordTenantId,
-        tenant_name: recordTenantId ? tenantMap[recordTenantId] || null : null,
         submitted_at:
           asString(record.submitted_at) ||
           asString(record.created_at) ||
@@ -265,7 +201,6 @@ async function loadQuestionnaireSubmissions(
         metadata: record,
       };
     })
-    .filter((item) => (tenantId ? item.tenant_id === tenantId : true))
     .filter((item) => (status ? asLowerString(item.status) === asLowerString(status) : true));
 }
 
@@ -290,7 +225,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const tenantId = typeof req.query.tenantId === 'string' ? req.query.tenantId.trim() : null;
     const status = typeof req.query.status === 'string' ? req.query.status.trim() : null;
     const typeFilterRaw = typeof req.query.type === 'string' ? req.query.type.trim() : 'all';
     const typeFilter = VALID_TYPES.includes(typeFilterRaw as (typeof VALID_TYPES)[number])
@@ -299,9 +233,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const [questionnaires, registrationSubmissions, questionnaireSubmissions, questionnaireTable, submissionTable] =
       await Promise.all([
-        loadQuestionnaires(tenantId),
-        loadRegistrationSubmissions(tenantId, status),
-        loadQuestionnaireSubmissions(tenantId, status),
+        loadQuestionnaires(),
+        loadRegistrationSubmissions(status),
+        loadQuestionnaireSubmissions(status),
         tableExists('questionnaires'),
         tableExists('questionnaire_submissions'),
       ]);
@@ -326,7 +260,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       questionnaires: filteredQuestionnaires,
       submissions: sortedSubmissions,
       filters: {
-        tenantId,
         status,
         type: typeFilter,
       },

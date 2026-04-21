@@ -1,516 +1,660 @@
 import React, { useState, useMemo } from 'react';
 import {
-  ComposedModal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+  Modal,
   TextInput,
+  TextArea,
   Select,
   SelectItem,
   Button,
+  IconButton,
   Stack,
   Grid,
   Column,
-  Tag,
-  Dropdown,
   NumberInput,
-} from '@carbon/react';
-import { Add, TrashCan, Warning } from '@carbon/icons-react';
-import type { Invoice, Payment, Client } from '../../types';
+} from '../ui';
+import { Plus, Trash2, AlertTriangle, Check } from 'lucide-react';
+import type { Invoice, Payment } from '../../types';
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface PaymentAllocationDraft {
   invoice_id: string;
   amount: string;
 }
 
-interface PaymentFormData {
+interface ClientOption {
+  id: string;
+  name: string;
+  isRegistered: boolean;
+}
+
+interface AllocationCandidate {
+  invoice: Invoice;
+  outstandingAmount: number;
+}
+
+interface ClientBalanceInfo {
+  balance: number;
+  credit: number;
+  currency: 'USD' | 'GBP';
+  openingBalance: number;
+  totalInvoiced: number;
+  totalPaid: number;
+}
+
+export interface PaymentFormData {
   client_id: string;
   client_name: string;
-  amount: string;
   currency: 'USD' | 'GBP';
+  amount: string;
   method: string;
   date: string;
   notes: string;
 }
 
-interface CarbonPaymentModalProps {
+export interface CarbonPaymentModalProps {
   open: boolean;
   editingPayment: Payment | null;
-  clients: Client[];
-  invoices: Invoice[];
+  clientOptions: ClientOption[];
+  allocationCandidates: AllocationCandidate[];
+  /** Pre-populated form data (state lifted from parent) */
+  formData: PaymentFormData;
+  allocations: PaymentAllocationDraft[];
+  isSubmitting: boolean;
+  /** Client balance info for the selected client */
+  clientBalance: ClientBalanceInfo | null;
+  onFormChange: (updates: Partial<PaymentFormData>) => void;
+  onClientChange: (clientId: string, clientName: string) => void;
+  onAllocationsChange: (allocations: PaymentAllocationDraft[]) => void;
   onClose: () => void;
-  onSubmit: (data: {
-    payment: PaymentFormData;
-    allocations: PaymentAllocationDraft[];
-    isUnallocated: boolean;
-  }) => void;
-  onDelete?: (paymentId: string) => void;
+  onSubmit: (e?: React.FormEvent) => void;
 }
 
-const PAYMENT_METHODS = [
-  'Bank Transfer',
-  'Cash',
-  'Card',
-  'Check',
-  'Other',
-];
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-const EMPTY_FORM: PaymentFormData = {
-  client_id: '',
-  client_name: '',
-  amount: '',
-  currency: 'USD',
-  method: 'Bank Transfer',
-  date: new Date().toISOString().split('T')[0],
-  notes: '',
-};
+const PAYMENT_METHODS = ['Bank Transfer', 'Cash', 'Card', 'Check', 'Other'];
+
+const formatMoney = (amount: number, currency?: string) =>
+  amount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: currency === 'GBP' ? 'GBP' : 'USD',
+  });
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 export const CarbonPaymentModal: React.FC<CarbonPaymentModalProps> = ({
   open,
   editingPayment,
-  clients,
-  invoices,
+  clientOptions,
+  allocationCandidates,
+  formData,
+  allocations,
+  isSubmitting,
+  clientBalance,
+  onFormChange,
+  onClientChange,
+  onAllocationsChange,
   onClose,
   onSubmit,
-  onDelete,
 }) => {
-  const [formData, setFormData] = useState<PaymentFormData>(EMPTY_FORM);
-  const [allocations, setAllocations] = useState<PaymentAllocationDraft[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // ── Derived state ────────────────────────────────────────────────────────
 
-  // Initialize form when editing
-  React.useEffect(() => {
-    if (open && editingPayment) {
-      setFormData({
-        client_id: editingPayment.client_id || '',
-        client_name: editingPayment.client_name || '',
-        amount: editingPayment.amount_usd.toString(),
-        currency: editingPayment.currency || 'USD',
-        method: editingPayment.method || 'Bank Transfer',
-        date: editingPayment.date ? editingPayment.date.split('T')[0] : new Date().toISOString().split('T')[0],
-        notes: editingPayment?.notes || '',
-      });
-      // Convert allocations
-      const paymentAllocations = editingPayment.allocations?.map(a => ({
-        invoice_id: a.invoice_id || '',
-        amount: a.amount_allocated.toString(),
-      })) || [];
-      setAllocations(paymentAllocations.length > 0 ? paymentAllocations : []);
-    } else if (open && !editingPayment) {
-      setFormData(EMPTY_FORM);
-      setAllocations([]);
-    }
-  }, [open, editingPayment]);
+  const allocatedInvoiceIds = useMemo(
+    () => new Set(allocations.map(a => a.invoice_id)),
+    [allocations],
+  );
 
-  const selectedClient = useMemo(() => {
-    if (!formData.client_id) return null;
-    return clients.find(c => c.id === formData.client_id);
-  }, [formData.client_id, clients]);
-
-  const clientInvoices = useMemo(() => {
-    if (!selectedClient) return [];
-    return invoices.filter(
-      inv =>
-        // Primary: match by client_id
-        (inv.client_id === selectedClient.id ||
-          // Fallback: name match for invoices without client_id (legacy data only)
-          (!inv.client_id && inv.client_name?.toLowerCase() === selectedClient.name?.toLowerCase())) &&
-        inv.currency === formData.currency &&
-        inv.status !== 'Paid'
-    );
-  }, [selectedClient, invoices, formData.currency]);
-
-  const totalAllocated = useMemo(() => {
-    return allocations.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
-  }, [allocations]);
+  const totalAllocated = useMemo(
+    () => allocations.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0),
+    [allocations],
+  );
 
   const paymentAmount = parseFloat(formData.amount) || 0;
   const remainingAmount = paymentAmount - totalAllocated;
   const isOverAllocated = totalAllocated > paymentAmount + 0.01;
-  const isFullyAllocated = remainingAmount <= 0.01 && totalAllocated > 0;
 
-  const handleClientChange = (clientId: string) => {
-    const client = clients.find(c => c.id === clientId);
-    setFormData(prev => ({
-      ...prev,
-      client_id: clientId,
-      client_name: client?.name || '',
-    }));
-    setAllocations([]);
+  const canSubmit =
+    !!formData.client_name.trim() &&
+    !!formData.amount &&
+    paymentAmount > 0 &&
+    !!formData.date &&
+    !isOverAllocated &&
+    !isSubmitting;
+
+  // ── Allocation helpers ───────────────────────────────────────────────────
+
+  const addAllocationRow = () => {
+    onAllocationsChange([...allocations, { invoice_id: '', amount: '' }]);
   };
 
-  const addAllocation = () => {
-    setAllocations(prev => [...prev, { invoice_id: '', amount: '' }]);
+  const updateAllocationInvoice = (index: number, invoiceId: string) => {
+    const candidate = allocationCandidates.find(c => c.invoice.id === invoiceId);
+    const next = allocations.map((entry, i) =>
+      i === index
+        ? {
+            ...entry,
+            invoice_id: invoiceId,
+            amount: entry.amount || (candidate ? candidate.outstandingAmount.toFixed(2) : ''),
+          }
+        : entry,
+    );
+    onAllocationsChange(next);
+  };
+
+  const updateAllocationAmount = (index: number, value: string) => {
+    const next = allocations.map((entry, i) =>
+      i === index ? { ...entry, amount: value } : entry,
+    );
+    onAllocationsChange(next);
   };
 
   const removeAllocation = (index: number) => {
-    setAllocations(prev => prev.filter((_, i) => i !== index));
+    const next =
+      allocations.length === 1
+        ? [{ invoice_id: '', amount: '' }]
+        : allocations.filter((_, i) => i !== index);
+    onAllocationsChange(next);
   };
 
-  const updateAllocation = (index: number, field: keyof PaymentAllocationDraft, value: string) => {
-    setAllocations(prev =>
-      prev.map((a, i) => (i === index ? { ...a, [field]: value } : a))
-    );
-  };
-
-  const handleSubmit = async () => {
-    if (!formData.client_id || !formData.amount) return;
-
-    setIsSubmitting(true);
-    try {
-      await onSubmit({
-        payment: formData,
-        allocations: allocations.filter(a => a.invoice_id && parseFloat(a.amount) > 0),
-        isUnallocated: allocations.length === 0 || totalAllocated === 0,
-      });
-      // onSubmit is expected to call onClose — don't reset state after success
-      // to avoid setting state on an unmounted component
-    } catch (err) {
-      setIsSubmitting(false); // only reset on error — success closes the modal
-      throw err;
-    }
-  };
-
-  const clientDropdownItems = clients.map(c => ({
-    id: c.id,
-    label: c.name,
-  }));
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <ComposedModal
-      open={open}
+    <Modal
+      isOpen={open}
       onClose={onClose}
+      title={editingPayment ? 'Edit Payment' : 'Record Payment'}
+      label={
+        editingPayment
+          ? 'Update payment details and invoice allocations'
+          : 'Record an inbound payment and immediately create a receipt'
+      }
       size="lg"
       preventCloseOnClickOutside
-    >
-      <ModalHeader
-        title={editingPayment ? 'Edit Payment' : 'Record Payment'}
-        subtitle={editingPayment 
-          ? 'Update payment details and invoice allocations'
-          : 'Record a new payment from a client'
-        }
-      />
-      
-      <ModalBody hasScrollingContent>
-        <Stack gap={6}>
-          {/* Client Selection */}
-          <section>
-            <h4 style={{ 
-              fontSize: 'var(--cds-heading-01-font-size, 0.875rem)', 
-              fontWeight: 600,
-              marginBottom: 'var(--cds-spacing-04, 0.75rem)',
-              color: 'var(--cds-text-primary, #161616)'
-            }}>
-              Client Information
-            </h4>
-            <Dropdown
-              id="payment-client"
-              titleText="Client *"
-              label="Select a client"
-              items={clientDropdownItems}
-              itemToString={(item) => item?.label || ''}
-              selectedItem={clientDropdownItems.find(c => c.id === formData.client_id) || null}
-              onChange={({ selectedItem }) => handleClientChange(selectedItem?.id || '')}
-              disabled={!!editingPayment}
-            />
-          </section>
-
-          {/* Payment Details */}
-          <section>
-            <h4 style={{ 
-              fontSize: 'var(--cds-heading-01-font-size, 0.875rem)', 
-              fontWeight: 600,
-              marginBottom: 'var(--cds-spacing-04, 0.75rem)',
-              color: 'var(--cds-text-primary, #161616)'
-            }}>
-              Payment Details
-            </h4>
-            <Grid narrow>
-              <Column sm={4} md={4} lg={8}>
-                <NumberInput
-                  id="payment-amount"
-                  label="Amount *"
-                  value={formData.amount}
-                  onChange={(_e, { value }) => setFormData(prev => ({ ...prev, amount: String(value) }))}
-                  step={0.01}
-                  min={0}
-                  hideSteppers
-                />
-              </Column>
-              <Column sm={4} md={4} lg={8}>
-                <Select
-                  id="payment-currency"
-                  labelText="Currency"
-                  value={formData.currency}
-                  onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value as 'USD' | 'GBP' }))}
-                >
-                  <SelectItem value="USD" text="USD ($)" />
-                  <SelectItem value="GBP" text="GBP (£)" />
-                </Select>
-              </Column>
-              <Column sm={4} md={4} lg={8}>
-                <Select
-                  id="payment-method"
-                  labelText="Payment Method"
-                  value={formData.method}
-                  onChange={(e) => setFormData(prev => ({ ...prev, method: e.target.value }))}
-                >
-                  {PAYMENT_METHODS.map(method => (
-                    <React.Fragment key={method}>
-                      <SelectItem value={method} text={method} />
-                    </React.Fragment>
-                  ))}
-                </Select>
-              </Column>
-              <Column sm={4} md={4} lg={8}>
-                <TextInput
-                  id="payment-date"
-                  labelText="Date *"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                />
-              </Column>
-            </Grid>
-          </section>
-
-          {/* Summary Card */}
-          {paymentAmount > 0 && (
-            <section style={{ 
-              backgroundColor: 'var(--cds-layer-02, #f4f4f4)', 
-              padding: 'var(--cds-spacing-05, 1rem)',
-              borderLeft: '3px solid var(--cds-interactive, #0f62fe)'
-            }}>
-              <Stack gap={3}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 'var(--cds-body-compact-01-font-size, 0.875rem)' }}>
-                    Payment Amount
-                  </span>
-                  <span style={{ 
-                    fontSize: 'var(--cds-heading-03-font-size, 1.25rem)', 
-                    fontWeight: 600,
-                    color: 'var(--cds-text-primary, #161616)'
-                  }}>
-                    {formData.currency === 'GBP' ? '£' : '$'}{paymentAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                {totalAllocated > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 'var(--cds-body-compact-01-font-size, 0.875rem)' }}>
-                      Allocated to Invoices
-                    </span>
-                    <span style={{ 
-                      fontSize: 'var(--cds-heading-01-font-size, 0.875rem)', 
-                      fontWeight: 600,
-                      color: 'var(--cds-text-secondary, #525252)'
-                    }}>
-                      {formData.currency === 'GBP' ? '£' : '$'}{totalAllocated.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
-                {remainingAmount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 'var(--cds-body-compact-01-font-size, 0.875rem)' }}>
-                      Remaining (Client Credit)
-                    </span>
-                    <span style={{ 
-                      fontSize: 'var(--cds-heading-01-font-size, 0.875rem)', 
-                      fontWeight: 600,
-                      color: 'var(--cds-support-warning, #f1c21b)'
-                    }}>
-                      {formData.currency === 'GBP' ? '£' : '$'}{remainingAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
-                {isOverAllocated && (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 'var(--cds-spacing-03, 0.5rem)',
-                    color: 'var(--cds-support-error, #da1e28)'
-                  }}>
-                    <Warning size={16} />
-                    <span style={{ fontSize: 'var(--cds-body-compact-01-font-size, 0.875rem)' }}>
-                      Allocated amount exceeds payment total
-                    </span>
-                  </div>
-                )}
-              </Stack>
-            </section>
-          )}
-
-          {/* Invoice Allocations */}
-          {selectedClient && (
-            <section>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: 'var(--cds-spacing-04, 0.75rem)'
-              }}>
-                <h4 style={{ 
-                  fontSize: 'var(--cds-heading-01-font-size, 0.875rem)', 
-                  fontWeight: 600,
-                  color: 'var(--cds-text-primary, #161616)'
-                }}>
-                  Invoice Allocations
-                </h4>
-                <Button
-                  kind="ghost"
-                  size="sm"
-                  renderIcon={Add}
-                  onClick={addAllocation}
-                  disabled={clientInvoices.length === 0}
-                >
-                  Add Allocation
-                </Button>
-              </div>
-
-              {clientInvoices.length === 0 ? (
-                <div style={{ 
-                  padding: 'var(--cds-spacing-05, 1rem)',
-                  backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
-                  borderLeft: '3px solid var(--cds-support-warning, #f1c21b)'
-                }}>
-                  <Stack gap={2}>
-                    <p style={{ fontSize: 'var(--cds-body-01-font-size, 0.875rem)' }}>
-                      No open invoices found for this client in {formData.currency}.
-                    </p>
-                    <p style={{ 
-                      fontSize: 'var(--cds-body-compact-01-font-size, 0.875rem)',
-                      color: 'var(--cds-text-secondary, #525252)'
-                    }}>
-                      This payment will be recorded as <Tag type="warm-gray" size="sm">Unallocated</Tag> and will reduce the client's balance.
-                    </p>
-                  </Stack>
-                </div>
-              ) : allocations.length === 0 ? (
-                <p style={{ 
-                  fontSize: 'var(--cds-body-compact-01-font-size, 0.875rem)',
-                  color: 'var(--cds-text-secondary, #525252)',
-                  fontStyle: 'italic'
-                }}>
-                  No allocations added. Payment will be recorded as unallocated client credit.
-                </p>
-              ) : (
-                <Stack gap={4}>
-                  {allocations.map((allocation, index) => {
-                    const selectedInvoice = clientInvoices.find(inv => inv.id === allocation.invoice_id);
-                    const outstanding = selectedInvoice 
-                      ? selectedInvoice.amount_usd - (selectedInvoice.amount_paid || 0)
-                      : 0;
-                    
-                    return (
-                      <Grid narrow key={index} style={{ 
-                        padding: 'var(--cds-spacing-04, 0.75rem)',
-                        backgroundColor: 'var(--cds-layer-02, #f4f4f4)'
-                      }}>
-                        <Column sm={4} md={6} lg={10}>
-                          <Dropdown
-                            id={`allocation-invoice-${index}`}
-                            titleText="Invoice"
-                            label="Select invoice"
-                            items={clientInvoices.map(inv => ({
-                              id: inv.id,
-                              label: `${inv.invoice_number} · ${formData.currency === 'GBP' ? '£' : '$'}${outstanding.toLocaleString()} due`,
-                              invoice: inv,
-                            }))}
-                            itemToString={(item) => item?.label || ''}
-                            selectedItem={allocation.invoice_id 
-                              ? { 
-                                  id: allocation.invoice_id, 
-                                  label: selectedInvoice?.invoice_number || '',
-                                  invoice: selectedInvoice,
-                                } 
-                              : null
-                            }
-                            onChange={({ selectedItem }) => {
-                              updateAllocation(index, 'invoice_id', selectedItem?.id || '');
-                              // Auto-fill with outstanding amount if empty
-                              if (selectedItem?.invoice && !allocation.amount) {
-                                const outAmt = selectedItem.invoice.amount_usd - (selectedItem.invoice.amount_paid || 0);
-                                updateAllocation(index, 'amount', outAmt.toString());
-                              }
-                            }}
-                          />
-                          {selectedInvoice && (
-                            <p style={{ 
-                              fontSize: 'var(--cds-label-01-font-size, 0.75rem)',
-                              color: 'var(--cds-text-secondary, #525252)',
-                              marginTop: 'var(--cds-spacing-02, 0.25rem)'
-                            }}>
-                              Outstanding: {formData.currency === 'GBP' ? '£' : '$'}{outstanding.toLocaleString()}
-                            </p>
-                          )}
-                        </Column>
-                        <Column sm={3} md={4} lg={5}>
-                          <NumberInput
-                            id={`allocation-amount-${index}`}
-                            label="Amount"
-                            value={allocation.amount}
-                            onChange={(_e, { value }) => updateAllocation(index, 'amount', String(value))}
-                            step={0.01}
-                            min={0}
-                            hideSteppers
-                          />
-                        </Column>
-                        <Column sm={1} md={2} lg={1} style={{ display: 'flex', alignItems: 'flex-end' }}>
-                          <Button
-                            kind="danger--ghost"
-                            size="sm"
-                            renderIcon={TrashCan}
-                            iconDescription="Remove allocation"
-                            hasIconOnly
-                            onClick={() => removeAllocation(index)}
-                          />
-                        </Column>
-                      </Grid>
-                    );
-                  })}
-                </Stack>
-              )}
-            </section>
-          )}
-
-          {/* Notes */}
-          <section>
-            <TextInput
-              id="payment-notes"
-              labelText="Notes"
-              placeholder="Optional notes about this payment"
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-            />
-          </section>
-        </Stack>
-      </ModalBody>
-
-      <ModalFooter
-        primaryButtonText={isSubmitting ? 'Saving...' : (editingPayment ? 'Save Changes' : 'Record Payment')}
-        primaryButtonDisabled={
-          !formData.client_id || 
-          !formData.amount || 
-          parseFloat(formData.amount) <= 0 ||
-          isOverAllocated ||
-          isSubmitting
-        }
-        secondaryButtonText="Cancel"
-        onRequestSubmit={handleSubmit}
-        onRequestClose={onClose}
-      >
-        {editingPayment && onDelete && (
+      footer={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button
-            kind="danger"
-            size="sm"
-            onClick={() => onDelete(editingPayment.id)}
-            disabled={isSubmitting}
+            variant="primary"
+            onClick={() => onSubmit()}
+            disabled={!canSubmit}
           >
-            Delete Payment
+            {isSubmitting ? 'Saving…' : editingPayment ? 'Save Changes' : 'Record Payment'}
           </Button>
+        </div>
+      }
+    >
+      <Stack gap={7}>
+        {/* ── Client ──────────────────────────────────────────────── */}
+        <section>
+          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+            Client
+          </h2>
+          <Select
+            id="payment-client"
+            labelText="Client *"
+            value={formData.client_id}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+              const opt = clientOptions.find(c => c.id === e.target.value);
+              onClientChange(e.target.value, opt?.name || '');
+            }}
+            disabled={!!editingPayment}
+          >
+            <SelectItem value="" text="Select a client" />
+            {clientOptions.map(c => (
+              <SelectItem
+                key={c.id}
+                value={c.id}
+                text={`${c.name}${!c.isRegistered ? ' (unregistered)' : ''}`}
+              />
+            ))}
+          </Select>
+        </section>
+
+        {/* ── Client Balance ──────────────────────────────────────── */}
+        {clientBalance && formData.client_name && (
+          <div
+            style={{
+              padding: '1rem',
+              backgroundColor: '#f4f4f4',
+              border: '1px solid #e0e0e0',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '0.5rem',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: '#525252',
+                }}
+              >
+                Client Balance Summary
+              </span>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  color: '#525252',
+                }}
+              >
+                Opening + Invoiced - Paid
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: '#525252' }}>Opening</div>
+                <div style={{ fontWeight: 700 }}>{formatMoney(clientBalance.openingBalance, clientBalance.currency)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: '#525252' }}>Invoiced</div>
+                <div style={{ fontWeight: 700 }}>{formatMoney(clientBalance.totalInvoiced, clientBalance.currency)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: '#525252' }}>Paid</div>
+                <div style={{ fontWeight: 700, color: '#24a148' }}>
+                  {formatMoney(clientBalance.totalPaid, clientBalance.currency)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: '#525252' }}>
+                  {clientBalance.balance > 0 ? 'Due' : clientBalance.credit > 0 ? 'Credit' : 'Balance'}
+                </div>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: '1.125rem',
+                    color:
+                      clientBalance.balance > 0
+                        ? '#da1e28'
+                        : clientBalance.credit > 0
+                          ? '#24a148'
+                          : '#161616',
+                  }}
+                >
+                  {clientBalance.balance > 0
+                    ? formatMoney(clientBalance.balance, clientBalance.currency)
+                    : clientBalance.credit > 0
+                      ? formatMoney(clientBalance.credit, clientBalance.currency)
+                      : formatMoney(0, clientBalance.currency)}
+                </div>
+              </div>
+            </div>
+            {clientBalance.balance <= 0 && clientBalance.credit === 0 && (
+              <div
+                style={{
+                  marginTop: '0.5rem',
+                  padding: '0.5rem',
+                  backgroundColor: '#fcf4d6',
+                  fontSize: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <AlertTriangle size={14} />
+                Client has no outstanding balance. Payment will be recorded as credit.
+              </div>
+            )}
+          </div>
         )}
-      </ModalFooter>
-    </ComposedModal>
+
+        {/* ── Payment Details ─────────────────────────────────────── */}
+        <section>
+          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+            Payment Details
+          </h2>
+
+          <Grid narrow>
+            <Column sm={4} md={4} lg={8}>
+              <NumberInput
+                id="payment-amount"
+                labelText="Amount *"
+                value={formData.amount}
+                onChange={(_e: any, { value }: any) => onFormChange({ amount: String(value) })}
+                step={0.01}
+                min={0}
+              />
+            </Column>
+            <Column sm={4} md={4} lg={8}>
+              <Select
+                id="payment-currency"
+                labelText="Currency"
+                value={formData.currency}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  onFormChange({ currency: e.target.value as 'USD' | 'GBP' })
+                }
+              >
+                <SelectItem value="USD" text="USD ($)" />
+                <SelectItem value="GBP" text="GBP (£)" />
+              </Select>
+            </Column>
+            <Column sm={4} md={4} lg={8}>
+              <Select
+                id="payment-method"
+                labelText="Payment Method"
+                value={formData.method}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  onFormChange({ method: e.target.value })
+                }
+              >
+                {PAYMENT_METHODS.map(m => (
+                  <SelectItem key={m} value={m} text={m} />
+                ))}
+              </Select>
+            </Column>
+            <Column sm={4} md={4} lg={8}>
+              <TextInput
+                id="payment-date"
+                labelText="Payment Date *"
+                type="date"
+                value={formData.date}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onFormChange({ date: e.target.value })
+                }
+              />
+            </Column>
+          </Grid>
+        </section>
+
+        {/* ── Allocation Summary ──────────────────────────────────── */}
+        {paymentAmount > 0 && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '1px',
+              background: '#e0e0e0',
+              border: '1px solid #e0e0e0',
+            }}
+          >
+            <SummaryCell label="Payment Total" value={formatMoney(paymentAmount, formData.currency)} emphasis />
+            <SummaryCell label="Allocated" value={formatMoney(totalAllocated, formData.currency)} />
+            <SummaryCell
+              label={
+                isOverAllocated
+                  ? 'Over-allocated'
+                  : remainingAmount <= 0.01 && totalAllocated > 0
+                    ? 'Fully Allocated'
+                    : 'Unallocated'
+              }
+              value={formatMoney(Math.abs(remainingAmount), formData.currency)}
+              accent={
+                isOverAllocated
+                  ? 'error'
+                  : remainingAmount <= 0.01 && totalAllocated > 0
+                    ? 'success'
+                    : 'warning'
+              }
+            />
+          </div>
+        )}
+
+        {isOverAllocated && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1rem',
+              background: '#fff1f1',
+              borderLeft: '3px solid #da1e28',
+              color: '#da1e28',
+            }}
+          >
+            <AlertTriangle size={16} />
+            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+              Allocated amount exceeds payment total
+            </span>
+          </div>
+        )}
+
+        {/* ── Allocations ─────────────────────────────────────────── */}
+        {formData.client_name && (
+          <section>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.75rem',
+              }}
+            >
+              <h2 className="text-base font-semibold text-gray-900">
+                Allocations{' '}
+                <span
+                  style={{
+                    fontWeight: 400,
+                    fontSize: '0.75rem',
+                    color: '#525252',
+                  }}
+                >
+                  (Optional)
+                </span>
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                renderIcon={Plus}
+                onClick={addAllocationRow}
+                disabled={!formData.client_name}
+              >
+                Add
+              </Button>
+            </div>
+
+            <p
+              style={{
+                fontSize: '0.75rem',
+                color: '#525252',
+                marginBottom: '0.75rem',
+              }}
+            >
+              Split this payment across open invoices.
+            </p>
+
+            <Stack gap={4}>
+              {allocations.map((allocation, index) => {
+                const selectedInvoice = allocationCandidates.find(
+                  c => c.invoice.id === allocation.invoice_id,
+                );
+                const invoiceOptions = allocationCandidates.filter(
+                  c => !allocatedInvoiceIds.has(c.invoice.id) || c.invoice.id === allocation.invoice_id,
+                );
+
+                return (
+                  <div
+                    key={`${allocation.invoice_id || 'new'}-${index}`}
+                    style={{
+                      padding: '0.75rem',
+                      backgroundColor: '#f4f4f4',
+                      borderLeft: '3px solid #c6c6c6',
+                    }}
+                  >
+                    <Grid narrow>
+                      <Column sm={4} md={5} lg={8}>
+                        <Select
+                          id={`alloc-invoice-${index}`}
+                          labelText="Invoice"
+                          value={allocation.invoice_id}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                            updateAllocationInvoice(index, e.target.value)
+                          }
+                        >
+                          <SelectItem value="" text="Select invoice" />
+                          {invoiceOptions.map(({ invoice, outstandingAmount }) => (
+                            <SelectItem
+                              key={invoice.id}
+                              value={invoice.id}
+                              text={`${invoice.invoice_number} · ${formatMoney(outstandingAmount, invoice.currency)} due${invoice.status === 'Paid' ? ' (Paid)' : ''}`}
+                            />
+                          ))}
+                        </Select>
+                      </Column>
+                      <Column sm={3} md={4} lg={6}>
+                        <NumberInput
+                          id={`alloc-amount-${index}`}
+                          labelText="Allocated Amount"
+                          value={allocation.amount}
+                          onChange={(_e: any, { value }: any) =>
+                            updateAllocationAmount(index, String(value))
+                          }
+                          step={0.01}
+                          min={0}
+                        />
+                        {selectedInvoice && (
+                          <p
+                            style={{
+                              fontSize: '0.75rem',
+                              color: '#525252',
+                              marginTop: '0.25rem',
+                            }}
+                          >
+                            Outstanding: {formatMoney(selectedInvoice.outstandingAmount, selectedInvoice.invoice.currency)}
+                          </p>
+                        )}
+                      </Column>
+                      <Column sm={1} md={1} lg={2} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <IconButton
+                          variant="ghost"
+                          size="sm"
+                          icon={<Trash2 size={14} />}
+                          label="Remove allocation"
+                          onClick={() => removeAllocation(index)}
+                          style={{ color: '#da1e28' }}
+                        />
+                      </Column>
+                    </Grid>
+                  </div>
+                );
+              })}
+            </Stack>
+
+            {/* Allocated Total */}
+            <div
+              style={{
+                marginTop: '0.75rem',
+                padding: '0.75rem 1rem',
+                backgroundColor: '#161616',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  color: '#525252',
+                }}
+              >
+                Allocated Total
+              </span>
+              <span style={{ fontWeight: 700, color: '#ffffff' }}>
+                {formatMoney(totalAllocated, formData.currency)}
+              </span>
+            </div>
+
+            {/* No invoices available notice */}
+            {allocationCandidates.length === 0 && (
+              <div
+                style={{
+                  marginTop: '0.75rem',
+                  padding: '0.75rem',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #c6c6c6',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '0.875rem',
+                    color: '#525252',
+                  }}
+                >
+                  No pending invoices found for this client in {formData.currency}.
+                </p>
+                <p
+                  style={{
+                    marginTop: '0.25rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: '#f1c21b',
+                  }}
+                >
+                  This payment will be recorded as UNALLOCATED (client credit).
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ── Notes ───────────────────────────────────────────────── */}
+        <section>
+          <TextArea
+            id="payment-notes"
+            labelText="Notes"
+            value={formData.notes}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              onFormChange({ notes: e.target.value })
+            }
+            rows={2}
+            placeholder="Optional receipt notes"
+          />
+        </section>
+      </Stack>
+    </Modal>
   );
 };
+
+// ── Summary cell helper ─────────────────────────────────────────────────────
+
+const accentColor = {
+  error: '#da1e28',
+  success: '#24a148',
+  warning: '#8e4e00',
+};
+
+const SummaryCell: React.FC<{
+  label: string;
+  value: string;
+  emphasis?: boolean;
+  accent?: 'error' | 'success' | 'warning';
+}> = ({ label, value, emphasis, accent }) => (
+  <div
+    style={{
+      background: '#f4f4f4',
+      padding: '0.875rem 1rem',
+      textAlign: 'center',
+    }}
+  >
+    <div
+      style={{
+        fontSize: '0.6875rem',
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        color: '#525252',
+        marginBottom: '0.25rem',
+      }}
+    >
+      {label}
+    </div>
+    <div
+      style={{
+        fontSize: emphasis ? '1.125rem' : '0.9375rem',
+        fontWeight: 700,
+        color: accent ? accentColor[accent] : '#161616',
+      }}
+    >
+      {value}
+    </div>
+  </div>
+);
 
 export default CarbonPaymentModal;

@@ -8,7 +8,6 @@ import {
   setSecurityHeaders,
   handleCors,
   apiError,
-  getTenantId,
 } from './_middleware.js';
 import { sql, withTransaction, validateOrderColumn } from './_db.js';
 import { logAuditEvent } from './_audit.js';
@@ -113,25 +112,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!(await verifyToken(authReq, res))) return;
   
   try {
-    const tenantId = getTenantId(req);
     switch (req.method) {
       case 'GET':
         if (req.query.id) {
-          return await getQuote(authReq, res, tenantId);
+          return await getQuote(authReq, res);
         }
-        return await listQuotes(authReq, res, tenantId);
+        return await listQuotes(authReq, res);
 
       case 'POST':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await createQuote(authReq, res, tenantId);
+        return await createQuote(authReq, res);
 
       case 'PUT':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await updateQuote(authReq, res, tenantId);
+        return await updateQuote(authReq, res);
 
       case 'DELETE':
         if (!requireRole(authReq, res, ['Admin'])) return;
-        return await deleteQuote(authReq, res, tenantId);
+        return await deleteQuote(authReq, res);
 
       default:
         apiError(res, 405, 'Method not allowed');
@@ -141,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listQuotes(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function listQuotes(req: AuthenticatedRequest, res: VercelResponse) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -154,7 +152,7 @@ async function listQuotes(req: AuthenticatedRequest, res: VercelResponse, tenant
     const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
     const [countResult, rows] = await Promise.all([
-      sql`SELECT COUNT(*) as total FROM quotes WHERE tenant_id = ${tenantId}::uuid`,
+      sql`SELECT COUNT(*) as total FROM quotes`,
       sql`
         SELECT q.*,
           COALESCE(
@@ -162,7 +160,6 @@ async function listQuotes(req: AuthenticatedRequest, res: VercelResponse, tenant
             '[]'::jsonb
           ) as items
         FROM quotes q
-        WHERE q.tenant_id = ${tenantId}::uuid
         ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
         LIMIT ${limit} OFFSET ${offset}
       `
@@ -182,7 +179,7 @@ async function listQuotes(req: AuthenticatedRequest, res: VercelResponse, tenant
   }
 }
 
-async function getQuote(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function getQuote(req: AuthenticatedRequest, res: VercelResponse) {
   const { id } = req.query;
 
   const rows = await sql`
@@ -192,7 +189,7 @@ async function getQuote(req: AuthenticatedRequest, res: VercelResponse, tenantId
         '[]'::jsonb
       ) as items
     FROM quotes q
-    WHERE q.id = ${id}::uuid AND q.tenant_id = ${tenantId}::uuid
+    WHERE q.id = ${id}::uuid
   `;
   
   if (rows.length === 0) {
@@ -259,7 +256,7 @@ async function insertQuoteItems(client: PoolClient, quoteId: string, items: Quot
   }
 }
 
-async function createQuote(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
   const user = req.user;
   try {
     const data = QuoteSchema.parse(req.body);
@@ -273,10 +270,10 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse, tenan
         `
           INSERT INTO quotes (
             quote_number, vehicle_id, client_id, client_name, client_email, client_address,
-            amount_usd, currency, status, description, valid_until, items, tenant_id
+            amount_usd, currency, status, description, valid_until, items
           )
           VALUES (
-            $1, $2::uuid, $3::uuid, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::uuid
+            $1, $2::uuid, $3::uuid, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb
           )
           RETURNING *
         `,
@@ -293,7 +290,6 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse, tenan
           data.description || null,
           data.valid_until || null,
           JSON.stringify(itemsSnapshot),
-          tenantId,
         ],
       );
 
@@ -319,7 +315,7 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse, tenan
   }
 }
 
-async function updateQuote(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
   const user = req.user;
   const { id } = req.query;
   
@@ -379,10 +375,8 @@ async function updateQuote(req: AuthenticatedRequest, res: VercelResponse, tenan
       }
 
       values.push(id);
-      paramIdx++;
-      values.push(tenantId);
       const rows = await client.query(
-        `UPDATE quotes SET ${updates.join(', ')} WHERE id = $${paramIdx - 1}::uuid AND tenant_id = $${paramIdx}::uuid RETURNING *`,
+        `UPDATE quotes SET ${updates.join(', ')} WHERE id = $${paramIdx}::uuid RETURNING *`,
         values,
       );
 
@@ -412,18 +406,18 @@ async function updateQuote(req: AuthenticatedRequest, res: VercelResponse, tenan
   }
 }
 
-async function deleteQuote(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function deleteQuote(req: AuthenticatedRequest, res: VercelResponse) {
   const user = req.user;
   const { id } = req.query;
 
-  const oldQuote = await sql`SELECT * FROM quotes WHERE id = ${id}::uuid AND tenant_id = ${tenantId}::uuid`;
+  const oldQuote = await sql`SELECT * FROM quotes WHERE id = ${id}::uuid`;
   if (oldQuote.length === 0) {
     return apiError(res, 404, 'Not found');
   }
 
   await withTransaction(async (client) => {
     await client.query('DELETE FROM quote_items WHERE quote_id = $1::uuid', [id]);
-    const result = await client.query('DELETE FROM quotes WHERE id = $1::uuid AND tenant_id = $2::uuid RETURNING id', [id, tenantId]);
+    const result = await client.query('DELETE FROM quotes WHERE id = $1::uuid RETURNING id', [id]);
     if (result.rows.length === 0) {
       throw new Error('Not found');
     }

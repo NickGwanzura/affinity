@@ -1,55 +1,32 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ExternalLink, AlertTriangle } from 'lucide-react';
+import { api } from '../services/apiClient';
 import {
   Button,
-  Column,
-  ComposedModal,
-  Grid,
   InlineLoading,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-  Select,
-  SelectItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableHeader,
-  TableRow,
+  StatCard,
   Tag,
   TextInput,
   Tile,
-} from '@carbon/react';
-import { Add, Launch, View, WarningFilled } from '@carbon/icons-react';
-import { api, clearViewTenantId } from '../services/apiClient';
-import { StatCard } from './ui';
+} from './ui';
 import { useToast } from './Toast';
 import { useCarbonConfirm } from './shared';
-import type { Tenant } from '../types';
 
-type DashboardSection = 'overview' | 'tenants' | 'users' | 'submissions' | 'system' | 'logs';
+type DashboardSection = 'overview' | 'users' | 'submissions' | 'system' | 'logs';
 
 type AdminUser = {
   id: string;
   name: string;
   email: string;
   role: string;
-  access_role: 'super_admin' | 'tenant_admin' | 'user';
+  access_role: 'super_admin' | 'admin' | 'user';
   status: 'Active' | 'Inactive' | 'Pending';
-  tenant_id: string | null;
-  tenant_name?: string | null;
-  tenant_status?: string | null;
   created_at: string;
 };
 
 type AdminMetrics = {
   totals: {
     users: number;
-    tenants: number;
-    activeTenants: number;
-    suspendedTenants: number;
-    pendingTenants: number;
     pendingApprovals: number;
   };
   activity: Array<{
@@ -89,7 +66,6 @@ type AdminLogPayload = {
   table_name: string | null;
   record_id: string | null;
   user_email: string | null;
-  tenant_name: string | null;
   created_at: string;
 };
 
@@ -97,8 +73,6 @@ type AdminQuestionnaire = {
   id: string;
   title: string;
   status: string;
-  tenant_id: string | null;
-  tenant_name: string | null;
   created_at: string | null;
 };
 
@@ -106,8 +80,6 @@ type AdminSubmission = {
   id: string;
   type: 'registration_request' | 'questionnaire_submission';
   status: string;
-  tenant_id: string | null;
-  tenant_name: string | null;
   submitted_at: string | null;
   reviewed_at: string | null;
   title: string | null;
@@ -131,31 +103,13 @@ type AdminSubmissionsPayload = {
   };
 };
 
-interface SuperAdminDashboardProps {
-  activeTenantContextId: string | null;
-  onViewTenant: (tenantId: string) => void;
-  onExitTenantView: () => void;
-}
-
 const sections: Array<{ id: DashboardSection; label: string; description: string }> = [
   { id: 'overview', label: 'Overview', description: 'Platform KPIs and approval pressure.' },
-  { id: 'tenants', label: 'Tenants', description: 'Approve, suspend, delete, and inspect tenants.' },
-  { id: 'users', label: 'Users', description: 'Cross-tenant user controls and account state.' },
+  { id: 'users', label: 'Users', description: 'User controls and account state.' },
   { id: 'submissions', label: 'Submissions', description: 'Questionnaire and submission system control.' },
   { id: 'system', label: 'System', description: 'API/DB health and error signals.' },
-  { id: 'logs', label: 'Logs', description: 'Platform audit feed across all tenants.' },
+  { id: 'logs', label: 'Logs', description: 'Platform audit feed.' },
 ];
-
-const tenantTagType = (status: string): React.ComponentProps<typeof Tag>['type'] => {
-  switch (status.toLowerCase()) {
-    case 'active':
-      return 'green';
-    case 'suspended':
-      return 'red';
-    default:
-      return 'warm-gray';
-  }
-};
 
 const userStatusTagType = (status: string): React.ComponentProps<typeof Tag>['type'] => {
   switch (status.toLowerCase()) {
@@ -170,7 +124,7 @@ const userStatusTagType = (status: string): React.ComponentProps<typeof Tag>['ty
 
 const accessRoleTagType = (accessRole: string): React.ComponentProps<typeof Tag>['type'] => {
   if (accessRole === 'super_admin') return 'purple';
-  if (accessRole === 'tenant_admin') return 'blue';
+  if (accessRole === 'admin') return 'blue';
   return 'cool-gray';
 };
 
@@ -198,14 +152,24 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return fallback;
 };
 
-const TableBodyCompat = TableBody as unknown as React.ComponentType<{ children?: React.ReactNode }>;
-const SelectItemCompat = SelectItem as unknown as React.ComponentType<{ value: string; text: string }>;
+const TableContainer: React.FC<{
+  title:        string;
+  description?: string;
+  children:     React.ReactNode;
+}> = ({ title, description, children }) => (
+  <div className="bg-white border border-gray-200">
+    <div className="px-4 py-3 border-b border-gray-200">
+      <h3 className="m-0 text-sm font-semibold text-gray-900">{title}</h3>
+      {description && <p className="mt-1 text-xs text-gray-500">{description}</p>}
+    </div>
+    {children}
+  </div>
+);
 
-export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
-  activeTenantContextId,
-  onViewTenant,
-  onExitTenantView,
-}) => {
+const thCls   = 'px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600';
+const tdCls   = 'px-3 py-2 text-sm text-gray-800 border-t border-gray-100';
+
+export const SuperAdminDashboard: React.FC = () => {
   const { showToast } = useToast();
   const { confirm, ConfirmDialog } = useCarbonConfirm();
 
@@ -214,27 +178,15 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
 
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [approvals, setApprovals] = useState<ApprovalsPayload | null>(null);
   const [system, setSystem] = useState<AdminSystemPayload | null>(null);
   const [logs, setLogs] = useState<AdminLogPayload[]>([]);
   const [submissions, setSubmissions] = useState<AdminSubmissionsPayload | null>(null);
 
-  const [tenantFilter, setTenantFilter] = useState<string>('');
   const [submissionStatusFilter, setSubmissionStatusFilter] = useState<string>('');
   const [submissionTypeFilter, setSubmissionTypeFilter] = useState<'all' | 'registration_request' | 'questionnaire_submission'>('all');
   const [logActionFilter, setLogActionFilter] = useState<string>('');
-
-  const [showCreateTenant, setShowCreateTenant] = useState(false);
-  const [newTenantName, setNewTenantName] = useState('');
-  const [newTenantStatus, setNewTenantStatus] = useState<'active' | 'pending'>('active');
-  const [createTenantLoading, setCreateTenantLoading] = useState(false);
-
-  const activeTenantContext = useMemo(
-    () => tenants.find((tenant) => tenant.id === activeTenantContextId) || null,
-    [activeTenantContextId, tenants],
-  );
 
   const selectedSectionMeta = useMemo(
     () => sections.find((section) => section.id === activeSection) || sections[0],
@@ -248,27 +200,23 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       setSectionLoading(prev => ({ ...prev, [activeSection]: true }));
     }
     try {
-      const [metricsPayload, tenantsPayload, usersPayload, approvalsPayload, systemPayload, logsPayload, submissionsPayload] =
+      const [metricsPayload, usersPayload, approvalsPayload, systemPayload, logsPayload, submissionsPayload] =
         await Promise.all([
           api.admin.metrics(),
-          api.admin.tenants.list(),
-          api.admin.users.list(tenantFilter ? { tenantId: tenantFilter } : undefined),
+          api.admin.users.list(),
           api.admin.approvals.list(),
           api.admin.system(),
           api.admin.logs({
             limit: 120,
             action: logActionFilter || undefined,
-            tenantId: tenantFilter || undefined,
           }),
           api.admin.submissions.list({
-            tenantId: tenantFilter || undefined,
             status: submissionStatusFilter || undefined,
             type: submissionTypeFilter,
           }),
         ]);
 
       setMetrics(metricsPayload as AdminMetrics);
-      setTenants(tenantsPayload as Tenant[]);
       setUsers(usersPayload as AdminUser[]);
       setApprovals(approvalsPayload as ApprovalsPayload);
       setSystem(systemPayload as AdminSystemPayload);
@@ -283,7 +231,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         setSectionLoading(prev => ({ ...prev, [activeSection]: false }));
       }
     }
-  }, [activeSection, logActionFilter, showToast, submissionStatusFilter, submissionTypeFilter, tenantFilter]);
+  }, [activeSection, logActionFilter, showToast, submissionStatusFilter, submissionTypeFilter]);
 
   useEffect(() => {
     loadData(true);
@@ -295,78 +243,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       loadData(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logActionFilter, submissionStatusFilter, submissionTypeFilter, tenantFilter]);
-
-  const handleCreateTenantClick = () => {
-    setNewTenantName('');
-    setNewTenantStatus('active');
-    setShowCreateTenant(true);
-  };
-
-  const handleCreateTenantSubmit = async () => {
-    if (!newTenantName.trim()) return;
-    setCreateTenantLoading(true);
-    try {
-      await api.admin.tenants.create({ name: newTenantName.trim(), status: newTenantStatus });
-      showToast('Tenant created successfully.', 'success');
-      setShowCreateTenant(false);
-      await loadData(false);
-    } catch (error) {
-      showToast(getErrorMessage(error, 'Failed to create tenant'), 'error');
-    } finally {
-      setCreateTenantLoading(false);
-    }
-  };
-
-  const updateTenantStatus = async (tenantId: string, status: 'pending' | 'active' | 'suspended') => {
-    try {
-      await api.admin.tenants.update(tenantId, { status });
-      showToast(`Tenant moved to ${status}.`, 'success');
-      await loadData(false);
-    } catch (error) {
-      showToast(getErrorMessage(error, 'Failed to update tenant status'), 'error');
-    }
-  };
-
-  const removeTenant = async (tenantId: string) => {
-    try {
-      await api.admin.tenants.delete(tenantId);
-      showToast('Tenant deleted.', 'success');
-      await loadData(false);
-    } catch (error) {
-      showToast(getErrorMessage(error, 'Failed to delete tenant'), 'error');
-    }
-  };
-
-  const handleDeleteTenant = async (tenant: { id: string; name: string }) => {
-    const confirmed = await confirm({
-      title: 'Delete Tenant',
-      message: `This will permanently delete "${tenant.name}" and all associated users and data. This action cannot be undone.`,
-      confirmLabel: 'Delete Tenant',
-      confirmVariant: 'danger',
-    });
-    if (confirmed) await removeTenant(tenant.id);
-  };
-
-  const handleApproveTenant = async (tenant: { id: string; name: string }) => {
-    const confirmed = await confirm({
-      title: 'Approve Tenant',
-      message: `Approve "${tenant.name}"? This will enable access for all their users.`,
-      confirmLabel: 'Approve',
-      confirmVariant: 'primary',
-    });
-    if (confirmed) await updateTenantStatus(tenant.id, 'active');
-  };
-
-  const handleSuspendTenant = async (tenant: { id: string; name: string }) => {
-    const confirmed = await confirm({
-      title: 'Suspend Tenant',
-      message: `Suspend "${tenant.name}"? All users in this tenant will lose access immediately.`,
-      confirmLabel: 'Suspend',
-      confirmVariant: 'danger',
-    });
-    if (confirmed) await updateTenantStatus(tenant.id, 'suspended');
-  };
+  }, [logActionFilter, submissionStatusFilter, submissionTypeFilter]);
 
   const reviewPendingUser = async (userId: string, action: 'approve' | 'reject') => {
     try {
@@ -401,396 +278,244 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     }
   };
 
-  const enterTenantView = (tenantId: string) => {
-    onViewTenant(tenantId);
-    showToast('Tenant view enabled. You are operating in explicit tenant context.', 'success');
-  };
-
-  const exitTenantView = () => {
-    clearViewTenantId();
-    onExitTenantView();
-    showToast('Tenant context cleared. Back to platform scope.', 'success');
-  };
-
   if (loading) {
     return (
-      <div style={{ padding: '2rem' }}>
+      <div className="p-8">
         <InlineLoading description="Loading platform control tower..." status="active" />
       </div>
     );
   }
 
   const overviewContent = (
-    <>
-      <Grid condensed fullWidth>
-        <Column sm={4} md={2} lg={4}><StatCard title="Total Users" value={metrics?.totals.users ?? 0} color="blue" /></Column>
-        <Column sm={4} md={2} lg={4}><StatCard title="Total Tenants" value={metrics?.totals.tenants ?? 0} color="purple" /></Column>
-        <Column sm={4} md={2} lg={4}><StatCard title="Pending Approvals" value={metrics?.totals.pendingApprovals ?? 0} color="amber" /></Column>
-        <Column sm={4} md={2} lg={4}><StatCard title="Active Tenants" value={metrics?.totals.activeTenants ?? 0} color="green" /></Column>
-      </Grid>
-
-      <Grid condensed fullWidth style={{ marginTop: '1rem' }}>
-        <Column sm={4} md={8} lg={8}>
-          <Tile style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
-            <h3 style={{ margin: 0, color: 'var(--cds-text-primary, #161616)' }}>Tenant State</h3>
-            <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <Tag type="green">Active: {metrics?.totals.activeTenants ?? 0}</Tag>
-              <Tag type="red">Suspended: {metrics?.totals.suspendedTenants ?? 0}</Tag>
-              <Tag type="warm-gray">Pending: {metrics?.totals.pendingTenants ?? 0}</Tag>
-            </div>
-          </Tile>
-        </Column>
-
-        <Column sm={4} md={8} lg={8}>
-          <TableContainer
-            title="Recent Platform Activity"
-            description="Latest actions across the platform."
-            style={{ background: 'var(--cds-layer-01, #fff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
-          >
-            <Table size="sm">
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Action</TableHeader>
-                  <TableHeader>Actor</TableHeader>
-                  <TableHeader>Time</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBodyCompat>
-                {(metrics?.activity || []).slice(0, 8).map((activity) => (
-                  <TableRow key={activity.id}>
-                    <TableCell>{activity.action}</TableCell>
-                    <TableCell>{activity.user_email || 'system'}</TableCell>
-                    <TableCell>{compactDateTime(activity.created_at)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBodyCompat>
-            </Table>
-          </TableContainer>
-        </Column>
-      </Grid>
-    </>
-  );
-
-  const tenantsContent = (
-    <TableContainer
-      title="Tenant Management"
-      description="Super admin control for all platform tenants."
-      style={{ background: 'var(--cds-layer-01, #fff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
-    >
-      <div style={{ padding: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
-        <Button kind="secondary" size="sm" renderIcon={Add} onClick={handleCreateTenantClick} disabled={createTenantLoading}>
-          Create Tenant
-        </Button>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <StatCard title="Total Users" value={metrics?.totals.users ?? 0} color="blue" />
+        <StatCard title="Pending Approvals" value={metrics?.totals.pendingApprovals ?? 0} color="amber" />
       </div>
-      <Table size="md">
-        <TableHead>
-          <TableRow>
-            <TableHeader>Tenant</TableHeader>
-            <TableHeader>Status</TableHeader>
-            <TableHeader>Users</TableHeader>
-            <TableHeader>Pending</TableHeader>
-            <TableHeader>Actions</TableHeader>
-          </TableRow>
-        </TableHead>
-        <TableBodyCompat>
-          {tenants.map((tenant) => (
-            <TableRow key={tenant.id}>
-              <TableCell>{tenant.name}</TableCell>
-              <TableCell><Tag type={tenantTagType(tenant.status)}>{tenant.status}</Tag></TableCell>
-              <TableCell>{tenant.user_count ?? 0}</TableCell>
-              <TableCell>{tenant.pending_users ?? 0}</TableCell>
-              <TableCell>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <Button kind="ghost" size="sm" renderIcon={View} onClick={() => enterTenantView(tenant.id)}>
-                    View Tenant
-                  </Button>
-                  <Button kind="ghost" size="sm" onClick={() => handleApproveTenant(tenant)}>Approve</Button>
-                  <Button kind="ghost" size="sm" onClick={() => handleSuspendTenant(tenant)}>Suspend</Button>
-                  <Button kind="danger--ghost" size="sm" onClick={() => handleDeleteTenant(tenant)}>Delete</Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBodyCompat>
-      </Table>
-    </TableContainer>
+
+      <TableContainer title="Recent Platform Activity" description="Latest actions across the platform.">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className={thCls}>Action</th>
+              <th className={thCls}>Actor</th>
+              <th className={thCls}>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(metrics?.activity || []).slice(0, 8).map((activity) => (
+              <tr key={activity.id}>
+                <td className={tdCls}>{activity.action}</td>
+                <td className={tdCls}>{activity.user_email || 'system'}</td>
+                <td className={tdCls}>{compactDateTime(activity.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableContainer>
+    </div>
   );
 
   const usersContent = (
-    <TableContainer
-      title="User Management"
-      description="Global user controls across every tenant."
-      style={{ background: 'var(--cds-layer-01, #fff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
-    >
-      <div style={{ padding: '0.75rem' }}>
-        <Select
-          id="tenant-filter-users"
-          labelText="Filter by tenant"
-          value={tenantFilter}
-          onChange={(event) => setTenantFilter(event.target.value)}
-        >
-          <SelectItemCompat value="" text="All tenants" />
-          {tenants.map((tenant) => (
-            <SelectItemCompat key={tenant.id} value={tenant.id} text={tenant.name} />
-          ))}
-        </Select>
-      </div>
-      <Table size="md">
-        <TableHead>
-          <TableRow>
-            <TableHeader>User</TableHeader>
-            <TableHeader>Access</TableHeader>
-            <TableHeader>Tenant</TableHeader>
-            <TableHeader>Status</TableHeader>
-            <TableHeader>Actions</TableHeader>
-          </TableRow>
-        </TableHead>
-        <TableBodyCompat>
+    <TableContainer title="User Management" description="Global user controls.">
+      <table className="w-full">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className={thCls}>User</th>
+            <th className={thCls}>Access</th>
+            <th className={thCls}>Status</th>
+            <th className={thCls}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
           {users.slice(0, 120).map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>
-                <div>
-                  <div>{user.name}</div>
-                  <small style={{ color: 'var(--cds-text-secondary, #525252)' }}>{user.email}</small>
-                </div>
-              </TableCell>
-              <TableCell>
+            <tr key={user.id}>
+              <td className={tdCls}>
+                <div className="font-medium text-gray-900">{user.name}</div>
+                <div className="text-xs text-gray-500">{user.email}</div>
+              </td>
+              <td className={tdCls}>
                 <Tag type={accessRoleTagType(user.access_role)}>{user.access_role}</Tag>
-              </TableCell>
-              <TableCell>
-                {user.tenant_name ? (
-                  <Tag type={tenantTagType(user.tenant_status || 'pending')}>{user.tenant_name}</Tag>
-                ) : (
-                  <Tag type="high-contrast">Platform</Tag>
-                )}
-              </TableCell>
-              <TableCell>
+              </td>
+              <td className={tdCls}>
                 <Tag type={userStatusTagType(user.status)}>{user.status}</Tag>
-              </TableCell>
-              <TableCell>
+              </td>
+              <td className={tdCls}>
                 {user.access_role === 'super_admin' ? (
                   <Tag type="purple">Platform Owner</Tag>
                 ) : (
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <div className="flex flex-wrap gap-2">
                     {user.status === 'Pending' && (
                       <>
-                        <Button kind="ghost" size="sm" onClick={() => reviewPendingUser(user.id, 'approve')}>Approve</Button>
-                        <Button kind="danger--ghost" size="sm" onClick={() => reviewPendingUser(user.id, 'reject')}>Reject</Button>
+                        <Button variant="ghost" size="sm" onClick={() => reviewPendingUser(user.id, 'approve')}>Approve</Button>
+                        <Button variant="danger" size="sm" onClick={() => reviewPendingUser(user.id, 'reject')}>Reject</Button>
                       </>
                     )}
                     {user.status !== 'Pending' && user.status !== 'Active' && (
-                      <Button kind="ghost" size="sm" onClick={() => updateUserStatus(user, 'Active')}>Activate</Button>
+                      <Button variant="ghost" size="sm" onClick={() => updateUserStatus(user, 'Active')}>Activate</Button>
                     )}
                     {user.status === 'Active' && (
-                      <Button kind="danger--ghost" size="sm" onClick={() => updateUserStatus(user, 'Inactive')}>Suspend</Button>
+                      <Button variant="danger" size="sm" onClick={() => updateUserStatus(user, 'Inactive')}>Suspend</Button>
                     )}
                   </div>
                 )}
-              </TableCell>
-            </TableRow>
+              </td>
+            </tr>
           ))}
-        </TableBodyCompat>
-      </Table>
+        </tbody>
+      </table>
     </TableContainer>
   );
 
   const submissionsContent = (
-    <>
-      <Grid condensed fullWidth>
-        <Column sm={4} md={4} lg={4}>
-          <StatCard title="Questionnaires" value={submissions?.summary.questionnaires ?? 0} color="purple" />
-        </Column>
-        <Column sm={4} md={4} lg={4}>
-          <StatCard title="Submissions" value={submissions?.summary.submissions ?? 0} color="blue" />
-        </Column>
-        <Column sm={4} md={4} lg={4}>
-          <StatCard title="Pending" value={submissions?.summary.pendingSubmissions ?? 0} color="amber" />
-        </Column>
-        <Column sm={4} md={4} lg={4}>
-          <Tile style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
-            <h3 style={{ margin: 0, color: 'var(--cds-text-primary, #161616)' }}>Data Sources</h3>
-            <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <Tag type={submissions?.sources.questionnairesTable ? 'green' : 'cool-gray'}>questionnaires</Tag>
-              <Tag type={submissions?.sources.questionnaireSubmissionsTable ? 'green' : 'cool-gray'}>questionnaire_submissions</Tag>
-              <Tag type={submissions?.sources.registrationRequestsTable ? 'green' : 'cool-gray'}>registration_requests</Tag>
-            </div>
-          </Tile>
-        </Column>
-      </Grid>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Questionnaires" value={submissions?.summary.questionnaires ?? 0} color="purple" />
+        <StatCard title="Submissions" value={submissions?.summary.submissions ?? 0} color="blue" />
+        <StatCard title="Pending" value={submissions?.summary.pendingSubmissions ?? 0} color="amber" />
+        <Tile>
+          <h3 className="m-0 text-sm font-semibold text-gray-900">Data Sources</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Tag type={submissions?.sources.questionnairesTable ? 'green' : 'cool-gray'}>questionnaires</Tag>
+            <Tag type={submissions?.sources.questionnaireSubmissionsTable ? 'green' : 'cool-gray'}>questionnaire_submissions</Tag>
+            <Tag type={submissions?.sources.registrationRequestsTable ? 'green' : 'cool-gray'}>registration_requests</Tag>
+          </div>
+        </Tile>
+      </div>
 
-      <Grid condensed fullWidth style={{ marginTop: '1rem' }}>
-        <Column sm={4} md={8} lg={8}>
-          <TableContainer
-            title="Questionnaires"
-            description="Questionnaire templates created across the platform."
-            style={{ background: 'var(--cds-layer-01, #fff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
-          >
-            <Table size="md">
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Title</TableHeader>
-                  <TableHeader>Tenant</TableHeader>
-                  <TableHeader>Status</TableHeader>
-                  <TableHeader>Created</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBodyCompat>
-                {(submissions?.questionnaires || []).slice(0, 100).map((questionnaire) => (
-                  <TableRow key={questionnaire.id}>
-                    <TableCell>{questionnaire.title}</TableCell>
-                    <TableCell>{questionnaire.tenant_name || '-'}</TableCell>
-                    <TableCell><Tag type={tenantTagType(questionnaire.status || 'pending')}>{questionnaire.status || 'unknown'}</Tag></TableCell>
-                    <TableCell>{compactDateTime(questionnaire.created_at)}</TableCell>
-                  </TableRow>
-                ))}
-                {(submissions?.questionnaires || []).length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4}>No questionnaires found.</TableCell>
-                  </TableRow>
-                )}
-              </TableBodyCompat>
-            </Table>
-          </TableContainer>
-        </Column>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TableContainer title="Questionnaires" description="Questionnaire templates.">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className={thCls}>Title</th>
+                <th className={thCls}>Status</th>
+                <th className={thCls}>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(submissions?.questionnaires || []).slice(0, 100).map((questionnaire) => (
+                <tr key={questionnaire.id}>
+                  <td className={tdCls}>{questionnaire.title}</td>
+                  <td className={tdCls}><Tag type="cool-gray">{questionnaire.status || 'unknown'}</Tag></td>
+                  <td className={tdCls}>{compactDateTime(questionnaire.created_at)}</td>
+                </tr>
+              ))}
+              {(submissions?.questionnaires || []).length === 0 && (
+                <tr><td className={tdCls} colSpan={3}>No questionnaires found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </TableContainer>
 
-        <Column sm={4} md={8} lg={8}>
-          <TableContainer
-            title="Submissions"
-            description="Global submission feed with tenant and type filters."
-            style={{ background: 'var(--cds-layer-01, #fff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
-          >
-            <div style={{ padding: '0.75rem', display: 'grid', gap: '0.75rem' }}>
-              <Select
-                id="submission-type-filter"
-                labelText="Filter by type"
-                value={submissionTypeFilter}
-                onChange={(event) => setSubmissionTypeFilter(event.target.value as typeof submissionTypeFilter)}
-              >
-                <SelectItemCompat value="all" text="All types" />
-                <SelectItemCompat value="registration_request" text="Registration requests" />
-                <SelectItemCompat value="questionnaire_submission" text="Questionnaire submissions" />
-              </Select>
-              <Select
-                id="submission-status-filter"
-                labelText="Filter by status"
-                value={submissionStatusFilter}
-                onChange={(event) => setSubmissionStatusFilter(event.target.value)}
-              >
-                <SelectItemCompat value="" text="All statuses" />
-                <SelectItemCompat value="Pending" text="Pending" />
-                <SelectItemCompat value="Approved" text="Approved" />
-                <SelectItemCompat value="Rejected" text="Rejected" />
-                <SelectItemCompat value="Active" text="Active" />
-                <SelectItemCompat value="Inactive" text="Inactive" />
-              </Select>
-            </div>
-            <Table size="md">
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Type</TableHeader>
-                  <TableHeader>Submitter</TableHeader>
-                  <TableHeader>Tenant</TableHeader>
-                  <TableHeader>Status</TableHeader>
-                  <TableHeader>Submitted</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBodyCompat>
-                {(submissions?.submissions || []).slice(0, 120).map((submission) => (
-                  <TableRow key={submission.id}>
-                    <TableCell>{submission.type}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div>{submission.submitter_name || submission.title || '-'}</div>
-                        {submission.submitter_email && (
-                          <small style={{ color: 'var(--cds-text-secondary, #525252)' }}>{submission.submitter_email}</small>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{submission.tenant_name || '-'}</TableCell>
-                    <TableCell><Tag type={userStatusTagType(submission.status)}>{submission.status}</Tag></TableCell>
-                    <TableCell>{compactDateTime(submission.submitted_at)}</TableCell>
-                  </TableRow>
-                ))}
-                {(submissions?.submissions || []).length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5}>No submissions found.</TableCell>
-                  </TableRow>
-                )}
-              </TableBodyCompat>
-            </Table>
-          </TableContainer>
-        </Column>
-      </Grid>
-    </>
+        <TableContainer title="Submissions" description="Global submission feed.">
+          <div className="p-3 grid gap-3">
+            <select
+              value={submissionTypeFilter}
+              onChange={(event) => setSubmissionTypeFilter(event.target.value as typeof submissionTypeFilter)}
+              className="p-2 border border-gray-300"
+            >
+              <option value="all">All types</option>
+              <option value="registration_request">Registration requests</option>
+              <option value="questionnaire_submission">Questionnaire submissions</option>
+            </select>
+            <select
+              value={submissionStatusFilter}
+              onChange={(event) => setSubmissionStatusFilter(event.target.value)}
+              className="p-2 border border-gray-300"
+            >
+              <option value="">All statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className={thCls}>Type</th>
+                <th className={thCls}>Submitter</th>
+                <th className={thCls}>Status</th>
+                <th className={thCls}>Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(submissions?.submissions || []).slice(0, 120).map((submission) => (
+                <tr key={submission.id}>
+                  <td className={tdCls}>{submission.type}</td>
+                  <td className={tdCls}>
+                    <div className="font-medium text-gray-900">{submission.submitter_name || submission.title || '-'}</div>
+                    {submission.submitter_email && (
+                      <div className="text-xs text-gray-500">{submission.submitter_email}</div>
+                    )}
+                  </td>
+                  <td className={tdCls}><Tag type={userStatusTagType(submission.status)}>{submission.status}</Tag></td>
+                  <td className={tdCls}>{compactDateTime(submission.submitted_at)}</td>
+                </tr>
+              ))}
+              {(submissions?.submissions || []).length === 0 && (
+                <tr><td className={tdCls} colSpan={4}>No submissions found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </TableContainer>
+      </div>
+    </div>
   );
 
   const systemContent = (
-    <Grid condensed fullWidth>
-      <Column sm={4} md={8} lg={6}>
-        <Tile style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
-          <h3 style={{ margin: 0, color: 'var(--cds-text-primary, #161616)' }}>System Health</h3>
-          <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <Tag type={system?.checks.api ? 'green' : 'red'}>API: {system?.checks.api ? 'healthy' : 'unhealthy'}</Tag>
-            <Tag type={system?.checks.database ? 'green' : 'red'}>DB: {system?.checks.database ? 'healthy' : 'unhealthy'}</Tag>
-            <Tag type={system?.status === 'healthy' ? 'green' : 'red'}>Status: {system?.status || 'unknown'}</Tag>
-          </div>
-          <p style={{ marginTop: '0.75rem', color: 'var(--cds-text-secondary, #525252)' }}>
-            Uptime: {formatUptime(system?.uptimeSeconds ?? 0)}
-          </p>
-          <p style={{ marginTop: '0.25rem', color: 'var(--cds-text-secondary, #525252)' }}>
-            Last check: {compactDateTime(system?.timestamp)}
-          </p>
-        </Tile>
-      </Column>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Tile>
+        <h3 className="m-0 text-sm font-semibold text-gray-900">System Health</h3>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Tag type={system?.checks.api ? 'green' : 'red'}>API: {system?.checks.api ? 'healthy' : 'unhealthy'}</Tag>
+          <Tag type={system?.checks.database ? 'green' : 'red'}>DB: {system?.checks.database ? 'healthy' : 'unhealthy'}</Tag>
+          <Tag type={system?.status === 'healthy' ? 'green' : 'red'}>Status: {system?.status || 'unknown'}</Tag>
+        </div>
+        <p className="mt-3 text-sm text-gray-500">Uptime: {formatUptime(system?.uptimeSeconds ?? 0)}</p>
+        <p className="mt-1 text-sm text-gray-500">Last check: {compactDateTime(system?.timestamp)}</p>
+      </Tile>
 
-      <Column sm={4} md={8} lg={10}>
-        <TableContainer
-          title="Recent Error Signals"
-          description="Latest failed/error/rejected events detected in audit stream."
-          style={{ background: 'var(--cds-layer-01, #fff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
-        >
-          <Table size="sm">
-            <TableHead>
-              <TableRow>
-                <TableHeader>Action</TableHeader>
-                <TableHeader>Table</TableHeader>
-                <TableHeader>Actor</TableHeader>
-                <TableHeader>Time</TableHeader>
-              </TableRow>
-            </TableHead>
-            <TableBodyCompat>
-              {(system?.recentErrors || []).map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.action}</TableCell>
-                  <TableCell>{row.table_name || '-'}</TableCell>
-                  <TableCell>{row.user_email || 'system'}</TableCell>
-                  <TableCell>{compactDateTime(row.created_at)}</TableCell>
-                </TableRow>
-              ))}
-              {(system?.recentErrors || []).length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <WarningFilled size={16} />
-                      No recent error signals.
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBodyCompat>
-          </Table>
-        </TableContainer>
-      </Column>
-    </Grid>
+      <TableContainer title="Recent Error Signals" description="Latest failed/error/rejected events detected in audit stream.">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className={thCls}>Action</th>
+              <th className={thCls}>Table</th>
+              <th className={thCls}>Actor</th>
+              <th className={thCls}>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(system?.recentErrors || []).map((row) => (
+              <tr key={row.id}>
+                <td className={tdCls}>{row.action}</td>
+                <td className={tdCls}>{row.table_name || '-'}</td>
+                <td className={tdCls}>{row.user_email || 'system'}</td>
+                <td className={tdCls}>{compactDateTime(row.created_at)}</td>
+              </tr>
+            ))}
+            {(system?.recentErrors || []).length === 0 && (
+              <tr>
+                <td className={tdCls} colSpan={4}>
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={16} />
+                    No recent error signals.
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </TableContainer>
+    </div>
   );
 
   const logsContent = (
-    <TableContainer
-      title="Audit Logs"
-      description="Platform-wide admin and system activity feed."
-      style={{ background: 'var(--cds-layer-01, #fff)', border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
-    >
-      <div style={{ padding: '0.75rem', display: 'grid', gap: '0.75rem' }}>
+    <TableContainer title="Audit Logs" description="Platform-wide admin and system activity feed.">
+      <div className="p-3 grid gap-3">
         <TextInput
           id="logs-action-filter"
           labelText="Filter action contains"
@@ -798,43 +523,38 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           onChange={(event) => setLogActionFilter(event.target.value)}
           placeholder="e.g. approvals, failed, users.updated"
         />
-        <Button kind="secondary" size="sm" renderIcon={Launch} onClick={() => loadData(false)}>
+        <Button variant="secondary" size="sm" leftIcon={<ExternalLink size={14} />} onClick={() => loadData(false)}>
           Refresh Logs
         </Button>
       </div>
-      <Table size="sm">
-        <TableHead>
-          <TableRow>
-            <TableHeader>Action</TableHeader>
-            <TableHeader>Actor</TableHeader>
-            <TableHeader>Tenant</TableHeader>
-            <TableHeader>Table</TableHeader>
-            <TableHeader>Time</TableHeader>
-          </TableRow>
-        </TableHead>
-        <TableBodyCompat>
+      <table className="w-full">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className={thCls}>Action</th>
+            <th className={thCls}>Actor</th>
+            <th className={thCls}>Table</th>
+            <th className={thCls}>Time</th>
+          </tr>
+        </thead>
+        <tbody>
           {logs.map((entry) => (
-            <TableRow key={entry.id}>
-              <TableCell>{entry.action}</TableCell>
-              <TableCell>{entry.user_email || 'system'}</TableCell>
-              <TableCell>{entry.tenant_name || 'platform'}</TableCell>
-              <TableCell>{entry.table_name || '-'}</TableCell>
-              <TableCell>{compactDateTime(entry.created_at)}</TableCell>
-            </TableRow>
+            <tr key={entry.id}>
+              <td className={tdCls}>{entry.action}</td>
+              <td className={tdCls}>{entry.user_email || 'system'}</td>
+              <td className={tdCls}>{entry.table_name || '-'}</td>
+              <td className={tdCls}>{compactDateTime(entry.created_at)}</td>
+            </tr>
           ))}
           {logs.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={5}>No logs found for current filters.</TableCell>
-            </TableRow>
+            <tr><td className={tdCls} colSpan={4}>No logs found for current filters.</td></tr>
           )}
-        </TableBodyCompat>
-      </Table>
+        </tbody>
+      </table>
     </TableContainer>
   );
 
   const sectionContent: Record<DashboardSection, React.ReactNode> = {
     overview: overviewContent,
-    tenants: tenantsContent,
     users: usersContent,
     submissions: submissionsContent,
     system: systemContent,
@@ -842,38 +562,27 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   };
 
   return (
-    <div style={{ padding: '1.5rem', background: 'var(--cds-layer-02, #f4f4f4)', minHeight: '100%' }}>
-      <Tile style={{ marginBottom: '1rem', padding: '1rem', borderLeft: '4px solid var(--cds-interactive, #0f62fe)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+    <div className="p-6 bg-gray-100 min-h-full">
+      <Tile className="mb-4 border-l-4 border-l-blue-600">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 style={{ margin: 0, color: 'var(--cds-text-primary, #161616)' }}>Super Admin Control Tower</h2>
-            <p style={{ margin: '0.5rem 0 0', color: 'var(--cds-text-secondary, #525252)' }}>
-              Platform-only operations. No tenant workspace logic is mixed into this dashboard.
-            </p>
+            <h2 className="m-0 text-lg font-semibold text-gray-900">Super Admin Control Tower</h2>
+            <p className="mt-2 text-sm text-gray-500">Platform-only operations.</p>
           </div>
-          {activeTenantContext ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <Tag type="blue">Viewing tenant: {activeTenantContext.name}</Tag>
-              <Button kind="ghost" size="sm" onClick={exitTenantView}>Exit Tenant View</Button>
-            </div>
-          ) : (
-            <Tag type="high-contrast">Platform Scope</Tag>
-          )}
+          <Tag type="high-contrast">Platform Scope</Tag>
         </div>
       </Tile>
 
-      <Grid condensed fullWidth>
-        <Column sm={4} md={4} lg={4}>
-          <Tile style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)', padding: '0.75rem' }}>
-            <h3 style={{ margin: 0, color: 'var(--cds-text-primary, #161616)' }}>Admin Sections</h3>
-            <p style={{ margin: '0.5rem 0 0.75rem', color: 'var(--cds-text-secondary, #525252)' }}>
-              {selectedSectionMeta.description}
-            </p>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="lg:col-span-1">
+          <Tile>
+            <h3 className="m-0 text-sm font-semibold text-gray-900">Admin Sections</h3>
+            <p className="mt-2 mb-3 text-sm text-gray-500">{selectedSectionMeta.description}</p>
+            <div className="grid gap-2">
               {sections.map((section) => (
                 <Button
                   key={section.id}
-                  kind={activeSection === section.id ? 'primary' : 'ghost'}
+                  variant={activeSection === section.id ? 'primary' : 'ghost'}
                   size="sm"
                   onClick={() => setActiveSection(section.id)}
                 >
@@ -882,71 +591,28 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
               ))}
             </div>
           </Tile>
-        </Column>
+        </div>
 
-        <Column sm={4} md={12} lg={12}>
+        <div className="lg:col-span-3">
           {sectionLoading[activeSection] ? (
             <InlineLoading description="Loading..." />
           ) : (
             sectionContent[activeSection]
           )}
-        </Column>
-      </Grid>
+        </div>
+      </div>
 
       {(approvals?.pendingUsers || []).length > 0 && activeSection !== 'users' && (
-        <Tile
-          style={{
-            marginTop: '1rem',
-            borderLeft: '4px solid var(--cds-support-warning, #f1c21b)',
-            border: '1px solid var(--cds-border-subtle, #c6c6c6)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <Tile className="mt-4 border-l-4 border-l-amber-500">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <strong>{approvals.pendingUsers.length} pending user approvals</strong>
-              <p style={{ margin: '0.25rem 0 0', color: 'var(--cds-text-secondary, #525252)' }}>
-                Open Users section to approve/reject pending accounts.
-              </p>
+              <strong className="text-gray-900">{approvals.pendingUsers.length} pending user approvals</strong>
+              <p className="mt-1 text-sm text-gray-500">Open Users section to approve/reject pending accounts.</p>
             </div>
-            <Button kind="secondary" size="sm" onClick={() => setActiveSection('users')}>Review Approvals</Button>
+            <Button variant="secondary" size="sm" onClick={() => setActiveSection('users')}>Review Approvals</Button>
           </div>
         </Tile>
       )}
-
-      <ComposedModal open={showCreateTenant} onClose={() => setShowCreateTenant(false)}>
-        <ModalHeader title="Create New Tenant" />
-        <ModalBody>
-          <TextInput
-            id="new-tenant-name"
-            labelText="Tenant Name"
-            value={newTenantName}
-            onChange={(e) => setNewTenantName(e.target.value)}
-            placeholder="Enter tenant name"
-            required
-          />
-          <div style={{ marginTop: '1rem' }}>
-            <Select
-              id="new-tenant-status"
-              labelText="Initial Status"
-              value={newTenantStatus}
-              onChange={(e) => setNewTenantStatus(e.target.value as 'active' | 'pending')}
-            >
-              <SelectItemCompat value="active" text="Active" />
-              <SelectItemCompat value="pending" text="Pending Approval" />
-            </Select>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button kind="secondary" onClick={() => setShowCreateTenant(false)}>Cancel</Button>
-          <Button
-            kind="primary"
-            onClick={handleCreateTenantSubmit}
-            disabled={!newTenantName.trim() || createTenantLoading}
-          >
-            {createTenantLoading ? 'Creating...' : 'Create Tenant'}
-          </Button>
-        </ModalFooter>
-      </ComposedModal>
 
       <ConfirmDialog />
     </div>

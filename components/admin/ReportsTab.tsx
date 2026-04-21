@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Asset, CompanyDetails, LandedCostSummary, OperatingFund, AppUser } from '../../types';
 import { dataService } from '../../services/dataService';
-import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload, generateDriverFundsReportPDFAndDownload } from '../../services/pdfService';
+import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload, generateDriverFundsReportPDFAndDownload, generateDebtorsReportPDFAndDownload, DebtorEntry } from '../../services/pdfService';
 import { useToast } from '../Toast';
 import { Button, DriverFundsSnapshotPanel, DriverFundsSummaryPanel, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
 import { buildDriverFundsReportData } from '../../utils/driverFunds';
@@ -16,6 +16,7 @@ export const ReportsTab: React.FC = () => {
   const [drivers, setDrivers] = useState<AppUser[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [company, setCompany] = useState<CompanyDetails | null>(null);
+  const [debtors, setDebtors] = useState<DebtorEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -54,6 +55,50 @@ export const ReportsTab: React.FC = () => {
           if (assetRes.ok) setAssets(await assetRes.json());
         } catch {
           // assets are optional for reports
+        }
+
+        try {
+          const [clientBalancesRes, invoicesData] = await Promise.all([
+            dataService.getAllClientBalances({ hasOutstanding: true }),
+            dataService.getInvoices(),
+          ]);
+          const today = new Date();
+          const debtorList: DebtorEntry[] = clientBalancesRes.clients
+            .filter(c => c.balance.current_balance > 0)
+            .map(c => {
+              const clientInvoices = invoicesData.filter(
+                inv => inv.client_id === c.id && inv.status !== 'Paid' && inv.status !== 'Cancelled'
+              );
+              let current = 0, overdue_30 = 0, overdue_60 = 0, overdue_90 = 0, overdue_90plus = 0;
+              for (const inv of clientInvoices) {
+                const outstanding = Math.max(0, inv.amount_usd);
+                if (!inv.due_date) { current += outstanding; continue; }
+                const daysOverdue = Math.floor((today.getTime() - new Date(inv.due_date).getTime()) / 86400000);
+                if (daysOverdue <= 0)        current       += outstanding;
+                else if (daysOverdue <= 30)  overdue_30    += outstanding;
+                else if (daysOverdue <= 60)  overdue_60    += outstanding;
+                else if (daysOverdue <= 90)  overdue_90    += outstanding;
+                else                         overdue_90plus += outstanding;
+              }
+              return {
+                id: c.id,
+                name: c.name,
+                email: c.email,
+                company: c.company || undefined,
+                currency: c.balance.currency,
+                total_invoiced: c.balance.total_invoiced,
+                total_paid: c.balance.total_paid,
+                current_balance: c.balance.current_balance,
+                current,
+                overdue_30,
+                overdue_60,
+                overdue_90,
+                overdue_90plus,
+              };
+            });
+          setDebtors(debtorList);
+        } catch {
+          // debtors data is optional for reports
         }
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -205,6 +250,20 @@ export const ReportsTab: React.FC = () => {
     } catch (err) {
       console.error('[ReportsTab] handleAssetRegisterReportPDF error:', err);
       notifyError('Failed to generate asset register PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDebtorsReportPDF = async () => {
+    if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
+    setIsExporting(true);
+    try {
+      await generateDebtorsReportPDFAndDownload(debtors, company);
+      notifySuccess('Debtors report PDF downloaded!');
+    } catch (err) {
+      console.error('[ReportsTab] handleDebtorsReportPDF error:', err);
+      notifyError('Failed to generate debtors report PDF. Please try again.');
     } finally {
       setIsExporting(false);
     }
@@ -509,6 +568,10 @@ export const ReportsTab: React.FC = () => {
           <Button onClick={handleAssetRegisterReportPDF} disabled={isExporting} variant="secondary">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
             Asset Register PDF
+          </Button>
+          <Button onClick={handleDebtorsReportPDF} disabled={isExporting} variant="secondary">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            Debtors Report PDF
           </Button>
         </div>
         <p className="text-sm text-indigo-100 mt-4">

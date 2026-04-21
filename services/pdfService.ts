@@ -3062,3 +3062,215 @@ export const generateAuditReportPDFAndDownload = async (
   const blob = await generateAuditReportPDF(summaries, expenses, company, options);
   downloadBlob(blob, `Audit_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 };
+
+// ============================================================================
+// DEBTORS REPORT
+// ============================================================================
+
+export interface DebtorEntry {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+  currency: 'USD' | 'GBP';
+  total_invoiced: number;
+  total_paid: number;
+  current_balance: number;
+  // Aging buckets (outstanding invoice amounts by days overdue)
+  current: number;       // not yet due
+  overdue_30: number;    // 1–30 days
+  overdue_60: number;    // 31–60 days
+  overdue_90: number;    // 61–90 days
+  overdue_90plus: number; // 91+ days
+}
+
+export const generateDebtorsReportPDF = async (
+  debtors: DebtorEntry[],
+  company: CompanyDetails
+): Promise<Blob> => {
+  const sanitizedCompany = sanitizeCompany(company);
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const builder = new PDFBuilder(sanitizedCompany, `Debtors_Report_${today.toISOString().split('T')[0]}.pdf`);
+  const doc = builder.getDocument();
+
+  await builder.addLogoWatermark();
+  (await builder.addHeader())
+    .addTitle('DEBTORS REPORT')
+    .addMetadataSection(
+      ['Report Date:', 'Total Debtors:', 'Currency:'],
+      [dateStr, String(debtors.length), debtors.length > 0 ? debtors[0].currency : 'USD'],
+      125,
+      65
+    );
+
+  let currentY = Math.max((doc as any).lastAutoTable?.finalY || 0, 80);
+
+  // ── Summary totals ────────────────────────────────────────────────────────
+  const currency = debtors.length > 0 ? debtors[0].currency : 'USD';
+  const totals = debtors.reduce(
+    (acc, d) => ({
+      invoiced: acc.invoiced + d.total_invoiced,
+      paid: acc.paid + d.total_paid,
+      balance: acc.balance + d.current_balance,
+      current: acc.current + d.current,
+      d30: acc.d30 + d.overdue_30,
+      d60: acc.d60 + d.overdue_60,
+      d90: acc.d90 + d.overdue_90,
+      d90plus: acc.d90plus + d.overdue_90plus,
+    }),
+    { invoiced: 0, paid: 0, balance: 0, current: 0, d30: 0, d60: 0, d90: 0, d90plus: 0 }
+  );
+
+  // Summary box
+  currentY = builder.ensureContentSpace(32, currentY);
+  doc.setFillColor(235, 237, 242);
+  doc.rect(LAYOUT.MARGIN_LEFT, currentY, LAYOUT.MARGIN_RIGHT - LAYOUT.MARGIN_LEFT, 28, 'F');
+  doc.setFontSize(FONT_SIZES.XSMALL);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+  doc.setTextColor(...COLORS.SECONDARY_GRAY);
+
+  const summaryItems = [
+    { label: 'TOTAL INVOICED', value: formatCurrencyAmount(totals.invoiced, currency) },
+    { label: 'TOTAL PAID', value: formatCurrencyAmount(totals.paid, currency) },
+    { label: 'TOTAL OUTSTANDING', value: formatCurrencyAmount(totals.balance, currency) },
+  ];
+  const colW = (LAYOUT.MARGIN_RIGHT - LAYOUT.MARGIN_LEFT) / summaryItems.length;
+  summaryItems.forEach((item, i) => {
+    const x = LAYOUT.MARGIN_LEFT + i * colW + colW / 2;
+    doc.text(item.label, x, currentY + 9, { align: 'center' });
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text(item.value, x, currentY + 20, { align: 'center' });
+    doc.setFontSize(FONT_SIZES.XSMALL);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+  });
+  currentY += 36;
+
+  // ── Aging summary bar ────────────────────────────────────────────────────
+  currentY = builder.ensureContentSpace(16, currentY);
+  doc.setFontSize(FONT_SIZES.MEDIUM);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+  doc.setTextColor(...COLORS.PRIMARY_DARK);
+  doc.text('AGING SUMMARY', LAYOUT.MARGIN_LEFT, currentY);
+  currentY += 5;
+
+  autoTable(doc, {
+    startY: currentY,
+    head: [['Current (Not Due)', '1–30 Days', '31–60 Days', '61–90 Days', '91+ Days', 'Total Outstanding']],
+    body: [[
+      formatCurrencyAmount(totals.current, currency),
+      formatCurrencyAmount(totals.d30, currency),
+      formatCurrencyAmount(totals.d60, currency),
+      formatCurrencyAmount(totals.d90, currency),
+      formatCurrencyAmount(totals.d90plus, currency),
+      formatCurrencyAmount(totals.balance, currency),
+    ]],
+    theme: 'plain',
+    margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+    headStyles: {
+      fillColor: TABLE_STYLES.HEAD_FILL,
+      textColor: COLORS.PRIMARY_DARK,
+      fontStyle: 'bold',
+      fontSize: FONT_SIZES.XSMALL,
+      halign: 'right',
+    },
+    styles: {
+      fontSize: FONT_SIZES.SMALL,
+      lineColor: COLORS.BORDER_GRAY,
+      lineWidth: TABLE_STYLES.LINE_WIDTH,
+      textColor: COLORS.PRIMARY_DARK,
+      halign: 'right',
+      fontStyle: 'bold',
+    },
+    columnStyles: {
+      0: { halign: 'right' },
+      5: { textColor: [180, 30, 30] as [number, number, number] },
+    },
+  });
+  currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 12;
+
+  // ── Debtors table ─────────────────────────────────────────────────────────
+  if (debtors.length === 0) {
+    currentY = builder.ensureContentSpace(12, currentY);
+    doc.setFontSize(FONT_SIZES.REGULAR);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
+    doc.setTextColor(...COLORS.SECONDARY_GRAY);
+    doc.text('No outstanding debtors at this time.', LAYOUT.MARGIN_LEFT, currentY);
+  } else {
+    currentY = builder.ensureContentSpace(16, currentY);
+    doc.setFontSize(FONT_SIZES.MEDIUM);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
+    doc.setTextColor(...COLORS.PRIMARY_DARK);
+    doc.text('DEBTOR DETAILS', LAYOUT.MARGIN_LEFT, currentY);
+    currentY += 5;
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['CLIENT', 'EMAIL', 'INVOICED', 'PAID', 'CURRENT', '1–30d', '31–60d', '61–90d', '91+d', 'BALANCE']],
+      body: debtors.map(d => [
+        sanitizeText(d.name) + (d.company ? `\n${sanitizeText(d.company)}` : ''),
+        sanitizeEmail(d.email),
+        formatCurrencyAmount(d.total_invoiced, d.currency),
+        formatCurrencyAmount(d.total_paid, d.currency),
+        formatCurrencyAmount(d.current, d.currency),
+        formatCurrencyAmount(d.overdue_30, d.currency),
+        formatCurrencyAmount(d.overdue_60, d.currency),
+        formatCurrencyAmount(d.overdue_90, d.currency),
+        formatCurrencyAmount(d.overdue_90plus, d.currency),
+        formatCurrencyAmount(d.current_balance, d.currency),
+      ]),
+      theme: 'plain',
+      margin: { left: LAYOUT.MARGIN_LEFT, right: LAYOUT.PAGE_WIDTH - LAYOUT.MARGIN_RIGHT, bottom: LAYOUT.PAGE_HEIGHT - builder.getFooterStartY() + 6 },
+      headStyles: {
+        fillColor: TABLE_STYLES.HEAD_FILL,
+        textColor: COLORS.PRIMARY_DARK,
+        fontStyle: 'bold',
+        fontSize: FONT_SIZES.XSMALL,
+      },
+      styles: {
+        fontSize: FONT_SIZES.XSMALL,
+        lineColor: COLORS.BORDER_GRAY,
+        lineWidth: TABLE_STYLES.LINE_WIDTH,
+        textColor: COLORS.PRIMARY_DARK,
+        cellPadding: 2.5,
+      },
+      columnStyles: {
+        0: { cellWidth: 30 },
+        1: { cellWidth: 32 },
+        2: { halign: 'right', cellWidth: 18 },
+        3: { halign: 'right', cellWidth: 18 },
+        4: { halign: 'right', cellWidth: 16 },
+        5: { halign: 'right', cellWidth: 14 },
+        6: { halign: 'right', cellWidth: 14 },
+        7: { halign: 'right', cellWidth: 14 },
+        8: { halign: 'right', cellWidth: 14 },
+        9: { halign: 'right', fontStyle: 'bold', cellWidth: 20, textColor: [180, 30, 30] as [number, number, number] },
+      },
+      alternateRowStyles: { fillColor: COLORS.FILL_ALTERNATE },
+      didParseCell: (data) => {
+        // Highlight high-balance rows
+        if (data.section === 'body' && data.column.index === 9) {
+          const debtor = debtors[data.row.index];
+          if (debtor && debtor.current_balance > 10000) {
+            data.cell.styles.fillColor = [255, 245, 245] as [number, number, number];
+          }
+        }
+      },
+    });
+  }
+
+  builder.addFooter({ additionalText: `Debtors Report — ${dateStr}`, fontSize: FONT_SIZES.XXSMALL });
+  return builder.generate();
+};
+
+export const generateDebtorsReportPDFAndDownload = async (
+  debtors: DebtorEntry[],
+  company: CompanyDetails
+): Promise<void> => {
+  const blob = await generateDebtorsReportPDF(debtors, company);
+  downloadBlob(blob, `Debtors_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+};

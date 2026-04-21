@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   AuthenticatedRequest,
   apiError,
-  getTenantId,
   handleCors,
   requireRole,
   setSecurityHeaders,
@@ -19,16 +18,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!(await verifyToken(authReq, res))) return;
 
   try {
-    const tenantId = getTenantId(req);
     switch (req.method) {
       case 'GET':
-        return await listFunds(req, res, tenantId);
+        return await listFunds(req, res);
       case 'POST':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await createFund(req, res, tenantId);
+        return await createFund(req, res);
       case 'DELETE':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await deleteFund(req, res, tenantId);
+        return await deleteFund(req, res);
       default:
         return apiError(res, 405, 'Method not allowed');
     }
@@ -37,30 +35,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listFunds(req: VercelRequest, res: VercelResponse, tenantId: string) {
+async function listFunds(req: VercelRequest, res: VercelResponse) {
   const recipient = typeof req.query.recipient === 'string' ? req.query.recipient.trim() : '';
   const rows = recipient
     ? await sql`
         SELECT id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
         FROM operating_funds
-        WHERE tenant_id = ${tenantId}::uuid AND LOWER(TRIM(COALESCE(recipient, ''))) = LOWER(TRIM(${recipient}))
+        WHERE LOWER(TRIM(COALESCE(recipient, ''))) = LOWER(TRIM(${recipient}))
         ORDER BY date DESC, created_at DESC
       `
     : await sql`
         SELECT id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
         FROM operating_funds
-        WHERE tenant_id = ${tenantId}::uuid
         ORDER BY date DESC, created_at DESC
       `;
 
   return res.status(200).json(rows);
 }
 
-async function createFund(req: VercelRequest, res: VercelResponse, tenantId: string) {
+async function createFund(req: VercelRequest, res: VercelResponse) {
   try {
     const data = OperatingFundSchema.parse(req.body);
     const rows = await sql`
-      INSERT INTO operating_funds (type, amount, currency, description, reference, recipient, approved_by, date, tenant_id)
+      INSERT INTO operating_funds (type, amount, currency, description, reference, recipient, approved_by, date)
       VALUES (
         ${data.type},
         ${data.amount},
@@ -69,8 +66,7 @@ async function createFund(req: VercelRequest, res: VercelResponse, tenantId: str
         ${data.reference || null},
         ${data.recipient || null},
         ${data.approved_by || null},
-        ${data.date},
-        ${tenantId}::uuid
+        ${data.date}
       )
       RETURNING id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
     `;
@@ -81,8 +77,8 @@ async function createFund(req: VercelRequest, res: VercelResponse, tenantId: str
   }
 }
 
-async function deleteFund(req: VercelRequest, res: VercelResponse, tenantId: string) {
-  const rows = await sql`DELETE FROM operating_funds WHERE id = ${req.query.id}::uuid AND tenant_id = ${tenantId}::uuid RETURNING id`;
+async function deleteFund(req: VercelRequest, res: VercelResponse) {
+  const rows = await sql`DELETE FROM operating_funds WHERE id = ${req.query.id}::uuid RETURNING id`;
   if (rows.length === 0) {
     return res.status(404).json({ error: 'Not found' });
   }

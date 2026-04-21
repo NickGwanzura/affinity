@@ -1,6 +1,4 @@
 import React from 'react';
-import { Tile } from '@carbon/react';
-import { SkeletonText, SkeletonPlaceholder } from '@carbon/react';
 
 interface StatCardProps {
   title:     string;
@@ -16,15 +14,22 @@ interface StatCardProps {
   className?: string;
 }
 
-// Carbon design-token colors mapped from the old palette
 const accentMap: Record<string, { bg: string; text: string }> = {
-  blue:   { bg: 'var(--cds-support-info-inverse,#4589ff)',    text: 'var(--cds-background,#fff)' },
-  green:  { bg: 'var(--cds-support-success-inverse,#24a148)', text: 'var(--cds-background,#fff)' },
-  red:    { bg: 'var(--cds-support-error-inverse,#da1e28)',   text: 'var(--cds-background,#fff)' },
-  amber:  { bg: 'var(--cds-support-warning-inverse,#f1c21b)', text: 'var(--cds-text-primary,#161616)' },
-  purple: { bg: '#8a3ffc',                                    text: '#fff' },
-  zinc:   { bg: 'var(--cds-layer-02,#e0e0e0)',               text: 'var(--cds-text-primary,#161616)' },
+  blue:   { bg: '#2563eb', text: '#ffffff' },
+  green:  { bg: '#16a34a', text: '#ffffff' },
+  red:    { bg: '#dc2626', text: '#ffffff' },
+  amber:  { bg: '#f59e0b', text: '#111827' },
+  purple: { bg: '#7c3aed', text: '#ffffff' },
+  zinc:   { bg: '#e4e4e7', text: '#111827' },
 };
+
+const SkeletonLine = ({ width, className = '' }: { width: string; className?: string }) => (
+  <div className={`h-4 bg-gray-200 animate-pulse ${className}`} style={{ width }} />
+);
+
+const SkeletonBox = ({ width, height }: { width: number; height: number }) => (
+  <div className="bg-gray-200 animate-pulse" style={{ width, height }} />
+);
 
 export const StatCard: React.FC<StatCardProps> = ({
   title,
@@ -40,95 +45,60 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   if (isLoading) {
     return (
-      <Tile className={className} style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-          <div style={{ width: '60%' }}><SkeletonText /></div>
-          <div style={{ width: 40, height: 40 }}><SkeletonPlaceholder /></div>
+      <div className={`bg-white border border-gray-200 p-6 ${className}`}>
+        <div className="flex justify-between items-start mb-4">
+          <SkeletonLine width="60%" />
+          <SkeletonBox width={40} height={40} />
         </div>
-        <div style={{ width: '40%', marginBottom: '0.5rem' }}><SkeletonText heading /></div>
-        <div style={{ width: '25%' }}><SkeletonText /></div>
-      </Tile>
+        <SkeletonLine width="40%" className="mb-2" />
+        <SkeletonLine width="25%" />
+      </div>
     );
   }
 
   return (
-    <Tile
-      className={className}
-      style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden' }}
-    >
+    <div className={`relative overflow-hidden bg-white border border-gray-200 p-6 ${className}`}>
       {/* Left accent bar */}
-      <div style={{
-        position: 'absolute',
-        top: 0, left: 0,
-        width: 4,
-        height: '100%',
-        background: accent.bg,
-      }} />
+      <div className="absolute top-0 left-0 w-1 h-full" style={{ background: accent.bg }} />
 
-      <div style={{ paddingLeft: '0.5rem' }}>
+      <div className="pl-2">
         {/* Header row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-          <p style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            color: 'var(--cds-text-secondary, #525252)',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            margin: 0,
-          }}>
+        <div className="flex justify-between items-start mb-3">
+          <p className="text-xs font-semibold text-gray-500 tracking-wider uppercase">
             {title}
           </p>
           {icon && (
-            <div style={{
-              width: 40, height: 40,
-              background: accent.bg,
-              color: accent.text,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}>
+            <div
+              className="w-10 h-10 flex items-center justify-center flex-shrink-0"
+              style={{ background: accent.bg, color: accent.text }}
+            >
               {icon}
             </div>
           )}
         </div>
 
         {/* Value */}
-        <p style={{
-          fontSize: '2rem',
-          fontWeight: 300,
-          color: 'var(--cds-text-primary, #161616)',
-          fontVariantNumeric: 'tabular-nums',
-          lineHeight: 1.1,
-          margin: '0 0 0.5rem',
-        }}>
+        <p className="text-3xl font-light text-gray-900 tabular-nums leading-tight mb-2">
           {value}
         </p>
 
         {/* Trend / subtitle */}
         {(trend || subtitle) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div className="flex items-center gap-2 flex-wrap">
             {trend && (
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: trend.isPositive
-                  ? 'var(--cds-support-success, #24a148)'
-                  : 'var(--cds-support-error, #da1e28)',
-              }}>
+              <span className={`inline-flex items-center gap-1 text-xs font-semibold ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
                 {trend.isPositive ? '↑' : '↓'}
                 {Math.abs(trend.value)}%
               </span>
             )}
             {subtitle && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)' }}>
+              <span className="text-xs text-gray-500">
                 {subtitle}
               </span>
             )}
           </div>
         )}
       </div>
-    </Tile>
+    </div>
   );
 };

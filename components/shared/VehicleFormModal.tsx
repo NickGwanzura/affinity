@@ -1,7 +1,6 @@
 import React from 'react';
-import { Stack, TextInput } from '@carbon/react';
 import CarbonFormModal from './CarbonFormModal';
-import { Button } from '../ui';
+import { Button, Stack, TextInput } from '../ui';
 
 export interface VehicleFormValue {
   vin: string;

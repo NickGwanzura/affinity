@@ -46,12 +46,8 @@ async function listApprovals(res: VercelResponse) {
       u.role,
       u.access_role,
       u.status,
-      u.tenant_id,
-      u.created_at,
-      t.name AS tenant_name,
-      t.status AS tenant_status
+      u.created_at
     FROM user_profiles u
-    LEFT JOIN tenants t ON u.tenant_id = t.id
     ORDER BY u.created_at DESC
   `;
 
@@ -69,7 +65,6 @@ async function listApprovals(res: VercelResponse) {
   }
 
   const pendingUsers = (users as any[]).filter((user) => String(user.status || '').toLowerCase() === 'pending');
-  const pendingTenants = (users as any[]).filter((user) => String(user.tenant_status || '').toLowerCase() === 'pending');
   const pendingRequests = registrationRequests.filter((request) => String(request.status || '').toLowerCase() === 'pending');
 
   return res.status(200).json({
@@ -77,7 +72,6 @@ async function listApprovals(res: VercelResponse) {
     pendingUsers,
     pendingRequests,
     users,
-    tenantReviewSignals: pendingTenants.length,
   });
 }
 
@@ -88,7 +82,7 @@ async function reviewUser(authReq: AuthenticatedRequest, req: VercelRequest, res
   if (!['approve', 'reject'].includes(action)) return apiError(res, 400, 'Invalid action');
 
   const existingRows = await sql`
-    SELECT id, email, access_role, tenant_id, status
+    SELECT id, email, access_role, status
     FROM user_profiles
     WHERE id = ${userId}::uuid
     LIMIT 1
@@ -99,23 +93,15 @@ async function reviewUser(authReq: AuthenticatedRequest, req: VercelRequest, res
     id: string;
     email: string;
     access_role: string;
-    tenant_id: string | null;
     status: string;
   };
-
-  if (existing.access_role === 'super_admin' && existing.tenant_id) {
-    return apiError(res, 400, 'super_admin must not have tenant_id');
-  }
-  if (existing.access_role !== 'super_admin' && !existing.tenant_id) {
-    return apiError(res, 400, 'User not linked to tenant');
-  }
 
   const nextStatus = action === 'approve' ? 'Active' : 'Inactive';
   const rows = await sql`
     UPDATE user_profiles
     SET status = ${nextStatus}, updated_at = NOW()
     WHERE id = ${userId}::uuid
-    RETURNING id, name, email, role, access_role, status, tenant_id, created_at, updated_at
+    RETURNING id, name, email, role, access_role, status, created_at, updated_at
   `;
 
   if (rows.length === 0) return apiError(res, 404, 'User not found');

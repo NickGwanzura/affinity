@@ -1,23 +1,23 @@
 /* global process */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { 
+import {
   AuthenticatedRequest,
   verifyToken,
-  setSecurityHeaders, 
-  handleCors, 
-  apiError 
+  setSecurityHeaders,
+  handleCors,
+  apiError,
 } from './_middleware.js';
 import { checkRateLimit } from './_db.js';
 import { logAuditEvent } from './_audit.js';
-import { 
-  authenticateUser, 
-  changePassword, 
+import {
+  authenticateUser,
+  changePassword,
   createPasswordResetRequest,
   resetPassword,
-  getUserById
+  getUserById,
 } from './_auth.js';
-import { isEmailTransportConfigured, sendPasswordResetEmail } from './_email.js';
+import { isEmailTransportConfigured, sendPasswordResetEmail } from './_email.tsx';
 import {
   ChangePasswordSchema,
   ForgotPasswordSchema,
@@ -26,17 +26,17 @@ import {
   ResetPasswordSchema,
 } from './_schemas.js';
 
-const normaliseAccessRole = (raw: unknown, role: string): 'super_admin' | 'tenant_admin' | 'user' => {
-  if (raw === 'super_admin' || raw === 'tenant_admin' || raw === 'user') {
+const normaliseAccessRole = (raw: unknown, role: string): 'super_admin' | 'admin' | 'user' => {
+  if (raw === 'super_admin' || raw === 'admin' || raw === 'user') {
     return raw;
   }
-  return role === 'Admin' ? 'tenant_admin' : 'user';
+  return role === 'Admin' ? 'admin' : 'user';
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
-  
+
   try {
     switch (req.method) {
       case 'GET':
@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       case 'POST': {
         const { action } = req.query;
-        
+
         switch (action) {
           case 'login':
             return await login(req, res);
@@ -63,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return apiError(res, 400, 'Invalid action');
         }
       }
-        
+
       default:
         apiError(res, 405, 'Method not allowed');
     }
@@ -80,7 +80,7 @@ async function login(req: VercelRequest, res: VercelResponse) {
     if (!checkRateLimit(`login:${clientIp}`, 5, 60000)) {
       return apiError(res, 429, 'Too many login attempts. Please try again later.');
     }
-    
+
     const result = await authenticateUser(email, password);
 
     if (result.success === false) {
@@ -106,10 +106,6 @@ async function login(req: VercelRequest, res: VercelResponse) {
         return apiError(res, 403, failure.message);
       }
 
-      if (failure.reason === 'TENANT_LINK_MISSING') {
-        return apiError(res, 400, failure.message);
-      }
-
       return apiError(res, 401, failure.message);
     }
 
@@ -124,10 +120,10 @@ async function login(req: VercelRequest, res: VercelResponse) {
         role: result.user.role,
       },
     });
-    
+
     res.status(200).json({
       token: result.token,
-      user: result.user
+      user: result.user,
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -156,7 +152,7 @@ async function changePasswordHandler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (userId && userId !== authReq.user.id) {
-      return apiError(res, 403, 'Cannot change another user\'s password');
+      return apiError(res, 403, "Cannot change another user's password");
     }
 
     await changePassword(authReq.user.id, currentPassword, newPassword);
@@ -168,7 +164,7 @@ async function changePasswordHandler(req: VercelRequest, res: VercelResponse) {
       tableName: 'user_profiles',
       recordId: authReq.user.id,
     });
-    
+
     res.status(200).json({ message: 'Password changed successfully' });
   } catch (error) {
     if (error instanceof Error) {
@@ -181,7 +177,7 @@ async function changePasswordHandler(req: VercelRequest, res: VercelResponse) {
 async function forgotPassword(req: VercelRequest, res: VercelResponse) {
   try {
     const { email } = ForgotPasswordSchema.parse(req.body);
-    
+
     // Rate limiting
     const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (!checkRateLimit(`forgot:${clientIp}`, 3, 3600000)) {
@@ -212,13 +208,13 @@ async function forgotPassword(req: VercelRequest, res: VercelResponse) {
     }
 
     if (process.env.NODE_ENV === 'development' && resetRequest?.token) {
-      res.status(200).json({ 
+      res.status(200).json({
         message: 'If an account exists, a reset email has been sent',
-        dev_token: resetRequest.token 
+        dev_token: resetRequest.token,
       });
     } else {
-      res.status(200).json({ 
-        message: 'If an account exists, a reset email has been sent'
+      res.status(200).json({
+        message: 'If an account exists, a reset email has been sent',
       });
     }
   } catch (error) {
@@ -232,7 +228,7 @@ async function forgotPassword(req: VercelRequest, res: VercelResponse) {
 async function resetPasswordHandler(req: VercelRequest, res: VercelResponse) {
   try {
     const { token, newPassword } = ResetPasswordSchema.parse(req.body);
-    
+
     await resetPassword(token, newPassword);
 
     await logAuditEvent({
@@ -241,7 +237,7 @@ async function resetPasswordHandler(req: VercelRequest, res: VercelResponse) {
       tableName: 'password_resets',
       newData: { token },
     });
-    
+
     res.status(200).json({ message: 'Password reset successfully' });
   } catch (error) {
     if (error instanceof Error) {
@@ -273,9 +269,7 @@ async function me(req: VercelRequest, res: VercelResponse) {
       role: user.role,
       status: user.status,
       accessRole: normaliseAccessRole((user as any).access_role, user.role),
-      tenantId: (user as any).tenant_id ?? null,
-      tenantStatus: (user as any).tenant_status ?? null,
-      tenantName: (user as any).tenant_name ?? null,
+      forcePasswordChange: !!user.force_password_change,
     });
   } catch (error) {
     return apiError(res, 500, 'Failed to load session', error);

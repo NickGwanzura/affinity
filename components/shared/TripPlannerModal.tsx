@@ -1,8 +1,7 @@
 import React from 'react';
-import { Select, SelectItem, Stack, TextArea, TextInput } from '@carbon/react';
 import type { AppUser, TripStatus, Vehicle } from '../../types';
 import CarbonFormModal from './CarbonFormModal';
-import { Button } from '../ui';
+import { Button, Select, SelectItem, Stack, TextArea, TextInput } from '../ui';
 
 export type TripFormValue = {
   title: string;

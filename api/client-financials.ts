@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   AuthenticatedRequest,
   apiError,
-  getTenantId,
   handleCors,
   requireRole,
   setSecurityHeaders,
@@ -43,26 +42,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!(await verifyToken(authReq, res))) return;
 
   try {
-    const tenantId = getTenantId(req);
     const { action } = req.query;
 
     switch (req.method) {
       case 'GET':
         if (action === 'balance') {
-          return await getClientBalance(authReq, res, tenantId);
+          return await getClientBalance(authReq, res);
         }
         if (action === 'ledger') {
-          return await getClientLedger(authReq, res, tenantId);
+          return await getClientLedger(authReq, res);
         }
         if (action === 'all-balances') {
-          return await getAllClientBalances(authReq, res, tenantId);
+          return await getAllClientBalances(authReq, res);
         }
         return apiError(res, 400, 'Invalid action. Use: balance, ledger, or all-balances');
 
       case 'POST':
         if (action === 'recalculate') {
           if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-          return await recalculateClientBalance(authReq, res, tenantId);
+          return await recalculateClientBalance(authReq, res);
         }
         return apiError(res, 400, 'Invalid action. Use: recalculate');
 
@@ -79,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
  * GET /api/client-financials?action=balance&clientId=xxx
  * Returns the unified balance for a single client
  */
-async function getClientBalance(req: AuthenticatedRequest, res: VercelResponse, _tenantId: string) {
+async function getClientBalance(req: AuthenticatedRequest, res: VercelResponse) {
   const { clientId } = req.query;
 
   if (!clientId || typeof clientId !== 'string') {
@@ -141,7 +139,7 @@ async function getClientBalance(req: AuthenticatedRequest, res: VercelResponse, 
  * GET /api/client-financials?action=ledger&clientId=xxx&from=yyyy-mm-dd&to=yyyy-mm-dd
  * Returns the ledger entries for a client with running balance
  */
-async function getClientLedger(req: AuthenticatedRequest, res: VercelResponse, _tenantId: string) {
+async function getClientLedger(req: AuthenticatedRequest, res: VercelResponse) {
   const { clientId, from, to } = req.query;
 
   if (!clientId || typeof clientId !== 'string') {
@@ -237,7 +235,7 @@ async function getClientLedger(req: AuthenticatedRequest, res: VercelResponse, _
  * GET /api/client-financials?action=all-balances&minBalance=xxx
  * Returns balances for all clients, optionally filtered
  */
-async function getAllClientBalances(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function getAllClientBalances(req: AuthenticatedRequest, res: VercelResponse) {
   const { minBalance, hasOutstanding, search } = req.query;
 
   try {
@@ -268,7 +266,6 @@ async function getAllClientBalances(req: AuthenticatedRequest, res: VercelRespon
         FROM public.invoices
         WHERE status != 'Cancelled'
           AND client_id IS NOT NULL
-          AND tenant_id = ${tenantId}::uuid
         GROUP BY client_id
       ) inv ON c.id = inv.client_id
       LEFT JOIN (
@@ -279,7 +276,6 @@ async function getAllClientBalances(req: AuthenticatedRequest, res: VercelRespon
         WHERE type = 'Inbound'
           AND client_id IS NOT NULL
           AND (is_deleted = false OR is_deleted IS NULL)
-          AND tenant_id = ${tenantId}::uuid
         GROUP BY client_id
       ) pay ON c.id = pay.client_id
       WHERE c.is_active = true
@@ -340,7 +336,7 @@ async function getAllClientBalances(req: AuthenticatedRequest, res: VercelRespon
  * POST /api/client-financials?action=recalculate&clientId=xxx
  * Force recalculation of client balance (admin only)
  */
-async function recalculateClientBalance(req: AuthenticatedRequest, res: VercelResponse, _tenantId: string) {
+async function recalculateClientBalance(req: AuthenticatedRequest, res: VercelResponse) {
   const { clientId } = req.query;
 
   if (!clientId || typeof clientId !== 'string') {

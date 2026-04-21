@@ -4,7 +4,6 @@ import { z } from 'zod';
 import {
   AuthenticatedRequest,
   apiError,
-  getTenantId,
   handleCors,
   requireRole,
   setSecurityHeaders,
@@ -151,7 +150,6 @@ async function replaceAllocationsForPayment(
   paymentAmountUsd: number,
   allocations: Array<{ invoice_id?: string; amount_allocated: number; currency: 'USD' | 'GBP'; status?: string }>,
   clientName?: string,
-  tenantId?: string,
 ) {
   const totalAllocated = allocations.reduce((sum, allocation) => sum + allocation.amount_allocated, 0);
   
@@ -199,10 +197,10 @@ async function replaceAllocationsForPayment(
     
     await client.query(
       `
-        INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id, tenant_id)
-        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7::uuid)
+        INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id)
+        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6)
       `,
-      [paymentId, allocation.invoice_id || null, allocation.amount_allocated, allocation.currency, status, clientId, tenantId || null],
+      [paymentId, allocation.invoice_id || null, allocation.amount_allocated, allocation.currency, status, clientId],
     );
   }
 
@@ -222,25 +220,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!(await verifyToken(authReq, res))) return;
 
   try {
-    const tenantId = getTenantId(req);
     const action = typeof req.query.action === 'string' ? req.query.action : '';
     if (action === 'allocations' && req.method === 'POST') {
       if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-      return await replaceAllocations(req, res, tenantId);
+      return await replaceAllocations(req, res);
     }
 
     switch (req.method) {
       case 'GET':
-        return await listPayments(res, tenantId);
+        return await listPayments(res);
       case 'POST':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await createPayment(req, res, tenantId);
+        return await createPayment(req, res);
       case 'PUT':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await updatePayment(req, res, tenantId);
+        return await updatePayment(req, res);
       case 'DELETE':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await deletePayment(req, res, tenantId);
+        return await deletePayment(req, res);
       default:
         return apiError(res, 405, 'Method not allowed');
     }
@@ -249,12 +246,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listPayments(res: VercelResponse, tenantId: string) {
+async function listPayments(res: VercelResponse) {
   try {
     const rows = await sql`
       SELECT id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
       FROM public.payments
-      WHERE tenant_id = ${tenantId}::uuid
       ORDER BY date DESC
     `;
     return res.status(200).json(await attachAllocations(rows as PaymentRow[]));
@@ -263,7 +259,7 @@ async function listPayments(res: VercelResponse, tenantId: string) {
   }
 }
 
-async function createPayment(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
   try {
     const data = PaymentSchema.parse(req.body);
     const allocations = parseAllocationsFromBody(req.body);
@@ -286,8 +282,8 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse, ten
 
       const result = await client.query(
         `
-          INSERT INTO public.payments (reference_id, client_name, client_id, type, amount_usd, currency, method, date, status, tenant_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::uuid)
+          INSERT INTO public.payments (reference_id, client_name, client_id, type, amount_usd, currency, method, date, status)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
           RETURNING id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
         `,
         [
@@ -300,7 +296,6 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse, ten
           data.method,
           data.date,
           paymentStatus,
-          tenantId,
         ],
       );
 
@@ -308,15 +303,15 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse, ten
       
       // Handle allocations (including unallocated)
       if (allocations.length > 0) {
-        await replaceAllocationsForPayment(client, createdPayment.id, createdPayment.amount_usd, allocations, data.client_name, tenantId);
+        await replaceAllocationsForPayment(client, createdPayment.id, createdPayment.amount_usd, allocations, data.client_name);
       } else if (!hasAllocations) {
         // Create an unallocated allocation entry for tracking
         await client.query(
           `
-            INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id, tenant_id)
-            VALUES ($1::uuid, NULL, $2, $3, 'unallocated', $4, $5::uuid)
+            INSERT INTO public.payment_allocations (payment_id, invoice_id, amount_allocated, currency, status, client_id)
+            VALUES ($1::uuid, NULL, $2, $3, 'unallocated', $4)
           `,
-          [createdPayment.id, createdPayment.amount_usd, data.currency || 'USD', clientId, tenantId],
+          [createdPayment.id, createdPayment.amount_usd, data.currency || 'USD', clientId],
         );
       }
 
@@ -355,7 +350,7 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse, ten
   }
 }
 
-async function updatePayment(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
   try {
     const data = PaymentUpdateSchema.parse(req.body);
     const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
@@ -365,7 +360,7 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse, ten
 
     // Get old data for audit
     const oldPaymentRows = await sql`
-      SELECT * FROM public.payments WHERE id = ${paymentId}::uuid AND tenant_id = ${tenantId}::uuid
+      SELECT * FROM public.payments WHERE id = ${paymentId}::uuid
     `;
     const oldPayment = oldPaymentRows[0];
 
@@ -415,10 +410,8 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse, ten
       paramIdx++;
 
       values.push(paymentId);
-      paramIdx++;
-      values.push(tenantId);
       const result = await client.query(
-        `UPDATE public.payments SET ${updates.join(', ')} WHERE id = $${paramIdx - 1}::uuid AND tenant_id = $${paramIdx}::uuid RETURNING id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status`,
+        `UPDATE public.payments SET ${updates.join(', ')} WHERE id = $${paramIdx}::uuid RETURNING id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status`,
         values,
       );
 
@@ -430,7 +423,7 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse, ten
       const clientName = data.client_name || updatedPayment.client_name;
       
       if (Array.isArray((req.body as { allocations?: unknown[] } | undefined)?.allocations)) {
-        await replaceAllocationsForPayment(client, updatedPayment.id, updatedPayment.amount_usd, allocations, clientName, tenantId);
+        await replaceAllocationsForPayment(client, updatedPayment.id, updatedPayment.amount_usd, allocations, clientName);
       }
 
       // Also update invoice status for legacy payments (reference_id matches invoice)
@@ -464,7 +457,7 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse, ten
   }
 }
 
-async function replaceAllocations(req: VercelRequest, res: VercelResponse, tenantId: string) {
+async function replaceAllocations(req: VercelRequest, res: VercelResponse) {
   const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!paymentId) return apiError(res, 400, 'Missing payment id');
 
@@ -476,12 +469,12 @@ async function replaceAllocations(req: VercelRequest, res: VercelResponse, tenan
     const paymentRows = await sql`
       SELECT amount_usd, client_name
       FROM public.payments
-      WHERE id = ${paymentId}::uuid AND tenant_id = ${tenantId}::uuid
+      WHERE id = ${paymentId}::uuid
     `;
     if (paymentRows.length === 0) return apiError(res, 404, 'Payment not found');
 
     await withTransaction(async (client) => {
-      await replaceAllocationsForPayment(client, paymentId, Number(paymentRows[0].amount_usd), allocations, paymentRows[0].client_name, tenantId);
+      await replaceAllocationsForPayment(client, paymentId, Number(paymentRows[0].amount_usd), allocations, paymentRows[0].client_name);
       
       // Update payment status based on allocations
       const hasInvoiceAllocations = allocations.some(a => a.invoice_id);
@@ -507,13 +500,13 @@ async function replaceAllocations(req: VercelRequest, res: VercelResponse, tenan
   }
 }
 
-async function deletePayment(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function deletePayment(req: AuthenticatedRequest, res: VercelResponse) {
   const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!paymentId) return apiError(res, 400, 'Missing payment id');
 
   // Get old data for audit before deletion
   const oldPaymentRows = await sql`
-    SELECT * FROM public.payments WHERE id = ${paymentId}::uuid AND tenant_id = ${tenantId}::uuid
+    SELECT * FROM public.payments WHERE id = ${paymentId}::uuid
   `;
   const oldPayment = oldPaymentRows[0];
   if (!oldPayment) return apiError(res, 404, 'Payment not found');
@@ -530,8 +523,8 @@ async function deletePayment(req: AuthenticatedRequest, res: VercelResponse, ten
 
     // Delete the payment
     const deleteResult = await client.query(
-      'DELETE FROM public.payments WHERE id = $1::uuid AND tenant_id = $2::uuid RETURNING id',
-      [paymentId, tenantId]
+      'DELETE FROM public.payments WHERE id = $1::uuid RETURNING id',
+      [paymentId]
     );
 
     if (deleteResult.rows.length === 0) {

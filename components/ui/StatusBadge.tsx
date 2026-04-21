@@ -1,5 +1,4 @@
 import React from 'react';
-import { Tag } from '@carbon/react';
 
 export type StatusType =
   | 'active' | 'inactive' | 'pending' | 'approved' | 'rejected'
@@ -9,76 +8,70 @@ export type StatusType =
   | 'high' | 'medium' | 'low'
   | 'success' | 'error' | 'warning' | 'info';
 
-type CarbonTagType =
-  | 'red' | 'magenta' | 'purple' | 'blue' | 'cyan' | 'teal'
-  | 'green' | 'gray' | 'warm-gray' | 'cool-gray'
-  | 'high-contrast' | 'outline';
-
 interface StatusBadgeProps {
   status:        StatusType | string;
   size?:         'sm' | 'md' | 'lg';
   className?:    string;
-  customColors?: { bg: string; text: string };  // kept for API compat; ignored in Carbon
+  customColors?: { bg: string; text: string };
 }
 
-// Map status strings → Carbon Tag type + display label
-const statusMap: Record<string, { type: CarbonTagType; label: string }> = {
-  // User / vehicle
-  active:       { type: 'green',     label: 'Active' },
-  inactive:     { type: 'gray',      label: 'Inactive' },
-  pending:      { type: 'warm-gray', label: 'Pending' },
-  // Financial
-  paid:         { type: 'green',     label: 'Paid' },
-  overdue:      { type: 'red',       label: 'Overdue' },
-  draft:        { type: 'cool-gray', label: 'Draft' },
-  sent:         { type: 'blue',      label: 'Sent' },
-  cancelled:    { type: 'gray',      label: 'Cancelled' },
-  // Request
-  approved:     { type: 'green',     label: 'Approved' },
-  accepted:     { type: 'green',     label: 'Accepted' },
-  rejected:     { type: 'red',       label: 'Rejected' },
-  // Progress
-  completed:    { type: 'teal',      label: 'Completed' },
-  'in-progress':{ type: 'blue',      label: 'In Progress' },
-  'on-hold':    { type: 'warm-gray', label: 'On Hold' },
-  // Priority
-  high:         { type: 'red',       label: 'High' },
-  medium:       { type: 'warm-gray', label: 'Medium' },
-  low:          { type: 'cyan',      label: 'Low' },
-  // Semantic
-  success:      { type: 'green',     label: 'Success' },
-  error:        { type: 'red',       label: 'Error' },
-  warning:      { type: 'warm-gray', label: 'Warning' },
-  info:         { type: 'blue',      label: 'Info' },
+const statusMap: Record<string, { classes: string; label: string }> = {
+  active:       { classes: 'bg-green-100 text-green-800', label: 'Active' },
+  inactive:     { classes: 'bg-gray-100 text-gray-700', label: 'Inactive' },
+  pending:      { classes: 'bg-amber-100 text-amber-800', label: 'Pending' },
+  paid:         { classes: 'bg-green-100 text-green-800', label: 'Paid' },
+  overdue:      { classes: 'bg-red-100 text-red-800', label: 'Overdue' },
+  draft:        { classes: 'bg-gray-100 text-gray-600', label: 'Draft' },
+  sent:         { classes: 'bg-blue-100 text-blue-800', label: 'Sent' },
+  cancelled:    { classes: 'bg-gray-100 text-gray-600', label: 'Cancelled' },
+  approved:     { classes: 'bg-green-100 text-green-800', label: 'Approved' },
+  accepted:     { classes: 'bg-green-100 text-green-800', label: 'Accepted' },
+  rejected:     { classes: 'bg-red-100 text-red-800', label: 'Rejected' },
+  completed:    { classes: 'bg-teal-100 text-teal-800', label: 'Completed' },
+  'in-progress':{ classes: 'bg-blue-100 text-blue-800', label: 'In Progress' },
+  'on-hold':    { classes: 'bg-amber-100 text-amber-800', label: 'On Hold' },
+  high:         { classes: 'bg-red-100 text-red-800', label: 'High' },
+  medium:       { classes: 'bg-amber-100 text-amber-800', label: 'Medium' },
+  low:          { classes: 'bg-cyan-100 text-cyan-800', label: 'Low' },
+  success:      { classes: 'bg-green-100 text-green-800', label: 'Success' },
+  error:        { classes: 'bg-red-100 text-red-800', label: 'Error' },
+  warning:      { classes: 'bg-amber-100 text-amber-800', label: 'Warning' },
+  info:         { classes: 'bg-blue-100 text-blue-800', label: 'Info' },
 };
 
-// Status aliases kept for backward compatibility
 const statusAliases: Record<string, string> = {
   'on leave':   'on-hold',
   'terminated': 'inactive',
   'generated':  'info',
 };
 
+const sizeClasses = { sm: 'px-2 py-0.5 text-xs', md: 'px-2.5 py-0.5 text-xs', lg: 'px-3 py-1 text-sm' };
+
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
   status,
   size      = 'md',
   className = '',
+  customColors,
 }) => {
   const normalised = status.toLowerCase().trim();
   const key        = statusAliases[normalised] ?? normalised;
-  const config     = statusMap[key] ?? { type: 'gray' as CarbonTagType, label: status };
-  // Carbon Tag accepts 'sm' | 'md' — map 'lg' → 'md'
-  const carbonSize = size === 'lg' ? ('md' as const) : (size as 'sm' | 'md');
+  const config     = statusMap[key] ?? { classes: 'bg-gray-100 text-gray-600', label: status };
+
+  if (customColors) {
+    return (
+      <span
+        className={`inline-flex items-center font-medium ${sizeClasses[size]} ${className}`}
+        style={{ backgroundColor: customColors.bg, color: customColors.text, cursor: 'default' }}
+      >
+        {config.label}
+      </span>
+    );
+  }
 
   return (
-    <Tag
-      type={config.type}
-      size={carbonSize}
-      className={className}
-      style={{ cursor: 'default' }}
-    >
+    <span className={`inline-flex items-center font-medium ${sizeClasses[size]} ${config.classes} ${className}`} style={{ cursor: 'default' }}>
       {config.label}
-    </Tag>
+    </span>
   );
 };
 
@@ -91,15 +84,15 @@ interface StatusDotProps {
 }
 
 const dotColorMap: Record<string, string> = {
-  active:     'var(--cds-support-success, #24a148)',
-  inactive:   'var(--cds-text-disabled, #8d8d8d)',
-  pending:    'var(--cds-support-warning, #f1c21b)',
-  paid:       'var(--cds-support-success, #24a148)',
-  overdue:    'var(--cds-support-error, #da1e28)',
-  error:      'var(--cds-support-error, #da1e28)',
-  warning:    'var(--cds-support-warning, #f1c21b)',
-  success:    'var(--cds-support-success, #24a148)',
-  info:       'var(--cds-support-info, #4589ff)',
+  active:     '#16a34a',
+  inactive:   '#9ca3af',
+  pending:    '#f59e0b',
+  paid:       '#16a34a',
+  overdue:    '#dc2626',
+  error:      '#dc2626',
+  warning:    '#f59e0b',
+  success:    '#16a34a',
+  info:       '#2563eb',
 };
 
 const dotSizePx = { sm: 6, md: 8, lg: 12 };
@@ -112,20 +105,17 @@ export const StatusDot: React.FC<StatusDotProps> = ({
 }) => {
   const normalised = status.toLowerCase().trim();
   const key        = statusAliases[normalised] ?? normalised;
-  const color      = dotColorMap[key] ?? 'var(--cds-text-disabled, #8d8d8d)';
+  const color      = dotColorMap[key] ?? '#9ca3af';
   const px         = dotSizePx[size];
 
   return (
     <span
-      className={className}
+      className={`inline-block rounded-full flex-shrink-0 ${className}`}
       style={{
-        display: 'inline-block',
         width: px,
         height: px,
-        borderRadius: '50%',
         background: color,
         animation: pulse ? 'pulse 1.5s ease-in-out infinite' : undefined,
-        flexShrink: 0,
       }}
     />
   );

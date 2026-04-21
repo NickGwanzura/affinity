@@ -1,5 +1,4 @@
 import React from 'react';
-import { Tag, Tile } from '@carbon/react';
 
 type Tone = 'blue' | 'green' | 'red' | 'amber' | 'purple' | 'teal' | 'gray';
 
@@ -26,29 +25,29 @@ interface RankedMetricItem {
   tone?: Tone;
 }
 
-const toneMap: Record<Tone, { bar: string; tag: React.ComponentProps<typeof Tag>['type'] }> = {
-  blue: { bar: 'var(--cds-support-info, #0f62fe)', tag: 'blue' },
-  green: { bar: 'var(--cds-support-success, #24a148)', tag: 'green' },
-  red: { bar: 'var(--cds-support-error, #da1e28)', tag: 'red' },
-  amber: { bar: 'var(--cds-support-warning, #f1c21b)', tag: 'warm-gray' },
-  purple: { bar: '#8a3ffc', tag: 'purple' },
-  teal: { bar: 'var(--cds-support-success, #24a148)', tag: 'teal' },
-  gray: { bar: 'var(--cds-border-subtle, #c6c6c6)', tag: 'gray' },
+const toneMap: Record<Tone, { bar: string; tagClasses: string }> = {
+  blue:   { bar: '#2563eb', tagClasses: 'bg-blue-100 text-blue-800' },
+  green:  { bar: '#16a34a', tagClasses: 'bg-green-100 text-green-800' },
+  red:    { bar: '#dc2626', tagClasses: 'bg-red-100 text-red-800' },
+  amber:  { bar: '#f59e0b', tagClasses: 'bg-amber-100 text-amber-800' },
+  purple: { bar: '#7c3aed', tagClasses: 'bg-purple-100 text-purple-800' },
+  teal:   { bar: '#14b8a6', tagClasses: 'bg-teal-100 text-teal-800' },
+  gray:   { bar: '#d1d5db', tagClasses: 'bg-gray-100 text-gray-700' },
 };
 
 export const InsightPanel: React.FC<InsightPanelProps> = ({ title, subtitle, action, children }) => (
-  <Tile style={{ padding: '1.25rem', minHeight: '100%' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1rem' }}>
+  <div className="bg-white border border-gray-200 p-5 min-h-full">
+    <div className="flex justify-between items-start gap-4 mb-4">
       <div>
-        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--cds-text-primary, #161616)' }}>{title}</h3>
+        <h3 className="text-base font-semibold text-gray-900 m-0">{title}</h3>
         {subtitle && (
-          <p style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: 'var(--cds-text-secondary, #525252)' }}>{subtitle}</p>
+          <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
         )}
       </div>
       {action}
     </div>
     {children}
-  </Tile>
+  </div>
 );
 
 export const MetricBarList: React.FC<{ items: MetricBarItem[]; emptyMessage?: string }> = ({
@@ -56,29 +55,29 @@ export const MetricBarList: React.FC<{ items: MetricBarItem[]; emptyMessage?: st
   emptyMessage = 'No data available.',
 }) => {
   if (!items.length) {
-    return <p style={{ margin: 0, color: 'var(--cds-text-secondary, #525252)', fontSize: '0.875rem' }}>{emptyMessage}</p>;
+    return <p className="m-0 text-gray-500 text-sm">{emptyMessage}</p>;
   }
 
   return (
-    <div style={{ display: 'grid', gap: '1rem' }}>
+    <div className="grid gap-4">
       {items.map((item) => {
         const tone = toneMap[item.tone || 'blue'];
         const percent = Math.max(0, Math.min(100, item.percent || 0));
 
         return (
-          <div key={`${item.label}-${item.value}`} style={{ display: 'grid', gap: '0.375rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--cds-text-primary, #161616)' }}>{item.label}</span>
-                {item.tagLabel && <Tag type={tone.tag}>{item.tagLabel}</Tag>}
+          <div key={`${item.label}-${item.value}`} className="grid gap-1.5">
+            <div className="flex justify-between items-center gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-semibold text-gray-900">{item.label}</span>
+                {item.tagLabel && <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${tone.tagClasses}`}>{item.tagLabel}</span>}
               </div>
-              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--cds-text-primary, #161616)' }}>{item.value}</span>
+              <span className="text-sm font-semibold text-gray-900">{item.value}</span>
             </div>
-            <div style={{ width: '100%', height: 8, background: 'var(--cds-layer-accent-01, #e8e8e8)' }}>
-              <div style={{ width: `${percent}%`, height: '100%', background: tone.bar }} />
+            <div className="w-full h-2 bg-gray-100">
+              <div className="h-full transition-all" style={{ width: `${percent}%`, background: tone.bar }} />
             </div>
             {item.helper && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)' }}>{item.helper}</span>
+              <span className="text-xs text-gray-500">{item.helper}</span>
             )}
           </div>
         );
@@ -92,46 +91,31 @@ export const RankedMetricList: React.FC<{ items: RankedMetricItem[]; emptyMessag
   emptyMessage = 'No ranked data available.',
 }) => {
   if (!items.length) {
-    return <p style={{ margin: 0, color: 'var(--cds-text-secondary, #525252)', fontSize: '0.875rem' }}>{emptyMessage}</p>;
+    return <p className="m-0 text-gray-500 text-sm">{emptyMessage}</p>;
   }
 
   return (
-    <div style={{ display: 'grid', gap: '0.75rem' }}>
+    <div className="grid gap-3">
       {items.map((item, index) => {
         const tone = toneMap[item.tone || 'blue'];
 
         return (
           <div
             key={`${item.label}-${index}`}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '2rem 1fr auto',
-              gap: '0.75rem',
-              alignItems: 'center',
-              padding: '0.875rem',
-              background: 'var(--cds-layer-hover, #f4f4f4)',
-            }}
+            className="grid items-center gap-3 p-3.5 bg-gray-50"
+            style={{ gridTemplateColumns: '2rem 1fr auto' }}
           >
             <div
-              style={{
-                width: '2rem',
-                height: '2rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: tone.bar,
-                color: '#fff',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-              }}
+              className="w-8 h-8 flex items-center justify-center text-white text-xs font-bold"
+              style={{ background: tone.bar }}
             >
               {index + 1}
             </div>
             <div>
-              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--cds-text-primary, #161616)' }}>{item.label}</div>
-              {item.helper && <div style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)' }}>{item.helper}</div>}
+              <div className="text-sm font-semibold text-gray-900">{item.label}</div>
+              {item.helper && <div className="text-xs text-gray-500">{item.helper}</div>}
             </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--cds-text-primary, #161616)', textAlign: 'right' }}>{item.value}</div>
+            <div className="text-sm font-semibold text-gray-900 text-right">{item.value}</div>
           </div>
         );
       })}

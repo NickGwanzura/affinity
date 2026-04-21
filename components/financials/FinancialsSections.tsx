@@ -1,42 +1,16 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
-  DataTable,
-  Table,
-  TableHead,
-  TableRow,
-  TableHeader,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableToolbar,
-  TableToolbarContent,
-  TableToolbarSearch,
-  Button,
-  Tag,
-  Tabs,
-  Tab,
-  TabList,
-  TabPanels,
-  TabPanel,
-  TextInput,
-  OverflowMenu,
-  OverflowMenuItem,
-  Tile,
-  Grid,
-  Column,
-  Dropdown,
-} from '@carbon/react';
-import {
-  Add,
-  DocumentDownload,
-  View,
-  Edit,
-  TrashCan,
+  Plus,
+  Download,
+  Pencil,
+  Trash2,
   Receipt,
-  DocumentAdd,
-  Money,
-  ChartBar,
-} from '@carbon/icons-react';
+  FilePlus,
+  DollarSign,
+  BarChart3,
+  MoreVertical,
+} from 'lucide-react';
+import { Button, IconButton, StatusBadge, DataTableWrapper } from '../ui';
 import type { Invoice, Payment, Quote, Receipt as ReceiptType } from '../../types';
 
 export type FinancialsTab = 'quotes' | 'invoices' | 'payments' | 'receipts' | 'statements';
@@ -50,35 +24,88 @@ const formatMoney = (amount: number, currency?: string): string => {
   return `${symbol}${(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
-const getStatusTagType = (status: string): React.ComponentProps<typeof Tag>['type'] => {
+const getStatusTagType = (status: string): string => {
   switch (status) {
     case 'Paid':
     case 'Accepted':
-      return 'green';
+      return 'paid';
     case 'Sent':
     case 'Active':
-      return 'blue';
+      return 'sent';
     case 'Draft':
     case 'Pending':
-      return 'warm-gray';
+      return 'draft';
     case 'Overdue':
-      return 'red';
+      return 'overdue';
     case 'Rejected':
     case 'Cancelled':
-      return 'high-contrast';
+      return 'cancelled';
     default:
-      return 'gray';
+      return 'info';
   }
 };
 
 const getPaymentStatusTag = (payment: Payment): React.ReactNode => {
   if (payment.status === 'unallocated' || payment.reference_id?.startsWith('UNALLOC-')) {
-    return <Tag type="warm-gray" size="sm">Unallocated</Tag>;
+    return <StatusBadge status="pending" size="sm" />;
   }
   if (payment.type === 'Inbound') {
-    return <Tag type="green" size="sm">Inbound</Tag>;
+    return <StatusBadge status="success" size="sm" />;
   }
-  return <Tag type="purple" size="sm">{payment.type}</Tag>;
+  return <StatusBadge status="info" size="sm" customColors={{ bg: '#f3e8ff', text: '#7e22ce' }} />;
+};
+
+// ============================================================================
+// Action Dropdown
+// ============================================================================
+
+interface ActionItem {
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}
+
+const ActionMenu: React.FC<{ items: ActionItem[] }> = ({ items }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
+  return (
+    <div className="relative inline-block" ref={ref}>
+      <IconButton
+        icon={<MoreVertical size={16} />}
+        size="sm"
+        variant="ghost"
+        label="Actions"
+        onClick={() => setOpen((v) => !v)}
+      />
+      {open && (
+        <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 shadow-lg z-50">
+          {items.map((item, i) => (
+            <button
+              key={i}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${item.danger ? 'text-red-600' : 'text-gray-700'}`}
+              onClick={() => {
+                setOpen(false);
+                item.onClick();
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 // ============================================================================
@@ -98,14 +125,12 @@ interface FinancialsTabBarProps {
 
 export const FinancialsTabBar: React.FC<FinancialsTabBarProps> = ({ activeTab, onChange, counts }) => {
   const tabs: { id: FinancialsTab; label: string; icon: React.ElementType }[] = [
-    { id: 'quotes', label: 'Quotes', icon: DocumentAdd },
+    { id: 'quotes', label: 'Quotes', icon: FilePlus },
     { id: 'invoices', label: 'Invoices', icon: Receipt },
-    { id: 'payments', label: 'Payments', icon: Money },
-    { id: 'receipts', label: 'Receipts', icon: DocumentDownload },
-    { id: 'statements', label: 'Statements', icon: ChartBar },
+    { id: 'payments', label: 'Payments', icon: DollarSign },
+    { id: 'receipts', label: 'Receipts', icon: Download },
+    { id: 'statements', label: 'Statements', icon: BarChart3 },
   ];
-
-  const activeIndex = tabs.findIndex(t => t.id === activeTab);
 
   const getCount = (id: FinancialsTab): number | undefined => {
     if (id === 'quotes') return counts.quotes;
@@ -116,32 +141,32 @@ export const FinancialsTabBar: React.FC<FinancialsTabBarProps> = ({ activeTab, o
   };
 
   return (
-    <Tabs
-      selectedIndex={activeIndex}
-      onChange={({ selectedIndex }) => onChange(tabs[selectedIndex].id)}
-    >
-      <TabList aria-label="Financial sections">
+    <div className="border-b border-gray-200">
+      <div className="flex overflow-x-auto">
         {tabs.map((tab) => {
           const count = getCount(tab.id);
+          const isActive = activeTab === tab.id;
+          const Icon = tab.icon;
           return (
-            <Tab key={tab.id} renderIcon={tab.icon}>
+            <button
+              key={tab.id}
+              onClick={() => onChange(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                isActive
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+              }`}
+            >
+              <Icon size={16} />
               {tab.label}
               {typeof count === 'number' && (
-                <span
-                  style={{
-                    marginLeft: 'var(--cds-spacing-02, 0.25rem)',
-                    fontSize: 'var(--cds-caption-01-font-size, 0.75rem)',
-                    opacity: 0.7,
-                  }}
-                >
-                  ({count})
-                </span>
+                <span className="ml-1 text-xs opacity-70">({count})</span>
               )}
-            </Tab>
+            </button>
           );
         })}
-      </TabList>
-    </Tabs>
+      </div>
+    </div>
   );
 };
 
@@ -168,92 +193,59 @@ export const QuotesSection: React.FC<QuotesSectionProps> = ({
   onConvert,
   onDelete,
 }) => {
-  const headers = [
-    { key: 'quote_number', header: 'Quote #' },
-    { key: 'client_name', header: 'Client' },
-    { key: 'amount', header: 'Amount' },
-    { key: 'status', header: 'Status' },
-    { key: 'created', header: 'Created' },
-    { key: 'actions', header: '' },
+  const columns = [
+    {
+      key: 'quote_number',
+      header: 'Quote #',
+      width: '15%',
+      render: (row: any) => <span className="font-mono font-semibold">{row.quote_number}</span>,
+    },
+    { key: 'client_name', header: 'Client', width: '25%' },
+    {
+      key: 'amount_usd',
+      header: 'Amount',
+      width: '15%',
+      render: (row: any) => <span className="font-semibold">{formatMoney(row.amount_usd, row.currency)}</span>,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '12%',
+      render: (row: any) => <StatusBadge status={getStatusTagType(row.status)} size="sm" />,
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      width: '15%',
+      render: (row: any) => new Date(row.created_at).toLocaleDateString(),
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: '18%',
+      render: (row: any) => (
+        <ActionMenu
+          items={[
+            { label: 'Preview', onClick: () => onPreview(row as Quote) },
+            { label: 'Download PDF', onClick: () => onDownload(row as Quote) },
+            { label: 'Edit', onClick: () => onEdit(row as Quote) },
+            { label: 'Convert to Invoice', onClick: () => onConvert(row as Quote) },
+            { label: 'Delete', onClick: () => onDelete(row as Quote), danger: true },
+          ]}
+        />
+      ),
+    },
   ];
 
-  const rows = quotes.map((quote) => ({
-    id: quote.id,
-    quote_number: (
-      <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontWeight: 600 }}>
-        {quote.quote_number}
-      </span>
-    ),
-    client_name: quote.client_name,
-    amount: (
-      <span style={{ fontWeight: 600 }}>
-        {formatMoney(quote.amount_usd, quote.currency)}
-      </span>
-    ),
-    status: <Tag type={getStatusTagType(quote.status)} size="sm">{quote.status}</Tag>,
-    created: new Date(quote.created_at).toLocaleDateString(),
-    actions: (
-      <OverflowMenu flipped ariaLabel="Quote actions">
-        <OverflowMenuItem itemText="Preview" onClick={() => onPreview(quote)} />
-        <OverflowMenuItem itemText="Download PDF" onClick={() => onDownload(quote)} />
-        <OverflowMenuItem itemText="Edit" onClick={() => onEdit(quote)} />
-        <OverflowMenuItem itemText="Convert to Invoice" onClick={() => onConvert(quote)} />
-        <OverflowMenuItem itemText="Delete" isDelete onClick={() => onDelete(quote)} />
-      </OverflowMenu>
-    ),
-  }));
+  const rows = quotes.map((quote) => ({ ...quote, actions: '' })) as any[];
 
   return (
-    <DataTable rows={rows} headers={headers}>
-      {({
-        rows,
-        headers,
-        getHeaderProps,
-        getRowProps,
-        getToolbarProps,
-        onInputChange,
-      }: any) => (
-        <TableContainer>
-          <TableToolbar {...getToolbarProps()}>
-            <TableToolbarContent>
-              <TableToolbarSearch onChange={onInputChange} />
-            </TableToolbarContent>
-          </TableToolbar>
-          <Table size="md">
-            <TableHead>
-              <TableRow>
-                {headers.map((header: any) => (
-                  <TableHeader {...getHeaderProps({ header })} key={header.key}>
-                    {header.header}
-                  </TableHeader>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody {...({} as any)}>
-              {rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={headers.length} style={{ textAlign: 'center', padding: '3rem' }}>
-                    <Tile>
-                      <p style={{ color: 'var(--cds-text-secondary, #525252)' }}>
-                        No quotes found
-                      </p>
-                    </Tile>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                rows.map((row: any) => (
-                  <TableRow {...getRowProps({ row })} key={row.id}>
-                    {row.cells.map((cell: any) => (
-                      <TableCell key={cell.id}>{cell.value}</TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </DataTable>
+    <DataTableWrapper
+      rows={rows}
+      columns={columns}
+      search
+      emptyMessage="No quotes found"
+    />
   );
 };
 
@@ -288,139 +280,106 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
     (invoice) => !batchFilter || (invoice.batch || '').toLowerCase().includes(batchFilter.toLowerCase())
   );
 
-  const headers = [
-    { key: 'invoice_number', header: 'Invoice #' },
-    { key: 'client_name', header: 'Client' },
-    { key: 'batch', header: 'Batch' },
-    { key: 'amount', header: 'Amount' },
-    { key: 'status', header: 'Status' },
-    { key: 'due_date', header: 'Due Date' },
-    { key: 'actions', header: '' },
+  const columns = [
+    {
+      key: 'invoice_number',
+      header: 'Invoice #',
+      width: '18%',
+      render: (row: any) => (
+        <div>
+          <span className="font-mono font-semibold block">{row.invoice_number}</span>
+          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 mt-0.5">
+            {row.invoice_kind || 'Standard'}
+          </span>
+        </div>
+      ),
+    },
+    { key: 'client_name', header: 'Client', width: '22%' },
+    {
+      key: 'batch',
+      header: 'Batch',
+      width: '12%',
+      render: (row: any) =>
+        row.batch ? (
+          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-cyan-100 text-cyan-800">
+            {row.batch}
+          </span>
+        ) : (
+          <span className="text-gray-500">—</span>
+        ),
+    },
+    {
+      key: 'amount_usd',
+      header: 'Amount',
+      width: '12%',
+      render: (row: any) => <span className="font-semibold">{formatMoney(row.amount_usd, row.currency)}</span>,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '12%',
+      render: (row: any) => <StatusBadge status={getStatusTagType(row.status)} size="sm" />,
+    },
+    {
+      key: 'due_date',
+      header: 'Due Date',
+      width: '12%',
+      render: (row: any) => (row.due_date ? new Date(row.due_date).toLocaleDateString() : '—'),
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: '12%',
+      render: (row: any) => (
+        <ActionMenu
+          items={[
+            { label: 'Preview', onClick: () => onPreview(row as Invoice) },
+            { label: 'Download PDF', onClick: () => onDownload(row as Invoice) },
+            { label: 'Edit', onClick: () => onEdit(row as Invoice) },
+            { label: 'Delete', onClick: () => onDelete(row as Invoice), danger: true },
+          ]}
+        />
+      ),
+    },
   ];
 
-  const rows = filteredInvoices.map((invoice) => ({
-    id: invoice.id,
-    invoice_number: (
-      <div>
-        <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontWeight: 600, display: 'block' }}>
-          {invoice.invoice_number}
-        </span>
-        <Tag type="cool-gray" size="sm" style={{ marginTop: '2px' }}>
-          {invoice.invoice_kind || 'Standard'}
-        </Tag>
-      </div>
-    ),
-    client_name: invoice.client_name,
-    batch: invoice.batch ? (
-      <Tag type="cyan" size="sm">{invoice.batch}</Tag>
-    ) : (
-      <span style={{ color: 'var(--cds-text-secondary, #525252)' }}>—</span>
-    ),
-    amount: (
-      <span style={{ fontWeight: 600 }}>
-        {formatMoney(invoice.amount_usd, invoice.currency)}
-      </span>
-    ),
-    status: <Tag type={getStatusTagType(invoice.status)} size="sm">{invoice.status}</Tag>,
-    due_date: invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '—',
-    actions: (
-      <OverflowMenu flipped ariaLabel="Invoice actions">
-        <OverflowMenuItem itemText="Preview" onClick={() => onPreview(invoice)} />
-        <OverflowMenuItem itemText="Download PDF" onClick={() => onDownload(invoice)} />
-        <OverflowMenuItem itemText="Edit" onClick={() => onEdit(invoice)} />
-        <OverflowMenuItem itemText="Delete" isDelete onClick={() => onDelete(invoice)} />
-      </OverflowMenu>
-    ),
-  }));
+  const rows = filteredInvoices.map((invoice) => ({ ...invoice, actions: '' })) as any[];
 
   return (
     <div>
       {/* Batch Filter */}
-      <div
-        style={{
-          padding: 'var(--cds-spacing-04, 0.75rem) var(--cds-spacing-05, 1rem)',
-          backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
-          borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--cds-spacing-03, 0.5rem)' }}>
-          <TextInput
-            id="invoice-batch-filter"
-            labelText="Filter by batch"
-            value={batchFilter}
-            onChange={(e) => onBatchFilterChange(e.target.value)}
-            placeholder="Enter batch code..."
-            size="sm"
-          />
+      <div className="px-4 py-3 bg-gray-100 border-b border-gray-200">
+        <div className="flex items-end gap-2">
+          <div className="flex-1 max-w-xs">
+            <label htmlFor="invoice-batch-filter" className="block text-xs text-gray-600 mb-1">
+              Filter by batch
+            </label>
+            <input
+              id="invoice-batch-filter"
+              type="text"
+              value={batchFilter}
+              onChange={(e) => onBatchFilterChange(e.target.value)}
+              placeholder="Enter batch code..."
+              className="w-full h-8 px-3 text-sm border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
           {batchFilter && (
-            <Button kind="ghost" size="sm" onClick={onClearBatchFilter}>
+            <Button variant="ghost" size="sm" onClick={onClearBatchFilter}>
               Clear
             </Button>
           )}
           {batchFilter && (
-            <span
-              style={{
-                fontSize: 'var(--cds-caption-01-font-size, 0.75rem)',
-                color: 'var(--cds-text-secondary, #525252)',
-                paddingBottom: 'var(--cds-spacing-03, 0.5rem)',
-              }}
-            >
-              {filteredInvoices.length} result(s)
-            </span>
+            <span className="text-xs text-gray-600 pb-2">{filteredInvoices.length} result(s)</span>
           )}
         </div>
       </div>
 
-      <DataTable rows={rows} headers={headers}>
-        {({
-          rows,
-          headers,
-          getHeaderProps,
-          getRowProps,
-          getToolbarProps,
-          onInputChange,
-        }: any) => (
-          <TableContainer>
-            <TableToolbar {...getToolbarProps()}>
-              <TableToolbarContent>
-                <TableToolbarSearch onChange={onInputChange} />
-              </TableToolbarContent>
-            </TableToolbar>
-            <Table size="md">
-              <TableHead>
-                <TableRow>
-                  {headers.map((header: any) => (
-                    <TableHeader {...getHeaderProps({ header })} key={header.key}>
-                      {header.header}
-                    </TableHeader>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody {...({} as any)}>
-                {rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={headers.length} style={{ textAlign: 'center', padding: '3rem' }}>
-                      <Tile>
-                        <p style={{ color: 'var(--cds-text-secondary, #525252)' }}>
-                          {batchFilter ? 'No invoices match the batch filter' : 'No invoices found'}
-                        </p>
-                      </Tile>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  rows.map((row: any) => (
-                    <TableRow {...getRowProps({ row })} key={row.id}>
-                      {row.cells.map((cell: any) => (
-                        <TableCell key={cell.id}>{cell.value}</TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </DataTable>
+      <DataTableWrapper
+        rows={rows}
+        columns={columns}
+        search
+        emptyMessage={batchFilter ? 'No invoices match the batch filter' : 'No invoices found'}
+      />
     </div>
   );
 };
@@ -438,6 +397,7 @@ interface PaymentsSectionProps {
   getPaymentAllocationSummary: (payment: Payment) => string | null;
   onEdit: (payment: Payment) => void;
   onDelete: (payment: Payment) => void;
+  onRecordPayment?: () => void;
 }
 
 export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
@@ -447,105 +407,83 @@ export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
   getPaymentAllocationSummary,
   onEdit,
   onDelete,
+  onRecordPayment,
 }) => {
-  const headers = [
-    { key: 'client', header: 'Client' },
-    { key: 'reference', header: 'Reference' },
-    { key: 'status', header: 'Status' },
-    { key: 'amount', header: 'Amount' },
-    { key: 'method', header: 'Method' },
-    { key: 'date', header: 'Date' },
-    { key: 'actions', header: '' },
+  const columns = [
+    { key: 'client', header: 'Client', width: '20%' },
+    {
+      key: 'reference_id',
+      header: 'Reference',
+      width: '22%',
+      render: (row: any) => (
+        <div>
+          <span className="font-mono text-xs">{row.reference_id}</span>
+          {getPaymentAllocationSummary(row as Payment) && (
+            <p className="text-xs text-gray-500 mt-0.5">{getPaymentAllocationSummary(row as Payment)}</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '12%',
+      render: (row: any) => getPaymentStatusTag(row as Payment),
+    },
+    {
+      key: 'amount_usd',
+      header: 'Amount',
+      width: '12%',
+      render: (row: any) => (
+        <span className="font-semibold text-green-700">
+          {formatMoney(row.amount_usd, getPaymentCurrency(row as Payment))}
+        </span>
+      ),
+    },
+    { key: 'method', header: 'Method', width: '12%' },
+    {
+      key: 'date',
+      header: 'Date',
+      width: '12%',
+      render: (row: any) => (row.date ? new Date(row.date).toLocaleDateString() : '—'),
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: '10%',
+      render: (row: any) => (
+        <ActionMenu
+          items={[
+            { label: 'Edit', onClick: () => onEdit(row as Payment) },
+            { label: 'Delete', onClick: () => onDelete(row as Payment), danger: true },
+          ]}
+        />
+      ),
+    },
   ];
 
   const rows = payments.map((payment) => ({
-    id: payment.id,
+    ...payment,
     client: getPaymentClientName(payment),
-    reference: (
-      <div>
-        <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 'var(--cds-caption-01-font-size, 0.75rem)' }}>
-          {payment.reference_id}
-        </span>
-        {getPaymentAllocationSummary(payment) && (
-          <p
-            style={{
-              fontSize: 'var(--cds-caption-01-font-size, 0.75rem)',
-              color: 'var(--cds-text-secondary, #525252)',
-              marginTop: '2px',
-            }}
-          >
-            {getPaymentAllocationSummary(payment)}
-          </p>
-        )}
-      </div>
-    ),
-    status: getPaymentStatusTag(payment),
-    amount: (
-      <span style={{ fontWeight: 600, color: 'var(--cds-support-success, #24a148)' }}>
-        {formatMoney(payment.amount_usd, getPaymentCurrency(payment))}
-      </span>
-    ),
-    method: payment.method,
-    date: payment.date ? new Date(payment.date).toLocaleDateString() : '—',
-    actions: (
-      <OverflowMenu flipped ariaLabel="Payment actions">
-        <OverflowMenuItem itemText="Edit" onClick={() => onEdit(payment)} />
-        <OverflowMenuItem itemText="Delete" isDelete onClick={() => onDelete(payment)} />
-      </OverflowMenu>
-    ),
-  }));
+    actions: '',
+  })) as any[];
 
   return (
-    <DataTable rows={rows} headers={headers}>
-      {({
-        rows,
-        headers,
-        getHeaderProps,
-        getRowProps,
-        getToolbarProps,
-        onInputChange,
-      }: any) => (
-        <TableContainer>
-          <TableToolbar {...getToolbarProps()}>
-            <TableToolbarContent>
-              <TableToolbarSearch onChange={onInputChange} />
-            </TableToolbarContent>
-          </TableToolbar>
-          <Table size="md">
-            <TableHead>
-              <TableRow>
-                {headers.map((header: any) => (
-                  <TableHeader {...getHeaderProps({ header })} key={header.key}>
-                    {header.header}
-                  </TableHeader>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody {...({} as any)}>
-              {rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={headers.length} style={{ textAlign: 'center', padding: '3rem' }}>
-                    <Tile>
-                      <p style={{ color: 'var(--cds-text-secondary, #525252)' }}>
-                        No payments recorded
-                      </p>
-                    </Tile>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                rows.map((row: any) => (
-                  <TableRow {...getRowProps({ row })} key={row.id}>
-                    {row.cells.map((cell: any) => (
-                      <TableCell key={cell.id}>{cell.value}</TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+    <div>
+      {onRecordPayment && (
+        <div className="px-4 py-3 border-b border-gray-200 flex justify-end">
+          <Button renderIcon={Plus} onClick={onRecordPayment}>
+            Record Payment
+          </Button>
+        </div>
       )}
-    </DataTable>
+      <DataTableWrapper
+        rows={rows}
+        columns={columns}
+        search
+        emptyMessage="No payments recorded"
+      />
+    </div>
   );
 };
 
@@ -572,135 +510,89 @@ export const ReceiptsSection: React.FC<ReceiptsSectionProps> = ({
 }) => {
   if (receipts.length === 0) {
     return (
-      <div style={{ padding: 'var(--cds-spacing-07, 2rem)' }}>
-        <Tile style={{ textAlign: 'center', padding: 'var(--cds-spacing-08, 2.5rem)' }}>
-          <Receipt size={48} style={{ color: 'var(--cds-support-success, #24a148)', marginBottom: 'var(--cds-spacing-04, 0.75rem)' }} />
-          <h3
-            style={{
-              fontSize: 'var(--cds-heading-02-font-size, 1rem)',
-              fontWeight: 600,
-              color: 'var(--cds-text-primary, #161616)',
-              marginBottom: 'var(--cds-spacing-03, 0.5rem)',
-            }}
-          >
-            Receipts
-          </h3>
-          <p
-            style={{
-              fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
-              color: 'var(--cds-text-secondary, #525252)',
-              marginBottom: 'var(--cds-spacing-05, 1rem)',
-            }}
-          >
+      <div className="p-8">
+        <div className="text-center p-10 bg-white border border-gray-200">
+          <Receipt size={48} className="mx-auto text-green-600 mb-3" />
+          <h3 className="text-base font-semibold text-gray-900 mb-2">Receipts</h3>
+          <p className="text-sm text-gray-500 mb-4">
             Record payments and generate receipts for clients.
           </p>
-          <Button renderIcon={Add} onClick={onRecordPayment}>
+          <Button renderIcon={Plus} onClick={onRecordPayment}>
             Record Payment
           </Button>
-        </Tile>
+        </div>
       </div>
     );
   }
 
-  const headers = [
-    { key: 'receipt_number', header: 'Receipt #' },
-    { key: 'client_name', header: 'Client' },
-    { key: 'batch', header: 'Batch' },
-    { key: 'amount', header: 'Amount' },
-    { key: 'date', header: 'Date' },
-    { key: 'actions', header: '' },
+  const columns = [
+    {
+      key: 'receipt_number',
+      header: 'Receipt #',
+      width: '18%',
+      render: (row: any) => (
+        <span className="font-mono font-semibold text-green-700">{row.receipt_number}</span>
+      ),
+    },
+    { key: 'client_name', header: 'Client', width: '25%' },
+    {
+      key: 'batch',
+      header: 'Batch',
+      width: '12%',
+      render: (row: any) =>
+        row.batch ? (
+          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-cyan-100 text-cyan-800">
+            {row.batch}
+          </span>
+        ) : (
+          <span className="text-gray-500">—</span>
+        ),
+    },
+    {
+      key: 'amount_received',
+      header: 'Amount',
+      width: '15%',
+      render: (row: any) => <span className="font-semibold">{formatMoney(row.amount_received, row.currency)}</span>,
+    },
+    {
+      key: 'payment_date',
+      header: 'Date',
+      width: '15%',
+      render: (row: any) => (row.payment_date ? new Date(row.payment_date).toLocaleDateString() : '—'),
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: '15%',
+      render: (row: any) => (
+        <ActionMenu
+          items={[
+            { label: 'Preview PDF', onClick: () => onPreview(row as ReceiptType) },
+            { label: 'Reissue', onClick: () => onReissue(row as ReceiptType) },
+            { label: 'Delete', onClick: () => onDelete(row as ReceiptType), danger: true },
+          ]}
+        />
+      ),
+    },
   ];
 
-  const rows = receipts.map((receipt) => ({
-    id: receipt.id,
-    receipt_number: (
-      <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontWeight: 600, color: 'var(--cds-support-success, #24a148)' }}>
-        {receipt.receipt_number}
-      </span>
-    ),
-    client_name: receipt.client_name,
-    batch: receipt.batch ? (
-      <Tag type="cyan" size="sm">{receipt.batch}</Tag>
-    ) : (
-      <span style={{ color: 'var(--cds-text-secondary, #525252)' }}>—</span>
-    ),
-    amount: (
-      <span style={{ fontWeight: 600 }}>
-        {formatMoney(receipt.amount_received, receipt.currency)}
-      </span>
-    ),
-    date: receipt.payment_date ? new Date(receipt.payment_date).toLocaleDateString() : '—',
-    actions: (
-      <OverflowMenu flipped ariaLabel="Receipt actions">
-        <OverflowMenuItem itemText="Preview PDF" onClick={() => onPreview(receipt)} />
-        <OverflowMenuItem itemText="Reissue" onClick={() => onReissue(receipt)} />
-        <OverflowMenuItem itemText="Delete" isDelete onClick={() => onDelete(receipt)} />
-      </OverflowMenu>
-    ),
-  }));
+  const rows = receipts.map((receipt) => ({ ...receipt, actions: '' })) as any[];
 
   return (
-    <div style={{ padding: 'var(--cds-spacing-05, 1rem)' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 'var(--cds-spacing-05, 1rem)',
-        }}
-      >
-        <h3
-          style={{
-            fontSize: 'var(--cds-heading-03-font-size, 1.25rem)',
-            fontWeight: 600,
-            color: 'var(--cds-text-primary, #161616)',
-          }}
-        >
-          All Receipts
-        </h3>
-        <Button renderIcon={Add} onClick={onRecordPayment}>
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">All Receipts</h3>
+        <Button renderIcon={Plus} onClick={onRecordPayment}>
           Record Payment
         </Button>
       </div>
 
-      <DataTable rows={rows} headers={headers}>
-        {({
-          rows,
-          headers,
-          getHeaderProps,
-          getRowProps,
-          getToolbarProps,
-          onInputChange,
-        }: any) => (
-          <TableContainer>
-            <TableToolbar {...getToolbarProps()}>
-              <TableToolbarContent>
-                <TableToolbarSearch onChange={onInputChange} />
-              </TableToolbarContent>
-            </TableToolbar>
-            <Table size="md">
-              <TableHead>
-                <TableRow>
-                  {headers.map((header: any) => (
-                    <TableHeader {...getHeaderProps({ header })} key={header.key}>
-                      {header.header}
-                    </TableHeader>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody {...({} as any)}>
-                {rows.map((row: any) => (
-                  <TableRow {...getRowProps({ row })} key={row.id}>
-                    {row.cells.map((cell: any) => (
-                      <TableCell key={cell.id}>{cell.value}</TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </DataTable>
+      <DataTableWrapper
+        rows={rows}
+        columns={columns}
+        search
+        emptyMessage="No receipts found"
+      />
     </div>
   );
 };
@@ -732,117 +624,72 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
   onGenerate,
   onClear,
 }) => {
-  const clientDropdownItems = [
-    { id: '', label: 'Select a client' },
-    ...clientOptions.map(c => ({ id: c.id, label: c.name })),
-  ];
-
   return (
-    <div style={{ padding: 'var(--cds-spacing-07, 2rem)' }}>
-      <Tile style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-        <ChartBar size={48} style={{ color: 'var(--cds-interactive, #0f62fe)', marginBottom: 'var(--cds-spacing-04, 0.75rem)' }} />
-        <h3
-          style={{
-            fontSize: 'var(--cds-heading-03-font-size, 1.25rem)',
-            fontWeight: 600,
-            color: 'var(--cds-text-primary, #161616)',
-            marginBottom: 'var(--cds-spacing-03, 0.5rem)',
-          }}
-        >
-          Client Statements
-        </h3>
-        <p
-          style={{
-            fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
-            color: 'var(--cds-text-secondary, #525252)',
-            marginBottom: 'var(--cds-spacing-05, 1rem)',
-          }}
-        >
+    <div className="p-8">
+      <div className="max-w-xl mx-auto text-center bg-white border border-gray-200 p-8">
+        <BarChart3 size={48} className="mx-auto text-blue-600 mb-3" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Client Statements</h3>
+        <p className="text-sm text-gray-500 mb-6">
           Generate a branded statement for a client using their invoices and matching payments,
           optionally filtered by date range.
         </p>
 
-        <Grid narrow>
-          <Column sm={4} md={8} lg={16} style={{ marginBottom: 'var(--cds-spacing-05, 1rem)' }}>
-            <Dropdown
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-6">
+          <div className="md:col-span-2">
+            <label htmlFor="statement-client" className="block text-xs text-gray-600 mb-1">
+              Client
+            </label>
+            <select
               id="statement-client"
-              titleText="Client"
-              label="Select a client"
-              items={clientDropdownItems}
-              itemToString={(item) => item?.label || ''}
-              selectedItem={clientDropdownItems.find(c => c.id === selectedClient) || clientDropdownItems[0]}
-              onChange={({ selectedItem }) => onClientChange(selectedItem?.id || '')}
-            />
-          </Column>
-          
-          <Column sm={2} md={4} lg={8} style={{ marginBottom: 'var(--cds-spacing-05, 1rem)' }}>
-            <div>
-              <label
-                htmlFor="statement-from"
-                style={{
-                  display: 'block',
-                  fontSize: 'var(--cds-label-01-font-size, 0.75rem)',
-                  fontWeight: 400,
-                  color: 'var(--cds-text-secondary, #525252)',
-                  marginBottom: 'var(--cds-spacing-03, 0.5rem)',
-                }}
-              >
-                From Date
-              </label>
-              <input
-                id="statement-from"
-                type="date"
-                value={statementDateFrom}
-                onChange={(e) => onDateFromChange(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: 'var(--cds-spacing-03, 0.5rem) var(--cds-spacing-04, 0.75rem)',
-                  border: '1px solid var(--cds-border-subtle, #c6c6c6)',
-                  fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
-                }}
-              />
-            </div>
-          </Column>
-          
-          <Column sm={2} md={4} lg={8} style={{ marginBottom: 'var(--cds-spacing-05, 1rem)' }}>
-            <div>
-              <label
-                htmlFor="statement-to"
-                style={{
-                  display: 'block',
-                  fontSize: 'var(--cds-label-01-font-size, 0.75rem)',
-                  fontWeight: 400,
-                  color: 'var(--cds-text-secondary, #525252)',
-                  marginBottom: 'var(--cds-spacing-03, 0.5rem)',
-                }}
-              >
-                To Date
-              </label>
-              <input
-                id="statement-to"
-                type="date"
-                value={statementDateTo}
-                onChange={(e) => onDateToChange(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: 'var(--cds-spacing-03, 0.5rem) var(--cds-spacing-04, 0.75rem)',
-                  border: '1px solid var(--cds-border-subtle, #c6c6c6)',
-                  fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
-                }}
-              />
-            </div>
-          </Column>
-        </Grid>
+              value={selectedClient}
+              onChange={(e) => onClientChange(e.target.value)}
+              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select a client</option>
+              {clientOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div style={{ display: 'flex', gap: 'var(--cds-spacing-03, 0.5rem)', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div>
+            <label htmlFor="statement-from" className="block text-xs text-gray-600 mb-1">
+              From Date
+            </label>
+            <input
+              id="statement-from"
+              type="date"
+              value={statementDateFrom}
+              onChange={(e) => onDateFromChange(e.target.value)}
+              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="statement-to" className="block text-xs text-gray-600 mb-1">
+              To Date
+            </label>
+            <input
+              id="statement-to"
+              type="date"
+              value={statementDateTo}
+              onChange={(e) => onDateToChange(e.target.value)}
+              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2 justify-center flex-wrap">
           <Button onClick={onGenerate} disabled={!selectedClient}>
             Generate Statement
           </Button>
-          <Button kind="ghost" onClick={onClear} disabled={!selectedClient}>
+          <Button variant="ghost" onClick={onClear} disabled={!selectedClient}>
             Clear Selection
           </Button>
         </div>
-      </Tile>
+      </div>
     </div>
   );
 };

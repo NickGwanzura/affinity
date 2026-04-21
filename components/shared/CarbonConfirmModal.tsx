@@ -1,101 +1,63 @@
-import React from 'react';
-import {
-  ComposedModal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-} from '@carbon/react';
-import { WarningAlt, Information } from '@carbon/icons-react';
+import React, { useState, useCallback } from 'react';
+import { AlertTriangle, Info } from 'lucide-react';
+import { Modal, Button } from '../ui';
 
 interface CarbonConfirmModalProps {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
+  isOpen:          boolean;
+  title:           string;
+  message:         string;
+  confirmLabel?:   string;
+  cancelLabel?:    string;
   confirmVariant?: 'danger' | 'primary';
-  onConfirm: () => void;
-  onCancel: () => void;
+  onConfirm:       () => void;
+  onCancel:        () => void;
 }
 
 export const CarbonConfirmModal: React.FC<CarbonConfirmModalProps> = ({
-  isOpen,
-  title,
-  message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  confirmVariant = 'danger',
-  onConfirm,
-  onCancel,
+  isOpen, title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel',
+  confirmVariant = 'danger', onConfirm, onCancel,
 }) => {
   const isDanger = confirmVariant === 'danger';
 
   return (
-    <ComposedModal
-      open={isOpen}
+    <Modal
+      isOpen={isOpen}
       onClose={onCancel}
+      title={title}
       size="xs"
       preventCloseOnClickOutside
-    >
-      <ModalHeader
-        title={title}
-        iconDescription={isDanger ? 'Warning' : 'Information'}
-      />
-      
-      <ModalBody>
-        <div style={{ display: 'flex', gap: 'var(--cds-spacing-04, 0.75rem)' }}>
-          <div
-            style={{
-              flexShrink: 0,
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: isDanger 
-                ? 'var(--cds-support-error, #da1e28)' 
-                : 'var(--cds-support-info, #0f62fe)',
-            }}
-          >
-            {isDanger ? (
-              <WarningAlt size={24} style={{ color: '#ffffff' }} />
-            ) : (
-              <Information size={24} style={{ color: '#ffffff' }} />
-            )}
-          </div>
-          <p
-            style={{
-              fontSize: 'var(--cds-body-01-font-size, 0.875rem)',
-              lineHeight: 'var(--cds-body-01-line-height, 1.5)',
-              color: 'var(--cds-text-secondary, #525252)',
-              margin: 0,
-            }}
-          >
-            {message}
-          </p>
+      footer={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={onCancel}>{cancelLabel}</Button>
+          <Button variant={isDanger ? 'danger' : 'primary'} onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
         </div>
-      </ModalBody>
-
-      <ModalFooter
-        primaryButtonText={confirmLabel}
-        secondaryButtonText={cancelLabel}
-        onRequestSubmit={onConfirm}
-        onRequestClose={onCancel}
-        danger={isDanger}
-      />
-    </ComposedModal>
+      }
+    >
+      <div className="flex gap-3">
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center ${
+            isDanger ? 'bg-red-600' : 'bg-blue-600'
+          }`}
+        >
+          {isDanger ? (
+            <AlertTriangle size={24} className="text-white" />
+          ) : (
+            <Info size={24} className="text-white" />
+          )}
+        </div>
+        <p className="text-sm leading-relaxed text-gray-700 m-0">{message}</p>
+      </div>
+    </Modal>
   );
 };
 
-// Hook for using confirmation modal
-import { useState, useCallback } from 'react';
-
 interface ConfirmOptions {
-  title: string;
-  message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
+  title:           string;
+  message:         string;
+  confirmLabel?:   string;
+  cancelLabel?:    string;
   confirmVariant?: 'danger' | 'primary';
 }
 
@@ -107,9 +69,7 @@ export const useCarbonConfirm = () => {
   const confirm = useCallback((opts: ConfirmOptions): Promise<boolean> => {
     setOptions(opts);
     setIsOpen(true);
-    return new Promise((resolve) => {
-      setResolveRef(() => resolve);
-    });
+    return new Promise((resolve) => { setResolveRef(() => resolve); });
   }, []);
 
   const handleConfirm = useCallback(() => {
@@ -141,7 +101,6 @@ export const useCarbonConfirm = () => {
   return { confirm, ConfirmDialog };
 };
 
-// Backward-compat alias — use useCarbonConfirm for new code
 export const useConfirm = useCarbonConfirm;
 
 export default CarbonConfirmModal;

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Tile } from '@carbon/react';
 
 interface DashboardCardProps {
   title: string;
@@ -11,12 +10,12 @@ interface DashboardCardProps {
 }
 
 const accentMap: Record<string, { bg: string; text: string }> = {
-  blue: { bg: 'var(--cds-support-info-inverse,#0f62fe)', text: 'var(--cds-text-on-color,#ffffff)' },
-  green: { bg: 'var(--cds-support-success-inverse,#24a148)', text: 'var(--cds-text-on-color,#ffffff)' },
-  red: { bg: 'var(--cds-support-error-inverse,#da1e28)', text: 'var(--cds-text-on-color,#ffffff)' },
-  amber: { bg: 'var(--cds-support-warning-inverse,#f1c21b)', text: 'var(--cds-text-primary,#161616)' },
-  purple: { bg: '#8a3ffc', text: '#ffffff' },
-  neutral: { bg: 'var(--cds-layer-02,#e0e0e0)', text: 'var(--cds-text-primary,#161616)' },
+  blue:    { bg: '#2563eb', text: '#ffffff' },
+  green:   { bg: '#16a34a', text: '#ffffff' },
+  red:     { bg: '#dc2626', text: '#ffffff' },
+  amber:   { bg: '#f59e0b', text: '#111827' },
+  purple:  { bg: '#7c3aed', text: '#ffffff' },
+  neutral: { bg: '#e5e7eb', text: '#111827' },
 };
 
 export const DashboardCard: React.FC<DashboardCardProps> = ({
@@ -30,68 +29,38 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   const accent = accentMap[color] ?? accentMap.blue;
 
   return (
-    <Tile className={className} style={{ position: 'relative', overflow: 'hidden', padding: 0 }}>
+    <div className={`relative overflow-hidden bg-white border border-gray-200 ${className}`}>
       {/* Left accent bar */}
       <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: 4,
-          height: '100%',
-          background: accent.bg,
-        }}
+        className="absolute top-0 left-0 w-1 h-full"
+        style={{ background: accent.bg }}
       />
-      <div style={{ padding: '1.5rem', paddingLeft: 'calc(1.5rem + 4px)' }}>
+      <div className="p-6 pl-7">
         {/* Header */}
-        <p
-          style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            color: 'var(--cds-text-secondary, #525252)',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            margin: '0 0 0.75rem',
-          }}
-        >
+        <p className="text-xs font-semibold text-gray-500 tracking-wider uppercase mb-3">
           {title}
         </p>
 
         {/* Value */}
-        <p
-          style={{
-            fontSize: '2rem',
-            fontWeight: 300,
-            color: 'var(--cds-text-primary, #161616)',
-            fontVariantNumeric: 'tabular-nums',
-            lineHeight: 1.1,
-            margin: '0 0 0.5rem',
-          }}
-        >
+        <p className="text-3xl font-light text-gray-900 tabular-nums leading-tight mb-2">
           {value}
         </p>
 
         {/* Subtitle */}
         {subtitle && (
-          <p
-            style={{
-              fontSize: '0.875rem',
-              color: 'var(--cds-text-secondary, #525252)',
-              margin: '0 0 0.75rem',
-            }}
-          >
+          <p className="text-sm text-gray-500 mb-3">
             {subtitle}
           </p>
         )}
 
         {/* Footer content */}
         {footer && (
-          <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
+          <div className="mt-3 pt-3 border-t border-gray-200">
             {footer}
           </div>
         )}
       </div>
-    </Tile>
+    </div>
   );
 };
 

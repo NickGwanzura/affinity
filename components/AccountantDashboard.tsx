@@ -19,8 +19,7 @@ import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from 
 import PayslipsListView from './shared/PayslipsListView';
 import { dataService } from '../services/dataService';
 import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
-import { Button as CarbonButton, Tile } from '@carbon/react';
-import { Add, Document, Money, Wallet, ChartLine, Time } from '@carbon/icons-react';
+import { Plus, FileText, DollarSign, Wallet, LineChart, Clock } from 'lucide-react';
 import { Button, StatCard, StatusBadge, SkeletonStatCards, SkeletonTable } from './ui';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
@@ -740,12 +739,12 @@ export const AccountantDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Accountant Dashboard</h1>
-          <p className="mt-1" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Financial overview and management</p>
+          <h1 className="text-3xl font-bold" style={{ color: '#161616' }}>Accountant Dashboard</h1>
+          <p className="mt-1" style={{ color: '#525252' }}>Financial overview and management</p>
         </div>
-        <CarbonButton kind="primary" renderIcon={Add} onClick={() => setShowExpenseModal(true)}>
+        <Button variant="primary" leftIcon={<Plus size={20} />} onClick={() => setShowExpenseModal(true)}>
           Add Expense
-        </CarbonButton>
+        </Button>
       </div>
 
       {/* Key Metrics */}
@@ -754,7 +753,7 @@ export const AccountantDashboard: React.FC = () => {
           title="Total Revenue"
           value={formatCurrency(totalRevenue)}
           subtitle={`From ${invoices.filter(i => i.status === 'Paid').length} paid invoices`}
-          icon={<Money size={20} />}
+          icon={<DollarSign size={20} />}
           color="green"
         />
         <StatCard
@@ -768,21 +767,21 @@ export const AccountantDashboard: React.FC = () => {
           title="Net Profit"
           value={formatCurrency(netProfit)}
           subtitle="Revenue - Expenses"
-          icon={<ChartLine size={20} />}
+          icon={<LineChart size={20} />}
           color={netProfit >= 0 ? 'blue' : 'amber'}
         />
         <StatCard
           title="Pending Invoices"
           value={formatCurrency(totalPending)}
           subtitle={`${pendingInvoices.length} outstanding`}
-          icon={<Time size={20} />}
+          icon={<Clock size={20} />}
           color="amber"
         />
       </div>
 
       {/* Tabs */}
-      <Tile style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ borderBottom: '1px solid var(--cds-border-subtle, #e0e0e0)', background: 'var(--cds-layer-02, #f4f4f4)' }}>
+      <div className="bg-white border border-gray-200 overflow-hidden">
+        <div style={{ borderBottom: '1px solid #e0e0e0', background: '#f4f4f4' }}>
           <div className="p-3">
             <DashboardSectionSwitcher
               value={activeTab}
@@ -862,12 +861,12 @@ export const AccountantDashboard: React.FC = () => {
               {/* Header */}
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Clients</h3>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{mergedClients.length} total — includes all clients from invoices</p>
+                  <h3 className="text-lg font-bold" style={{ color: '#161616' }}>Clients</h3>
+                  <p className="text-xs mt-0.5" style={{ color: '#525252' }}>{mergedClients.length} total — includes all clients from invoices</p>
                 </div>
-                <CarbonButton kind="primary" size="sm" renderIcon={Add} onClick={() => { setEditingClient(null); setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' }); setShowClientModal(true); }}>
+                <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => { setEditingClient(null); setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' }); setShowClientModal(true); }}>
                   Add Client
-                </CarbonButton>
+                </Button>
               </div>
 
               <AccountantClientsView
@@ -893,8 +892,8 @@ export const AccountantDashboard: React.FC = () => {
           {activeTab === 'payslips' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>Payslips</h3>
-                <CarbonButton kind="primary" size="sm" renderIcon={Document} onClick={() => { setPayslipForm(createEmptyPayslipForm()); setShowPayslipModal(true); }}>Generate Payslip</CarbonButton>
+                <h3 className="text-lg font-bold" style={{ color: '#161616' }}>Payslips</h3>
+                <Button variant="primary" size="sm" leftIcon={<FileText size={16} />} onClick={() => { setPayslipForm(createEmptyPayslipForm()); setShowPayslipModal(true); }}>Generate Payslip</Button>
               </div>
               <PayslipsListView
                 payslips={payslips}
@@ -951,7 +950,7 @@ export const AccountantDashboard: React.FC = () => {
             <AssetRegister userRole={userRole} />
           )}
         </div>
-      </Tile>
+      </div>
 
       <OperatingFundEntryModal
         isOpen={showFundModal}

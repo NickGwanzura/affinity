@@ -3,8 +3,8 @@ import { Client, Invoice, Quote, Payment } from '../types';
 import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
-import { Modal, TextInput, Button, Form, Stack, Tag } from '@carbon/react';
-import { Add, Edit, TrashCan, DocumentDownload } from '@carbon/icons-react';
+import { Plus, Pencil, Trash2, Download, Loader2 } from 'lucide-react';
+import { Button, IconButton } from './ui';
 import { generateStatementPDF } from '../services/pdfService';
 
 const formatMoney = (amount: number, currency = 'USD') => {
@@ -13,13 +13,13 @@ const formatMoney = (amount: number, currency = 'USD') => {
 };
 
 const statusColor: Record<string, string> = {
-  Paid:     'bg-[var(--cds-support-success,#24a148)] text-white',
-  Sent:     'bg-[var(--cds-interactive,#0f62fe)] text-white',
-  Overdue:  'bg-[var(--cds-support-error,#da1e28)] text-white',
-  Draft:    'bg-[var(--cds-layer-02,#f4f4f4)] text-[var(--cds-text-secondary,#525252)]',
-  Accepted: 'bg-[var(--cds-support-success,#24a148)] text-white',
-  Rejected: 'bg-[var(--cds-support-error,#da1e28)] text-white',
-  Approved: 'bg-[var(--cds-support-warning,#f1c21b)] text-[var(--cds-text-primary,#161616)]',
+  Paid:     'bg-green-600 text-white',
+  Sent:     'bg-blue-600 text-white',
+  Overdue:  'bg-red-600 text-white',
+  Draft:    'bg-gray-100 text-gray-600',
+  Accepted: 'bg-green-600 text-white',
+  Rejected: 'bg-red-600 text-white',
+  Approved: 'bg-amber-500 text-gray-900',
 };
 
 interface ClientFormData {
@@ -56,7 +56,7 @@ export const ClientDirectory: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [detailTab, setDetailTab] = useState<'invoices' | 'quotes' | 'payments' | 'statement'>('invoices');
+  const [detailTab, setDetailTab] = useState<'invoices' | 'quotes' | 'payments' | 'statement'>('statement');
   const showMobileDetail = Boolean(selectedClient);
 
   // Modal states
@@ -398,8 +398,8 @@ export const ClientDirectory: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center">
-        <div className="flex items-center gap-3 text-[var(--cds-text-secondary,#525252)]">
-          <div className="animate-spin h-8 w-8 border-b-2 border-[var(--cds-interactive,#0f62fe)]" />
+        <div className="flex items-center gap-3 text-gray-500">
+          <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
           <span className="text-sm font-bold uppercase tracking-widest">Loading clients…</span>
         </div>
       </div>
@@ -407,18 +407,18 @@ export const ClientDirectory: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--cds-layer-02,#f4f4f4)] p-4 sm:p-6">
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6">
       <ToastContainer />
       <ConfirmDialog />
 
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[var(--cds-text-primary,#161616)]">Client Directory</h1>
-          <p className="mt-1 text-[var(--cds-text-secondary,#525252)] text-sm">{enrichedClients.length} clients · search across invoices, quotes & payments</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900">Client Directory</h1>
+          <p className="mt-1 text-gray-500 text-sm">{enrichedClients.length} clients · search across invoices, quotes & payments</p>
         </div>
         <Button
-          renderIcon={Add}
+          leftIcon={<Plus size={16} />}
           onClick={openAddClient}
           className="w-full sm:w-auto"
         >
@@ -429,46 +429,46 @@ export const ClientDirectory: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar list */}
         <div className={`w-full lg:w-80 flex-shrink-0 ${showMobileDetail ? 'hidden lg:block' : ''}`}>
-          <div className="bg-[var(--cds-layer-01,#ffffff)] border border-[var(--cds-border-subtle,#c6c6c6)] overflow-hidden">
-            <div className="p-4 border-b border-[var(--cds-border-subtle,#c6c6c6)]">
+          <div className="bg-white border border-gray-300 overflow-hidden">
+            <div className="p-4 border-b border-gray-300">
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--cds-text-secondary,#525252)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search clients…"
-                  className="w-full pl-9 pr-4 py-2.5 border border-[var(--cds-border-subtle,#c6c6c6)] text-sm outline-none focus:ring-2 focus:ring-[var(--cds-interactive,#0f62fe)] bg-[var(--cds-field-01,#ffffff)] text-[var(--cds-text-primary,#161616)]"
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-blue-600 bg-white text-gray-900"
                 />
               </div>
             </div>
             <div className="overflow-y-auto max-h-none lg:max-h-[calc(100vh-280px)]">
               {filtered.length === 0 ? (
-                <p className="text-center py-12 text-[var(--cds-text-secondary,#525252)] text-sm">No clients found</p>
+                <p className="text-center py-12 text-gray-500 text-sm">No clients found</p>
               ) : (
                 filtered.map(client => {
                   const stats = clientStats(client.name);
                   return (
                     <button
                       key={client.id}
-                      onClick={() => { setSelectedClient(client); setDetailTab('invoices'); }}
-                      className={`w-full text-left px-4 py-4 border-b border-[var(--cds-border-subtle,#c6c6c6)] transition-colors hover:bg-[var(--cds-layer-hover,#e8e8e8)] ${selectedClient?.name === client.name ? 'bg-[var(--cds-layer-selected,#e0e0e0)] border-l-4 border-l-[var(--cds-interactive,#0f62fe)]' : ''}`}
+                      onClick={() => { setSelectedClient(client); setDetailTab('statement'); }}
+                      className={`w-full text-left px-4 py-4 border-b border-gray-300 transition-colors hover:bg-gray-200 ${selectedClient?.name === client.name ? 'bg-gray-300 border-l-4 border-l-blue-600' : ''}`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-bold text-[var(--cds-text-primary,#161616)] text-sm">{client.name}</p>
-                          {client.company && <p className="text-xs text-[var(--cds-text-secondary,#525252)] mt-0.5">{client.company}</p>}
-                          {!client.company && client.email && <p className="text-xs text-[var(--cds-text-secondary,#525252)] mt-0.5">{client.email}</p>}
+                          <p className="font-bold text-gray-900 text-sm">{client.name}</p>
+                          {client.company && <p className="text-xs text-gray-500 mt-0.5">{client.company}</p>}
+                          {!client.company && client.email && <p className="text-xs text-gray-500 mt-0.5">{client.email}</p>}
                         </div>
                         <div className="text-right">
-                          <p className="text-xs font-bold text-[var(--cds-text-primary,#161616)]">{stats.invoiceCount} inv</p>
+                          <p className="text-xs font-bold text-gray-900">{stats.invoiceCount} inv</p>
                           {stats.outstanding > 0 ? (
-                            <p className="text-xs font-semibold text-[var(--cds-support-error,#da1e28)]">
+                            <p className="text-xs font-semibold text-red-600">
                               {formatMoney(stats.outstanding)} due
                             </p>
                           ) : stats.creditBalance > 0 ? (
-                            <p className="text-xs font-semibold text-[var(--cds-support-success,#24a148)]">
+                            <p className="text-xs font-semibold text-green-600">
                               {formatMoney(stats.creditBalance)} cr
                             </p>
                           ) : null}
@@ -485,12 +485,12 @@ export const ClientDirectory: React.FC = () => {
         {/* Detail panel */}
         <div className={`flex-1 min-w-0 ${!showMobileDetail ? 'hidden lg:block' : ''}`}>
           {!selectedClient ? (
-            <div className="bg-[var(--cds-layer-01,#ffffff)] border border-[var(--cds-border-subtle,#c6c6c6)] flex items-center justify-center min-h-[400px]">
+            <div className="bg-white border border-gray-300 flex items-center justify-center min-h-[400px]">
               <div className="text-center">
-                <svg className="mx-auto h-12 w-12 text-[var(--cds-text-secondary,#525252)] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="mx-auto h-12 w-12 text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <p className="text-[var(--cds-text-secondary,#525252)] font-semibold">Select a client to view details</p>
+                <p className="text-gray-500 font-semibold">Select a client to view details</p>
               </div>
             </div>
           ) : (() => {
@@ -503,12 +503,12 @@ export const ClientDirectory: React.FC = () => {
             return (
               <div className="space-y-4">
                 {/* Client header card */}
-                <div className="bg-[var(--cds-layer-01,#ffffff)] border border-[var(--cds-border-subtle,#c6c6c6)] p-6">
+                <div className="bg-white border border-gray-300 p-6">
                   <div className="mb-4 lg:hidden">
                     <button
                       type="button"
                       onClick={() => setSelectedClient(null)}
-                      className="inline-flex min-h-[44px] items-center gap-2 border border-[var(--cds-border-subtle,#c6c6c6)] px-3 py-2 text-sm font-semibold text-[var(--cds-text-primary,#161616)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]"
+                      className="inline-flex min-h-[44px] items-center gap-2 border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                     >
                       <span aria-hidden="true">←</span>
                       Back to clients
@@ -517,81 +517,79 @@ export const ClientDirectory: React.FC = () => {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="flex items-center gap-3">
-                        <h2 className="text-2xl font-black text-[var(--cds-text-primary,#161616)]">{c.name}</h2>
+                        <h2 className="text-2xl font-black text-gray-900">{c.name}</h2>
                         {(c as any).isRegistered && (
                           <>
-                            <Button
-                              kind="ghost"
+                            <IconButton
+                              icon={<Pencil size={16} />}
+                              variant="ghost"
                               size="sm"
-                              renderIcon={Edit}
-                              iconDescription="Edit client"
-                              hasIconOnly
+                              label="Edit client"
                               onClick={() => openEditClient(c)}
                             />
-                            <Button
-                              kind="danger--ghost"
+                            <IconButton
+                              icon={<Trash2 size={16} />}
+                              variant="ghost"
                               size="sm"
-                              renderIcon={TrashCan}
-                              iconDescription="Delete client"
-                              hasIconOnly
+                              label="Delete client"
                               onClick={() => handleDeleteClient(c)}
                             />
                           </>
                         )}
                       </div>
-                      {c.company && <p className="text-[var(--cds-text-secondary,#525252)] text-sm mt-0.5">{c.company}</p>}
-                      <div className="flex flex-wrap gap-4 mt-3 text-sm text-[var(--cds-text-secondary,#525252)]">
+                      {c.company && <p className="text-gray-500 text-sm mt-0.5">{c.company}</p>}
+                      <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
                         {c.email && <span>✉ {c.email}</span>}
                         {c.phone && <span>📞 {c.phone}</span>}
                         {c.address && <span>📍 {c.address}</span>}
                       </div>
                     </div>
                     {(c as any).isRegistered ? (
-                      <Tag type="green">Registered</Tag>
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800">Registered</span>
                     ) : (
-                      <Tag type="warm-gray">Unregistered</Tag>
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700">Unregistered</span>
                     )}
                   </div>
 
                   {/* Stats row */}
-                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mt-6 pt-4 border-t border-[var(--cds-border-subtle,#c6c6c6)]">
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mt-6 pt-4 border-t border-gray-300">
                     <div>
-                      <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">Opening Bal</p>
-                      <p className="text-xl font-black text-[var(--cds-text-primary,#161616)] mt-1">{formatMoney(stats.openingBalance)}</p>
+                      <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Opening Bal</p>
+                      <p className="text-xl font-black text-gray-900 mt-1">{formatMoney(stats.openingBalance)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">Total Billed</p>
-                      <p className="text-xl font-black text-[var(--cds-text-primary,#161616)] mt-1">{formatMoney(stats.totalBilled)}</p>
+                      <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total Billed</p>
+                      <p className="text-xl font-black text-gray-900 mt-1">{formatMoney(stats.totalBilled)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">Total Paid</p>
-                      <p className="text-xl font-black text-[var(--cds-support-success,#24a148)] mt-1">{formatMoney(stats.totalPaid)}</p>
+                      <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total Paid</p>
+                      <p className="text-xl font-black text-green-600 mt-1">{formatMoney(stats.totalPaid)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">
+                      <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">
                         {stats.outstanding > 0 ? 'Balance Due' : stats.creditBalance > 0 ? 'Credit' : 'Balance'}
                       </p>
-                      <p className={`text-xl font-black mt-1 ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : stats.creditBalance > 0 ? 'text-[var(--cds-support-success,#24a148)]' : 'text-[var(--cds-text-primary,#161616)]'}`}>
+                      <p className={`text-xl font-black mt-1 ${stats.outstanding > 0 ? 'text-red-600' : stats.creditBalance > 0 ? 'text-green-600' : 'text-gray-900'}`}>
                         {stats.outstanding > 0 ? formatMoney(stats.outstanding) : 
                          stats.creditBalance > 0 ? formatMoney(stats.creditBalance) : 
                          formatMoney(0)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-[var(--cds-text-secondary,#525252)] uppercase font-bold tracking-wider">Quotes</p>
-                      <p className="text-xl font-black text-[var(--cds-interactive,#0f62fe)] mt-1">{stats.quoteCount}</p>
+                      <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Quotes</p>
+                      <p className="text-xl font-black text-blue-600 mt-1">{stats.quoteCount}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="bg-[var(--cds-layer-01,#ffffff)] border border-[var(--cds-border-subtle,#c6c6c6)] overflow-hidden">
-                  <div className="border-b border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-02,#f4f4f4)] p-3 sm:hidden">
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-[var(--cds-text-secondary,#525252)]">Records</label>
+                <div className="bg-white border border-gray-300 overflow-hidden">
+                  <div className="border-b border-gray-300 bg-gray-100 p-3 sm:hidden">
+                    <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Records</label>
                     <select
                       value={detailTab}
                       onChange={(event) => setDetailTab(event.target.value as any)}
-                      className="w-full border border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-field-01,#ffffff)] px-4 py-3 text-sm font-semibold text-[var(--cds-text-primary,#161616)] outline-none focus:border-[var(--cds-interactive,#0f62fe)] focus:ring-2 focus:ring-[var(--cds-interactive,#0f62fe)]/20"
+                      className="w-full border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                     >
                       <option value="invoices">Invoices ({clientInvoices.length})</option>
                       <option value="quotes">Quotes ({clientQuotes.length})</option>
@@ -599,12 +597,12 @@ export const ClientDirectory: React.FC = () => {
                       <option value="statement">Statement</option>
                     </select>
                   </div>
-                  <div className="hidden gap-1 p-2 border-b border-[var(--cds-border-subtle,#c6c6c6)] bg-[var(--cds-layer-02,#f4f4f4)] overflow-x-auto sm:flex">
+                  <div className="hidden gap-1 p-2 border-b border-gray-300 bg-gray-100 overflow-x-auto sm:flex">
                     {(['invoices', 'quotes', 'payments', 'statement'] as const).map(tab => (
                       <button
                         key={tab}
                         onClick={() => setDetailTab(tab)}
-                        className={`px-5 py-2.5 text-sm font-bold capitalize transition-all ${detailTab === tab ? 'bg-[var(--cds-layer-01,#ffffff)] text-[var(--cds-interactive,#0f62fe)]' : 'text-[var(--cds-text-secondary,#525252)] hover:text-[var(--cds-text-primary,#161616)]'}`}
+                        className={`px-5 py-2.5 text-sm font-bold capitalize transition-all ${detailTab === tab ? 'bg-white text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
                       >
                         {tab}
                         {tab !== 'statement' && (
@@ -619,29 +617,29 @@ export const ClientDirectory: React.FC = () => {
                   <div className="p-4">
                     {detailTab === 'invoices' && (
                       clientInvoices.length === 0 ? (
-                        <p className="text-center py-10 text-[var(--cds-text-secondary,#525252)] text-sm">No invoices for this client</p>
+                        <p className="text-center py-10 text-gray-500 text-sm">No invoices for this client</p>
                       ) : (
                         <div className="hidden sm:block overflow-x-auto">
                           <table className="w-full text-sm min-w-[40rem]">
                             <thead>
-                              <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Invoice #</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Amount</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Status</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Due Date</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Description</th>
+                              <tr className="border-b border-gray-300">
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Invoice #</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Amount</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Status</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Due Date</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Description</th>
                               </tr>
                             </thead>
                             <tbody>
                               {clientInvoices.map(inv => (
-                                <tr key={inv.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
-                                  <td className="py-3 font-mono text-xs font-bold text-[var(--cds-interactive,#0f62fe)]">{inv.invoice_number}</td>
-                                  <td className="py-3 font-bold text-[var(--cds-text-primary,#161616)]">{formatMoney(inv.amount_usd, inv.currency || 'USD')}</td>
+                                <tr key={inv.id} className="border-b border-gray-300 hover:bg-gray-200">
+                                  <td className="py-3 font-mono text-xs font-bold text-blue-600">{inv.invoice_number}</td>
+                                  <td className="py-3 font-bold text-gray-900">{formatMoney(inv.amount_usd, inv.currency || 'USD')}</td>
                                   <td className="py-3">
-                                    <span className={`px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-[var(--cds-layer-02,#f4f4f4)] text-[var(--cds-text-secondary,#525252)]'}`}>{inv.status}</span>
+                                    <span className={`px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${statusColor[inv.status] || 'bg-gray-100 text-gray-600'}`}>{inv.status}</span>
                                   </td>
-                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</td>
-                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs truncate max-w-[200px]">{inv.description || '—'}</td>
+                                  <td className="py-3 text-gray-500 text-xs">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—'}</td>
+                                  <td className="py-3 text-gray-500 text-xs truncate max-w-[200px]">{inv.description || '—'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -652,29 +650,29 @@ export const ClientDirectory: React.FC = () => {
 
                     {detailTab === 'quotes' && (
                       clientQuotes.length === 0 ? (
-                        <p className="text-center py-10 text-[var(--cds-text-secondary,#525252)] text-sm">No quotes for this client</p>
+                        <p className="text-center py-10 text-gray-500 text-sm">No quotes for this client</p>
                       ) : (
                         <div className="hidden sm:block overflow-x-auto">
                           <table className="w-full text-sm min-w-[40rem]">
                             <thead>
-                              <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Quote #</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Amount</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Status</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Valid Until</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Description</th>
+                              <tr className="border-b border-gray-300">
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Quote #</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Amount</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Status</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Valid Until</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Description</th>
                               </tr>
                             </thead>
                             <tbody>
                               {clientQuotes.map(q => (
-                                <tr key={q.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
-                                  <td className="py-3 font-mono text-xs font-bold text-[var(--cds-interactive,#0f62fe)]">{q.quote_number}</td>
-                                  <td className="py-3 font-bold text-[var(--cds-text-primary,#161616)]">{formatMoney(q.amount_usd, q.currency || 'USD')}</td>
+                                <tr key={q.id} className="border-b border-gray-300 hover:bg-gray-200">
+                                  <td className="py-3 font-mono text-xs font-bold text-blue-600">{q.quote_number}</td>
+                                  <td className="py-3 font-bold text-gray-900">{formatMoney(q.amount_usd, q.currency || 'USD')}</td>
                                   <td className="py-3">
-                                    <span className={`px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-[var(--cds-layer-02,#f4f4f4)] text-[var(--cds-text-secondary,#525252)]'}`}>{q.status}</span>
+                                    <span className={`px-2 py-0.5 text-xs font-black uppercase tracking-tighter ${statusColor[q.status] || 'bg-gray-100 text-gray-600'}`}>{q.status}</span>
                                   </td>
-                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '—'}</td>
-                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs truncate max-w-[200px]">{q.description || '—'}</td>
+                                  <td className="py-3 text-gray-500 text-xs">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '—'}</td>
+                                  <td className="py-3 text-gray-500 text-xs truncate max-w-[200px]">{q.description || '—'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -685,33 +683,33 @@ export const ClientDirectory: React.FC = () => {
 
                     {detailTab === 'payments' && (
                       clientPayments.length === 0 ? (
-                        <p className="text-center py-10 text-[var(--cds-text-secondary,#525252)] text-sm">No payments recorded for this client</p>
+                        <p className="text-center py-10 text-gray-500 text-sm">No payments recorded for this client</p>
                       ) : (
                         <div className="hidden sm:block overflow-x-auto">
                           <table className="w-full text-sm min-w-[32rem]">
                             <thead>
-                              <tr className="border-b border-[var(--cds-border-subtle,#c6c6c6)]">
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Ref</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Amount</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Status</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Method</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Date</th>
+                              <tr className="border-b border-gray-300">
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Ref</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Amount</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Status</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Method</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Date</th>
                               </tr>
                             </thead>
                             <tbody>
                               {clientPayments.map(p => (
-                                <tr key={p.id} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
-                                  <td className="py-3 font-mono text-xs font-bold text-[var(--cds-text-secondary,#525252)]">{p.reference_id || '—'}</td>
-                                  <td className="py-3 font-bold text-[var(--cds-support-success,#24a148)]">{formatMoney(p.amount_usd, p.currency || 'USD')}</td>
+                                <tr key={p.id} className="border-b border-gray-300 hover:bg-gray-200">
+                                  <td className="py-3 font-mono text-xs font-bold text-gray-500">{p.reference_id || '—'}</td>
+                                  <td className="py-3 font-bold text-green-600">{formatMoney(p.amount_usd, p.currency || 'USD')}</td>
                                   <td className="py-3">
                                     {p.status === 'unallocated' ? (
-                                      <Tag type="warm-gray" size="sm">Unallocated</Tag>
+                                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700">Unallocated</span>
                                     ) : (
-                                      <Tag type="green" size="sm">Allocated</Tag>
+                                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800">Allocated</span>
                                     )}
                                   </td>
-                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{p.method || '—'}</td>
-                                  <td className="py-3 text-[var(--cds-text-secondary,#525252)] text-xs">{p.date ? new Date(p.date).toLocaleDateString() : '—'}</td>
+                                  <td className="py-3 text-gray-500 text-xs">{p.method || '—'}</td>
+                                  <td className="py-3 text-gray-500 text-xs">{p.date ? new Date(p.date).toLocaleDateString() : '—'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -735,26 +733,26 @@ export const ClientDirectory: React.FC = () => {
                         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
                           <div className="flex gap-4">
                             <div>
-                              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--cds-text-secondary,#525252)] mb-1">From</label>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">From</label>
                               <input
                                 type="date"
                                 value={statementDateFrom}
                                 onChange={(e) => setStatementDateFrom(e.target.value)}
-                                className="border border-[var(--cds-border-subtle,#c6c6c6)] px-3 py-2 text-sm"
+                                className="border border-gray-300 px-3 py-2 text-sm"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--cds-text-secondary,#525252)] mb-1">To</label>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">To</label>
                               <input
                                 type="date"
                                 value={statementDateTo}
                                 onChange={(e) => setStatementDateTo(e.target.value)}
-                                className="border border-[var(--cds-border-subtle,#c6c6c6)] px-3 py-2 text-sm"
+                                className="border border-gray-300 px-3 py-2 text-sm"
                               />
                             </div>
                           </div>
                           <Button
-                            renderIcon={DocumentDownload}
+                            leftIcon={<Download size={16} />}
                             onClick={generateStatement}
                           >
                             Download PDF Statement
@@ -765,53 +763,53 @@ export const ClientDirectory: React.FC = () => {
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="border-b-2 border-[var(--cds-text-primary,#161616)]">
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Date</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Type</th>
-                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Reference</th>
-                                <th className="py-3 text-right text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Debit</th>
-                                <th className="py-3 text-right text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Credit</th>
-                                <th className="py-3 text-right text-xs font-black uppercase tracking-widest text-[var(--cds-text-secondary,#525252)]">Balance</th>
+                              <tr className="border-b-2 border-gray-900">
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Date</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Type</th>
+                                <th className="py-3 text-left text-xs font-black uppercase tracking-widest text-gray-500">Reference</th>
+                                <th className="py-3 text-right text-xs font-black uppercase tracking-widest text-gray-500">Debit</th>
+                                <th className="py-3 text-right text-xs font-black uppercase tracking-widest text-gray-500">Credit</th>
+                                <th className="py-3 text-right text-xs font-black uppercase tracking-widest text-gray-500">Balance</th>
                               </tr>
                             </thead>
                             <tbody>
                               {filteredLedger.length === 0 ? (
                                 <tr>
-                                  <td colSpan={6} className="py-10 text-center text-[var(--cds-text-secondary,#525252)]">
+                                  <td colSpan={6} className="py-10 text-center text-gray-500">
                                     No entries for the selected date range
                                   </td>
                                 </tr>
                               ) : (
                                 <>
                                   {filteredLedger.map((entry, index) => (
-                                    <tr key={index} className="border-b border-[var(--cds-border-subtle,#c6c6c6)] hover:bg-[var(--cds-layer-hover,#e8e8e8)]">
+                                    <tr key={index} className="border-b border-gray-300 hover:bg-gray-200">
                                       <td className="py-3 text-xs">{entry.date.toLocaleDateString()}</td>
                                       <td className="py-3">
-                                        {entry.type === 'opening' && <Tag size="sm">Opening</Tag>}
-                                        {entry.type === 'invoice' && <Tag type="blue" size="sm">Invoice</Tag>}
-                                        {entry.type === 'payment' && <Tag type="green" size="sm">Payment</Tag>}
+                                        {entry.type === 'opening' && <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600">Opening</span>}
+                                        {entry.type === 'invoice' && <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">Invoice</span>}
+                                        {entry.type === 'payment' && <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800">Payment</span>}
                                       </td>
                                       <td className="py-3 font-mono text-xs">{entry.reference}</td>
-                                      <td className="py-3 text-right font-bold text-[var(--cds-support-error,#da1e28)]">
+                                      <td className="py-3 text-right font-bold text-red-600">
                                         {entry.debit > 0 ? formatMoney(entry.debit) : '-'}
                                       </td>
-                                      <td className="py-3 text-right font-bold text-[var(--cds-support-success,#24a148)]">
+                                      <td className="py-3 text-right font-bold text-green-600">
                                         {entry.credit > 0 ? formatMoney(entry.credit) : '-'}
                                       </td>
-                                      <td className={`py-3 text-right font-black ${entry.balance > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : entry.balance < 0 ? 'text-[var(--cds-support-success,#24a148)]' : ''}`}>
+                                      <td className={`py-3 text-right font-black ${entry.balance > 0 ? 'text-red-600' : entry.balance < 0 ? 'text-green-600' : ''}`}>
                                         {formatMoney(Math.abs(entry.balance))} {entry.balance > 0 ? 'DR' : entry.balance < 0 ? 'CR' : ''}
                                       </td>
                                     </tr>
                                   ))}
                                   
                                   {/* Total Row */}
-                                  <tr className="border-t-2 border-[var(--cds-text-primary,#161616)] bg-[var(--cds-layer-02,#f4f4f4)]">
+                                  <tr className="border-t-2 border-gray-900 bg-gray-100">
                                     <td className="py-4" colSpan={3}>
                                       <span className="font-black uppercase tracking-wider">Current Balance</span>
                                     </td>
                                     <td className="py-4"></td>
                                     <td className="py-4"></td>
-                                    <td className={`py-4 text-right font-black text-xl ${stats.outstanding > 0 ? 'text-[var(--cds-support-error,#da1e28)]' : stats.creditBalance > 0 ? 'text-[var(--cds-support-success,#24a148)]' : ''}`}>
+                                    <td className={`py-4 text-right font-black text-xl ${stats.outstanding > 0 ? 'text-red-600' : stats.creditBalance > 0 ? 'text-green-600' : ''}`}>
                                       {stats.outstanding > 0 
                                         ? formatMoney(stats.outstanding) + ' DR'
                                         : stats.creditBalance > 0 
@@ -835,84 +833,124 @@ export const ClientDirectory: React.FC = () => {
       </div>
 
       {/* Client Add/Edit Modal */}
-      <Modal
-        open={isClientModalOpen}
-        onRequestClose={() => setIsClientModalOpen(false)}
-        modalHeading={editingClient ? 'Edit Client' : 'Add New Client'}
-        primaryButtonText={isSubmitting ? 'Saving...' : (editingClient ? 'Save Changes' : 'Create Client')}
-        secondaryButtonText="Cancel"
-        onRequestSubmit={handleSaveClient}
-        primaryButtonDisabled={isSubmitting || !formData.name.trim()}
-      >
-        <Form onSubmit={handleSaveClient}>
-          <Stack gap={5}>
-            <TextInput
-              id="client-name"
-              labelText="Client Name *"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-            <TextInput
-              id="client-email"
-              labelText="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-            <TextInput
-              id="client-phone"
-              labelText="Phone"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            />
-            <TextInput
-              id="client-company"
-              labelText="Company"
-              value={formData.company}
-              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            />
-            <TextInput
-              id="client-address"
-              labelText="Address"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            />
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <TextInput
-                  id="opening-balance"
-                  labelText="Opening Balance"
-                  type="number"
-                  step="0.01"
-                  value={formData.opening_balance}
-                  onChange={(e) => setFormData({ ...formData, opening_balance: e.target.value })}
+      {isClientModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 backdrop-blur-sm cursor-pointer" style={{ background: 'rgba(22, 22, 22, 0.4)' }} onClick={() => setIsClientModalOpen(false)}></div>
+          <div className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto bg-white shadow-lg">
+            <h3 className="text-2xl font-black mb-6 text-gray-900">{editingClient ? 'Edit Client' : 'Add New Client'}</h3>
+            <form onSubmit={handleSaveClient} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-500">Client Name *</label>
+                <input
+                  id="client-name"
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 outline-none border border-gray-300 text-sm"
                 />
               </div>
-              <div className="w-32">
-                <label className="block text-xs font-bold uppercase tracking-wider text-[var(--cds-text-secondary,#525252)] mb-1">
-                  Currency
-                </label>
-                <select
-                  value={formData.opening_balance_currency}
-                  onChange={(e) => setFormData({ ...formData, opening_balance_currency: e.target.value as 'USD' | 'GBP' })}
-                  className="w-full border border-[var(--cds-border-subtle,#c6c6c6)] px-3 py-2 text-sm"
-                  style={{ background: 'var(--cds-background, #ffffff)' }}
-                >
-                  <option value="USD">USD</option>
-                  <option value="GBP">GBP</option>
-                </select>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-500">Email</label>
+                <input
+                  id="client-email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-4 py-3 outline-none border border-gray-300 text-sm"
+                />
               </div>
-            </div>
-            <TextInput
-              id="client-notes"
-              labelText="Notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            />
-          </Stack>
-        </Form>
-      </Modal>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-500">Phone</label>
+                <input
+                  id="client-phone"
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-4 py-3 outline-none border border-gray-300 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-500">Company</label>
+                <input
+                  id="client-company"
+                  type="text"
+                  value={formData.company}
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  className="w-full px-4 py-3 outline-none border border-gray-300 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-500">Address</label>
+                <input
+                  id="client-address"
+                  type="text"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="w-full px-4 py-3 outline-none border border-gray-300 text-sm"
+                />
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1 space-y-1">
+                  <label className="text-sm font-semibold text-gray-500">Opening Balance</label>
+                  <input
+                    id="opening-balance"
+                    type="number"
+                    step="0.01"
+                    value={formData.opening_balance}
+                    onChange={(e) => setFormData({ ...formData, opening_balance: e.target.value })}
+                    className="w-full px-4 py-3 outline-none border border-gray-300 text-sm"
+                  />
+                </div>
+                <div className="w-32 space-y-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                    Currency
+                  </label>
+                  <select
+                    value={formData.opening_balance_currency}
+                    onChange={(e) => setFormData({ ...formData, opening_balance_currency: e.target.value as 'USD' | 'GBP' })}
+                    className="w-full border border-gray-300 px-3 py-2 text-sm bg-white"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="GBP">GBP</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-500">Notes</label>
+                <input
+                  id="client-notes"
+                  type="text"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="w-full px-4 py-3 outline-none border border-gray-300 text-sm"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  variant="secondary"
+                  type="button"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setIsClientModalOpen(false);
+                    setFormData(emptyForm);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  type="submit"
+                  style={{ flex: 1 }}
+                  disabled={isSubmitting || !formData.name.trim()}
+                >
+                  {isSubmitting ? 'Saving...' : (editingClient ? 'Save Changes' : 'Create Client')}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

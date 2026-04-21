@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Money, Car, UserMultiple, User, Document, Map } from '@carbon/icons-react';
+import { DollarSign, Car, Users, User, FileText, Map } from 'lucide-react';
 import { LandedCostSummary, VehicleStatus, Currency, Client, Employee, Payslip, CompanyDetails, OperatingFund, UserRole, AppUser, Expense, Vehicle, ExpenseCategory, Trip } from '../types';
 import { dataService } from '../services/dataService';
 import { AssetRegister } from './AssetRegister';
@@ -729,8 +729,8 @@ export const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '24rem', gap: '1rem' }}>
-        <div className="animate-spin" style={{ width: '3rem', height: '3rem', border: '2px solid var(--cds-interactive, #0f62fe)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
-        <p style={{ color: 'var(--cds-text-secondary, #525252)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.75rem' }}>Initializing Fleet Data</p>
+        <div className="animate-spin" style={{ width: '3rem', height: '3rem', border: '2px solid #2563eb', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+        <p style={{ color: '#525252', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.75rem' }}>Initializing Fleet Data</p>
       </div>
     );
   }
@@ -748,12 +748,12 @@ export const AdminDashboard: React.FC = () => {
     {
       id: 'reports',
       label: 'Reports',
-      icon: <Document size={16} />,
+      icon: <FileText size={16} />,
     },
     {
       id: 'clients',
       label: 'Clients',
-      icon: <UserMultiple size={16} />,
+      icon: <Users size={16} />,
     },
     {
       id: 'employees',
@@ -763,12 +763,12 @@ export const AdminDashboard: React.FC = () => {
     {
       id: 'payslips',
       label: 'Payslips',
-      icon: <Document size={16} />,
+      icon: <FileText size={16} />,
     },
     {
       id: 'funds',
       label: 'Operating Funds',
-      icon: <Money size={16} />,
+      icon: <DollarSign size={16} />,
     },
     {
       id: 'trips',
@@ -786,8 +786,8 @@ export const AdminDashboard: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: 'var(--cds-text-primary, #161616)', margin: 0 }}>Admin Dashboard</h2>
-          <p style={{ color: 'var(--cds-text-secondary, #525252)', margin: '0.25rem 0 0' }}>Fleet, clients, employees & payroll management</p>
+          <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#161616', margin: 0 }}>Admin Dashboard</h2>
+          <p style={{ color: '#525252', margin: '0.25rem 0 0' }}>Fleet, clients, employees & payroll management</p>
         </div>
         <DashboardSectionSwitcher
           value={activeView}
@@ -804,7 +804,7 @@ export const AdminDashboard: React.FC = () => {
             type="button"
             variant="secondary"
             onClick={() => setShowExpenseModal(true)}
-            leftIcon={<Money size={20} />}
+            leftIcon={<DollarSign size={20} />}
           >
             Add Expense
           </Button>
@@ -827,7 +827,7 @@ export const AdminDashboard: React.FC = () => {
               setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' });
               setShowClientModal(true);
             }}
-            leftIcon={<UserMultiple size={20} />}
+            leftIcon={<Users size={20} />}
           >
             Add Client
           </Button>
@@ -858,7 +858,7 @@ export const AdminDashboard: React.FC = () => {
               setPayslipForm(createEmptyPayslipForm());
               setShowPayslipModal(true);
             }}
-            leftIcon={<Document size={20} />}
+            leftIcon={<FileText size={20} />}
           >
             Generate Payslip
           </Button>
@@ -881,7 +881,7 @@ export const AdminDashboard: React.FC = () => {
               });
               setShowFundsModal(true);
             }}
-            leftIcon={<Money size={20} />}
+            leftIcon={<DollarSign size={20} />}
           >
             Record Transaction
           </Button>

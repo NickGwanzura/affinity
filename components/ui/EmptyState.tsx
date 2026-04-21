@@ -1,14 +1,14 @@
 import React from 'react';
-import { Button } from '@carbon/react';
 import {
   FolderOpen,
-  Document,
-  UserMultiple,
+  FileText,
+  Users,
   Receipt,
-  ChartBar,
-  DeliveryTruck,
+  BarChart3,
+  Truck,
   Search,
-} from '@carbon/icons-react';
+} from 'lucide-react';
+import { Button } from './Button';
 
 interface EmptyStateProps {
   title:        string;
@@ -26,21 +26,15 @@ interface EmptyStateProps {
   className?: string;
 }
 
-// Default icons using @carbon/icons-react for consistent icon system
+// Default icons using lucide-react
 const defaultIcons = {
   folder:   <FolderOpen size={32} />,
-  document: <Document size={32} />,
-  users:    <UserMultiple size={32} />,
+  document: <FileText size={32} />,
+  users:    <Users size={32} />,
   receipt:  <Receipt size={32} />,
-  chart:    <ChartBar size={32} />,
-  truck:    <DeliveryTruck size={32} />,
+  chart:    <BarChart3 size={32} />,
+  truck:    <Truck size={32} />,
   search:   <Search size={32} />,
-};
-
-const kindMap: Record<string, 'primary' | 'secondary' | 'ghost'> = {
-  primary:   'primary',
-  success:   'primary',
-  secondary: 'secondary',
 };
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
@@ -52,63 +46,35 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   className = '',
 }) => (
   <div
-    className={className}
-    style={{
-      display:        'flex',
-      flexDirection:  'column',
-      alignItems:     'center',
-      justifyContent: 'center',
-      padding:        '4rem 1rem',
-      textAlign:      'center',
-    }}
+    className={`flex flex-col items-center justify-center py-16 px-4 text-center ${className}`}
   >
     {/* Icon box */}
-    <div style={{
-      width:           80,
-      height:          80,
-      background:      'var(--cds-layer-02, #e0e0e0)',
-      display:         'flex',
-      alignItems:      'center',
-      justifyContent:  'center',
-      color:           'var(--cds-text-secondary, #525252)',
-      marginBottom:    '1.5rem',
-    }}>
+    <div className="w-20 h-20 bg-gray-100 flex items-center justify-center text-gray-500 mb-6">
       {icon ?? defaultIcons.folder}
     </div>
 
-    <h3 style={{
-      fontSize:    '1.125rem',
-      fontWeight:  600,
-      color:       'var(--cds-text-primary, #161616)',
-      margin:      '0 0 0.5rem',
-    }}>
+    <h3 className="text-lg font-semibold text-gray-900 mb-2">
       {title}
     </h3>
 
     {description && (
-      <p style={{
-        fontSize:   '0.875rem',
-        color:      'var(--cds-text-secondary, #525252)',
-        maxWidth:   '360px',
-        lineHeight: 1.5,
-        margin:     '0 0 1.5rem',
-      }}>
+      <p className="text-sm text-gray-500 max-w-sm leading-relaxed mb-6">
         {description}
       </p>
     )}
 
     {(action || secondaryAction) && (
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div className="flex gap-3 flex-wrap justify-center">
         {action && (
           <Button
-            kind={kindMap[action.variant ?? 'primary']}
+            variant={action.variant ?? 'primary'}
             onClick={action.onClick}
           >
             {action.label}
           </Button>
         )}
         {secondaryAction && (
-          <Button kind="ghost" onClick={secondaryAction.onClick}>
+          <Button variant="ghost" onClick={secondaryAction.onClick}>
             {secondaryAction.label}
           </Button>
         )}

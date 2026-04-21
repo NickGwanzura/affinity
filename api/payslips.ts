@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   AuthenticatedRequest,
   apiError,
-  getTenantId,
   handleCors,
   requireRole,
   setSecurityHeaders,
@@ -21,19 +20,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!(await verifyToken(authReq, res))) return;
 
   try {
-    const tenantId = getTenantId(req);
     switch (req.method) {
       case 'GET':
-        return await listPayslips(req, res, tenantId);
+        return await listPayslips(req, res);
       case 'POST':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await createPayslip(authReq, res, tenantId);
+        return await createPayslip(authReq, res);
       case 'PUT':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await updatePayslipStatus(req, res, tenantId);
+        return await updatePayslipStatus(req, res);
       case 'DELETE':
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
-        return await deletePayslip(req, res, tenantId);
+        return await deletePayslip(req, res);
       default:
         return apiError(res, 405, 'Method not allowed');
     }
@@ -42,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listPayslips(req: VercelRequest, res: VercelResponse, tenantId: string) {
+async function listPayslips(req: VercelRequest, res: VercelResponse) {
   const employeeId = typeof req.query.employeeId === 'string' ? req.query.employeeId : '';
   const year = typeof req.query.year === 'string' ? parseInt(req.query.year, 10) : undefined;
   const month = typeof req.query.month === 'string' ? parseInt(req.query.month, 10) : undefined;
@@ -52,8 +50,7 @@ async function listPayslips(req: VercelRequest, res: VercelResponse, tenantId: s
         SELECT p.*, row_to_json(e.*) AS employee
         FROM payslips p
         LEFT JOIN employees e ON p.employee_id = e.id
-        WHERE p.tenant_id = ${tenantId}::uuid
-          AND p.employee_id = ${employeeId}::uuid
+        WHERE p.employee_id = ${employeeId}::uuid
           AND (${year || null}::int IS NULL OR p.year = ${year || null})
           AND (${month || null}::int IS NULL OR p.month = ${month || null})
         ORDER BY p.year DESC, p.month DESC
@@ -62,8 +59,7 @@ async function listPayslips(req: VercelRequest, res: VercelResponse, tenantId: s
         SELECT p.*, row_to_json(e.*) AS employee
         FROM payslips p
         LEFT JOIN employees e ON p.employee_id = e.id
-        WHERE p.tenant_id = ${tenantId}::uuid
-          AND (${year || null}::int IS NULL OR p.year = ${year || null})
+        WHERE (${year || null}::int IS NULL OR p.year = ${year || null})
           AND (${month || null}::int IS NULL OR p.month = ${month || null})
         ORDER BY p.year DESC, p.month DESC
       `;
@@ -71,7 +67,7 @@ async function listPayslips(req: VercelRequest, res: VercelResponse, tenantId: s
   return res.status(200).json(rows);
 }
 
-async function createPayslip(req: AuthenticatedRequest, res: VercelResponse, tenantId: string) {
+async function createPayslip(req: AuthenticatedRequest, res: VercelResponse) {
   try {
     const data = PayslipSchema.parse(req.body);
     const employeeRows = await sql`SELECT * FROM employees WHERE id = ${data.employee_id}::uuid`;
@@ -79,7 +75,7 @@ async function createPayslip(req: AuthenticatedRequest, res: VercelResponse, ten
 
     // Check for duplicate payslip
     const existingPayslip = await sql`
-      SELECT id FROM payslips WHERE employee_id = ${data.employee_id}::uuid AND month = ${data.month} AND year = ${data.year} AND tenant_id = ${tenantId}::uuid
+      SELECT id FROM payslips WHERE employee_id = ${data.employee_id}::uuid AND month = ${data.month} AND year = ${data.year}
     `;
     if (existingPayslip.length > 0) {
       return res.status(409).json({ error: 'Payslip already exists for this employee, month, and year' });
@@ -102,7 +98,7 @@ async function createPayslip(req: AuthenticatedRequest, res: VercelResponse, ten
         overtime_hours, overtime_rate, overtime_pay, bonus, allowances, commission,
         tax_deduction, pension_deduction, health_insurance, other_deductions,
         gross_pay, total_deductions, net_pay, currency,
-        payment_date, payment_method, status, notes, generated_by, tenant_id
+        payment_date, payment_method, status, notes, generated_by
       )
       VALUES (
         ${payslipNumber},
@@ -128,8 +124,7 @@ async function createPayslip(req: AuthenticatedRequest, res: VercelResponse, ten
         ${data.payment_method || null},
         'Generated',
         ${data.notes || null},
-        ${req.user?.id || null}::uuid,
-        ${tenantId}::uuid
+        ${req.user?.id || null}::uuid
       )
       RETURNING id
     `;
@@ -147,7 +142,7 @@ async function createPayslip(req: AuthenticatedRequest, res: VercelResponse, ten
   }
 }
 
-async function updatePayslipStatus(req: VercelRequest, res: VercelResponse, tenantId: string) {
+async function updatePayslipStatus(req: VercelRequest, res: VercelResponse) {
   const newStatus = req.body?.status as PayslipStatus | undefined;
   if (!newStatus || !['Generated', 'Approved', 'Paid', 'Cancelled'].includes(newStatus)) {
     return apiError(res, 400, 'Invalid payslip status');
@@ -161,7 +156,7 @@ async function updatePayslipStatus(req: VercelRequest, res: VercelResponse, tena
     'Cancelled': [],
   };
 
-  const current = await sql`SELECT status FROM payslips WHERE id = ${req.query.id}::uuid AND tenant_id = ${tenantId}::uuid`;
+  const current = await sql`SELECT status FROM payslips WHERE id = ${req.query.id}::uuid`;
   if (!current.length) return apiError(res, 404, 'Not found');
 
   const allowed = VALID_TRANSITIONS[current[0].status] ?? [];
@@ -175,7 +170,7 @@ async function updatePayslipStatus(req: VercelRequest, res: VercelResponse, tena
   const rows = await sql`
     UPDATE payslips
     SET status = ${newStatus}, updated_at = NOW()
-    WHERE id = ${req.query.id}::uuid AND tenant_id = ${tenantId}::uuid
+    WHERE id = ${req.query.id}::uuid
     RETURNING id
   `;
   if (rows.length === 0) return apiError(res, 404, 'Payslip not found');
@@ -190,8 +185,8 @@ async function updatePayslipStatus(req: VercelRequest, res: VercelResponse, tena
   return res.status(200).json(fullRows[0]);
 }
 
-async function deletePayslip(req: VercelRequest, res: VercelResponse, tenantId: string) {
-  const rows = await sql`DELETE FROM payslips WHERE id = ${req.query.id}::uuid AND tenant_id = ${tenantId}::uuid RETURNING id`;
+async function deletePayslip(req: VercelRequest, res: VercelResponse) {
+  const rows = await sql`DELETE FROM payslips WHERE id = ${req.query.id}::uuid RETURNING id`;
   if (rows.length === 0) {
     return res.status(404).json({ error: 'Not found' });
   }

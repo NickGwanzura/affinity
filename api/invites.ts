@@ -5,13 +5,13 @@ import {
   apiError,
   handleCors,
   requireRole,
-  requireTenantContext,
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
 import { authenticateUser, createUser } from './_auth.js';
 import { logAuditEvent } from './_audit.js';
 import { sql } from './_db.js';
+import { sendInviteEmail } from './_email.tsx';
 
 const InviteCreateSchema = z.object({
   email: z.string().email(),
@@ -32,7 +32,6 @@ type InviteRecord = {
   id: string;
   email: string;
   role: 'Admin' | 'Manager' | 'Accountant' | 'Driver';
-  tenant_id?: string | null;
   name?: string;
   status: 'Pending' | 'Accepted' | 'Expired' | 'Cancelled' | 'Revoked';
   invited_by?: string | null;
@@ -50,25 +49,22 @@ const toInvite = (row: InviteRecord) => ({
   status: row.status === 'Revoked' ? 'Expired' : row.status,
   invitedBy: row.invited_by || 'Administrator',
   inviteToken: row.invite_token || row.token || '',
-  tenantId: row.tenant_id ?? null,
   expiresAt: row.expires_at,
   createdAt: row.created_at,
 });
 
-async function listInviteRows(tenantId: string) {
+async function listInviteRows() {
   try {
     return await sql`
-      SELECT id, email, role, tenant_id, name, status, invited_by, invite_token, expires_at, created_at
+      SELECT id, email, role, name, status, invited_by, invite_token, expires_at, created_at
       FROM invites
-      WHERE tenant_id = ${tenantId}::uuid
       ORDER BY created_at DESC
     `;
   } catch (error) {
     if (isMissingColumnError(error, 'name') || isMissingColumnError(error, 'invite_token')) {
       return sql`
-        SELECT id, email, role, tenant_id, status, invited_by, token, expires_at, created_at
+        SELECT id, email, role, status, invited_by, token, expires_at, created_at
         FROM invites
-        WHERE tenant_id = ${tenantId}::uuid
         ORDER BY created_at DESC
       `;
     }
@@ -79,7 +75,7 @@ async function listInviteRows(tenantId: string) {
 async function findInviteByToken(token: string) {
   try {
     const rows = await sql`
-      SELECT id, email, role, tenant_id, name, status, invited_by, invite_token, expires_at, created_at
+      SELECT id, email, role, name, status, invited_by, invite_token, expires_at, created_at
       FROM invites
       WHERE invite_token = ${token} AND status = 'Pending' AND expires_at > NOW()
     `;
@@ -87,7 +83,7 @@ async function findInviteByToken(token: string) {
   } catch (error) {
     if (isMissingColumnError(error, 'name') || isMissingColumnError(error, 'invite_token')) {
       const rows = await sql`
-        SELECT id, email, role, tenant_id, status, invited_by, token, expires_at, created_at
+        SELECT id, email, role, status, invited_by, token, expires_at, created_at
         FROM invites
         WHERE token = ${token} AND status = 'Pending' AND expires_at > NOW()
       `;
@@ -115,12 +111,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const authReq = req as AuthenticatedRequest;
     if (!(await verifyToken(authReq, res))) return;
-    if (!requireTenantContext(authReq, res)) return;
     if (!requireRole(authReq, res, ['Admin'])) return;
 
     switch (req.method) {
       case 'GET':
-        return await listInvitesForTenant(authReq.user!.tenantId!, res);
+        return await listInvitesHandler(res);
       case 'POST':
         if (action === 'resend') return await resendInvite(req, res);
         return await createInviteHandler(req, res);
@@ -134,17 +129,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listInvitesForTenant(tenantId: string, res: VercelResponse) {
-  const rows = await listInviteRows(tenantId);
-  return res.status(200).json(rows.map((row) => toInvite(row as InviteRecord)));
+async function listInvitesHandler(res: VercelResponse) {
+  const rows = await listInviteRows();
+  return res.status(200).json(rows.map(row => toInvite(row as InviteRecord)));
 }
 
 async function createInviteHandler(req: VercelRequest, res: VercelResponse) {
   try {
     const authReq = req as AuthenticatedRequest;
-    const tenantId = authReq.user?.tenantId;
-    if (!tenantId) return apiError(res, 400, 'User not linked to tenant');
-
     const data = InviteCreateSchema.parse(req.body);
     const token = crypto.randomUUID();
     const expiresAt = new Date();
@@ -152,18 +144,17 @@ async function createInviteHandler(req: VercelRequest, res: VercelResponse) {
 
     try {
       const rows = await sql`
-        INSERT INTO invites (email, role, tenant_id, name, invited_by, invite_token, expires_at, status)
+        INSERT INTO invites (email, role, name, invited_by, invite_token, expires_at, status)
         VALUES (
           ${data.email.toLowerCase()},
           ${data.role},
-          ${tenantId}::uuid,
           ${data.name},
           ${data.invitedBy || null},
           ${token},
           ${expiresAt.toISOString()},
           'Pending'
         )
-        RETURNING id, email, role, tenant_id, name, status, invited_by, invite_token, expires_at, created_at
+        RETURNING id, email, role, name, status, invited_by, invite_token, expires_at, created_at
       `;
       await logAuditEvent({
         req,
@@ -173,21 +164,27 @@ async function createInviteHandler(req: VercelRequest, res: VercelResponse) {
         recordId: rows[0].id,
         newData: rows[0],
       });
+      await sendInviteEmail({
+        to: data.email.toLowerCase(),
+        name: data.name,
+        role: data.role,
+        inviteToken: token,
+        invitedBy: data.invitedBy || 'Administrator',
+      });
       return res.status(201).json(toInvite(rows[0] as InviteRecord));
     } catch (error) {
       if (isMissingColumnError(error, 'name') || isMissingColumnError(error, 'invite_token')) {
         const rows = await sql`
-          INSERT INTO invites (email, role, tenant_id, invited_by, token, expires_at, status)
+          INSERT INTO invites (email, role, invited_by, token, expires_at, status)
           VALUES (
             ${data.email.toLowerCase()},
             ${data.role},
-            ${tenantId}::uuid,
             ${data.invitedBy || null},
             ${token},
             ${expiresAt.toISOString()},
             'Pending'
           )
-          RETURNING id, email, role, tenant_id, status, invited_by, token, expires_at, created_at
+          RETURNING id, email, role, status, invited_by, token, expires_at, created_at
         `;
         await logAuditEvent({
           req,
@@ -196,6 +193,13 @@ async function createInviteHandler(req: VercelRequest, res: VercelResponse) {
           tableName: 'invites',
           recordId: rows[0].id,
           newData: { ...(rows[0] as InviteRecord), name: data.name },
+        });
+        await sendInviteEmail({
+          to: data.email.toLowerCase(),
+          name: data.name,
+          role: data.role,
+          inviteToken: token,
+          invitedBy: data.invitedBy || 'Administrator',
         });
         return res.status(201).json(toInvite({ ...(rows[0] as InviteRecord), name: data.name }));
       }
@@ -208,9 +212,6 @@ async function createInviteHandler(req: VercelRequest, res: VercelResponse) {
 
 async function resendInvite(req: VercelRequest, res: VercelResponse) {
   const authReq = req as AuthenticatedRequest;
-  const tenantId = authReq.user?.tenantId;
-  if (!tenantId) return apiError(res, 400, 'User not linked to tenant');
-
   const inviteId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!inviteId) return apiError(res, 400, 'Missing invite id');
 
@@ -221,8 +222,8 @@ async function resendInvite(req: VercelRequest, res: VercelResponse) {
     const rows = await sql`
       UPDATE invites
       SET expires_at = ${expiresAt.toISOString()}, status = 'Pending'
-      WHERE id = ${inviteId}::uuid AND tenant_id = ${tenantId}::uuid
-      RETURNING id, email, role, tenant_id, name, status, invited_by, invite_token, expires_at, created_at
+      WHERE id = ${inviteId}::uuid
+      RETURNING id, email, role, name, status, invited_by, invite_token, expires_at, created_at
     `;
     if (rows.length === 0) return apiError(res, 404, 'Invite not found');
     await logAuditEvent({
@@ -233,14 +234,21 @@ async function resendInvite(req: VercelRequest, res: VercelResponse) {
       recordId: rows[0].id,
       newData: rows[0],
     });
+    await sendInviteEmail({
+      to: rows[0].email,
+      name: rows[0].name || rows[0].email.split('@')[0],
+      role: rows[0].role,
+      inviteToken: rows[0].invite_token || rows[0].token || '',
+      invitedBy: rows[0].invited_by || 'Administrator',
+    });
     return res.status(200).json(toInvite(rows[0] as InviteRecord));
   } catch (error) {
     if (isMissingColumnError(error, 'name') || isMissingColumnError(error, 'invite_token')) {
       const rows = await sql`
         UPDATE invites
         SET expires_at = ${expiresAt.toISOString()}, status = 'Pending'
-        WHERE id = ${inviteId}::uuid AND tenant_id = ${tenantId}::uuid
-        RETURNING id, email, role, tenant_id, status, invited_by, token, expires_at, created_at
+        WHERE id = ${inviteId}::uuid
+        RETURNING id, email, role, status, invited_by, token, expires_at, created_at
       `;
       if (rows.length === 0) return apiError(res, 404, 'Invite not found');
       await logAuditEvent({
@@ -251,6 +259,13 @@ async function resendInvite(req: VercelRequest, res: VercelResponse) {
         recordId: rows[0].id,
         newData: rows[0],
       });
+      await sendInviteEmail({
+        to: rows[0].email,
+        name: rows[0].email.split('@')[0],
+        role: rows[0].role,
+        inviteToken: rows[0].token || '',
+        invitedBy: rows[0].invited_by || 'Administrator',
+      });
       return res.status(200).json(toInvite(rows[0] as InviteRecord));
     }
     throw error;
@@ -259,13 +274,10 @@ async function resendInvite(req: VercelRequest, res: VercelResponse) {
 
 async function deleteInvite(req: VercelRequest, res: VercelResponse) {
   const authReq = req as AuthenticatedRequest;
-  const tenantId = authReq.user?.tenantId;
-  if (!tenantId) return apiError(res, 400, 'User not linked to tenant');
-
   const existing = await sql`
-    SELECT id, email, role, tenant_id, status
+    SELECT id, email, role, status
     FROM invites
-    WHERE id = ${req.query.id}::uuid AND tenant_id = ${tenantId}::uuid
+    WHERE id = ${req.query.id}::uuid
   `;
   if (existing.length === 0) return apiError(res, 404, 'Invite not found');
   await logAuditEvent({
@@ -276,7 +288,7 @@ async function deleteInvite(req: VercelRequest, res: VercelResponse) {
     recordId: existing[0].id,
     oldData: existing[0],
   });
-  await sql`DELETE FROM invites WHERE id = ${req.query.id}::uuid AND tenant_id = ${tenantId}::uuid`;
+  await sql`DELETE FROM invites WHERE id = ${req.query.id}::uuid`;
   return res.status(204).end();
 }
 
@@ -299,9 +311,8 @@ async function acceptInvite(req: VercelRequest, res: VercelResponse) {
       data.password,
       invite.role,
       {
-        accessRole: invite.role === 'Admin' ? 'tenant_admin' : 'user',
-        tenantId: invite.tenant_id ?? null,
-      },
+        accessRole: invite.role === 'Admin' ? 'admin' : 'user',
+      }
     );
     await sql`
       UPDATE invites

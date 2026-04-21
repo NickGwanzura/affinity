@@ -22,3 +22,27 @@ export {
 export { DashboardCard } from './DashboardCard';
 export { DataTableWrapper } from './DataTableWrapper';
 export type { DataTableColumn, DataTableWrapperProps } from './DataTableWrapper';
+
+export { Modal } from './Modal';
+export type { ModalSize } from './Modal';
+
+export {
+  TextInput,
+  PasswordInput,
+  TextArea,
+  NumberInput,
+  Select,
+  SelectItem,
+  Checkbox,
+  InlineLoading,
+  Loading,
+  InlineNotification,
+  Stack,
+  Tile,
+  Tag,
+  Grid,
+  Column,
+} from './FormInputs';
+
+export { Tabs, TabList, Tab, TabPanels, TabPanel } from './Tabs';
+export { OverflowMenu, OverflowMenuItem } from './OverflowMenu';

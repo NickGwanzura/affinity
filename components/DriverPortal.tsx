@@ -1,15 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  InlineLoading,
-  InlineNotification,
-  Link,
-  Select,
-  SelectItem,
-  Tag,
-  TextArea,
-  TextInput,
-  Tile,
-} from '@carbon/react';
+import { Loader2 } from 'lucide-react';
 import { Currency, Expense, ExpenseCategory, OperatingFund, Trip, Vehicle, VehicleStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
 import { dataService } from '../services/dataService';
@@ -467,21 +457,21 @@ export const DriverPortal: React.FC = () => {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <Tile style={{ padding: '2rem' }}>
-          <div className="flex justify-center">
-            <InlineLoading description="Loading your funds and drawdowns..." status="active" />
+        <div className="bg-white border border-gray-200 p-8">
+          <div className="flex justify-center items-center gap-3">
+            <Loader2 className="animate-spin" size={24} />
+            <span className="text-sm text-gray-600">Loading your funds and drawdowns...</span>
           </div>
-        </Tile>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-      <Tile
-        className="overflow-hidden"
+      <div
+        className="bg-white border border-gray-200 overflow-hidden p-6"
         style={{
-          padding: '1.5rem',
           background:
             'radial-gradient(circle at top left, rgba(69,137,255,0.2), transparent 34%), linear-gradient(135deg, #161616 0%, #262626 48%, #0f62fe 100%)',
           color: '#ffffff',
@@ -490,10 +480,10 @@ export const DriverPortal: React.FC = () => {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <Tag type="blue">Driver Funds</Tag>
-              <Tag type={availableUsd > 0 ? 'green' : 'red'}>
+              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">Driver Funds</span>
+              <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${availableUsd > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                 {availableUsd > 0 ? 'Ready To Draw' : 'Awaiting Allocation'}
-              </Tag>
+              </span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black mt-4 break-words">Welcome back, {currentDriver}</h2>
             <p className="text-sm sm:text-base text-slate-200 mt-3 max-w-3xl leading-6">
@@ -518,7 +508,7 @@ export const DriverPortal: React.FC = () => {
             </p>
           </div>
         </div>
-      </Tile>
+      </div>
 
       <section className="grid gap-4 md:grid-cols-3">
         <StatCard
@@ -542,7 +532,7 @@ export const DriverPortal: React.FC = () => {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
-        <Tile style={{ padding: '1.5rem' }}>
+        <div className="bg-white border border-gray-200 p-6">
           <div className="space-y-6">
             <div>
               <h3 className="text-2xl font-black text-zinc-900">Submit Drawdown</h3>
@@ -552,71 +542,72 @@ export const DriverPortal: React.FC = () => {
             </div>
 
             {success && (
-              <InlineNotification
-                kind="success"
-                lowContrast
-                hideCloseButton={false}
-                title="Success"
-                subtitle="Expense logged successfully and your drawdown balance has been refreshed."
-                onClose={() => setSuccess(false)}
-              />
+              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">Success</p>
+                    <p className="text-sm mt-0.5">Expense logged successfully and your drawdown balance has been refreshed.</p>
+                  </div>
+                  <button onClick={() => setSuccess(false)} className="text-green-600 hover:text-green-800 text-lg leading-none">×</button>
+                </div>
+              </div>
             )}
 
             {uploadError && (
-              <InlineNotification
-                kind="error"
-                lowContrast
-                hideCloseButton={false}
-                title="Could not complete request"
-                subtitle={uploadError}
-                onClose={() => setUploadError('')}
-              />
+              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">Could not complete request</p>
+                    <p className="text-sm mt-0.5">{uploadError}</p>
+                  </div>
+                  <button onClick={() => setUploadError('')} className="text-red-600 hover:text-red-800 text-lg leading-none">×</button>
+                </div>
+              </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Select
+                  <label htmlFor="vehicle-select" className="block text-sm font-medium text-gray-700 mb-1">Vehicle (Optional)</label>
+                  <select
                     id="vehicle-select"
-                    labelText="Vehicle (Optional)"
                     value={selectedVehicle}
                     onChange={(event) => setSelectedVehicle(event.target.value)}
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <SelectItem value="" text="General drawdown" />
+                    <option value="">General drawdown</option>
                     {vehicles.map((vehicle) => (
-                      <React.Fragment key={vehicle.id}>
-                        <SelectItem
-                          value={vehicle.id}
-                          text={`${vehicle.make_model} (${vehicle.vin_number})`}
-                        />
-                      </React.Fragment>
+                      <option key={vehicle.id} value={vehicle.id}>
+                        {vehicle.make_model} ({vehicle.vin_number})
+                      </option>
                     ))}
-                  </Select>
+                  </select>
                 </div>
 
                 <div>
-                  <Select
+                  <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
                     id="category-select"
-                    labelText="Category"
                     value={category}
                     onChange={(event) => setCategory(event.target.value as Exclude<ExpenseCategory, 'Driver Disbursement'>)}
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <SelectItem value="Fuel" text="Fuel" />
-                    <SelectItem value="Tolls" text="Tolls" />
-                    <SelectItem value="Food" text="Food" />
-                    <SelectItem value="Repairs" text="Repairs" />
-                    <SelectItem value="Duty" text="Duty" />
-                    <SelectItem value="Shipping" text="Shipping" />
-                    <SelectItem value="Other" text="Other" />
-                  </Select>
+                    <option value="Fuel">Fuel</option>
+                    <option value="Tolls">Tolls</option>
+                    <option value="Food">Food</option>
+                    <option value="Repairs">Repairs</option>
+                    <option value="Duty">Duty</option>
+                    <option value="Shipping">Shipping</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="md:col-span-2">
-                  <TextInput
+                  <label htmlFor="amount-input" className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                  <input
                     id="amount-input"
-                    labelText="Amount"
                     type="number"
                     step="0.01"
                     min="0.01"
@@ -625,41 +616,44 @@ export const DriverPortal: React.FC = () => {
                     required
                     autoComplete="off"
                     placeholder="0.00"
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <p className="text-xs text-zinc-500 mt-2">
+                  <p className="text-xs text-gray-500 mt-2">
                     Available balance: {availableBalanceDisplay}
                   </p>
                 </div>
 
                 <div>
-                  <Select
+                  <label htmlFor="currency-select" className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                  <select
                     id="currency-select"
-                    labelText="Currency"
                     value={currency}
                     onChange={(event) => setCurrency(event.target.value as Currency)}
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <SelectItem value="NAD" text="Namibian Dollars (NAD)" />
-                    <SelectItem value="ZAR" text="Rands (ZAR)" />
-                    <SelectItem value="BWP" text="Pulas (BWP)" />
-                    <SelectItem value="USD" text="US Dollars (USD)" />
-                    <SelectItem value="GBP" text="British Pounds (GBP)" />
-                  </Select>
+                    <option value="NAD">Namibian Dollars (NAD)</option>
+                    <option value="ZAR">Rands (ZAR)</option>
+                    <option value="BWP">Pulas (BWP)</option>
+                    <option value="USD">US Dollars (USD)</option>
+                    <option value="GBP">British Pounds (GBP)</option>
+                  </select>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Select
+                  <label htmlFor="location-select" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <select
                     id="location-select"
-                    labelText="Location"
                     value={location}
                     onChange={(event) => setLocation(event.target.value as VehicleStatus)}
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <SelectItem value="UK" text="UK" />
-                    <SelectItem value="Namibia" text="Namibia" />
-                    <SelectItem value="Zimbabwe" text="Zimbabwe" />
-                    <SelectItem value="Botswana" text="Botswana" />
-                  </Select>
+                    <option value="UK">UK</option>
+                    <option value="Namibia">Namibia</option>
+                    <option value="Zimbabwe">Zimbabwe</option>
+                    <option value="Botswana">Botswana</option>
+                  </select>
                 </div>
 
                 <div className="space-y-3">
@@ -674,7 +668,7 @@ export const DriverPortal: React.FC = () => {
                     onChange={handleFileSelect}
                     className="hidden"
                   />
-                  <div className="flex flex-col gap-3 rounded-sm border border-dashed border-zinc-300 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-3 border border-dashed border-gray-300 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-zinc-800">
                         {selectedFile ? selectedFile.name : 'No receipt selected'}
@@ -695,33 +689,39 @@ export const DriverPortal: React.FC = () => {
                 </div>
               </div>
 
-              <TextInput
-                id="trip-reference-input"
-                labelText="Trip Reference (Optional)"
-                value={tripReference}
-                onChange={(event) => setTripReference(event.target.value)}
-                placeholder="e.g. Windhoek delivery - April run"
-                autoComplete="off"
-              />
+              <div>
+                <label htmlFor="trip-reference-input" className="block text-sm font-medium text-gray-700 mb-1">Trip Reference (Optional)</label>
+                <input
+                  id="trip-reference-input"
+                  value={tripReference}
+                  onChange={(event) => setTripReference(event.target.value)}
+                  placeholder="e.g. Windhoek delivery - April run"
+                  autoComplete="off"
+                  className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-              <TextArea
-                id="description-input"
-                labelText="Description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={4}
-                placeholder="What is this expense for?"
-              />
+              <div>
+                <label htmlFor="description-input" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  id="description-input"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  rows={4}
+                  placeholder="What is this expense for?"
+                  className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
               {previewUrl && (
-                <Tile style={{ padding: '1rem' }}>
+                <div className="bg-white border border-gray-200 p-4">
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-zinc-900">Receipt preview</p>
                         <p className="text-xs text-zinc-500 mt-1">Double-check the image before you submit.</p>
                       </div>
-                      <Tag type="gray">{selectedFile?.type || 'image'}</Tag>
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-800">{selectedFile?.type || 'image'}</span>
                     </div>
                     <img
                       src={previewUrl}
@@ -729,10 +729,10 @@ export const DriverPortal: React.FC = () => {
                       className="w-full max-h-80 object-contain border border-zinc-200 bg-white"
                     />
                   </div>
-                </Tile>
+                </div>
               )}
 
-              <div className="sticky bottom-3 z-10  border border-zinc-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+              <div className="sticky bottom-3 z-10 border border-zinc-200 bg-white/95 p-3 shadow-lg backdrop-blur">
                 <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm font-semibold text-zinc-900">Ready to submit</p>
                   <p className="text-xs text-zinc-500">Available balance: {availableBalanceDisplay}</p>
@@ -748,10 +748,10 @@ export const DriverPortal: React.FC = () => {
               </div>
             </form>
           </div>
-        </Tile>
+        </div>
 
         <div className="space-y-6">
-          <Tile style={{ padding: '1.5rem' }}>
+          <div className="bg-white border border-gray-200 p-6">
             <div className="space-y-5">
               <div>
                 <h3 className="text-xl font-black text-zinc-900">Upcoming Schedule</h3>
@@ -764,7 +764,7 @@ export const DriverPortal: React.FC = () => {
                 {calendarDays.map((day) => (
                   <div
                     key={day.isoDate}
-                    className={` border p-3 ${
+                    className={`border p-3 ${
                       day.events.length > 0
                         ? 'border-blue-200 bg-blue-50'
                         : 'border-zinc-200 bg-zinc-50'
@@ -780,22 +780,23 @@ export const DriverPortal: React.FC = () => {
               </div>
 
               {upcomingTrips.length === 0 ? (
-                <InlineNotification
-                  kind="info"
-                  lowContrast
-                  hideCloseButton
-                  title="No trip date recorded yet"
-                  subtitle="Once operations records a dated driver allocation, your next trip will appear here."
-                />
+                <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3">
+                  <p className="font-semibold text-sm">No trip date recorded yet</p>
+                  <p className="text-sm mt-0.5">Once operations records a dated driver allocation, your next trip will appear here.</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {upcomingTrips.slice(0, 3).map((trip) => (
-                    <Tile key={trip.id} style={{ padding: '1rem' }}>
+                    <div key={trip.id} className="bg-white border border-gray-200 p-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-semibold text-zinc-900">{trip.title}</p>
-                            <Tag type={trip.status === 'Delayed' ? 'red' : trip.status === 'Completed' ? 'green' : 'blue'}>{trip.status}</Tag>
+                            <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${
+                              trip.status === 'Delayed' ? 'bg-red-100 text-red-800' : trip.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {trip.status}
+                            </span>
                           </div>
                           <p className="mt-2 text-sm text-zinc-600">
                             {trip.route_origin} to {trip.route_destination}
@@ -812,14 +813,14 @@ export const DriverPortal: React.FC = () => {
                         </div>
                         <div className="text-sm font-bold text-blue-700">{trip.trip_number}</div>
                       </div>
-                    </Tile>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
-          </Tile>
+          </div>
 
-          <Tile style={{ padding: '1.5rem' }}>
+          <div className="bg-white border border-gray-200 p-6">
             <div className="space-y-5">
               <div>
                 <h3 className="text-xl font-black text-zinc-900">Latest Activity</h3>
@@ -827,24 +828,23 @@ export const DriverPortal: React.FC = () => {
               </div>
 
               {ledger.length === 0 ? (
-                <InlineNotification
-                  kind="info"
-                  lowContrast
-                  hideCloseButton
-                  title="No activity yet"
-                  subtitle="No funds or drawdowns are attached to your profile yet."
-                />
+                <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3">
+                  <p className="font-semibold text-sm">No activity yet</p>
+                  <p className="text-sm mt-0.5">No funds or drawdowns are attached to your profile yet.</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {ledger.slice(0, 8).map((entry) => (
-                    <Tile key={entry.id} style={{ padding: '1rem' }}>
+                    <div key={entry.id} className="bg-white border border-gray-200 p-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0 space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-semibold text-zinc-900 break-words">{entry.title}</p>
-                            <Tag type={entry.isCredit ? 'green' : 'red'}>
+                            <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${
+                              entry.isCredit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
                               {entry.isCredit ? 'Allocation' : 'Spend'}
-                            </Tag>
+                            </span>
                           </div>
                           <p className="text-sm text-zinc-600 break-words">{entry.subtitle}</p>
                           <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
@@ -854,9 +854,9 @@ export const DriverPortal: React.FC = () => {
                             {entry.receiptUrl && (
                               <>
                                 <span className="hidden sm:inline">•</span>
-                                <Link href={entry.receiptUrl} target="_blank" rel="noreferrer">
+                                <a href={entry.receiptUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
                                   Receipt
-                                </Link>
+                                </a>
                               </>
                             )}
                           </div>
@@ -869,14 +869,14 @@ export const DriverPortal: React.FC = () => {
                           <p className="text-xs text-zinc-500 mt-1">USD eq. {formatUsd(entry.amountUsd)}</p>
                         </div>
                       </div>
-                    </Tile>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
-          </Tile>
+          </div>
 
-          <Tile style={{ padding: '1.5rem' }}>
+          <div className="bg-white border border-gray-200 p-6">
             <div className="space-y-4">
               <div>
                 <h3 className="text-xl font-black text-zinc-900">How It Works</h3>
@@ -888,7 +888,7 @@ export const DriverPortal: React.FC = () => {
                 <li>Every expense you submit reduces the available balance shown above.</li>
               </ol>
             </div>
-          </Tile>
+          </div>
         </div>
       </section>
     </div>

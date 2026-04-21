@@ -6,8 +6,7 @@ import { Button, InsightPanel, MetricBarList, RankedMetricList, DashboardCard } 
 import { toVehicleEditorRecord, type VehicleEditorRecord } from '../../utils/dashboardViewModels';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from '../shared/ExpenseEntryModal';
 import VehicleFormModal, { type VehicleFormValue } from '../shared/VehicleFormModal';
-import { Money, Car, ArrowUp, TrashCan, Edit } from '@carbon/icons-react';
-import { Tile, Modal, Stack } from '@carbon/react';
+import { DollarSign, Car, ArrowUp, Trash2, Pencil } from 'lucide-react';
 
 export const VehiclesTab: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
@@ -221,43 +220,43 @@ export const VehiclesTab: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '16rem', gap: '1rem' }}>
-        <div className="animate-spin" style={{ width: '2.5rem', height: '2.5rem', border: '2px solid var(--cds-interactive, #0f62fe)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
-        <p style={{ color: 'var(--cds-text-secondary, #525252)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.75rem' }}>Loading Fleet Data</p>
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="animate-spin w-10 h-10 border-2 border-[#0f62fe] border-t-transparent rounded-full"></div>
+        <p className="text-[#525252] font-semibold uppercase tracking-widest text-xs">Loading Fleet Data</p>
       </div>
     );
   }
 
   return (
-    <Stack gap={8}>
+    <div className="flex flex-col gap-8">
       {/* Action buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+      <div className="flex items-center gap-2 flex-wrap">
         <Button
           type="button"
           variant="secondary"
           onClick={() => setShowExpenseModal(true)}
-          leftIcon={<Money size={20} />}
+          leftIcon={<DollarSign size={20} />}
         >
           Add Expense
         </Button>
         <Button
           type="button"
           onClick={openAddVehicleModal}
-          renderIcon={Car}
+          leftIcon={<Car size={20} />}
         >
           Add Vehicle
         </Button>
       </div>
 
-      {/* Analytics Cards - Carbon compliant */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+      {/* Analytics Cards */}
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
         <DashboardCard
           title="Total Asset Valuation"
           value={`$${totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           subtitle="Fleet book value"
           color="blue"
           footer={
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cds-support-success, #24a148)', fontSize: '0.875rem', fontWeight: 600 }}>
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#24a148]">
               <ArrowUp size={16} />
               <span>Healthy Inventory</span>
             </div>
@@ -270,7 +269,7 @@ export const VehiclesTab: React.FC = () => {
           subtitle="Active routes"
           color="green"
           footer={
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cds-text-secondary, #525252)', fontSize: '0.875rem' }}>
+            <div className="flex items-center gap-2 text-sm text-[#525252]">
               <Car size={16} />
               <span>Across Namibia & Zimbabwe</span>
             </div>
@@ -283,15 +282,15 @@ export const VehiclesTab: React.FC = () => {
           subtitle="Operational uptime"
           color="purple"
           footer={
-            <div style={{ width: '100%', height: 8, background: 'var(--cds-layer-accent-01, #e8e8e8)', marginTop: '0.5rem' }}>
-              <div style={{ width: '94%', height: '100%', background: 'var(--cds-support-success, #24a148)' }} />
+            <div className="w-full h-2 bg-[#e8e8e8] mt-2">
+              <div className="h-full bg-[#24a148]" style={{ width: '94%' }} />
             </div>
           }
         />
       </div>
 
       {/* Analytics Panels */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+      <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
         <InsightPanel
           title="Landed Cost Breakdown"
           subtitle="Top vehicles ranked by total landed cost, with transit spend called out."
@@ -329,121 +328,92 @@ export const VehiclesTab: React.FC = () => {
         </InsightPanel>
       </div>
 
-      {/* Inventory Table - Carbon styled */}
-      <Tile style={{ padding: 0 }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--cds-border-subtle, #e0e0e0)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Inventory Table */}
+      <div className="bg-white border border-[#e0e0e0]">
+        <div className="px-6 py-4 border-b border-[#e0e0e0] flex justify-between items-center">
           <div>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--cds-text-primary, #161616)' }}>Current Inventory</h3>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: 'var(--cds-text-secondary, #525252)' }}>
+            <h3 className="m-0 text-base font-semibold text-[#161616]">Current Inventory</h3>
+            <p className="mt-1 text-sm text-[#525252]">
               {summaries.length} vehicle{summaries.length !== 1 ? 's' : ''} &bull; {inTransitCount} in transit
             </p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Total Value</p>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '1.25rem', fontWeight: 600, color: 'var(--cds-text-primary, #161616)', fontVariantNumeric: 'tabular-nums' }}>
+          <div className="text-right">
+            <p className="m-0 text-xs text-[#525252] uppercase tracking-wider font-semibold">Total Value</p>
+            <p className="mt-1 text-xl font-semibold text-[#161616] tabular-nums">
               ${totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
           </div>
         </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
             <thead>
-              <tr style={{ background: 'var(--cds-layer-02, #f4f4f4)', borderBottom: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
-                <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, color: 'var(--cds-text-secondary, #525252)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>Asset / VIN</th>
-                <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, color: 'var(--cds-text-secondary, #525252)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>Region</th>
-                <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, color: 'var(--cds-text-secondary, #525252)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>Purchase Cost</th>
-                <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, color: 'var(--cds-text-secondary, #525252)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>Landed Cost</th>
+              <tr className="bg-[#f4f4f4] border-b border-[#e0e0e0]">
+                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">Asset / VIN</th>
+                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">Region</th>
+                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">Purchase Cost</th>
+                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">Landed Cost</th>
               </tr>
             </thead>
             <tbody>
               {summaries.map((s) => (
                 <tr
                   key={s.vehicle_id}
-                  style={{ borderBottom: '1px solid var(--cds-border-subtle, #e0e0e0)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--cds-layer-hover, #f4f4f4)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  className="border-b border-[#e0e0e0] hover:bg-[#f4f4f4] transition-colors group"
                 >
-                  <td style={{ padding: '1rem 1.5rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 600, color: 'var(--cds-text-primary, #161616)' }}>{s.make_model}</span>
-                      <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)', textTransform: 'uppercase' }}>{s.vin_number}</span>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-[#161616]">{s.make_model}</span>
+                      <span className="font-mono text-xs text-[#525252] uppercase">{s.vin_number}</span>
                     </div>
                   </td>
-                  <td style={{ padding: '1rem 1.5rem' }}>
+                  <td className="px-6 py-4">
                     <span
+                      className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider"
                       style={{
-                        display: 'inline-block',
-                        padding: '0.25rem 0.75rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                         background:
                           s.status === 'UK'
-                            ? 'var(--cds-layer-02, #e0e0e0)'
+                            ? '#e0e0e0'
                             : s.status === 'Namibia'
-                            ? 'var(--cds-support-warning, #f1c21b)'
+                            ? '#f1c21b'
                             : s.status === 'Zimbabwe'
-                            ? 'var(--cds-support-success, #24a148)'
+                            ? '#24a148'
                             : s.status === 'Botswana'
                             ? '#8a3ffc'
-                            : 'var(--cds-support-info, #0f62fe)',
+                            : '#0f62fe',
                         color:
-                          s.status === 'UK'
-                            ? 'var(--cds-text-primary, #161616)'
-                            : s.status === 'Namibia'
-                            ? 'var(--cds-text-primary, #161616)'
+                          s.status === 'UK' || s.status === 'Namibia'
+                            ? '#161616'
                             : '#ffffff',
                       }}
                     >
                       {s.status}
                     </span>
                   </td>
-                  <td style={{ padding: '1rem 1.5rem', color: 'var(--cds-text-secondary, #525252)', fontVariantNumeric: 'tabular-nums' }}>
+                  <td className="px-6 py-4 text-[#525252] tabular-nums">
                     £{s.purchase_price_gbp.toLocaleString()}
                   </td>
-                  <td style={{ padding: '1rem 1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--cds-text-primary, #161616)', fontVariantNumeric: 'tabular-nums' }}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-[#161616] tabular-nums">
                           ${s.total_landed_cost_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary, #525252)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Valuation</span>
+                        <span className="text-xs text-[#525252] uppercase tracking-wider">Total Valuation</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEditVehicleModal(s)}
-                          style={{
-                            padding: '0.5rem',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--cds-interactive, #0f62fe)',
-                            opacity: 0,
-                            transition: 'opacity 0.15s',
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+                          className="p-2 bg-transparent border-none cursor-pointer text-[#0f62fe] opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Edit vehicle"
                         >
-                          <Edit size={16} />
+                          <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => openDeleteDialog(s)}
-                          style={{
-                            padding: '0.5rem',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--cds-support-error, #da1e28)',
-                            opacity: 0,
-                            transition: 'opacity 0.15s',
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+                          className="p-2 bg-transparent border-none cursor-pointer text-[#da1e28] opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Delete vehicle"
                         >
-                          <TrashCan size={16} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
@@ -453,7 +423,7 @@ export const VehiclesTab: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </Tile>
+      </div>
 
       <VehicleFormModal
         isOpen={showAddModal}
@@ -480,35 +450,52 @@ export const VehiclesTab: React.FC = () => {
         accent="green"
       />
 
-      {/* Delete Vehicle Confirmation - Carbon Modal */}
-      <Modal
-        open={showDeleteDialog}
-        modalHeading="Delete Vehicle?"
-        primaryButtonText="Delete Vehicle"
-        secondaryButtonText="Cancel"
-        danger
-        onRequestClose={() => setShowDeleteDialog(false)}
-        onRequestSubmit={handleDeleteVehicle}
-      >
-        {vehicleToDelete && (
-          <Stack gap={4}>
-            <p style={{ color: 'var(--cds-text-primary, #161616)' }}>
-              Are you sure you want to delete <strong>{vehicleToDelete.make_model}</strong>?
-            </p>
-            <p style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--cds-text-secondary, #525252)' }}>
-              VIN: {vehicleToDelete.vin_number}
-            </p>
-            <Tile style={{ background: 'var(--cds-support-warning, #f1c21b)', padding: '1rem' }}>
-              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--cds-text-primary, #161616)' }}>
-                Warning: This action cannot be undone. All associated expenses will also be deleted.
-              </p>
-            </Tile>
-          </Stack>
-        )}
-      </Modal>
+      {/* Delete Vehicle Confirmation - Custom Modal */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-full max-w-lg mx-4 shadow-lg">
+            <div className="px-6 py-4 border-b border-[#e0e0e0]">
+              <h3 className="text-lg font-semibold text-[#161616]">Delete Vehicle?</h3>
+            </div>
+            <div className="px-6 py-6 flex flex-col gap-4">
+              {vehicleToDelete && (
+                <>
+                  <p className="text-[#161616]">
+                    Are you sure you want to delete <strong>{vehicleToDelete.make_model}</strong>?
+                  </p>
+                  <p className="font-mono text-sm text-[#525252]">
+                    VIN: {vehicleToDelete.vin_number}
+                  </p>
+                  <div className="p-4" style={{ background: '#f1c21b' }}>
+                    <p className="m-0 text-sm font-semibold text-[#161616]">
+                      Warning: This action cannot be undone. All associated expenses will also be deleted.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="px-6 py-4 flex justify-end gap-2 bg-[#f4f4f4]">
+              <button
+                type="button"
+                onClick={() => setShowDeleteDialog(false)}
+                className="px-4 py-2 text-sm font-semibold text-[#161616] bg-transparent border border-[#c6c6c6] hover:bg-[#e8e8e8] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteVehicle}
+                className="px-4 py-2 text-sm font-semibold text-white bg-[#da1e28] hover:bg-red-700 transition-colors"
+              >
+                Delete Vehicle
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ToastContainer />
-    </Stack>
+    </div>
   );
 };
 

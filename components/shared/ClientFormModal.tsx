@@ -1,7 +1,6 @@
 import React from 'react';
-import { Stack, TextArea, TextInput } from '@carbon/react';
 import CarbonFormModal from './CarbonFormModal';
-import { Button } from '../ui';
+import { Button, Stack, TextArea, TextInput } from '../ui';
 
 export interface ClientFormValue {
   name: string;

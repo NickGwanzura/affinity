@@ -33,12 +33,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!requireAccessRole(authReq, res, ['super_admin'])) return;
 
   try {
-    const [users, tenants, activeTenants, suspendedTenants, pendingTenants, pendingUsers, pendingRequests] = await Promise.all([
+    const [users, pendingUsers, pendingRequests] = await Promise.all([
       safeCount(sql`SELECT COUNT(*) AS count FROM user_profiles`),
-      safeCount(sql`SELECT COUNT(*) AS count FROM tenants`),
-      safeCount(sql`SELECT COUNT(*) AS count FROM tenants WHERE LOWER(status) = 'active'`),
-      safeCount(sql`SELECT COUNT(*) AS count FROM tenants WHERE LOWER(status) = 'suspended'`),
-      safeCount(sql`SELECT COUNT(*) AS count FROM tenants WHERE LOWER(status) = 'pending'`),
       safeCount(sql`SELECT COUNT(*) AS count FROM user_profiles WHERE LOWER(COALESCE(status, '')) = 'pending'`),
       safeCount(sql`SELECT COUNT(*) AS count FROM registration_requests WHERE LOWER(COALESCE(status, '')) = 'pending'`),
     ]);
@@ -66,10 +62,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       totals: {
         users,
-        tenants,
-        activeTenants,
-        suspendedTenants,
-        pendingTenants,
         pendingApprovals: pendingUsers + pendingRequests,
       },
       activity: recentActions,
