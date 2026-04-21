@@ -8,7 +8,13 @@ import {
   apiError,
 } from './_middleware.js';
 import { sql, validateOrderColumn } from './_db.js';
-import { VehicleSchema, VehicleUpdateSchema, PaginationSchema } from './_schemas.js';
+import {
+  VehicleSchema,
+  VehicleUpdateSchema,
+  PaginationSchema,
+  ShipmentSchema,
+  ShipmentUpdateSchema,
+} from './_schemas.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);
@@ -22,19 +28,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     switch (req.method) {
       case 'GET':
         if (req.query.id) {
+          if (req.query.type === 'shipment') {
+            return await getShipment(authReq, res);
+          }
           return await getVehicle(authReq, res);
+        }
+        if (req.query.type === 'shipment') {
+          return await listShipments(authReq, res);
         }
         return await listVehicles(authReq, res);
 
       case 'POST':
+        if (req.query.type === 'shipment') {
+          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+          return await createShipment(authReq, res);
+        }
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
         return await createVehicle(authReq, res);
 
       case 'PUT':
+        if (req.query.type === 'shipment') {
+          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+          return await updateShipment(authReq, res);
+        }
         if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
         return await updateVehicle(authReq, res);
 
       case 'DELETE':
+        if (req.query.type === 'shipment') {
+          if (!requireRole(authReq, res, ['Admin'])) return;
+          return await deleteShipment(authReq, res);
+        }
         if (!requireRole(authReq, res, ['Admin'])) return;
         return await deleteVehicle(authReq, res);
 
@@ -45,6 +69,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     apiError(res, 500, 'Internal server error', error);
   }
 }
+
+// ============ VEHICLE FUNCTIONS ============
 
 async function listVehicles(req: AuthenticatedRequest, res: VercelResponse) {
   try {
@@ -61,7 +87,7 @@ async function listVehicles(req: AuthenticatedRequest, res: VercelResponse) {
     const [countResult, rows] = await Promise.all([
       sql`SELECT COUNT(*) as total FROM vehicles`,
       sql`
-        SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, cbca_applied, created_at
+        SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
         FROM vehicles
         ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
         LIMIT ${limit} OFFSET ${offset}
@@ -86,7 +112,7 @@ async function getVehicle(req: AuthenticatedRequest, res: VercelResponse) {
   const { id } = req.query;
 
   const rows = await sql`
-    SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, cbca_applied, created_at
+    SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
     FROM vehicles
     WHERE id = ${id}::uuid
   `;
@@ -103,9 +129,9 @@ async function createVehicle(req: AuthenticatedRequest, res: VercelResponse) {
     const data = VehicleSchema.parse(req.body);
 
     const rows = await sql`
-      INSERT INTO vehicles (vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, cbca_applied)
-      VALUES (${data.vin_number}, ${data.reg_number}, ${data.make_model}, ${data.purchase_price_gbp}, ${data.status}, ${data.purpose}, ${data.cbca_applied})
-      RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, cbca_applied, created_at
+      INSERT INTO vehicles (vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied)
+      VALUES (${data.vin_number}, ${data.reg_number}, ${data.make_model}, ${data.purchase_price_gbp}, ${data.status}, ${data.purpose}, ${data.client_id ?? null}, ${data.cbca_applied})
+      RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
     `;
 
     res.status(201).json(rows[0]);
@@ -132,10 +158,11 @@ async function updateVehicle(req: AuthenticatedRequest, res: VercelResponse) {
         purchase_price_gbp = COALESCE(${data.purchase_price_gbp ?? null}, purchase_price_gbp),
         status = COALESCE(${data.status ?? null}, status),
         purpose = COALESCE(${data.purpose ?? null}, purpose),
+        client_id = ${data.client_id ?? null},
         cbca_applied = COALESCE(${data.cbca_applied ?? null}, cbca_applied),
         updated_at = NOW()
       WHERE id = ${id}::uuid
-      RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, cbca_applied, created_at
+      RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, created_at
     `;
 
     if (rows.length === 0) {
@@ -152,6 +179,122 @@ async function deleteVehicle(req: AuthenticatedRequest, res: VercelResponse) {
   const { id } = req.query;
 
   await sql`DELETE FROM vehicles WHERE id = ${id}::uuid`;
+
+  res.status(204).end();
+}
+
+// ============ SHIPMENT FUNCTIONS ============
+
+async function listShipments(req: AuthenticatedRequest, res: VercelResponse) {
+  try {
+    const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
+    const offset = (page - 1) * limit;
+
+    let orderColumn = 'created_at';
+    if (sortBy) {
+      const validated = validateOrderColumn('shipments', sortBy);
+      if (validated) orderColumn = validated;
+    }
+    const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    const [countResult, rows] = await Promise.all([
+      sql`SELECT COUNT(*) as total FROM shipments`,
+      sql`
+        SELECT s.id, s.client_id, s.vehicle_id, s.description, s.origin, s.destination, s.status, s.shipping_date, s.delivery_date, s.created_at,
+               c.name as client_name, v.make_model as vehicle_name
+        FROM shipments s
+        LEFT JOIN clients c ON s.client_id = c.id
+        LEFT JOIN vehicles v ON s.vehicle_id = v.id
+        ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+    ]);
+
+    const total = parseInt(countResult[0].total);
+
+    res.status(200).json({
+      data: rows,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    apiError(res, 400, 'Invalid query parameters', error);
+  }
+}
+
+async function getShipment(req: AuthenticatedRequest, res: VercelResponse) {
+  const { id } = req.query;
+
+  const rows = await sql`
+    SELECT s.id, s.client_id, s.vehicle_id, s.description, s.origin, s.destination, s.status, s.shipping_date, s.delivery_date, s.created_at,
+           c.name as client_name, v.make_model as vehicle_name
+    FROM shipments s
+    LEFT JOIN clients c ON s.client_id = c.id
+    LEFT JOIN vehicles v ON s.vehicle_id = v.id
+    WHERE s.id = ${id}::uuid
+  `;
+
+  if (rows.length === 0) {
+    return apiError(res, 404, 'Shipment not found');
+  }
+
+  res.status(200).json(rows[0]);
+}
+
+async function createShipment(req: AuthenticatedRequest, res: VercelResponse) {
+  try {
+    const data = ShipmentSchema.parse(req.body);
+
+    const rows = await sql`
+      INSERT INTO shipments (client_id, vehicle_id, description, origin, destination, status, shipping_date, delivery_date)
+      VALUES (${data.client_id}, ${data.vehicle_id ?? null}, ${data.description}, ${data.origin}, ${data.destination}, ${data.status}, ${data.shipping_date ?? null}, ${data.delivery_date ?? null})
+      RETURNING id, client_id, vehicle_id, description, origin, destination, status, shipping_date, delivery_date, created_at
+    `;
+
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    apiError(res, 400, 'Invalid shipment data', error);
+  }
+}
+
+async function updateShipment(req: AuthenticatedRequest, res: VercelResponse) {
+  const { id } = req.query;
+
+  try {
+    const data = ShipmentUpdateSchema.parse(req.body);
+
+    const rows = await sql`
+      UPDATE shipments
+      SET 
+        client_id = COALESCE(${data.client_id ?? null}, client_id),
+        vehicle_id = ${data.vehicle_id ?? null},
+        description = COALESCE(${data.description ?? null}, description),
+        origin = COALESCE(${data.origin ?? null}, origin),
+        destination = COALESCE(${data.destination ?? null}, destination),
+        status = COALESCE(${data.status ?? null}, status),
+        shipping_date = COALESCE(${data.shipping_date ?? null}, shipping_date),
+        delivery_date = COALESCE(${data.delivery_date ?? null}, delivery_date),
+        updated_at = NOW()
+      WHERE id = ${id}::uuid
+      RETURNING id, client_id, vehicle_id, description, origin, destination, status, shipping_date, delivery_date, created_at
+    `;
+
+    if (rows.length === 0) {
+      return apiError(res, 404, 'Shipment not found');
+    }
+
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    apiError(res, 400, 'Invalid shipment data', error);
+  }
+}
+
+async function deleteShipment(req: AuthenticatedRequest, res: VercelResponse) {
+  const { id } = req.query;
+
+  await sql`DELETE FROM shipments WHERE id = ${id}::uuid`;
 
   res.status(204).end();
 }

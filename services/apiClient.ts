@@ -1,6 +1,6 @@
 /**
  * Frontend API Client
- * 
+ *
  * Replaces direct database access with API calls
  * All requests include JWT token for authentication
  */
@@ -42,7 +42,9 @@ export class APIError extends Error {
   }
 }
 
-function toQueryString(params?: Record<string, string | number | boolean | null | undefined>): string {
+function toQueryString(
+  params?: Record<string, string | number | boolean | null | undefined>
+): string {
   if (!params) return '';
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -54,17 +56,14 @@ function toQueryString(params?: Record<string, string | number | boolean | null 
 }
 
 // Base request function
-async function apiRequest<T>(
-  endpoint: string,
-  options: globalThis.RequestInit = {}
-): Promise<T> {
+async function apiRequest<T>(endpoint: string, options: globalThis.RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers as Record<string, string>,
+    ...(options.headers as Record<string, string>),
   };
-  
+
   // Add auth token
   const token = getToken();
   if (token) {
@@ -75,19 +74,19 @@ async function apiRequest<T>(
     ...options,
     headers,
   };
-  
+
   try {
     const response = await fetch(url, config);
-    
+
     // Handle 204 No Content
     if (response.status === 204) {
       return undefined as T;
     }
-    
+
     // Get content type to determine how to parse response
     const contentType = response.headers.get('content-type') || '';
     const isJson = contentType.includes('application/json');
-    
+
     // Parse response based on content type
     let data: any;
     if (isJson) {
@@ -96,7 +95,7 @@ async function apiRequest<T>(
       const text = await response.text();
       data = { error: text || 'Unknown error' };
     }
-    
+
     if (!response.ok) {
       throw new APIError(
         data.error || `HTTP ${response.status}: ${response.statusText}`,
@@ -104,18 +103,15 @@ async function apiRequest<T>(
         data
       );
     }
-    
+
     return data as T;
   } catch (error) {
     if (error instanceof APIError) {
       throw error;
     }
-    
+
     // Network or other errors
-    throw new APIError(
-      error instanceof Error ? error.message : 'Network error',
-      0
-    );
+    throw new APIError(error instanceof Error ? error.message : 'Network error', 0);
   }
 }
 
@@ -138,130 +134,161 @@ export const api = {
         accessRole?: 'super_admin' | 'admin' | 'user';
         forcePasswordChange?: boolean;
       }>('/auth?action=me'),
-    
+
     register: (name: string, email: string, password: string, role: string) =>
       apiRequest('/auth?action=register', {
         method: 'POST',
         body: JSON.stringify({ name, email, password, role }),
       }),
-    
+
     changePassword: (userId: string, currentPassword: string, newPassword: string) =>
       apiRequest('/auth?action=change-password', {
         method: 'POST',
         body: JSON.stringify({ userId, currentPassword, newPassword }),
       }),
-    
+
     forgotPassword: (email: string) =>
       apiRequest('/auth?action=forgot-password', {
         method: 'POST',
         body: JSON.stringify({ email }),
       }),
-    
+
     resetPassword: (token: string, newPassword: string) =>
       apiRequest('/auth?action=reset-password', {
         method: 'POST',
         body: JSON.stringify({ token, newPassword }),
       }),
   },
-  
+
   // Vehicles
   vehicles: {
     list: (params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: string }) =>
-      apiRequest<PaginatedResponse<any>>(`/vehicles?${new URLSearchParams(params as Record<string, string>).toString()}`),
-    
-    get: (id: string) =>
-      apiRequest<any>(`/vehicles?id=${id}`),
-    
+      apiRequest<PaginatedResponse<any>>(
+        `/vehicles?${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
+
+    get: (id: string) => apiRequest<any>(`/vehicles?id=${id}`),
+
     create: (data: any) =>
       apiRequest<any>('/vehicles', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    
+
     update: (id: string, data: any) =>
       apiRequest<any>(`/vehicles?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
-    
+
     delete: (id: string) =>
       apiRequest<void>(`/vehicles?id=${id}`, {
         method: 'DELETE',
       }),
   },
-  
+
+  // Shipments
+  shipments: {
+    list: (params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: string }) =>
+      apiRequest<PaginatedResponse<any>>(
+        `/vehicles?type=shipment&${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
+
+    get: (id: string) => apiRequest<any>(`/vehicles?type=shipment&id=${id}`),
+
+    create: (data: any) =>
+      apiRequest<any>('/vehicles?type=shipment', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    update: (id: string, data: any) =>
+      apiRequest<any>(`/vehicles?type=shipment&id=${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    delete: (id: string) =>
+      apiRequest<void>(`/vehicles?type=shipment&id=${id}`, {
+        method: 'DELETE',
+      }),
+  },
+
   // Clients
   clients: {
     list: (params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: string }) =>
-      apiRequest<PaginatedResponse<any>>(`/clients?${new URLSearchParams(params as Record<string, string>).toString()}`),
-    
-    get: (id: string) =>
-      apiRequest<any>(`/clients?id=${id}`),
-    
+      apiRequest<PaginatedResponse<any>>(
+        `/clients?${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
+
+    get: (id: string) => apiRequest<any>(`/clients?id=${id}`),
+
     create: (data: any) =>
       apiRequest<any>('/clients', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    
+
     update: (id: string, data: any) =>
       apiRequest<any>(`/clients?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
-    
+
     delete: (id: string) =>
       apiRequest<void>(`/clients?id=${id}`, {
         method: 'DELETE',
       }),
   },
-  
+
   // Quotes
   quotes: {
     list: (params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: string }) =>
-      apiRequest<PaginatedResponse<any>>(`/quotes?${new URLSearchParams(params as Record<string, string>).toString()}`),
-    
-    get: (id: string) =>
-      apiRequest<any>(`/quotes?id=${id}`),
-    
+      apiRequest<PaginatedResponse<any>>(
+        `/quotes?${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
+
+    get: (id: string) => apiRequest<any>(`/quotes?id=${id}`),
+
     create: (data: any) =>
       apiRequest<any>('/quotes', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    
+
     update: (id: string, data: any) =>
       apiRequest<any>(`/quotes?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
-    
+
     delete: (id: string) =>
       apiRequest<void>(`/quotes?id=${id}`, {
         method: 'DELETE',
       }),
   },
-  
+
   // Invoices
   invoices: {
     list: (params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: string }) =>
-      apiRequest<PaginatedResponse<any>>(`/invoices?${new URLSearchParams(params as Record<string, string>).toString()}`),
-    
-    get: (id: string) =>
-      apiRequest<any>(`/invoices?id=${id}`),
-    
+      apiRequest<PaginatedResponse<any>>(
+        `/invoices?${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
+
+    get: (id: string) => apiRequest<any>(`/invoices?id=${id}`),
+
     create: (data: any) =>
       apiRequest<any>('/invoices', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    
+
     update: (id: string, data: any) =>
       apiRequest<any>(`/invoices?id=${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
-    
+
     delete: (id: string) =>
       apiRequest<void>(`/invoices?id=${id}`, {
         method: 'DELETE',
@@ -310,8 +337,17 @@ export const api = {
   },
 
   expenses: {
-    list: (params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: string; driverName?: string; vehicleId?: string }) =>
-      apiRequest<PaginatedResponse<any>>(`/expenses?${new URLSearchParams(params as Record<string, string>).toString()}`),
+    list: (params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: string;
+      driverName?: string;
+      vehicleId?: string;
+    }) =>
+      apiRequest<PaginatedResponse<any>>(
+        `/expenses?${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
 
     create: (data: any) =>
       apiRequest<any>('/expenses', {
@@ -344,10 +380,11 @@ export const api = {
       dateTo?: string;
       upcomingOnly?: boolean;
     }) =>
-      apiRequest<PaginatedResponse<any>>(`/trips?${new URLSearchParams(params as Record<string, string>).toString()}`),
+      apiRequest<PaginatedResponse<any>>(
+        `/trips?${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
 
-    get: (id: string) =>
-      apiRequest<any>(`/trips?id=${id}`),
+    get: (id: string) => apiRequest<any>(`/trips?id=${id}`),
 
     create: (data: any) =>
       apiRequest<any>('/trips', {
@@ -444,10 +481,14 @@ export const api = {
     metrics: () => apiRequest<any>('/admin/metrics'),
     system: () => apiRequest<any>('/admin/system'),
     logs: (params?: { limit?: number; action?: string }) =>
-      apiRequest<any[]>(`/admin/logs${toQueryString(params as Record<string, string | number | boolean | null | undefined>)}`),
+      apiRequest<any[]>(
+        `/admin/logs${toQueryString(params as Record<string, string | number | boolean | null | undefined>)}`
+      ),
     users: {
       list: (params?: { status?: string }) =>
-        apiRequest<any[]>(`/admin/users${toQueryString(params as Record<string, string | number | boolean | null | undefined>)}`),
+        apiRequest<any[]>(
+          `/admin/users${toQueryString(params as Record<string, string | number | boolean | null | undefined>)}`
+        ),
       update: (id: string, data: any) =>
         apiRequest<any>(`/admin/users?id=${id}`, {
           method: 'PATCH',
@@ -466,8 +507,13 @@ export const api = {
         }),
     },
     submissions: {
-      list: (params?: { status?: string; type?: 'all' | 'registration_request' | 'questionnaire_submission' }) =>
-        apiRequest<any>(`/admin/submissions${toQueryString(params as Record<string, string | number | boolean | null | undefined>)}`),
+      list: (params?: {
+        status?: string;
+        type?: 'all' | 'registration_request' | 'questionnaire_submission';
+      }) =>
+        apiRequest<any>(
+          `/admin/submissions${toQueryString(params as Record<string, string | number | boolean | null | undefined>)}`
+        ),
     },
   },
 
@@ -491,7 +537,9 @@ export const api = {
 
   payslips: {
     list: (params?: { employeeId?: string; year?: number; month?: number }) =>
-      apiRequest<any[]>(`/payslips?${new URLSearchParams(params as Record<string, string>).toString()}`),
+      apiRequest<any[]>(
+        `/payslips?${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
     create: (data: any) =>
       apiRequest<any>('/payslips', {
         method: 'POST',
@@ -510,7 +558,9 @@ export const api = {
 
   operatingFunds: {
     list: (params?: { recipient?: string }) =>
-      apiRequest<any[]>(`/operating-funds?${new URLSearchParams(params as Record<string, string>).toString()}`),
+      apiRequest<any[]>(
+        `/operating-funds?${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
     create: (data: any) =>
       apiRequest<any>('/operating-funds', {
         method: 'POST',
@@ -524,7 +574,9 @@ export const api = {
 
   auditLogs: {
     list: (params?: { limit?: number }) =>
-      apiRequest<any[]>(`/audit-logs?${new URLSearchParams(params as Record<string, string>).toString()}`),
+      apiRequest<any[]>(
+        `/audit-logs?${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
   },
 
   // Client Financials - Unified Balance & Ledger
@@ -563,7 +615,9 @@ export const api = {
           opening_balance: number;
           closing_balance: number;
         };
-      }>(`/client-financials?action=ledger&clientId=${clientId}&${new URLSearchParams(params as Record<string, string>).toString()}`),
+      }>(
+        `/client-financials?action=ledger&clientId=${clientId}&${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
 
     getAllBalances: (params?: { hasOutstanding?: boolean; minBalance?: number; search?: string }) =>
       apiRequest<{
@@ -584,7 +638,9 @@ export const api = {
           is_active: boolean;
           created_at: string;
         }>;
-      }>(`/client-financials?action=all-balances&${new URLSearchParams(params as Record<string, string>).toString()}`),
+      }>(
+        `/client-financials?action=all-balances&${new URLSearchParams(params as Record<string, string>).toString()}`
+      ),
 
     recalculateBalance: (clientId: string) =>
       apiRequest<{
@@ -597,7 +653,7 @@ export const api = {
         method: 'POST',
       }),
   },
-  
+
   // Generic request for future endpoints
   request: apiRequest,
 };

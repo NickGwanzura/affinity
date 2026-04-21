@@ -1,6 +1,7 @@
 export type Currency = 'GBP' | 'NAD' | 'USD' | 'BWP' | 'ZAR';
 export type VehicleStatus = 'UK' | 'Namibia' | 'Zimbabwe' | 'Botswana' | 'Sold';
 export type VehiclePurpose = 'Resale' | 'Client';
+export type ShipmentStatus = 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
 export type ExpenseCategory =
   | 'Shipping'
   | 'Fuel'
@@ -30,7 +31,21 @@ export interface Vehicle {
   purchase_price_gbp: number;
   status: VehicleStatus;
   purpose: VehiclePurpose;
+  client_id?: string;
   cbca_applied: boolean;
+  created_at: string;
+}
+
+export interface Shipment {
+  id: string;
+  client_id: string;
+  vehicle_id?: string;
+  description: string;
+  origin: string;
+  destination: string;
+  status: ShipmentStatus;
+  shipping_date?: string;
+  delivery_date?: string;
   created_at: string;
 }
 

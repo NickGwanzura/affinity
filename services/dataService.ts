@@ -84,6 +84,24 @@ class DataService {
     return api.vehicles.delete(vehicleId);
   }
 
+  // Shipments
+  async getShipments(): Promise<any[]> {
+    const response = await api.shipments.list({ limit: 1000 });
+    return response.data ?? [];
+  }
+
+  async addShipment(shipment: any): Promise<any> {
+    return api.shipments.create(shipment);
+  }
+
+  async updateShipment(shipmentId: string, shipment: any): Promise<any> {
+    return api.shipments.update(shipmentId, shipment);
+  }
+
+  async deleteShipment(shipmentId: string): Promise<void> {
+    return api.shipments.delete(shipmentId);
+  }
+
   async getClients(): Promise<Client[]> {
     const response = await api.clients.list({ limit: 1000, sortBy: 'name', sortOrder: 'asc' });
     return response.data ?? [];
@@ -123,7 +141,9 @@ class DataService {
     return response.data ?? [];
   }
 
-  async createInvoice(data: Omit<Invoice, 'id' | 'created_at' | 'invoice_number'>): Promise<Invoice> {
+  async createInvoice(
+    data: Omit<Invoice, 'id' | 'created_at' | 'invoice_number'>
+  ): Promise<Invoice> {
     return api.invoices.create(data);
   }
 
@@ -155,7 +175,9 @@ class DataService {
     return api.payments.delete(id);
   }
 
-  async createReceipt(data: Omit<Receipt, 'id' | 'created_at' | 'receipt_number'>): Promise<Receipt> {
+  async createReceipt(
+    data: Omit<Receipt, 'id' | 'created_at' | 'receipt_number'>
+  ): Promise<Receipt> {
     return api.receipts.create(data);
   }
 
@@ -169,7 +191,12 @@ class DataService {
 
   async replacePaymentAllocations(
     paymentId: string,
-    allocations: Array<{ invoice_id?: string; amount_allocated: number; currency: 'USD' | 'GBP'; status?: string }>,
+    allocations: Array<{
+      invoice_id?: string;
+      amount_allocated: number;
+      currency: 'USD' | 'GBP';
+      status?: string;
+    }>
   ): Promise<void> {
     await api.payments.replaceAllocations(paymentId, allocations);
   }
@@ -200,7 +227,9 @@ class DataService {
     return response.data ?? [];
   }
 
-  async createTrip(data: Omit<Trip, 'id' | 'trip_number' | 'created_at' | 'updated_at'>): Promise<Trip> {
+  async createTrip(
+    data: Omit<Trip, 'id' | 'trip_number' | 'created_at' | 'updated_at'>
+  ): Promise<Trip> {
     return api.trips.create(data);
   }
 
@@ -256,7 +285,9 @@ class DataService {
     return api.employees.list();
   }
 
-  async createEmployee(data: Omit<Employee, 'id' | 'employee_number' | 'created_at'>): Promise<Employee> {
+  async createEmployee(
+    data: Omit<Employee, 'id' | 'employee_number' | 'created_at'>
+  ): Promise<Employee> {
     return api.employees.create(data);
   }
 
@@ -268,7 +299,11 @@ class DataService {
     return api.employees.delete(id);
   }
 
-  async getPayslips(filters?: { employeeId?: string; year?: number; month?: number }): Promise<Payslip[]> {
+  async getPayslips(filters?: {
+    employeeId?: string;
+    year?: number;
+    month?: number;
+  }): Promise<Payslip[]> {
     return api.payslips.list(filters);
   }
 
@@ -289,14 +324,17 @@ class DataService {
   }
 
   async createInvite(
-    emailOrData: string | { email: string; role: AppUser['role']; name: string; invitedBy?: string },
+    emailOrData:
+      | string
+      | { email: string; role: AppUser['role']; name: string; invitedBy?: string },
     role?: AppUser['role'],
     name?: string,
-    invitedBy?: string,
+    invitedBy?: string
   ): Promise<UserInvite> {
-    const payload = typeof emailOrData === 'string'
-      ? { email: emailOrData, role: role!, name: name!, invitedBy }
-      : emailOrData;
+    const payload =
+      typeof emailOrData === 'string'
+        ? { email: emailOrData, role: role!, name: name!, invitedBy }
+        : emailOrData;
     return api.invites.create(payload);
   }
 
@@ -325,7 +363,11 @@ class DataService {
     return api.registrationRequests.list();
   }
 
-  async createRegistrationRequest(data: { name: string; email: string; role: RegistrationRequest['role'] }): Promise<void> {
+  async createRegistrationRequest(data: {
+    name: string;
+    email: string;
+    role: RegistrationRequest['role'];
+  }): Promise<void> {
     await api.registrationRequests.create(data);
   }
 
@@ -353,7 +395,11 @@ class DataService {
     return api.operatingFunds.list({ recipient });
   }
 
-  async getOperatingFundsBalance(): Promise<{ received: number; disbursed: number; balance: number }> {
+  async getOperatingFundsBalance(): Promise<{
+    received: number;
+    disbursed: number;
+    balance: number;
+  }> {
     const funds = await this.getOperatingFunds();
     const totals = funds.reduce(
       (accumulator, fund) => {
@@ -363,7 +409,7 @@ class DataService {
         if (fund.type === 'Disbursed') accumulator.disbursed += value;
         return accumulator;
       },
-      { received: 0, disbursed: 0, balance: 0 },
+      { received: 0, disbursed: 0, balance: 0 }
     );
 
     totals.balance = totals.received - totals.disbursed;
@@ -381,11 +427,13 @@ class DataService {
   async getLandedCostSummaries(): Promise<LandedCostSummary[]> {
     const [vehicles, expenses] = await Promise.all([this.getVehicles(), this.getExpenses()]);
 
-    return vehicles.map((vehicle) => {
-      const vehicleExpenses = expenses.filter((expense) => expense.vehicle_id === vehicle.id);
+    return vehicles.map(vehicle => {
+      const vehicleExpenses = expenses.filter(expense => expense.vehicle_id === vehicle.id);
       const totalExpensesUsd = vehicleExpenses.reduce(
-        (sum, expense) => sum + expense.amount * (expense.exchange_rate_to_usd || this.getCurrencyRate(expense.currency)),
-        0,
+        (sum, expense) =>
+          sum +
+          expense.amount * (expense.exchange_rate_to_usd || this.getCurrencyRate(expense.currency)),
+        0
       );
 
       return {
@@ -394,7 +442,8 @@ class DataService {
         make_model: vehicle.make_model,
         purchase_price_gbp: vehicle.purchase_price_gbp,
         total_expenses_usd: totalExpensesUsd,
-        total_landed_cost_usd: totalExpensesUsd + vehicle.purchase_price_gbp * this.getCurrencyRate('GBP'),
+        total_landed_cost_usd:
+          totalExpensesUsd + vehicle.purchase_price_gbp * this.getCurrencyRate('GBP'),
         status: vehicle.status,
       };
     });
@@ -526,30 +575,32 @@ class DataService {
     credit_balance: number;
   } {
     const openingBalance = client.opening_balance || 0;
-    
+
     // Calculate total invoiced (excluding cancelled invoices)
     const totalInvoiced = invoices
-      .filter(inv => 
-        (inv.client_id === client.id || inv.client_name === client.name) &&
-        inv.status !== 'Cancelled'
+      .filter(
+        inv =>
+          (inv.client_id === client.id || inv.client_name === client.name) &&
+          inv.status !== 'Cancelled'
       )
       .reduce((sum, inv) => sum + (Number(inv.amount_usd) || 0), 0);
 
     // Calculate total paid (excluding deleted payments)
     const totalPaid = payments
-      .filter(pay => 
-        (pay.client_id === client.id || pay.client_name === client.name) &&
-        pay.type === 'Inbound' &&
-        !pay.is_deleted
+      .filter(
+        pay =>
+          (pay.client_id === client.id || pay.client_name === client.name) &&
+          pay.type === 'Inbound' &&
+          !pay.is_deleted
       )
       .reduce((sum, pay) => sum + (Number(pay.amount_usd) || 0), 0);
 
     const rawBalance = openingBalance + totalInvoiced - totalPaid;
-    
+
     // If overpaid, show credit balance
     let currentBalance = rawBalance;
     let creditBalance = 0;
-    
+
     if (rawBalance < 0) {
       creditBalance = Math.abs(rawBalance);
       currentBalance = 0;
@@ -607,9 +658,10 @@ class DataService {
 
     // Invoice entries
     invoices
-      .filter(inv => 
-        (inv.client_id === client.id || inv.client_name === client.name) &&
-        inv.status !== 'Cancelled'
+      .filter(
+        inv =>
+          (inv.client_id === client.id || inv.client_name === client.name) &&
+          inv.status !== 'Cancelled'
       )
       .forEach(inv => {
         entries.push({
@@ -625,10 +677,11 @@ class DataService {
 
     // Payment entries
     payments
-      .filter(pay => 
-        (pay.client_id === client.id || pay.client_name === client.name) &&
-        pay.type === 'Inbound' &&
-        !pay.is_deleted
+      .filter(
+        pay =>
+          (pay.client_id === client.id || pay.client_name === client.name) &&
+          pay.type === 'Inbound' &&
+          !pay.is_deleted
       )
       .forEach(pay => {
         entries.push({

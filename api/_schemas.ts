@@ -21,10 +21,25 @@ export const VehicleSchema = z.object({
   purchase_price_gbp: z.number().positive(),
   status: z.enum(['UK', 'Namibia', 'Zimbabwe', 'Botswana', 'Sold']).default('UK'),
   purpose: z.enum(['Resale', 'Client']).default('Resale'),
+  client_id: z.string().uuid().optional().nullable(),
   cbca_applied: z.boolean().default(false),
 });
 
 export const VehicleUpdateSchema = VehicleSchema.partial();
+
+// Shipment schemas
+export const ShipmentSchema = z.object({
+  client_id: z.string().uuid(),
+  vehicle_id: z.string().uuid().optional().nullable(),
+  description: z.string().min(1).max(500),
+  origin: z.string().min(1).max(200),
+  destination: z.string().min(1).max(200),
+  status: z.enum(['Pending', 'In Transit', 'Delivered', 'Cancelled']).default('Pending'),
+  shipping_date: z.string().optional(),
+  delivery_date: z.string().optional(),
+});
+
+export const ShipmentUpdateSchema = ShipmentSchema.partial();
 
 // Client schemas
 export const ClientSchema = z.object({
