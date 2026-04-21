@@ -26,3 +26,10 @@ dist-ssr
 .vercel
 .env*.local
 .env
+
+# One-off SQL scripts that may contain credentials or PII
+UPDATE_PASSWORD*.sql
+
+# Claude Code runtime state
+.claude/scheduled_tasks.lock
+.claude/worktrees/
