@@ -4,7 +4,11 @@ import { Button } from './ui';
 import { authService } from '../services/authService';
 import { AuthSession } from '../types';
 import { useToast } from './Toast';
-import { forgotPasswordFormSchema, getFirstValidationMessage, loginFormSchema } from '../utils/clientValidation';
+import {
+  forgotPasswordFormSchema,
+  getFirstValidationMessage,
+  loginFormSchema,
+} from '../utils/clientValidation';
 import { ZodError } from 'zod';
 
 interface LoginProps {
@@ -15,12 +19,12 @@ type Mode = 'login' | 'forgot';
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const { showToast } = useToast();
-  const [mode, setMode]         = useState<Mode>('login');
-  const [email, setEmail]       = useState('');
+  const [mode, setMode] = useState<Mode>('login');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
-  const [success, setSuccess]   = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const reset = (nextMode: Mode) => {
     setMode(nextMode);
@@ -38,11 +42,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       showToast(`Welcome back, ${session.user.name}.`, 'success');
       onLogin(session);
     } catch (err: unknown) {
-      const message = err instanceof ZodError
-        ? getFirstValidationMessage(err)
-        : err instanceof Error
-          ? err.message
-          : 'Login failed';
+      const message =
+        err instanceof ZodError
+          ? getFirstValidationMessage(err)
+          : err instanceof Error
+            ? err.message
+            : 'Login failed';
       setError(message);
       showToast(message, 'error');
     } finally {
@@ -63,11 +68,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       showToast(message, 'success');
       setTimeout(() => reset('login'), 3500);
     } catch (err: unknown) {
-      const message = err instanceof ZodError
-        ? getFirstValidationMessage(err)
-        : err instanceof Error
-          ? err.message
-          : 'Failed to send reset email';
+      const message =
+        err instanceof ZodError
+          ? getFirstValidationMessage(err)
+          : err instanceof Error
+            ? err.message
+            : 'Failed to send reset email';
       setError(message);
       showToast(message, 'error');
     } finally {
@@ -76,13 +82,13 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   const modeTitle: Record<Mode, string> = {
-    login:    'Sign in',
-    forgot:   'Reset password',
+    login: 'Sign in',
+    forgot: 'Reset password',
   };
 
   const submitLabel: Record<Mode, string> = {
-    login:    loading ? 'Signing in…' : 'Sign in',
-    forgot:   loading ? 'Sending…'    : 'Send reset email',
+    login: loading ? 'Signing in…' : 'Sign in',
+    forgot: loading ? 'Sending…' : 'Send reset email',
   };
 
   const onSubmit = mode === 'login' ? handleLogin : handleForgot;
@@ -90,37 +96,40 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   return (
     <div className="login-shell">
       <div className="login-shell__brand">
-        {/* Background grid decoration */}
         <div className="login-shell__brand-grid" />
 
         <div className="login-shell__brand-content">
-          {/* Logo mark */}
           <div className="login-shell__brand-lockup">
             <div className="login-shell__logo-mark">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#000"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
-              <div className="login-shell__brand-name">
-                AFFINITY
-              </div>
-              <div className="login-shell__brand-subtitle">
-                LOGISTICS
-              </div>
+              <div className="login-shell__brand-name">AFFINITY</div>
+              <div className="login-shell__brand-subtitle">LOGISTICS</div>
             </div>
           </div>
 
           <h2 className="login-shell__headline">
-            Global Logistics,<br />
+            Global Logistics,
+            <br />
             <strong>Intelligent Transit.</strong>
           </h2>
           <p className="login-shell__headline-copy">
-            The all-in-one platform for cross-border vehicle logistics, landed cost tracking,
-            and driver management across the SADC region.
+            The all-in-one platform for cross-border vehicle logistics, landed cost tracking, and
+            driver management across the SADC region.
           </p>
 
-          {/* Stat chips */}
           <div className="login-shell__stats">
             {[
               { value: '100%', label: 'Transit Visibility' },
@@ -130,161 +139,225 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             ].map(stat => (
               <div key={stat.label} className="login-shell__stat">
                 <div className="login-shell__stat-value">{stat.value}</div>
-                <div className="login-shell__stat-label">
-                  {stat.label.toUpperCase()}
-                </div>
+                <div className="login-shell__stat-label">{stat.label.toUpperCase()}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── Right: Auth form ── */}
       <div className="login-shell__panel">
         <div className="login-shell__panel-inner">
-          {/* Mobile brand card */}
           <div className="login-shell__mobile-brand">
             <div className="login-shell__mobile-brand-row">
               <div className="login-shell__mobile-copy">
-                <div className="login-shell__mobile-eyebrow">
-                  Affinity Logistics
-                </div>
-                <h2 className="login-shell__mobile-title">
-                  Fleet access for every trip.
-                </h2>
-                <p className="login-shell__mobile-text">
-                  Sign in, review trip operations, and move through the platform cleanly from any device.
-                </p>
+                <h2 className="login-shell__mobile-title">Fleet access for every trip.</h2>
               </div>
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                Affinity
-              </span>
+              <span style={{ color: '#fff', fontWeight: 600, fontSize: '0.75rem' }}>AL</span>
             </div>
           </div>
 
           <div className="login-shell__card">
-          {/* Mode tabs */}
-          <div className="login-shell__tabs" role="tablist" aria-label="Authentication options">
-            {(['login', 'forgot'] as Mode[]).map(m => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => reset(m)}
-                role="tab"
-                aria-selected={mode === m}
-                className={`login-shell__tab ${mode === m ? 'is-active' : ''}`}
-              >
-                {m === 'login' ? 'Sign in' : 'Reset password'}
-              </button>
-            ))}
-          </div>
-
-          <div className="login-shell__intro">
-            <h3 className="login-shell__title">{modeTitle[mode]}</h3>
-            <p className="login-shell__description">
-              {mode === 'login'
-                ? 'Sign in with your approved company account to access the logistics workspace.'
-                : 'We will send reset instructions to your email address if an account exists.'}
-            </p>
-          </div>
-
-          {/* Notifications */}
-          {error && (
-            <div className="login-shell__notice">
-              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 text-red-800 text-sm">
-                <span className="font-semibold shrink-0">Error:</span>
-                <span className="flex-1">{error}</span>
+            <div className="login-shell__tabs" role="tablist" aria-label="Authentication options">
+              {(['login', 'forgot'] as Mode[]).map(m => (
                 <button
+                  key={m}
                   type="button"
-                  onClick={() => setError('')}
-                  className="shrink-0 text-red-600 hover:text-red-800"
-                  aria-label="Dismiss"
+                  onClick={() => reset(m)}
+                  role="tab"
+                  aria-selected={mode === m}
+                  className={`login-shell__tab ${mode === m ? 'is-active' : ''}`}
                 >
-                  <X size={14} />
+                  {m === 'login' ? 'Sign in' : 'Reset password'}
                 </button>
-              </div>
+              ))}
             </div>
-          )}
-          {success && (
-            <div className="login-shell__notice">
-              <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 text-green-800 text-sm">
-                <span className="font-semibold shrink-0">Success:</span>
-                <span className="flex-1">{success}</span>
-                <button
-                  type="button"
-                  onClick={() => setSuccess('')}
-                  className="shrink-0 text-green-600 hover:text-green-800"
-                  aria-label="Dismiss"
+
+            <div className="login-shell__intro">
+              <h3 className="login-shell__title">{modeTitle[mode]}</h3>
+              <p className="login-shell__description">
+                {mode === 'login'
+                  ? 'Sign in with your approved company account to access the logistics workspace.'
+                  : 'We will send reset instructions to your email address if an account exists.'}
+              </p>
+            </div>
+
+            {error && (
+              <div className="login-shell__notice">
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.5rem',
+                    padding: '0.75rem',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#dc2626',
+                    fontSize: '0.875rem',
+                    borderRadius: '6px',
+                  }}
                 >
-                  <X size={14} />
-                </button>
+                  <span style={{ fontWeight: 600, flexShrink: 0 }}>Error:</span>
+                  <span style={{ flex: 1 }}>{error}</span>
+                  <button
+                    type="button"
+                    onClick={() => setError('')}
+                    style={{
+                      flexShrink: 0,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      color: '#dc2626',
+                    }}
+                    aria-label="Dismiss"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-
-          <form onSubmit={onSubmit}>
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-1">
-                <label htmlFor="login-email" className="text-sm font-medium text-gray-900">
-                  Work email
-                </label>
-                <input
-                  id="login-email"
-                  type="email"
-                  placeholder="email@affinity-logistics.com"
-                  autoComplete="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+            )}
+            {success && (
+              <div className="login-shell__notice">
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.5rem',
+                    padding: '0.75rem',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    color: '#16a34a',
+                    fontSize: '0.875rem',
+                    borderRadius: '6px',
+                  }}
+                >
+                  <span style={{ fontWeight: 600, flexShrink: 0 }}>Success:</span>
+                  <span style={{ flex: 1 }}>{success}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSuccess('')}
+                    style={{
+                      flexShrink: 0,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      color: '#16a34a',
+                    }}
+                    aria-label="Dismiss"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
+            )}
 
-              {mode === 'login' && (
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="login-password" className="text-sm font-medium text-gray-900">
-                    Password
+            <form onSubmit={onSubmit}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                  <label
+                    htmlFor="login-email"
+                    style={{ fontSize: '0.875rem', fontWeight: 500, color: '#000' }}
+                  >
+                    Work email
                   </label>
                   <input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    id="login-email"
+                    type="email"
+                    placeholder="email@company.com"
+                    autoComplete="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    style={{
+                      width: '100%',
+                      padding: '0.625rem 0.75rem',
+                      fontSize: '0.9375rem',
+                      background: '#fafafa',
+                      border: '1px solid #e5e5e5',
+                      borderRadius: '6px',
+                      color: '#000',
+                      outline: 'none',
+                      transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                    }}
+                    onFocus={e => {
+                      e.target.style.borderColor = '#000';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.05)';
+                    }}
+                    onBlur={e => {
+                      e.target.style.borderColor = '#e5e5e5';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   />
                 </div>
-              )}
 
-              {mode === 'forgot' && (
-                <p className="login-shell__helper-text">
-                  We'll send reset instructions to your email address if an account exists.
-                </p>
-              )}
+                {mode === 'login' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                    <label
+                      htmlFor="login-password"
+                      style={{ fontSize: '0.875rem', fontWeight: 500, color: '#000' }}
+                    >
+                      Password
+                    </label>
+                    <input
+                      id="login-password"
+                      type="password"
+                      placeholder="Enter password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.625rem 0.75rem',
+                        fontSize: '0.9375rem',
+                        background: '#fafafa',
+                        border: '1px solid #e5e5e5',
+                        borderRadius: '6px',
+                        color: '#000',
+                        outline: 'none',
+                        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                      }}
+                      onFocus={e => {
+                        e.target.style.borderColor = '#000';
+                        e.target.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.05)';
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = '#e5e5e5';
+                        e.target.style.boxShadow = 'none';
+                      }}
+                    />
+                  </div>
+                )}
 
-              <Button
-                type="submit"
-                disabled={loading}
-                renderIcon={mode === 'login' ? LogIn : Mail}
-                size="lg"
-                fullWidth
-              >
-                {submitLabel[mode]}
-              </Button>
+                {mode === 'forgot' && (
+                  <p className="login-shell__helper-text">
+                    We'll send reset instructions to your email address if an account exists.
+                  </p>
+                )}
 
-              {mode === 'login' && (
-                <button
-                  type="button"
-                  onClick={() => reset('forgot')}
-                  className="login-shell__link"
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  renderIcon={mode === 'login' ? LogIn : Mail}
+                  size="lg"
+                  fullWidth
                 >
-                  Forgot your password?
-                </button>
-              )}
-            </div>
-          </form>
+                  {submitLabel[mode]}
+                </Button>
+
+                {mode === 'login' && (
+                  <button
+                    type="button"
+                    onClick={() => reset('forgot')}
+                    className="login-shell__link"
+                  >
+                    Forgot your password?
+                  </button>
+                )}
+              </div>
+            </form>
           </div>
         </div>
       </div>

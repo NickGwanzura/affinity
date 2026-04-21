@@ -1,5 +1,5 @@
-@import "tailwindcss/theme.css";
-@import "tailwindcss/utilities.css";
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/utilities.css';
 
 @source "../index.html";
 @source "../index.tsx";
@@ -9,7 +9,53 @@
 @source "../hooks/**/*.{ts,tsx}";
 
 :root {
-  --app-font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --app-font-sans: 'Geist Sans', 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', 'IBM Plex Mono', monospace;
+}
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Regular.woff2')
+    format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Medium.woff2')
+    format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-SemiBold.woff2')
+    format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Bold.woff2')
+    format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-mono/GeistMono-Regular.woff2')
+    format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 html,
@@ -95,48 +141,46 @@ button:disabled {
   min-height: 100dvh;
   width: 100%;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at top right, rgba(15, 98, 254, 0.08), transparent 28%),
-    linear-gradient(180deg, #f8fafc 0%, #f4f4f4 100%);
+  background: #000;
   font-family: var(--app-font-sans);
 }
 
 .login-shell__brand {
   position: relative;
-  flex: 0 0 45%;
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding: 4rem;
+  background: #000;
   overflow: hidden;
-  padding: 4rem 3.5rem;
-  background: linear-gradient(160deg, #001141 0%, #0043ce 60%, #0f62fe 100%);
 }
 
 .login-shell__brand-grid {
   position: absolute;
   inset: 0;
-  opacity: 0.05;
+  opacity: 0.03;
   background-image:
-    linear-gradient(#fff 1px, transparent 1px),
-    linear-gradient(90deg, #fff 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 .login-shell__brand-content {
   position: relative;
   z-index: 1;
+  max-width: 480px;
 }
 
 .login-shell__brand-lockup {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   margin-bottom: 3rem;
 }
 
 .login-shell__logo-mark {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,63 +189,70 @@ button:disabled {
 
 .login-shell__brand-name {
   color: #fff;
-  font-weight: 700;
-  font-size: 1.25rem;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
   line-height: 1;
 }
 
 .login-shell__brand-subtitle {
-  margin-top: 0.2rem;
-  color: #78a9ff;
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
 }
 
 .login-shell__headline {
   margin: 0 0 1.5rem;
   color: #fff;
-  font-size: 2.5rem;
-  font-weight: 300;
-  line-height: 1.2;
+  font-size: 3.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
 
 .login-shell__headline strong {
-  font-weight: 700;
+  font-weight: 600;
+  background: linear-gradient(135deg, #fff 0%, #888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .login-shell__headline-copy {
-  max-width: 22.5rem;
+  max-width: 28rem;
   margin: 0 0 3rem;
-  color: #a6c8ff;
+  color: #666;
   font-size: 1rem;
   line-height: 1.6;
 }
 
 .login-shell__stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  max-width: 23.75rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  max-width: 30rem;
 }
 
 .login-shell__stat {
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.08);
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
 .login-shell__stat-value {
   color: #fff;
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .login-shell__stat-label {
   margin-top: 0.25rem;
-  color: #78a9ff;
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
+  color: #666;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .login-shell__panel {
@@ -209,12 +260,13 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem;
+  padding: 2rem;
+  background: #fff;
 }
 
 .login-shell__panel-inner {
   width: 100%;
-  max-width: 27rem;
+  max-width: 380px;
 }
 
 .login-shell__mobile-brand {
@@ -233,96 +285,113 @@ button:disabled {
 }
 
 .login-shell__mobile-eyebrow {
-  color: #a6c8ff;
+  color: #666;
   font-size: 0.75rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .login-shell__mobile-title {
   margin: 0.5rem 0 0;
-  color: #fff;
-  font-size: 1.375rem;
+  color: #000;
+  font-size: 1.25rem;
   line-height: 1.2;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .login-shell__mobile-text {
-  margin: 0.625rem 0 0;
-  color: #d0e2ff;
+  margin: 0.5rem 0 0;
+  color: #666;
   font-size: 0.875rem;
   line-height: 1.5;
 }
 
 .login-shell__card {
-  padding: 1.5rem;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .login-shell__tabs {
   display: flex;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e5e5e5;
 }
 
 .login-shell__tab {
   flex: 1;
   margin-bottom: -1px;
-  padding: 0.875rem 0.75rem;
+  padding: 0.75rem 0;
   border: 0;
   border-bottom: 2px solid transparent;
   background: none;
-  color: #525252;
+  color: #666;
   font-size: 0.875rem;
-  font-weight: 400;
-  letter-spacing: 0.01em;
+  font-weight: 500;
   cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.login-shell__tab:hover {
+  color: #000;
 }
 
 .login-shell__tab.is-active {
-  border-bottom-color: #0f62fe;
-  color: #0f62fe;
+  border-bottom-color: #000;
+  color: #000;
   font-weight: 600;
 }
 
 .login-shell__intro {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .login-shell__title {
-  margin: 0 0 0.75rem;
-  color: #161616;
-  font-size: 1.75rem;
-  font-weight: 300;
+  margin: 0 0 0.5rem;
+  color: #000;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   line-height: 1.25;
 }
 
 .login-shell__description,
 .login-shell__helper-text {
   margin: 0;
-  color: #525252;
+  color: #666;
   font-size: 0.875rem;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .login-shell__notice {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .login-shell__link {
-  padding: 0;
+  display: block;
+  width: 100%;
+  padding: 0.75rem 0;
   border: 0;
   background: none;
-  color: #0f62fe;
+  color: #666;
   font-size: 0.875rem;
-  text-decoration: underline;
+  text-align: center;
   cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.login-shell__link:hover {
+  color: #000;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -348,12 +417,28 @@ button:disabled {
     display: block;
     margin-bottom: 0.875rem;
     padding: 1rem;
-    background: linear-gradient(160deg, #001141 0%, #0043ce 60%, #0f62fe 100%);
-    box-shadow: 0 8px 24px rgba(15, 98, 254, 0.16);
+    background: #000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .login-shell__mobile-brand-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .login-shell__mobile-title {
+    color: #fff;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .login-shell__mobile-text {
+    display: none;
   }
 
   .login-shell__card {
-    padding: 1rem;
+    padding: 0;
   }
 
   .login-shell__tabs {
@@ -374,7 +459,7 @@ button:disabled {
   .login-shell__panel {
     min-height: 100dvh;
     align-items: flex-start;
-    padding: max(0.875rem, env(safe-area-inset-top)) 0.875rem max(1.25rem, env(safe-area-inset-bottom));
+    padding: max(0.875rem, env(safe-area-inset-top)) 1rem max(1.25rem, env(safe-area-inset-bottom));
   }
 
   .login-shell__mobile-brand {
@@ -387,15 +472,11 @@ button:disabled {
   }
 
   .login-shell__mobile-title {
-    font-size: 1.25rem;
-  }
-
-  .login-shell__mobile-text {
-    font-size: 0.8125rem;
+    font-size: 1rem;
   }
 
   .login-shell__card {
-    padding: 1rem 0.875rem;
+    padding: 0;
   }
 
   .login-shell__tabs {
@@ -408,6 +489,10 @@ button:disabled {
   }
 
   .login-shell__title {
-    font-size: 1.375rem;
+    font-size: 1.25rem;
+  }
+
+  .login-shell__headline {
+    font-size: 2rem;
   }
 }

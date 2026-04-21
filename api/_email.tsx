@@ -151,17 +151,17 @@ const getEmailFromAddress = (): string => {
   return process.env.EMAIL_FROM_ADDRESS || 'noreply@affinitylogsitics.site';
 };
 
-const InviteEmailTemplate: React.FC<InviteEmailArgs> = ({
-  name,
-  role,
-  inviteToken,
-  invitedBy,
-}) => (
-  <div style={{ fontFamily: 'IBM Plex Sans, Arial, sans-serif', padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
+const InviteEmailTemplate: React.FC<InviteEmailArgs> = ({ name, role, inviteToken, invitedBy }) => (
+  <div
+    style={{
+      fontFamily: 'IBM Plex Sans, Arial, sans-serif',
+      padding: '20px',
+      maxWidth: '600px',
+      margin: '0 auto',
+    }}
+  >
     <h1 style={{ color: '#161616', fontSize: '24px', marginBottom: '16px' }}>You're Invited!</h1>
-    <p style={{ color: '#525252', fontSize: '16px', marginBottom: '16px' }}>
-      Hello {name},
-    </p>
+    <p style={{ color: '#525252', fontSize: '16px', marginBottom: '16px' }}>Hello {name},</p>
     <p style={{ color: '#525252', fontSize: '16px', marginBottom: '16px' }}>
       You've been invited to join <strong>Affinity Logistics</strong> as a <strong>{role}</strong>.
     </p>
@@ -185,9 +185,7 @@ const InviteEmailTemplate: React.FC<InviteEmailArgs> = ({
         Accept Invitation
       </a>
     </div>
-    <p style={{ color: '#525252', fontSize: '14px', marginBottom: '8px' }}>
-      Or copy this link:
-    </p>
+    <p style={{ color: '#525252', fontSize: '14px', marginBottom: '8px' }}>Or copy this link:</p>
     <p style={{ color: '#0f62fe', fontSize: '14px', wordBreak: 'break-all' }}>
       {getAppBaseUrl()}?type=invite&token={inviteToken}
     </p>
@@ -195,9 +193,7 @@ const InviteEmailTemplate: React.FC<InviteEmailArgs> = ({
       This invitation expires in 7 days.
     </p>
     <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '24px 0' }} />
-    <p style={{ color: '#a8a8a8', fontSize: '12px' }}>
-      Affinity Logistics CRM
-    </p>
+    <p style={{ color: '#a8a8a8', fontSize: '12px' }}>Affinity Logistics CRM</p>
   </div>
 );
 
@@ -212,8 +208,10 @@ export async function sendInviteEmail({
   const fromAddress = getEmailFromAddress();
 
   if (resendClient) {
-    const html = await render(React.createElement(InviteEmailTemplate, { name, role, inviteToken, invitedBy }));
-    
+    const html = await render(
+      React.createElement(InviteEmailTemplate, { name, role, inviteToken, invitedBy })
+    );
+
     await resendClient.emails.send({
       from: fromAddress,
       to,
@@ -227,7 +225,7 @@ export async function sendInviteEmail({
   if (nodemailerConfig) {
     const transporter = await getTransporter();
     const inviteUrl = `${getAppBaseUrl()}?type=invite&token=${inviteToken}`;
-    
+
     await transporter.sendMail({
       from: nodemailerConfig.from,
       to,
@@ -242,7 +240,9 @@ export async function sendInviteEmail({
         '',
         'This invitation expires in 7 days.',
       ].join('\n'),
-      html: await render(React.createElement(InviteEmailTemplate, { name, role, inviteToken, invitedBy })),
+      html: await render(
+        React.createElement(InviteEmailTemplate, { name, role, inviteToken, invitedBy })
+      ),
     });
     return;
   }

@@ -2,26 +2,26 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success' | 'ghost' | 'warning';
-export type ButtonSize    = 'sm' | 'md' | 'lg';
+export type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   children?: React.ReactNode;
-  variant?:  ButtonVariant;
-  size?:     ButtonSize;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   isLoading?: boolean;
-  leftIcon?:  React.ReactNode;
+  leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
   renderIcon?: React.ComponentType<{ size?: number }>;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary:   'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-  secondary: 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500',
-  danger:    'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-  success:   'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-  ghost:     'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
-  warning:   'bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500',
+  primary: 'bg-black text-white hover:bg-gray-800 focus:ring-gray-500 border-0',
+  secondary: 'bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 focus:ring-gray-500',
+  danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+  success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
+  ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+  warning: 'bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -32,8 +32,8 @@ const sizeClasses: Record<ButtonSize, string> = {
 
 export const Button: React.FC<ButtonProps> = ({
   children,
-  variant   = 'primary',
-  size      = 'md',
+  variant = 'primary',
+  size = 'md',
   isLoading = false,
   leftIcon,
   rightIcon,
@@ -45,7 +45,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseClasses = [
-    'inline-flex items-center justify-center gap-2 font-medium transition-colors',
+    'inline-flex items-center justify-center gap-2 font-medium transition-colors rounded-md',
     'focus:outline-none focus:ring-2 focus:ring-offset-1',
     'disabled:opacity-60 disabled:cursor-not-allowed',
     variantClasses[variant],
@@ -55,12 +55,7 @@ export const Button: React.FC<ButtonProps> = ({
   ].join(' ');
 
   return (
-    <button
-      className={baseClasses}
-      disabled={disabled || isLoading}
-      style={style}
-      {...props}
-    >
+    <button className={baseClasses} disabled={disabled || isLoading} style={style} {...props}>
       {isLoading && <Loader2 className="animate-spin" size={size === 'sm' ? 14 : 16} />}
       {!isLoading && leftIcon && <span className="inline-flex items-center">{leftIcon}</span>}
       {!isLoading && RenderIcon && <RenderIcon size={size === 'sm' ? 14 : 16} />}
@@ -72,19 +67,19 @@ export const Button: React.FC<ButtonProps> = ({
 
 // ── Icon button ─────────────────────────────────────────────────────────────
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  icon:       React.ReactNode;
-  variant?:   ButtonVariant;
-  size?:      'sm' | 'md' | 'lg';
+  icon: React.ReactNode;
+  variant?: ButtonVariant;
+  size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
-  label?:     string;
+  label?: string;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({
   icon,
-  variant   = 'ghost',
-  size      = 'md',
+  variant = 'ghost',
+  size = 'md',
   isLoading = false,
-  label     = 'Action',
+  label = 'Action',
   className = '',
   disabled,
   ...props
