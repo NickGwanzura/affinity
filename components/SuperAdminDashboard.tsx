@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ExternalLink, AlertTriangle } from 'lucide-react';
+import { ExternalLink, AlertTriangle, Users, ClipboardCheck, Inbox, Activity } from 'lucide-react';
 import { api } from '../services/apiClient';
 import {
   Button,
@@ -8,6 +8,9 @@ import {
   Tag,
   TextInput,
   Tile,
+  DashboardPageHeader,
+  DashboardKpiCard,
+  DashboardSection,
 } from './ui';
 import { useToast } from './Toast';
 import { useCarbonConfirm } from './shared';
@@ -561,23 +564,65 @@ export const SuperAdminDashboard: React.FC = () => {
     logs: logsContent,
   };
 
+  const activeUsers = users.filter((user) => user.status === 'Active').length;
+  const pendingApprovals = approvals?.pendingCount ?? metrics?.totals.pendingApprovals ?? 0;
+  const pendingSubmissions = submissions?.summary.pendingSubmissions ?? 0;
+  const systemHealthLabel = system?.status === 'healthy' ? 'All systems go' : system?.status === 'degraded' ? 'Degraded' : 'Unknown';
+
   return (
-    <div className="p-6 bg-gray-100 min-h-full">
-      <Tile className="mb-4 border-l-4 border-l-blue-600">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="m-0 text-lg font-semibold text-gray-900">Super Admin Control Tower</h2>
-            <p className="mt-2 text-sm text-gray-500">Platform-only operations.</p>
-          </div>
-          <Tag type="high-contrast">Platform Scope</Tag>
-        </div>
-      </Tile>
+    <div className="p-6 bg-gray-100 min-h-full space-y-6">
+      <DashboardPageHeader
+        title="Super Admin"
+        subtitle="Platform oversight"
+        actions={<Tag type="high-contrast">Platform Scope</Tag>}
+        banner={
+          (approvals?.pendingUsers || []).length > 0 && activeSection !== 'users' ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <strong className="text-[#1C1917]">{approvals?.pendingUsers.length} pending user approvals</strong>
+                <p className="mt-1 text-sm text-[#78716C]">Open Users section to approve/reject pending accounts.</p>
+              </div>
+              <Button variant="secondary" size="sm" onClick={() => setActiveSection('users')}>Review Approvals</Button>
+            </div>
+          ) : null
+        }
+      />
+
+      {/* Top-line KPI grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <DashboardKpiCard
+          label="Active Users"
+          value={activeUsers}
+          icon={Users}
+          iconTone="amber"
+          trend={`${users.length} total`}
+        />
+        <DashboardKpiCard
+          label="Pending Approvals"
+          value={pendingApprovals}
+          icon={ClipboardCheck}
+          iconTone="rose"
+          trend="Awaiting review"
+        />
+        <DashboardKpiCard
+          label="Pending Submissions"
+          value={pendingSubmissions}
+          icon={Inbox}
+          iconTone="blue"
+          trend="Questionnaires & requests"
+        />
+        <DashboardKpiCard
+          label="System Health"
+          value={systemHealthLabel}
+          icon={Activity}
+          iconTone="emerald"
+          trend={system ? `Uptime ${formatUptime(system.uptimeSeconds)}` : 'Awaiting check'}
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-1">
-          <Tile>
-            <h3 className="m-0 text-sm font-semibold text-gray-900">Admin Sections</h3>
-            <p className="mt-2 mb-3 text-sm text-gray-500">{selectedSectionMeta.description}</p>
+          <DashboardSection title="Admin Sections" subtitle={selectedSectionMeta.description}>
             <div className="grid gap-2">
               {sections.map((section) => (
                 <Button
@@ -590,29 +635,19 @@ export const SuperAdminDashboard: React.FC = () => {
                 </Button>
               ))}
             </div>
-          </Tile>
+          </DashboardSection>
         </div>
 
         <div className="lg:col-span-3">
-          {sectionLoading[activeSection] ? (
-            <InlineLoading description="Loading..." />
-          ) : (
-            sectionContent[activeSection]
-          )}
+          <DashboardSection title={selectedSectionMeta.label} subtitle={selectedSectionMeta.description}>
+            {sectionLoading[activeSection] ? (
+              <InlineLoading description="Loading..." />
+            ) : (
+              sectionContent[activeSection]
+            )}
+          </DashboardSection>
         </div>
       </div>
-
-      {(approvals?.pendingUsers || []).length > 0 && activeSection !== 'users' && (
-        <Tile className="mt-4 border-l-4 border-l-amber-500">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <strong className="text-gray-900">{approvals.pendingUsers.length} pending user approvals</strong>
-              <p className="mt-1 text-sm text-gray-500">Open Users section to approve/reject pending accounts.</p>
-            </div>
-            <Button variant="secondary" size="sm" onClick={() => setActiveSection('users')}>Review Approvals</Button>
-          </div>
-        </Tile>
-      )}
 
       <ConfirmDialog />
     </div>

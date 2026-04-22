@@ -1,9 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Route, CheckCircle2, Wallet } from 'lucide-react';
 import { Currency, Expense, ExpenseCategory, OperatingFund, Trip, Vehicle, VehicleStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
 import { dataService } from '../services/dataService';
-import { Button, StatCard } from './ui';
+import {
+  Button,
+  StatCard,
+  DashboardPageHeader,
+  DashboardKpiCard,
+  DashboardSection,
+} from './ui';
 import { getDriverIdentityAliases } from '../utils/driverIdentity';
 import { useToast } from './Toast';
 import { driverDrawdownSchema, getFirstValidationMessage } from '../utils/clientValidation';
@@ -287,6 +293,31 @@ export const DriverPortal: React.FC = () => {
     [assignedTrips],
   );
 
+  // ── Top-line KPIs for the dashboard shell ───────────────────────────
+  // Active Trips: in-transit or assigned trips for this driver
+  // Completed This Month: trips completed in the current calendar month
+  // Available Balance: current USD drawdown balance
+  const dashboardKpis = useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    const activeTrips = assignedTrips.filter(
+      (trip) => trip.status === 'In Transit' || trip.status === 'Assigned',
+    ).length;
+
+    const completedThisMonth = assignedTrips.filter((trip) => {
+      if (trip.status !== 'Completed') return false;
+      const end = trip.actual_arrival_at || trip.eta_date;
+      if (!end) return false;
+      return new Date(end).getTime() >= monthStart;
+    }).length;
+
+    return {
+      activeTrips,
+      completedThisMonth,
+    };
+  }, [assignedTrips]);
+
   const calendarDays = useMemo(() => {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
@@ -469,77 +500,82 @@ export const DriverPortal: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-      <div
-        className="bg-white border border-gray-200 overflow-hidden p-6"
-        style={{
-          background:
-            'radial-gradient(circle at top left, rgba(69,137,255,0.2), transparent 34%), linear-gradient(135deg, #161616 0%, #262626 48%, #D97706 100%)',
-          color: '#ffffff',
-        }}
-      >
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">Driver Funds</span>
-              <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${availableUsd > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                {availableUsd > 0 ? 'Ready To Draw' : 'Awaiting Allocation'}
-              </span>
+      <DashboardPageHeader
+        title="Driver Portal"
+        subtitle={currentDriver ? `Hello, ${currentDriver}` : 'Driver funds and drawdowns'}
+        banner={
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D97706]">Available To Draw</p>
+              <p className={`text-2xl font-bold mt-1 ${availableUsd >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {availableBalanceDisplay}
+              </p>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black mt-4 break-words">Welcome back, {currentDriver}</h2>
-            <p className="text-sm sm:text-base text-slate-200 mt-3 max-w-3xl leading-6">
-              View every driver-specific allocation from admin or accounting, track what has already been spent, and submit the next drawdown directly from your available balance.
-            </p>
-          </div>
-
-          <div className="border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4 w-full lg:max-w-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-200">Available To Draw</p>
-            <p className={`text-3xl sm:text-4xl font-black mt-3 ${availableUsd >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-              {availableBalanceDisplay}
-            </p>
-            <p className="mt-2 text-xs text-slate-200/80">
-              {allocationBreakdown
-                ? `USD equivalent: ${formatUsd(availableUsd)}`
-                : 'No driver-specific allocation recorded yet.'}
-            </p>
-            <p className="text-sm text-slate-200 mt-3 leading-5">
+            <p className="text-xs text-stone-600 max-w-md leading-5">
               {availableUsd > 0
                 ? 'You can submit expenses against this balance now.'
                 : 'No balance is available right now. Ask admin or accounting to top up your driver funds.'}
             </p>
           </div>
-        </div>
+        }
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <DashboardKpiCard
+          label="Active Trips"
+          value={dashboardKpis.activeTrips}
+          icon={Route}
+          iconTone="amber"
+          trend="In transit or assigned"
+        />
+        <DashboardKpiCard
+          label="Completed This Month"
+          value={dashboardKpis.completedThisMonth}
+          icon={CheckCircle2}
+          iconTone="emerald"
+          trend="Trips completed"
+        />
+        <DashboardKpiCard
+          label="Available Balance"
+          value={availableBalanceDisplay}
+          icon={Wallet}
+          iconTone="blue"
+          trend={availableUsd >= 0 ? 'Ready to draw' : 'Awaiting allocation'}
+        />
       </div>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <StatCard
-          title="Allocated"
-          value={formatPreferredDisplay(allocatedUsd, allocationCurrencyTotals)}
-          subtitle={`${expenseDisbursements.length + driverFunds.length} allocation${expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded`}
-          color="blue"
-        />
-        <StatCard
-          title="Spent"
-          value={formatPreferredDisplay(spentUsd, spentCurrencyTotals)}
-          subtitle={`${drawdowns.length} drawdown${drawdowns.length === 1 ? '' : 's'} submitted`}
-          color="red"
-        />
-        <StatCard
-          title="Allocation Mix"
-          value={formatPreferredDisplay(allocatedFromExpenseUsd, expenseAllocationCurrencyTotals)}
-          subtitle={`Operating fund top-ups: ${formatPreferredDisplay(allocatedFromFundsUsd, fundAllocationCurrencyTotals)}`}
-          color="green"
-        />
-      </section>
+      <DashboardSection
+        title="Allocations & Spend"
+        subtitle="Your running totals across every currency"
+      >
+        <section className="grid gap-4 md:grid-cols-3">
+          <StatCard
+            title="Allocated"
+            value={formatPreferredDisplay(allocatedUsd, allocationCurrencyTotals)}
+            subtitle={`${expenseDisbursements.length + driverFunds.length} allocation${expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded`}
+            color="blue"
+          />
+          <StatCard
+            title="Spent"
+            value={formatPreferredDisplay(spentUsd, spentCurrencyTotals)}
+            subtitle={`${drawdowns.length} drawdown${drawdowns.length === 1 ? '' : 's'} submitted`}
+            color="red"
+          />
+          <StatCard
+            title="Allocation Mix"
+            value={formatPreferredDisplay(allocatedFromExpenseUsd, expenseAllocationCurrencyTotals)}
+            subtitle={`Operating fund top-ups: ${formatPreferredDisplay(allocatedFromFundsUsd, fundAllocationCurrencyTotals)}`}
+            color="green"
+          />
+        </section>
+      </DashboardSection>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
-        <div className="bg-white border border-gray-200 p-6">
+        <DashboardSection
+          title="Submit Drawdown"
+          subtitle="Every expense submitted here is tagged to your driver profile and deducted from your available funds."
+        >
           <div className="space-y-6">
-            <div>
-              <h3 className="text-2xl font-black text-zinc-900">Submit Drawdown</h3>
-              <p className="text-zinc-600 mt-2 leading-6">
-                Every expense submitted here is tagged to your driver profile and deducted from your available funds.
-              </p>
-            </div>
 
             {success && (
               <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3">
@@ -748,18 +784,14 @@ export const DriverPortal: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </DashboardSection>
 
         <div className="space-y-6">
-          <div className="bg-white border border-gray-200 p-6">
+          <DashboardSection
+            title="Upcoming Schedule"
+            subtitle="Your assigned trips now come from the dedicated planner, with real route, status, and ETA data."
+          >
             <div className="space-y-5">
-              <div>
-                <h3 className="text-xl font-black text-zinc-900">Upcoming Schedule</h3>
-                <p className="mt-2 text-zinc-600">
-                  Your assigned trips now come from the dedicated planner, with real route, status, and ETA data.
-                </p>
-              </div>
-
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                 {calendarDays.map((day) => (
                   <div
@@ -818,15 +850,13 @@ export const DriverPortal: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
+          </DashboardSection>
 
-          <div className="bg-white border border-gray-200 p-6">
+          <DashboardSection
+            title="Latest Activity"
+            subtitle="Allocations and drawdowns linked to your profile"
+          >
             <div className="space-y-5">
-              <div>
-                <h3 className="text-xl font-black text-zinc-900">Latest Activity</h3>
-                <p className="text-zinc-600 mt-2">Allocations and drawdowns linked to your profile</p>
-              </div>
-
               {ledger.length === 0 ? (
                 <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3">
                   <p className="font-semibold text-sm">No activity yet</p>
@@ -874,21 +904,18 @@ export const DriverPortal: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
+          </DashboardSection>
 
-          <div className="bg-white border border-gray-200 p-6">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xl font-black text-zinc-900">How It Works</h3>
-                <p className="text-zinc-600 mt-2">A quick guide to how allocations and spend tracking work in the portal.</p>
-              </div>
-              <ol className="space-y-3 text-sm text-zinc-700 leading-6">
-                <li>Admin or accounting records a driver-specific disbursement for your profile.</li>
-                <li>The allocation appears here immediately, whether it is vehicle-specific or a general top-up.</li>
-                <li>Every expense you submit reduces the available balance shown above.</li>
-              </ol>
-            </div>
-          </div>
+          <DashboardSection
+            title="How It Works"
+            subtitle="A quick guide to how allocations and spend tracking work in the portal."
+          >
+            <ol className="space-y-3 text-sm text-zinc-700 leading-6">
+              <li>Admin or accounting records a driver-specific disbursement for your profile.</li>
+              <li>The allocation appears here immediately, whether it is vehicle-specific or a general top-up.</li>
+              <li>Every expense you submit reduces the available balance shown above.</li>
+            </ol>
+          </DashboardSection>
         </div>
       </section>
     </div>

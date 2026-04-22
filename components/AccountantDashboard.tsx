@@ -18,9 +18,19 @@ import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/O
 import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from './shared/PayslipFormModal';
 import PayslipsListView from './shared/PayslipsListView';
 import { dataService } from '../services/dataService';
+import { EXCHANGE_RATES } from '../constants';
 import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
-import { Plus, FileText, DollarSign, Wallet, LineChart, Clock } from 'lucide-react';
-import { Button, StatCard, StatusBadge, SkeletonStatCards, SkeletonTable } from './ui';
+import { Plus, FileText, DollarSign, Wallet, LineChart, Clock, Receipt } from 'lucide-react';
+import {
+  Button,
+  StatCard,
+  StatusBadge,
+  SkeletonStatCards,
+  SkeletonTable,
+  DashboardPageHeader,
+  DashboardKpiCard,
+  DashboardSection,
+} from './ui';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 import { buildDriverFundsReportData } from '../utils/driverFunds';
@@ -43,6 +53,7 @@ export const AccountantDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'expenses' | 'payments' | 'reports' | 'clients' | 'payslips' | 'operating-funds' | 'expense-reports' | 'assets'>('overview');
   const [userRole, setUserRole] = useState<UserRole>('Accountant');
+  const [userName, setUserName] = useState<string>('');
   const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundForm, setFundForm] = useState<{ type: OperatingFundType; amount: string; currency: Currency; description: string; reference: string; recipient: string; approved_by: string; date: string }>({
@@ -213,6 +224,9 @@ export const AccountantDashboard: React.FC = () => {
       if (session?.user?.role) {
         setUserRole(session.user.role);
       }
+      if (session?.user?.name) {
+        setUserName(session.user.name);
+      }
     }).catch((err: unknown) => console.error('[AccountantDashboard] getSession failed:', err));
   }, []);
 
@@ -316,6 +330,33 @@ export const AccountantDashboard: React.FC = () => {
     () => buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles),
     [drivers, expenses, operatingFunds, vehicles],
   );
+
+  // ── Top-line KPIs for the dashboard shell ───────────────────────────
+  // Revenue MTD: sum of paid invoices this month
+  // Outstanding: sum of unpaid invoice amounts
+  // Expenses MTD: sum expenses this month
+  // Cash Position: operating funds running balance (received - disbursed)
+  const dashboardKpis = useMemo(() => {
+    const cashPosition = (operatingFunds || []).reduce((total, fund) => {
+      const usd = (fund.amount || 0) * (EXCHANGE_RATES[fund.currency] || 1);
+      return total + (fund.type === 'Received' ? usd : -usd);
+    }, 0);
+
+    const fmtCompact = (n: number) => {
+      const abs = Math.abs(n);
+      const sign = n < 0 ? '-' : '';
+      if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+      if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(1)}K`;
+      return `${sign}$${abs.toFixed(0)}`;
+    };
+
+    return {
+      revenueMtdLabel: fmtCompact(monthlyRevenue),
+      outstandingLabel: fmtCompact(totalPending),
+      expensesMtdLabel: fmtCompact(monthlyExpenses),
+      cashPositionLabel: fmtCompact(cashPosition),
+    };
+  }, [monthlyRevenue, totalPending, monthlyExpenses, operatingFunds]);
 
   const accountantTabOptions: Array<{
     id: 'overview' | 'invoices' | 'expenses' | 'payments' | 'reports' | 'clients' | 'payslips' | 'operating-funds' | 'expense-reports' | 'assets';
@@ -734,65 +775,65 @@ export const AccountantDashboard: React.FC = () => {
     );
   }
 
+  const activeTabLabel =
+    accountantTabOptions.find(option => option.id === activeTab)?.label ?? 'Overview';
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold" style={{ color: '#161616' }}>Accountant Dashboard</h1>
-          <p className="mt-1" style={{ color: '#525252' }}>Financial overview and management</p>
-        </div>
-        <Button variant="primary" leftIcon={<Plus size={20} />} onClick={() => setShowExpenseModal(true)}>
-          Add Expense
-        </Button>
+      <DashboardPageHeader
+        title="Accountant Dashboard"
+        subtitle={userName ? `Welcome back, ${userName}` : 'Financial overview and management'}
+        actions={
+          <Button variant="primary" leftIcon={<Plus size={20} />} onClick={() => setShowExpenseModal(true)}>
+            Add Expense
+          </Button>
+        }
+      />
+
+      {/* Top-line KPI grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <DashboardKpiCard
+          label="Revenue MTD"
+          value={dashboardKpis.revenueMtdLabel}
+          icon={DollarSign}
+          iconTone="amber"
+          trend="Paid invoices this month"
+        />
+        <DashboardKpiCard
+          label="Outstanding"
+          value={dashboardKpis.outstandingLabel}
+          icon={FileText}
+          iconTone="rose"
+          trend={`${pendingInvoices.length} unpaid invoice${pendingInvoices.length === 1 ? '' : 's'}`}
+        />
+        <DashboardKpiCard
+          label="Expenses MTD"
+          value={dashboardKpis.expensesMtdLabel}
+          icon={Receipt}
+          iconTone="stone"
+          trend="This month"
+        />
+        <DashboardKpiCard
+          label="Cash Position"
+          value={dashboardKpis.cashPositionLabel}
+          icon={Wallet}
+          iconTone="emerald"
+          trend="Operating funds balance"
+        />
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Revenue"
-          value={formatCurrency(totalRevenue)}
-          subtitle={`From ${invoices.filter(i => i.status === 'Paid').length} paid invoices`}
-          icon={<DollarSign size={20} />}
-          color="green"
-        />
-        <StatCard
-          title="Total Expenses"
-          value={formatCurrency(totalExpenses)}
-          subtitle={`${expenses.length} expense entries`}
-          icon={<Wallet size={20} />}
-          color="red"
-        />
-        <StatCard
-          title="Net Profit"
-          value={formatCurrency(netProfit)}
-          subtitle="Revenue - Expenses"
-          icon={<LineChart size={20} />}
-          color={netProfit >= 0 ? 'blue' : 'amber'}
-        />
-        <StatCard
-          title="Pending Invoices"
-          value={formatCurrency(totalPending)}
-          subtitle={`${pendingInvoices.length} outstanding`}
-          icon={<Clock size={20} />}
-          color="amber"
-        />
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white border border-gray-200 overflow-hidden">
-        <div style={{ borderBottom: '1px solid #e0e0e0', background: '#f4f4f4' }}>
-          <div className="p-3">
-            <DashboardSectionSwitcher
-              value={activeTab}
-              onChange={setActiveTab}
-              label="Section"
-              options={accountantTabOptions}
-            />
-          </div>
-        </div>
-
-        <div className="p-6">
+      <DashboardSection
+        title={activeTabLabel}
+        actions={
+          <DashboardSectionSwitcher
+            value={activeTab}
+            onChange={setActiveTab}
+            label="Section"
+            options={accountantTabOptions}
+          />
+        }
+      >
+        <div className="space-y-6">
           {activeTab === 'overview' && (
             <AccountantOverviewSection
               totalRevenue={totalRevenue}
@@ -950,7 +991,7 @@ export const AccountantDashboard: React.FC = () => {
             <AssetRegister userRole={userRole} />
           )}
         </div>
-      </div>
+      </DashboardSection>
 
       <OperatingFundEntryModal
         isOpen={showFundModal}
