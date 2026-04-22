@@ -11,7 +11,7 @@ import {
 import { logAuditEvent } from './_audit.js';
 import { RegistrationRequestSchema } from './_schemas.js';
 import { sql } from './_db.js';
-import { sendInviteEmail } from './_email.tsx';
+import { sendInviteEmail } from './_email.js';
 
 type RegistrationRequestRecord = {
   id: string;
