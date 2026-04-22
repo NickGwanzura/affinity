@@ -25,9 +25,9 @@ import { Button } from '../ui';
 import { useConfirm } from '../ConfirmModal';
 import { useToast } from '../Toast';
 import { ClientFormModal, type ClientFormValue } from '../shared/ClientFormModal';
-import { CarbonInvoiceModal } from '../shared/CarbonInvoiceModal';
-import { CarbonQuoteModal } from '../shared/CarbonQuoteModal';
-import { CarbonPaymentModal } from '../shared/CarbonPaymentModal';
+import { CarbonInvoiceModal } from '../shared/InvoiceModal';
+import { CarbonQuoteModal } from '../shared/QuoteModal';
+import { CarbonPaymentModal } from '../shared/PaymentModal';
 
 import { FinancialsTabBar, type FinancialsTab } from './FinancialsTabBar';
 import { QuotesSection } from './sections/QuotesSection';

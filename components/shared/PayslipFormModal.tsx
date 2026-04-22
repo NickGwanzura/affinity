@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Employee } from '../../types';
 import { getMonthName } from '../../utils/formatters';
-import CarbonFormModal from './CarbonFormModal';
+import CarbonFormModal from './FormModal';
 import { Button } from '../ui';
 
 export interface PayslipFormValue {

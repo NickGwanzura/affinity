@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppUser, Currency, ExpenseCategory, Vehicle, VehicleStatus } from '../../types';
-import CarbonFormModal from './CarbonFormModal';
+import CarbonFormModal from './FormModal';
 import { Button } from '../ui';
 
 export interface ExpenseEntryFormValue {

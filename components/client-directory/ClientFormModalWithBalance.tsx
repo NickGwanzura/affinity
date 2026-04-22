@@ -1,5 +1,5 @@
 import React from 'react';
-import CarbonFormModal from '../shared/CarbonFormModal';
+import CarbonFormModal from '../shared/FormModal';
 import {
   Button,
   Stack,

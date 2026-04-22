@@ -1,5 +1,5 @@
 import React from 'react';
-import CarbonFormModal from './CarbonFormModal';
+import CarbonFormModal from './FormModal';
 import { Button, Stack, TextInput, Select, SelectItem } from '../ui';
 import { Upload, AlertCircle } from 'lucide-react';
 

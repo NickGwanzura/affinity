@@ -3,7 +3,7 @@ import { Plus, Users } from 'lucide-react';
 import { Button, Loading } from './ui';
 import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
-import { useConfirm } from './shared/CarbonConfirmModal';
+import { useConfirm } from './shared/ConfirmModal';
 import {
   ClientListSidebar,
   ClientDetailPanel,

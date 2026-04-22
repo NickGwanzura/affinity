@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppUser, TripStatus, Vehicle } from '../../types';
-import CarbonFormModal from './CarbonFormModal';
+import CarbonFormModal from './FormModal';
 import { Button, Select, SelectItem, Stack, TextArea, TextInput } from '../ui';
 
 export type TripFormValue = {

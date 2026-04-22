@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Employee } from '../../types';
-import CarbonFormModal from './CarbonFormModal';
+import CarbonFormModal from './FormModal';
 import { Button, Select, SelectItem, Stack, TextInput } from '../ui';
 
 export interface EmployeeFormValue {

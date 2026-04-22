@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppUser, Currency, OperatingFundType } from '../../types';
-import CarbonFormModal from './CarbonFormModal';
+import CarbonFormModal from './FormModal';
 import { Button } from '../ui';
 
 const CURRENCY_LABELS: Record<Currency, string> = {

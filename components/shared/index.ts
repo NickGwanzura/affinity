@@ -2,14 +2,14 @@
 // Shared Components - Barrel Export
 // ============================================
 
-export { CarbonConfirmModal, useCarbonConfirm, useConfirm } from './CarbonConfirmModal';
+export { CarbonConfirmModal, useCarbonConfirm, useConfirm } from './ConfirmModal';
 
-export { CarbonInvoiceModal } from './CarbonInvoiceModal';
+export { CarbonInvoiceModal } from './InvoiceModal';
 
-export { CarbonQuoteModal } from './CarbonQuoteModal';
+export { CarbonQuoteModal } from './QuoteModal';
 
-export { CarbonPaymentModal } from './CarbonPaymentModal';
+export { CarbonPaymentModal } from './PaymentModal';
 
 export { ClientFormModal, type ClientFormValue } from './ClientFormModal';
 
-export { default as CarbonFormModal } from './CarbonFormModal';
+export { default as CarbonFormModal } from './FormModal';
