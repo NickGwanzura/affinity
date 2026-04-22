@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Asset, AssetRequest, AssetStatus, AssetRequestStatus } from '../types';
-import { Button, StatCard, EmptyState, StatusBadge, SkeletonTable, defaultIcons } from './ui';
+import { Button, StatCard, EmptyState, StatusBadge, SkeletonTable, defaultIcons, DashboardPageHeader, DashboardSection } from './ui';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 
@@ -333,14 +333,17 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       <ConfirmDialog />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Asset Register</h2>
-        {canEdit && (
-          <Button onClick={() => { setEditingAsset(null); setShowAssetModal(true); }} className="w-full sm:w-auto">
-            + Add Asset
-          </Button>
-        )}
-      </div>
+      <DashboardPageHeader
+        title="Asset Register"
+        subtitle="Fleet vehicles, equipment, and their valuations"
+        actions={
+          canEdit ? (
+            <Button onClick={() => { setEditingAsset(null); setShowAssetModal(true); }}>
+              + Add Asset
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -392,6 +395,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
       {/* Assets Tab */}
       {activeTab === 'assets' && (
+        <DashboardSection title="Assets">
         <div className="space-y-4">
           {canEdit && (
             <div className="flex justify-end">
@@ -498,10 +502,12 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
             </>
           )}
         </div>
+        </DashboardSection>
       )}
 
       {/* Requests Tab */}
       {activeTab === 'requests' && (
+        <DashboardSection title="Requests">
         <div className="space-y-4">
           {canEdit && (
             <div className="flex justify-end">
@@ -668,6 +674,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
             </>
           )}
         </div>
+        </DashboardSection>
       )}
 
       {/* Asset Modal */}

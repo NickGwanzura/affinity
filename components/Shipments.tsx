@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
-import { Button, DashboardCard } from './ui';
-import { Plus, Package, Truck, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Button, DashboardCard, DashboardPageHeader, DashboardSection } from './ui';
+import { Plus, Truck, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 interface Shipment {
   id: string;
@@ -161,26 +161,21 @@ export const Shipments: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       <ToastContainer />
       <ConfirmDialog />
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gray-100">
-            <Package size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Shipments</h1>
-            <p className="text-sm text-gray-500">Track vehicles and goods shipping</p>
-          </div>
-        </div>
-        <Button onClick={openAddModal} leftIcon={<Plus size={18} />}>
-          New Shipment
-        </Button>
-      </div>
+      <DashboardPageHeader
+        title="Shipments"
+        subtitle="Cross-border vehicle logistics"
+        actions={
+          <Button onClick={openAddModal} leftIcon={<Plus size={18} />}>
+            New Shipment
+          </Button>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <DashboardCard>
           <div className="text-2xl font-bold">{stats.total}</div>
           <div className="text-sm text-gray-500">Total Shipments</div>
@@ -199,7 +194,8 @@ export const Shipments: React.FC = () => {
         </DashboardCard>
       </div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
+      <DashboardSection title="All Shipments">
+      <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -275,6 +271,7 @@ export const Shipments: React.FC = () => {
           </tbody>
         </table>
       </div>
+      </DashboardSection>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

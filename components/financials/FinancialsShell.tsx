@@ -21,7 +21,7 @@ import {
   generateStatementPDF,
   type StatementData,
 } from '../../services/pdfService';
-import { Button } from '../ui';
+import { Button, DashboardPageHeader } from '../ui';
 import { useConfirm } from '../ConfirmModal';
 import { useToast } from '../Toast';
 import { ClientFormModal, type ClientFormValue } from '../shared/ClientFormModal';
@@ -1523,30 +1523,23 @@ export const Financials: React.FC = () => {
       <ConfirmDialog />
 
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h2
-            className="text-2xl sm:text-3xl font-black tracking-tight"
-            style={{ color: 'var(--cds-text-primary, #161616)' }}
-          >
-            Finance
-          </h2>
-          <p
-            className="font-medium"
-            style={{ color: 'var(--cds-text-secondary, #525252)' }}
-          >
-            Quotes, Billing, Receipts, Statements
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button variant="success" renderIcon={Plus} onClick={openCreateInvoiceModal}>
-            New Invoice
-          </Button>
-          <Button renderIcon={Plus} onClick={() => setShowQuoteModal(true)}>
-            New Quote
-          </Button>
-        </div>
-      </div>
+      <DashboardPageHeader
+        title="Financials"
+        subtitle="Quotes, invoices, payments, receipts, and client statements"
+        actions={
+          <>
+            <Button renderIcon={Plus} onClick={() => setShowQuoteModal(true)}>
+              New Quote
+            </Button>
+            <Button variant="success" renderIcon={Plus} onClick={openCreateInvoiceModal}>
+              New Invoice
+            </Button>
+            <Button variant="secondary" renderIcon={Plus} onClick={openPaymentModal}>
+              Record Payment
+            </Button>
+          </>
+        }
+      />
 
       {/* Modals */}
       <CarbonQuoteModal
