@@ -42,7 +42,7 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({ name, role, appUrl }
   >
     <Text style={styles.h1}>Welcome aboard, {name.split(' ')[0]}.</Text>
     <Text style={styles.paragraph}>
-      Your {brand.name} account is live. You're signed in as{' '}
+      Your {brand.name} account is live. You&apos;re signed in as{' '}
       <strong style={{ color: color.textPrimary }}>{role}</strong>.
     </Text>
 

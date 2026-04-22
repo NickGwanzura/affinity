@@ -22,7 +22,7 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
     preview={`Join ${brand.name} as ${role} — your invitation is waiting.`}
     footerNote="You received this email because someone invited you to collaborate."
   >
-    <Text style={styles.h1}>You've been invited</Text>
+    <Text style={styles.h1}>You&apos;ve been invited</Text>
     <Text style={styles.paragraph}>Hi {name},</Text>
     <Text style={styles.paragraph}>
       <strong style={{ color: color.textPrimary }}>
@@ -49,8 +49,8 @@ export const InviteEmail: React.FC<InviteEmailProps> = ({
     <Divider />
 
     <Text style={{ ...styles.small, margin: 0 }}>
-      This invitation expires in {expiresInDays} days. If you weren't expecting this, you
-      can safely ignore this email — no account will be created until you accept.
+      This invitation expires in {expiresInDays} days. If you weren&apos;t expecting
+      this, you can safely ignore this email — no account will be created until you accept.
     </Text>
   </EmailLayout>
 );

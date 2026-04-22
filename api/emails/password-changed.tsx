@@ -62,7 +62,7 @@ export const PasswordChangedEmail: React.FC<PasswordChangedEmailProps> = ({
 
       <Divider />
 
-      <Text style={styles.h2}>Didn't change your password?</Text>
+      <Text style={styles.h2}>Didn&apos;t change your password?</Text>
       <Text style={styles.paragraph}>
         Your account may be compromised. Please secure it immediately by resetting your
         password and reviewing recent activity.

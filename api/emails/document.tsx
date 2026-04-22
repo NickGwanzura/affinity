@@ -123,8 +123,8 @@ export const DocumentEmail: React.FC<DocumentEmailProps> = (props) => {
       <Divider />
 
       <Text style={{ ...styles.small, margin: 0 }}>
-        Questions about this {meta.title.toLowerCase()}? Reply to this email and we'll
-        help sort it out.
+        Questions about this {meta.title.toLowerCase()}? Reply to this email and
+        we&apos;ll help sort it out.
       </Text>
     </EmailLayout>
   );

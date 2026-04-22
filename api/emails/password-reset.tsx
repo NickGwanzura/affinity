@@ -45,8 +45,8 @@ export const PasswordResetEmail: React.FC<PasswordResetEmailProps> = ({
       <Divider />
 
       <Text style={{ ...styles.small, margin: 0 }}>
-        This link expires in {expiresInMinutes} minutes. If you didn't request a reset,
-        you can safely ignore this email — your password will not change.
+        This link expires in {expiresInMinutes} minutes. If you didn&apos;t request a
+        reset, you can safely ignore this email — your password will not change.
         {requestIp ? (
           <>
             {' '}Request origin: <code style={{ color: color.textPrimary }}>{requestIp}</code>.
