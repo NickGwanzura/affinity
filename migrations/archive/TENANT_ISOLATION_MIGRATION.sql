@@ -1,5 +1,13 @@
 -- ============================================================
--- Tenant Isolation Migration
+-- ARCHIVED: REVERTED by TENANT_ISOLATION_REVERT.sql on 2026-04-21
+-- This migration is no longer valid. The application is
+-- single-tenant, so tenant_id columns are being removed from
+-- finance tables. Do NOT re-apply this migration.
+-- See: TENANT_ISOLATION_REVERT.sql
+-- ============================================================
+
+-- ============================================================
+-- Tenant Isolation Migration (ORIGINAL, FOR HISTORICAL REFERENCE)
 -- Add tenant_id to all finance tables for multi-tenant isolation
 -- ============================================================
 

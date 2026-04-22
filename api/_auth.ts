@@ -326,7 +326,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
 
   await sql`
     UPDATE user_profiles
-    SET password_hash = ${newHash}, password_salt = NULL, updated_at = NOW()
+    SET password_hash = ${newHash}, password_salt = NULL, force_password_change = false, updated_at = NOW()
     WHERE id = ${userId}::uuid
   `;
 
@@ -334,6 +334,40 @@ export async function resetPassword(token: string, newPassword: string): Promise
   await sql`
     UPDATE password_resets
     SET used_at = NOW()
+    WHERE token = ${token}
+  `;
+}
+
+/**
+ * Record an attempt against a given reset token and return the number of
+ * attempts made so far (including this one). If the caller sees this value
+ * exceed a threshold they should invalidate the token.
+ */
+export async function recordResetTokenAttempt(token: string): Promise<number> {
+  // password_resets is expected to have an `attempts` column after this
+  // migration. The UPDATE is a no-op on rows that don't exist, which is
+  // exactly what we want for bogus tokens.
+  await sql`
+    UPDATE password_resets
+    SET attempts = COALESCE(attempts, 0) + 1
+    WHERE token = ${token}
+  `;
+  const rows = await sql`
+    SELECT COALESCE(attempts, 0) AS attempts
+    FROM password_resets
+    WHERE token = ${token}
+  `;
+  return Number(rows[0]?.attempts ?? 0);
+}
+
+/**
+ * Mark a reset token as used (invalidated) without actually resetting a
+ * password. Used when an attacker exhausts attempts against a single token.
+ */
+export async function invalidateResetToken(token: string): Promise<void> {
+  await sql`
+    UPDATE password_resets
+    SET used_at = COALESCE(used_at, NOW())
     WHERE token = ${token}
   `;
 }

@@ -3,7 +3,8 @@ import {
   AuthenticatedRequest,
   apiError,
   handleCors,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
@@ -158,23 +159,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     await ensureTripSchema();
 
     switch (req.method) {
       case 'GET':
-        if (!requireRole(authReq, res, ['Admin', 'Manager', 'Driver'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         if (req.query.id) return await getTrip(authReq, res);
         return await listTrips(authReq, res);
       case 'POST':
-        if (!requireRole(authReq, res, ['Admin', 'Manager'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await createTrip(authReq, res);
       case 'PUT':
-        if (!requireRole(authReq, res, ['Admin', 'Manager'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updateTrip(authReq, res);
       case 'DELETE':
-        if (!requireRole(authReq, res, ['Admin', 'Manager'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deleteTrip(authReq, res);
       default:
         return apiError(res, 405, 'Method not allowed');

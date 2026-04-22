@@ -3,7 +3,8 @@ import {
   AuthenticatedRequest,
   apiError,
   handleCors,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
@@ -26,6 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     switch (req.method) {
@@ -33,13 +35,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (req.query.id) return await getExpense(req, res);
         return await listExpenses(req, res);
       case 'POST':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant', 'Driver'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await createExpense(req, res);
       case 'PUT':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant', 'Driver'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updateExpense(req, res);
       case 'DELETE':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deleteExpense(req, res);
       default:
         return apiError(res, 405, 'Method not allowed');

@@ -4,7 +4,8 @@ import { ZodError } from 'zod';
 import {
   AuthenticatedRequest,
   verifyToken,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
   apiError,
@@ -189,6 +190,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const authReq = req as AuthenticatedRequest;
 
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     switch (req.method) {
@@ -199,15 +201,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await listInvoices(authReq, res);
 
       case 'POST':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await createInvoice(authReq, res);
 
       case 'PUT':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updateInvoice(authReq, res);
 
       case 'DELETE':
-        if (!requireRole(authReq, res, ['Admin'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deleteInvoice(authReq, res);
 
       default:

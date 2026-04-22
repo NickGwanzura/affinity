@@ -4,6 +4,7 @@ import {
   apiError,
   handleCors,
   requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
 } from '../_middleware.js';
@@ -20,6 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
   if (!requireAccessRole(authReq, res, ['super_admin'])) return;
 
   try {

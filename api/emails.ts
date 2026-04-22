@@ -2,7 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   AuthenticatedRequest,
   verifyToken,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
   apiError,
@@ -40,6 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     switch (req.method) {
@@ -56,25 +58,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       case 'POST':
         if (req.query.type === 'templates') {
-          if (!requireRole(authReq, res, ['Admin'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
           return await createEmailTemplate(authReq, res);
         }
         if (req.query.type === 'queue' || req.query.action === 'send') {
-          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
           return await sendEmail(authReq, res);
         }
         return apiError(res, 400, 'Invalid query');
 
       case 'PUT':
         if (req.query.type === 'templates') {
-          if (!requireRole(authReq, res, ['Admin'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
           return await updateEmailTemplate(authReq, res);
         }
         return apiError(res, 400, 'Invalid query');
 
       case 'DELETE':
         if (req.query.type === 'templates') {
-          if (!requireRole(authReq, res, ['Admin'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
           return await deleteEmailTemplate(authReq, res);
         }
         return apiError(res, 400, 'Invalid query');

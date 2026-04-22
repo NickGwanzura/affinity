@@ -4,7 +4,8 @@ import { ZodError } from 'zod';
 import {
   AuthenticatedRequest,
   verifyToken,
-  requireRole,
+  requireAccessRole,
+  requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
   apiError,
@@ -180,6 +181,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const authReq = req as AuthenticatedRequest;
 
   if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
 
   try {
     switch (req.method) {
@@ -190,15 +192,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await listQuotes(authReq, res);
 
       case 'POST':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await createQuote(authReq, res);
 
       case 'PUT':
-        if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updateQuote(authReq, res);
 
       case 'DELETE':
-        if (!requireRole(authReq, res, ['Admin'])) return;
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deleteQuote(authReq, res);
 
       default:
