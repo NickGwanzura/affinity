@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
-import { Button, DashboardCard, DashboardPageHeader, DashboardSection } from './ui';
-import { Plus, Truck, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection } from './ui';
+import { Plus, Truck, CheckCircle, Clock, Package, XCircle } from 'lucide-react';
 
 interface Shipment {
   id: string;
@@ -176,22 +176,10 @@ export const Shipments: React.FC = () => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <DashboardCard>
-          <div className="text-2xl font-bold">{stats.total}</div>
-          <div className="text-sm text-gray-500">Total Shipments</div>
-        </DashboardCard>
-        <DashboardCard>
-          <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-          <div className="text-sm text-gray-500">Pending</div>
-        </DashboardCard>
-        <DashboardCard>
-          <div className="text-2xl font-bold text-blue-600">{stats.inTransit}</div>
-          <div className="text-sm text-gray-500">In Transit</div>
-        </DashboardCard>
-        <DashboardCard>
-          <div className="text-2xl font-bold text-green-600">{stats.delivered}</div>
-          <div className="text-sm text-gray-500">Delivered</div>
-        </DashboardCard>
+        <DashboardKpiCard label="Total Shipments" value={stats.total} icon={Package} iconTone="amber" />
+        <DashboardKpiCard label="Pending" value={stats.pending} icon={Clock} iconTone="stone" />
+        <DashboardKpiCard label="In Transit" value={stats.inTransit} icon={Truck} iconTone="blue" />
+        <DashboardKpiCard label="Delivered" value={stats.delivered} icon={CheckCircle} iconTone="emerald" />
       </div>
 
       <DashboardSection title="All Shipments">

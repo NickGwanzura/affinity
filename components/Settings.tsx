@@ -36,7 +36,6 @@ import {
 } from '../utils/clientValidation';
 import { ZodError } from 'zod';
 import ForensicLogPanel from './shared/ForensicLogPanel';
-import { DashboardCard } from './ui';
 
 export const Settings: React.FC = () => {
   const { showToast, ToastContainer } = useToast();

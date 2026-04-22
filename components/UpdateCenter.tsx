@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { api } from '../services/apiClient';
 import { useToast } from './Toast';
-import { Button, DashboardCard, DashboardPageHeader, DashboardSection } from './ui';
-import { Send, FileText, Plus, Edit, Trash2, CheckCircle, Clock } from 'lucide-react';
+import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection } from './ui';
+import { Send, FileText, Plus, Edit, Trash2, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface EmailTemplate {
   id: string;
@@ -48,7 +48,7 @@ export const UpdateCenter: React.FC = () => {
   const [queue, setQueue] = useState<EmailQueueItem[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'templates' | 'queue' | 'send'>('templates');
+  const [activeTab, setActiveTab] = useState<'templates' | 'queue'>('templates');
 
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
@@ -200,47 +200,19 @@ export const UpdateCenter: React.FC = () => {
 
       <DashboardPageHeader
         title="Update Center"
-        subtitle="Announcements, clock-ins, and platform updates"
+        subtitle="Email templates and send queue"
+        actions={
+          <Button onClick={() => setShowSendModal(true)} leftIcon={<Send size={18} />}>
+            Send Email
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <DashboardCard>
-          <div className="flex items-center gap-2">
-            <FileText size={20} className="text-blue-500" />
-            <div>
-              <div className="text-2xl font-bold">{stats.templates}</div>
-              <div className="text-sm text-gray-500">Templates</div>
-            </div>
-          </div>
-        </DashboardCard>
-        <DashboardCard>
-          <div className="flex items-center gap-2">
-            <CheckCircle size={20} className="text-green-500" />
-            <div>
-              <div className="text-2xl font-bold">{stats.sent}</div>
-              <div className="text-sm text-gray-500">Sent</div>
-            </div>
-          </div>
-        </DashboardCard>
-        <DashboardCard>
-          <div className="flex items-center gap-2">
-            <Clock size={20} className="text-yellow-500" />
-            <div>
-              <div className="text-2xl font-bold">{stats.pending}</div>
-              <div className="text-sm text-gray-500">Pending</div>
-            </div>
-          </div>
-        </DashboardCard>
-        <DashboardCard>
-          <div className="flex items-center gap-2">
-            <Send size={20} className="text-purple-500" />
-            <div>
-              <Button size="sm" onClick={() => setShowSendModal(true)}>
-                Send Email
-              </Button>
-            </div>
-          </div>
-        </DashboardCard>
+        <DashboardKpiCard label="Templates" value={stats.templates} icon={FileText} iconTone="amber" />
+        <DashboardKpiCard label="Sent" value={stats.sent} icon={CheckCircle} iconTone="emerald" />
+        <DashboardKpiCard label="Pending" value={stats.pending} icon={Clock} iconTone="blue" />
+        <DashboardKpiCard label="Failed" value={stats.failed} icon={AlertCircle} iconTone="rose" />
       </div>
 
       <DashboardSection title={activeTab === 'queue' ? 'Email Queue' : 'Templates'}>
