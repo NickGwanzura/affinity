@@ -10,13 +10,15 @@ export type { StatusType } from './StatusBadge';
 export { InsightPanel, MetricBarList, RankedMetricList } from './AnalyticsPanels';
 export { DriverFundsSummaryPanel, DriverFundsSnapshotPanel } from './DriverFundsPanels';
 
-export { 
-  Skeleton, 
-  SkeletonCard, 
-  SkeletonTableRow, 
+export {
+  Skeleton,
+  SkeletonText,
+  SkeletonPlaceholder,
+  SkeletonCard,
+  SkeletonTableRow,
   SkeletonTable,
   SkeletonStatCards,
-  SkeletonChart 
+  SkeletonChart,
 } from './Skeleton';
 
 export { DashboardCard } from './DashboardCard';

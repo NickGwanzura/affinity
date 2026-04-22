@@ -27,6 +27,69 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   );
 };
 
+// ── Carbon-compatible primitives ──────────────────────────────────────────────
+// These mirror @carbon/react's SkeletonText / SkeletonPlaceholder so consumers
+// that still reach for the Carbon names (or Layer 4 swaps) keep working.
+
+interface SkeletonTextProps {
+  /** number of bar lines to render */
+  paragraph?: boolean;
+  lineCount?: number;
+  /** accepts CSS width (e.g. "80%" or 240) */
+  width?: string | number;
+  /** accepts CSS height (e.g. "1rem" or 16) */
+  height?: string | number;
+  className?: string;
+  heading?: boolean;
+}
+
+export const SkeletonText: React.FC<SkeletonTextProps> = ({
+  paragraph = false,
+  lineCount = 3,
+  width = '100%',
+  height,
+  className = '',
+  heading = false,
+}) => {
+  const count = paragraph ? Math.max(1, lineCount) : 1;
+  const barHeight = height ?? (heading ? '1.25rem' : '1rem');
+  return (
+    <div className={`space-y-2 ${className}`}>
+      {Array.from({ length: count }).map((_, i) => {
+        // Last bar in a paragraph is narrower for realism.
+        const w =
+          paragraph && i === count - 1 && typeof width === 'string' && width.endsWith('%')
+            ? '75%'
+            : width;
+        return (
+          <div
+            key={i}
+            className="animate-pulse bg-gray-200"
+            style={{ width: w, height: barHeight }}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+interface SkeletonPlaceholderProps {
+  className?: string;
+  width?: string | number;
+  height?: string | number;
+}
+
+export const SkeletonPlaceholder: React.FC<SkeletonPlaceholderProps> = ({
+  className = '',
+  width = '100%',
+  height = '6rem',
+}) => (
+  <div
+    className={`animate-pulse bg-gray-200 ${className}`}
+    style={{ width, height }}
+  />
+);
+
 // ── Pre-built layouts ─────────────────────────────────────────────────────────
 
 export const SkeletonCard: React.FC = () => (

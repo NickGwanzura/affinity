@@ -15,7 +15,7 @@ interface StatCardProps {
 }
 
 const accentMap: Record<string, { bg: string; text: string }> = {
-  blue:   { bg: '#2563eb', text: '#ffffff' },
+  blue:   { bg: '#0f62fe', text: '#ffffff' },
   green:  { bg: '#16a34a', text: '#ffffff' },
   red:    { bg: '#dc2626', text: '#ffffff' },
   amber:  { bg: '#f59e0b', text: '#111827' },
