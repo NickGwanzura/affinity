@@ -179,7 +179,7 @@ export const Layout: React.FC<LayoutProps> = ({
                   width: '100%',
                   padding: sidebarCollapsed ? '0.75rem' : '0.625rem 0.75rem',
                   justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-                  background: isActive ? '#262626' : 'transparent',
+                  background: isActive ? '#0f62fe' : 'transparent',
                   color: isActive ? '#fff' : '#999',
                   border: 'none',
                   borderRadius: '6px',

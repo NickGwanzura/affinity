@@ -261,7 +261,7 @@ export const UpdateCenter: React.FC = () => {
               onClick={() => setActiveTab(id as any)}
               className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                 activeTab === id
-                  ? 'border-black text-black font-semibold'
+                  ? 'border-[#0f62fe] text-[#0f62fe] font-semibold'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >

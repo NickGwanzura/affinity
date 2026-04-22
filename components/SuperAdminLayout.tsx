@@ -46,7 +46,7 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({
         Skip to main content
       </a>
 
-      <header className="fixed top-0 left-0 right-0 z-[8000] flex h-12 items-center bg-[#161616] text-white">
+      <header className="fixed top-0 left-0 right-0 z-[8000] flex h-12 items-center bg-[#0f62fe] text-white">
         <a
           href="javascript:void(0)"
           onClick={(event) => event.preventDefault()}
@@ -91,7 +91,7 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({
               }}
               className={`px-4 py-3 text-sm ${
                 activeSection === section.id
-                  ? 'border-l-4 border-[#161616] bg-gray-100 font-semibold text-gray-900'
+                  ? 'border-l-4 border-[#0f62fe] bg-gray-100 font-semibold text-gray-900'
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
               aria-current={activeSection === section.id ? 'page' : undefined}
