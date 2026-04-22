@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Plus, Users } from 'lucide-react';
-import { Button, Loading } from './ui';
+import { Plus } from 'lucide-react';
+import { Button, DashboardPageHeader, Loading } from './ui';
 import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
 import { useConfirm } from './shared/ConfirmModal';
@@ -82,24 +82,23 @@ export const ClientDirectory: React.FC = () => {
 
   if (data.loading) return <Loading description="Loading clients…" withOverlay={false} />;
 
+  const activeClientCount = enrichedClients.filter((c) => c.is_active !== false).length;
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <ToastContainer />
       <ConfirmDialog />
 
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gray-100">
-            <Users size={22} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Client Directory</h1>
-            <p className="text-sm text-gray-500">
-              {enrichedClients.length} clients · financials, vehicles &amp; shipments
-            </p>
-          </div>
-        </div>
-        <Button leftIcon={<Plus size={14} />} onClick={crud.openAdd}>Add Client</Button>
+      <div className="mb-6">
+        <DashboardPageHeader
+          title="Clients"
+          subtitle={`${enrichedClients.length} total · ${activeClientCount} active`}
+          actions={
+            <Button leftIcon={<Plus size={14} />} onClick={crud.openAdd}>
+              Add Client
+            </Button>
+          }
+        />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4">

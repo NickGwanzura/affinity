@@ -5,6 +5,7 @@ import { dataService } from '../services/dataService';
 import { generateVehicleStatementPDFAndDownload } from '../services/pdfService';
 import { useToast } from '../components/Toast';
 import { getDriverIdentityAliases } from '../utils/driverIdentity';
+import { DashboardPageHeader, DashboardSection } from './ui';
 
 export const Documents: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'receipts' | 'statements'>('receipts');
@@ -113,14 +114,14 @@ export const Documents: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h2 className="text-3xl font-black text-zinc-900 tracking-tight">Document Center</h2>
-        <p className="text-zinc-500 font-medium">
-          {viewerRole === 'Driver'
+      <DashboardPageHeader
+        title="Documents"
+        subtitle={
+          viewerRole === 'Driver'
             ? 'Your receipts and statements tied to your trip activity'
-            : 'Audit-ready receipts and consolidated fleet statements'}
-        </p>
-      </div>
+            : 'Generated PDFs, uploaded files, and reg books'
+        }
+      />
 
       <div className="flex w-full gap-1 bg-zinc-100 p-1.5 sm:w-fit">
         <button 
@@ -142,6 +143,7 @@ export const Documents: React.FC = () => {
       </div>
 
       {activeTab === 'receipts' ? (
+        <DashboardSection title="Digital Receipts">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
           {expenses.length === 0 ? (
             <div className="col-span-full text-center py-20">
@@ -204,7 +206,9 @@ export const Documents: React.FC = () => {
             ))
           )}
         </div>
+        </DashboardSection>
       ) : (
+        <DashboardSection title="Fleet Statements">
         <div className="space-y-6">
           {/* Show general expenses without vehicle assignment */}
           {unassignedExpenses.length > 0 && (
@@ -284,6 +288,7 @@ export const Documents: React.FC = () => {
           )}
           </div>
         </div>
+        </DashboardSection>
       )}
 
       {/* Toast Notifications */}

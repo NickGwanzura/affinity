@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { api } from '../services/apiClient';
 import { useToast } from './Toast';
-import { Button, DashboardCard } from './ui';
-import { Mail, Send, FileText, Plus, Edit, Trash2, CheckCircle, Clock } from 'lucide-react';
+import { Button, DashboardCard, DashboardPageHeader, DashboardSection } from './ui';
+import { Send, FileText, Plus, Edit, Trash2, CheckCircle, Clock } from 'lucide-react';
 
 interface EmailTemplate {
   id: string;
@@ -195,22 +195,15 @@ export const UpdateCenter: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       <ToastContainer />
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gray-100">
-            <Mail size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Update Center</h1>
-            <p className="text-sm text-gray-500">Send branded emails to clients and staff</p>
-          </div>
-        </div>
-      </div>
+      <DashboardPageHeader
+        title="Update Center"
+        subtitle="Announcements, clock-ins, and platform updates"
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <DashboardCard>
           <div className="flex items-center gap-2">
             <FileText size={20} className="text-blue-500" />
@@ -250,6 +243,7 @@ export const UpdateCenter: React.FC = () => {
         </DashboardCard>
       </div>
 
+      <DashboardSection title={activeTab === 'queue' ? 'Email Queue' : 'Templates'}>
       <div className="border-b mb-4">
         <nav className="flex gap-4">
           {[
@@ -412,6 +406,7 @@ export const UpdateCenter: React.FC = () => {
           </table>
         </div>
       )}
+      </DashboardSection>
 
       {showTemplateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

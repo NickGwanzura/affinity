@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TextInput, TextArea, Button, Tag, Tile, Stack, Checkbox, InlineNotification } from './ui';
+import { TextInput, TextArea, Button, Tag, Tile, Stack, Checkbox, DashboardPageHeader, InlineNotification } from './ui';
 import {
   Settings as SettingsIcon,
   User,
@@ -519,37 +519,11 @@ export const Settings: React.FC = () => {
     <div className="max-w-[90rem] mx-auto font-sans px-4 lg:px-8">
       <ToastContainer />
       <ConfirmDialog />
-      <div className="flex items-center gap-4 mb-8">
-        <div className="p-3" style={{ background: 'var(--cds-layer-02, #f4f4f4)' }}>
-          <svg
-            className="w-6 h-6"
-            style={{ color: 'var(--cds-interactive, #D97706)' }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>
-            Platform Settings
-          </h2>
-          <p style={{ color: 'var(--cds-text-secondary, #525252)' }}>
-            Manage your business profile and team access
-          </p>
-        </div>
+      <div className="mb-8">
+        <DashboardPageHeader
+          title="Settings"
+          subtitle="Organisation, users, and system configuration"
+        />
       </div>
 
       <div
