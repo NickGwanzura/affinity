@@ -14,6 +14,7 @@ import {
   Mail,
 } from 'lucide-react';
 import { AppUser, UserRole } from '../types';
+import affinityLogo from '../assets/affinity-logo.svg';
 
 export type AppView =
   | 'admin'
@@ -114,43 +115,42 @@ export const Layout: React.FC<LayoutProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-            gap: '0.75rem',
+            justifyContent: 'center',
             padding: sidebarCollapsed ? '1rem 0.5rem' : '1rem',
             borderBottom: '1px solid #262626',
           }}
         >
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              background: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#000"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {sidebarCollapsed ? (
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                background: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                color: '#000',
+                letterSpacing: '0',
+              }}
+              aria-label="Affinity Logistics"
             >
-              <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          {!sidebarCollapsed && (
-            <div>
-              <div style={{ fontSize: '0.875rem', fontWeight: 600, lineHeight: 1.2 }}>AFFINITY</div>
-              <div style={{ fontSize: '0.625rem', color: '#666', letterSpacing: '0.1em' }}>
-                LOGISTICS
-              </div>
+              A
             </div>
+          ) : (
+            <img
+              src={affinityLogo}
+              alt="Affinity Logistics"
+              style={{
+                width: '100%',
+                maxWidth: '180px',
+                height: 'auto',
+                background: '#fff',
+                padding: '0.5rem 0.75rem',
+                display: 'block',
+              }}
+            />
           )}
         </div>
 

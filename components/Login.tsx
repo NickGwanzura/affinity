@@ -10,6 +10,7 @@ import {
   loginFormSchema,
 } from '../utils/clientValidation';
 import { ZodError } from 'zod';
+import affinityLogo from '../assets/affinity-logo.svg';
 
 interface LoginProps {
   onLogin: (session: AuthSession) => void;
@@ -100,24 +101,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         <div className="login-shell__brand-content">
           <div className="login-shell__brand-lockup">
-            <div className="login-shell__logo-mark">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#000"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div>
-              <div className="login-shell__brand-name">AFFINITY</div>
-              <div className="login-shell__brand-subtitle">LOGISTICS</div>
-            </div>
+            <img
+              src={affinityLogo}
+              alt="Affinity Logistics"
+              className="login-shell__logo-image"
+            />
           </div>
 
           <h2 className="login-shell__headline">
