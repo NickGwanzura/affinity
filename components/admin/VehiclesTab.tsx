@@ -280,7 +280,7 @@ export const VehiclesTab: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <div className="animate-spin w-10 h-10 border-2 border-[#0f62fe] border-t-transparent rounded-full"></div>
+        <div className="animate-spin w-10 h-10 border-2 border-[#D97706] border-t-transparent rounded-full"></div>
         <p className="text-[#525252] font-semibold uppercase tracking-widest text-xs">
           Loading Fleet Data
         </p>
@@ -467,7 +467,7 @@ export const VehiclesTab: React.FC = () => {
                                 ? '#24a148'
                                 : s.status === 'Botswana'
                                   ? '#8a3ffc'
-                                  : '#0f62fe',
+                                  : '#D97706',
                         color: s.status === 'UK' || s.status === 'Namibia' ? '#161616' : '#ffffff',
                       }}
                     >
@@ -493,7 +493,7 @@ export const VehiclesTab: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEditVehicleModal(s)}
-                          className="p-2 bg-transparent border-none cursor-pointer text-[#0f62fe] opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-2 bg-transparent border-none cursor-pointer text-[#D97706] opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Edit vehicle"
                         >
                           <Pencil size={16} />

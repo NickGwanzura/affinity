@@ -91,7 +91,7 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#fafafa' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#F9F9F8' }}>
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
@@ -101,7 +101,7 @@ export const Layout: React.FC<LayoutProps> = ({
           top: 0,
           bottom: 0,
           width: sidebarCollapsed ? '64px' : '240px',
-          background: '#000',
+          background: '#1C1917',
           color: '#fff',
           display: 'flex',
           flexDirection: 'column',
@@ -117,7 +117,7 @@ export const Layout: React.FC<LayoutProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             padding: sidebarCollapsed ? '1rem 0.5rem' : '1rem',
-            borderBottom: '1px solid #262626',
+            borderBottom: '1px solid #292524',
           }}
         >
           {sidebarCollapsed ? (
@@ -173,16 +173,17 @@ export const Layout: React.FC<LayoutProps> = ({
                 onClick={() => navigate(id)}
                 title={sidebarCollapsed ? label : undefined}
                 style={{
+                  position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.75rem',
                   width: '100%',
                   padding: sidebarCollapsed ? '0.75rem' : '0.625rem 0.75rem',
                   justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-                  background: isActive ? '#0f62fe' : 'transparent',
-                  color: isActive ? '#fff' : '#999',
+                  background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  color: isActive ? '#fff' : '#a8a8a8',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: 0,
                   cursor: 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: isActive ? 600 : 400,
@@ -191,19 +192,35 @@ export const Layout: React.FC<LayoutProps> = ({
                 }}
                 onMouseEnter={e => {
                   if (!isActive) {
-                    e.currentTarget.style.background = '#1a1a1a';
                     e.currentTarget.style.color = '#fff';
                   }
                 }}
                 onMouseLeave={e => {
                   if (!isActive) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#999';
+                    e.currentTarget.style.color = '#a8a8a8';
                   }
                 }}
               >
-                <Icon size={18} />
+                <Icon
+                  size={18}
+                  color={isActive ? '#D97706' : undefined}
+                />
                 {!sidebarCollapsed && <span>{label}</span>}
+                {isActive && !sidebarCollapsed && (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      right: '14px',
+                      transform: 'translateY(-50%)',
+                      width: '4px',
+                      height: '4px',
+                      background: '#D97706',
+                      borderRadius: '9999px',
+                    }}
+                  />
+                )}
               </button>
             );
           })}
@@ -213,62 +230,71 @@ export const Layout: React.FC<LayoutProps> = ({
         <div
           style={{
             padding: '0.75rem',
-            borderTop: '1px solid #262626',
+            borderTop: '1px solid #292524',
           }}
         >
           {!sidebarCollapsed && (
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.5rem',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                padding: '0.75rem',
                 marginBottom: '0.5rem',
-                background: '#1a1a1a',
-                borderRadius: '6px',
+                background: '#292524',
+                borderRadius: 0,
               }}
             >
               <div
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: '#333',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: '#fff',
-                  flexShrink: 0,
+                  gap: '0.625rem',
                 }}
               >
-                {user.name
-                  .split(' ')
-                  .map(n => n[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
-              <div style={{ minWidth: 0, flex: 1 }}>
                 <div
                   style={{
-                    fontSize: '0.8125rem',
-                    fontWeight: 500,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: '#44403C',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: '#fff',
+                    flexShrink: 0,
                   }}
                 >
-                  {user.name}
+                  {user.name
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase()}
                 </div>
-                <div
-                  style={{
-                    fontSize: '0.6875rem',
-                    color: '#666',
-                  }}
-                >
-                  {user.role}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: '0.8125rem',
+                      fontWeight: 500,
+                      color: '#fff',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {user.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.6875rem',
+                      color: '#a8a8a8',
+                    }}
+                  >
+                    {user.role}
+                  </div>
                 </div>
               </div>
             </div>
@@ -286,9 +312,9 @@ export const Layout: React.FC<LayoutProps> = ({
               width: '100%',
               padding: sidebarCollapsed ? '0.75rem' : '0.625rem 0.75rem',
               background: 'transparent',
-              color: '#999',
+              color: '#a8a8a8',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: 0,
               cursor: isLoggingOut ? 'not-allowed' : 'pointer',
               fontSize: '0.875rem',
               transition: 'background 0.15s ease, color 0.15s ease',
@@ -296,14 +322,14 @@ export const Layout: React.FC<LayoutProps> = ({
             }}
             onMouseEnter={e => {
               if (!isLoggingOut) {
-                e.currentTarget.style.background = '#1a1a1a';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
                 e.currentTarget.style.color = '#fff';
               }
             }}
             onMouseLeave={e => {
               if (!isLoggingOut) {
                 e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#999';
+                e.currentTarget.style.color = '#a8a8a8';
               }
             }}
           >
@@ -324,8 +350,8 @@ export const Layout: React.FC<LayoutProps> = ({
             transform: 'translateY(-50%)',
             width: '24px',
             height: '24px',
-            background: '#000',
-            border: '1px solid #333',
+            background: '#1C1917',
+            border: '1px solid #44403C',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',

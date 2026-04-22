@@ -372,7 +372,7 @@ export const ReportsTab: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total Fleet Value</p>
             <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--cds-support-info-inverse, #edf5ff)' }}>
-              <svg className="w-5 h-5" style={{ color: 'var(--cds-interactive, #0f62fe)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <svg className="w-5 h-5" style={{ color: 'var(--cds-interactive, #D97706)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
           </div>
           <p className="text-3xl font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>${filteredSummaries.reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
@@ -470,7 +470,7 @@ export const ReportsTab: React.FC = () => {
         {/* Location Analysis */}
         <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #161616)' }}>
-            <svg className="w-5 h-5" style={{ color: 'var(--cds-interactive, #0f62fe)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            <svg className="w-5 h-5" style={{ color: 'var(--cds-interactive, #D97706)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             Expenses by Location
           </h3>
           <div className="space-y-3">
@@ -485,7 +485,7 @@ export const ReportsTab: React.FC = () => {
                     <p className="font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{location}</p>
                     <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{locExpenses.length} transactions &bull; {percentage.toFixed(1)}% of total</p>
                   </div>
-                  <span className="text-lg font-bold" style={{ color: 'var(--cds-interactive, #0f62fe)' }}>${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  <span className="text-lg font-bold" style={{ color: 'var(--cds-interactive, #D97706)' }}>${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                 </div>
               ) : null;
             })}
@@ -523,7 +523,7 @@ export const ReportsTab: React.FC = () => {
                     <td className="px-4 py-3 font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{summary.make_model}</td>
                     <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{summary.vin_number ? `${truncateValue(summary.vin_number, 12)}...` : '-'}</td>
                     <td className="px-4 py-3">
-                      <span className="inline-block px-2 py-1 text-xs font-semibold" style={{ background: 'var(--cds-support-info-inverse, #edf5ff)', color: 'var(--cds-interactive, #0f62fe)' }}>{summary.status}</span>
+                      <span className="inline-block px-2 py-1 text-xs font-semibold" style={{ background: 'var(--cds-support-info-inverse, #edf5ff)', color: 'var(--cds-interactive, #D97706)' }}>{summary.status}</span>
                     </td>
                     <td className="px-4 py-3 text-right" style={{ color: 'var(--cds-text-secondary, #525252)' }}>£{(summary.purchase_price_gbp || 0).toLocaleString()}</td>
                     <td className="px-4 py-3 text-right font-bold" style={{ color: 'var(--cds-support-success, #24a148)' }}>${(summary.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>

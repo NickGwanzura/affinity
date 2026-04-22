@@ -510,7 +510,7 @@ export const Settings: React.FC = () => {
       <div className="flex items-center justify-center h-64 font-sans">
         <div
           className="animate-spin h-8 w-8 border-b-2"
-          style={{ borderColor: 'var(--cds-interactive, #0f62fe)' }}
+          style={{ borderColor: 'var(--cds-interactive, #D97706)' }}
         ></div>
       </div>
     );
@@ -523,7 +523,7 @@ export const Settings: React.FC = () => {
         <div className="p-3" style={{ background: 'var(--cds-layer-02, #f4f4f4)' }}>
           <svg
             className="w-6 h-6"
-            style={{ color: 'var(--cds-interactive, #0f62fe)' }}
+            style={{ color: 'var(--cds-interactive, #D97706)' }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -574,8 +574,8 @@ export const Settings: React.FC = () => {
             style={
               activeTab === 'company'
                 ? {
-                    borderColor: 'var(--cds-interactive, #0f62fe)',
-                    color: 'var(--cds-interactive, #0f62fe)',
+                    borderColor: 'var(--cds-interactive, #D97706)',
+                    color: 'var(--cds-interactive, #D97706)',
                     background: 'var(--cds-background, #ffffff)',
                   }
                 : { color: 'var(--cds-text-secondary, #525252)' }
@@ -591,8 +591,8 @@ export const Settings: React.FC = () => {
             style={
               activeTab === 'users'
                 ? {
-                    borderColor: 'var(--cds-interactive, #0f62fe)',
-                    color: 'var(--cds-interactive, #0f62fe)',
+                    borderColor: 'var(--cds-interactive, #D97706)',
+                    color: 'var(--cds-interactive, #D97706)',
                     background: 'var(--cds-background, #ffffff)',
                   }
                 : { color: 'var(--cds-text-secondary, #525252)' }
@@ -608,8 +608,8 @@ export const Settings: React.FC = () => {
             style={
               activeTab === 'forensics'
                 ? {
-                    borderColor: 'var(--cds-interactive, #0f62fe)',
-                    color: 'var(--cds-interactive, #0f62fe)',
+                    borderColor: 'var(--cds-interactive, #D97706)',
+                    color: 'var(--cds-interactive, #D97706)',
                     background: 'var(--cds-background, #ffffff)',
                   }
                 : { color: 'var(--cds-text-secondary, #525252)' }
@@ -625,8 +625,8 @@ export const Settings: React.FC = () => {
             style={
               activeTab === 'requests'
                 ? {
-                    borderColor: 'var(--cds-interactive, #0f62fe)',
-                    color: 'var(--cds-interactive, #0f62fe)',
+                    borderColor: 'var(--cds-interactive, #D97706)',
+                    color: 'var(--cds-interactive, #D97706)',
                     background: 'var(--cds-background, #ffffff)',
                   }
                 : { color: 'var(--cds-text-secondary, #525252)' }
@@ -649,8 +649,8 @@ export const Settings: React.FC = () => {
             style={
               activeTab === 'invites'
                 ? {
-                    borderColor: 'var(--cds-interactive, #0f62fe)',
-                    color: 'var(--cds-interactive, #0f62fe)',
+                    borderColor: 'var(--cds-interactive, #D97706)',
+                    color: 'var(--cds-interactive, #D97706)',
                     background: 'var(--cds-background, #ffffff)',
                   }
                 : { color: 'var(--cds-text-secondary, #525252)' }
@@ -793,7 +793,7 @@ export const Settings: React.FC = () => {
                   <div className="flex items-center justify-between mb-2">
                     <svg
                       className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0"
-                      style={{ color: 'var(--cds-interactive, #0f62fe)' }}
+                      style={{ color: 'var(--cds-interactive, #D97706)' }}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -2005,7 +2005,7 @@ export const Settings: React.FC = () => {
                     onClick={() => setUserForm({ ...userForm, role: 'Manager' })}
                     className="p-4 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
                       background:
                         userForm.role === 'Manager'
                           ? 'var(--cds-layer-selected-01, #e5f6ff)'
@@ -2023,10 +2023,10 @@ export const Settings: React.FC = () => {
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
                           background:
                             userForm.role === 'Manager'
-                              ? 'var(--cds-interactive, #0f62fe)'
+                              ? 'var(--cds-interactive, #D97706)'
                               : 'transparent',
                         }}
                       >
@@ -2198,7 +2198,7 @@ export const Settings: React.FC = () => {
               >
                 <svg
                   className="w-6 h-6"
-                  style={{ color: 'var(--cds-interactive, #0f62fe)' }}
+                  style={{ color: 'var(--cds-interactive, #D97706)' }}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -2296,7 +2296,7 @@ export const Settings: React.FC = () => {
                 <button
                   type="submit"
                   className="flex-1 px-4 py-3 font-bold text-sm text-white"
-                  style={{ background: 'var(--cds-interactive, #0f62fe)' }}
+                  style={{ background: 'var(--cds-interactive, #D97706)' }}
                 >
                   Set Password
                 </button>
@@ -2420,7 +2420,7 @@ export const Settings: React.FC = () => {
                     onClick={() => setEditForm({ ...editForm, role: 'Manager' })}
                     className="p-3 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
                       background:
                         editForm.role === 'Manager'
                           ? 'var(--cds-layer-selected-01, #e5f6ff)'
@@ -2438,10 +2438,10 @@ export const Settings: React.FC = () => {
                         className="w-4 h-4 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #0f62fe)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
                           background:
                             editForm.role === 'Manager'
-                              ? 'var(--cds-interactive, #0f62fe)'
+                              ? 'var(--cds-interactive, #D97706)'
                               : 'transparent',
                         }}
                       >
@@ -2590,7 +2590,7 @@ export const Settings: React.FC = () => {
                 <button
                   type="submit"
                   className="flex-1 px-4 py-3 font-bold text-sm text-white"
-                  style={{ background: 'var(--cds-interactive, #0f62fe)' }}
+                  style={{ background: 'var(--cds-interactive, #D97706)' }}
                 >
                   Update User
                 </button>

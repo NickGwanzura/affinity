@@ -34,7 +34,7 @@ export const AdminClientsView: React.FC<AdminClientsViewProps> = ({
               )}
               {client.email && (
                 <div className="mb-1 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
-                  <a href={`mailto:${client.email}`} style={{ color: 'var(--cds-interactive, #0f62fe)' }}>{client.email}</a>
+                  <a href={`mailto:${client.email}`} style={{ color: 'var(--cds-interactive, #D97706)' }}>{client.email}</a>
                 </div>
               )}
               {client.phone && (
@@ -42,7 +42,7 @@ export const AdminClientsView: React.FC<AdminClientsViewProps> = ({
               )}
               <div className="mb-3 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{formatDate(client.created_at)}</div>
               <div className="flex flex-wrap gap-2 border-t border-zinc-50 pt-3">
-                <button onClick={() => onEditClient(client)} className="px-2 py-1 text-xs font-bold" style={{ color: 'var(--cds-interactive, #0f62fe)' }}>Edit</button>
+                <button onClick={() => onEditClient(client)} className="px-2 py-1 text-xs font-bold" style={{ color: 'var(--cds-interactive, #D97706)' }}>Edit</button>
                 <button onClick={() => onDeleteClient(client.id)} className="px-2 py-1 text-xs font-bold" style={{ color: 'var(--cds-support-error, #da1e28)' }}>Delete</button>
               </div>
             </div>
@@ -77,7 +77,7 @@ export const AdminClientsView: React.FC<AdminClientsViewProps> = ({
                   <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{client.company || '-'}</td>
                   <td className="px-6 py-4 text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{formatDate(client.created_at)}</td>
                   <td className="px-6 py-4 text-right space-x-2">
-                    <button onClick={() => onEditClient(client)} className="font-semibold" style={{ color: 'var(--cds-interactive, #0f62fe)' }}>
+                    <button onClick={() => onEditClient(client)} className="font-semibold" style={{ color: 'var(--cds-interactive, #D97706)' }}>
                       Edit
                     </button>
                     <button onClick={() => onDeleteClient(client.id)} className="font-semibold" style={{ color: 'var(--cds-support-error, #da1e28)' }}>

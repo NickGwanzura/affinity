@@ -9,14 +9,14 @@ const helperCls = 'mt-1.5 text-xs text-gray-500 leading-snug';
 const errorCls = 'mt-1.5 flex items-start gap-1 text-xs text-[#da1e28] leading-snug';
 
 // Carbon-style input: #f4f4f4 fill, top/side 1px #c6c6c6, bottom 1px #8d8d8d,
-// focus ring in Carbon Blue (#0f62fe), invalid red (#da1e28).
+// focus ring in Carbon Blue (#D97706), invalid red (#da1e28).
 const baseInput =
   'block w-full bg-[#f4f4f4] text-gray-900 text-sm placeholder-gray-400 ' +
   'border border-[#c6c6c6] border-b-[#8d8d8d] rounded-none ' +
   'px-3 py-2 min-h-[2.5rem] shadow-none appearance-none ' +
   'transition-[background-color,border-color,outline-color] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] ' +
   'hover:bg-[#e8e8e8] ' +
-  'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#0f62fe] ' +
+  'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#D97706] ' +
   'disabled:bg-[#f4f4f4] disabled:text-gray-400 disabled:border-[#e0e0e0] disabled:border-b-[#c6c6c6] disabled:cursor-not-allowed';
 
 const invalidCls =
@@ -129,7 +129,7 @@ export const PasswordInput: React.FC<TextInputProps> = (props) => {
           onClick={() => setShow((s) => !s)}
           aria-label={show ? 'Hide password' : 'Show password'}
           aria-pressed={show}
-          className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center text-gray-500 transition-colors duration-150 hover:text-gray-900 hover:bg-gray-200/60 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0f62fe]"
+          className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center text-gray-500 transition-colors duration-150 hover:text-gray-900 hover:bg-gray-200/60 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D97706]"
           tabIndex={-1}
         >
           {show ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -316,7 +316,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         id={id}
         type="checkbox"
         disabled={disabled}
-        className={`peer absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-none border border-gray-500 bg-white transition-colors duration-150 checked:border-[#0f62fe] checked:bg-[#0f62fe] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f62fe] disabled:cursor-not-allowed disabled:border-gray-300 ${className}`}
+        className={`peer absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-none border border-gray-500 bg-white transition-colors duration-150 checked:border-[#D97706] checked:bg-[#D97706] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D97706] disabled:cursor-not-allowed disabled:border-gray-300 ${className}`}
         {...props}
       />
       <Check
@@ -354,7 +354,7 @@ export const InlineLoading: React.FC<InlineLoadingProps> = ({
     role="status"
     aria-live="polite"
   >
-    {status === 'active' && <Loader2 className="animate-spin text-[#0f62fe]" size={16} />}
+    {status === 'active' && <Loader2 className="animate-spin text-[#D97706]" size={16} />}
     {status === 'finished' && <Check className="text-[#198038]" size={16} />}
     {status === 'error' && <AlertCircle className="text-[#da1e28]" size={16} />}
     {description && <span>{description}</span>}
@@ -379,7 +379,7 @@ export const Loading: React.FC<LoadingProps> = ({
     aria-live="polite"
   >
     <div className="flex flex-col items-center gap-3">
-      <Loader2 className="animate-spin text-[#0f62fe]" size={32} />
+      <Loader2 className="animate-spin text-[#D97706]" size={32} />
       <span className="text-sm text-gray-700">{description}</span>
     </div>
   </div>
@@ -397,7 +397,7 @@ interface InlineNotificationProps {
 const kindStyles: Record<InlineNotificationProps['kind'], string> = {
   error: 'bg-red-50 border-l-[3px] border-[#da1e28] text-red-900',
   success: 'bg-green-50 border-l-[3px] border-[#198038] text-green-900',
-  info: 'bg-blue-50 border-l-[3px] border-[#0f62fe] text-blue-900',
+  info: 'bg-blue-50 border-l-[3px] border-[#D97706] text-blue-900',
   warning: 'bg-amber-50 border-l-[3px] border-[#f1c21b] text-amber-900',
 };
 export const InlineNotification: React.FC<InlineNotificationProps> = ({
@@ -418,7 +418,7 @@ export const InlineNotification: React.FC<InlineNotificationProps> = ({
       <button
         type="button"
         onClick={onClose}
-        className="shrink-0 inline-flex h-6 w-6 items-center justify-center opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0f62fe]"
+        className="shrink-0 inline-flex h-6 w-6 items-center justify-center opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D97706]"
         aria-label="Dismiss"
       >
         ×

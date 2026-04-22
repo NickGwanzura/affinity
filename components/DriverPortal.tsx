@@ -473,7 +473,7 @@ export const DriverPortal: React.FC = () => {
         className="bg-white border border-gray-200 overflow-hidden p-6"
         style={{
           background:
-            'radial-gradient(circle at top left, rgba(69,137,255,0.2), transparent 34%), linear-gradient(135deg, #161616 0%, #262626 48%, #0f62fe 100%)',
+            'radial-gradient(circle at top left, rgba(69,137,255,0.2), transparent 34%), linear-gradient(135deg, #161616 0%, #262626 48%, #D97706 100%)',
           color: '#ffffff',
         }}
       >

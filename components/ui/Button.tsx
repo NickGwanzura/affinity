@@ -27,14 +27,14 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
 // Each variant defines idle / hover / active states for background + text + border.
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-[#0f62fe] text-white border border-transparent ' +
-    'hover:bg-[#0353e9] active:bg-[#002d9c]',
+    'bg-[#D97706] text-white border border-transparent ' +
+    'hover:bg-[#B45309] active:bg-[#92400E]',
   secondary:
     'bg-[#393939] text-white border border-transparent ' +
     'hover:bg-[#4c4c4c] active:bg-[#6f6f6f]',
   tertiary:
-    'bg-transparent text-[#0f62fe] border border-[#0f62fe] ' +
-    'hover:bg-[#0f62fe] hover:text-white active:bg-[#002d9c] active:border-[#002d9c]',
+    'bg-transparent text-[#D97706] border border-[#D97706] ' +
+    'hover:bg-[#D97706] hover:text-white active:bg-[#92400E] active:border-[#92400E]',
   danger:
     'bg-[#da1e28] text-white border border-transparent ' +
     'hover:bg-[#b81921] active:bg-[#750e13]',
@@ -45,7 +45,7 @@ const variantClasses: Record<ButtonVariant, string> = {
     'bg-[#198038] text-white border border-transparent ' +
     'hover:bg-[#0e6027] active:bg-[#044317]',
   ghost:
-    'bg-transparent text-[#0f62fe] border border-transparent ' +
+    'bg-transparent text-[#D97706] border border-transparent ' +
     'hover:bg-gray-100 active:bg-gray-200',
   warning:
     'bg-[#f1c21b] text-gray-900 border border-transparent ' +
@@ -64,7 +64,7 @@ const baseButton = [
   'rounded-none',
   'transition-[background-color,border-color,color,box-shadow,opacity] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)]',
   'focus:outline-none focus-visible:outline-none',
-  'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0f62fe] focus-visible:ring-offset-white',
+  'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#D97706] focus-visible:ring-offset-white',
   'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:pointer-events-none',
   'active:translate-y-0',
 ].join(' ');

@@ -252,7 +252,7 @@ export const CarbonQuoteModal: React.FC<CarbonQuoteModalProps> = ({
               style={{
                 padding: '0.75rem 1rem',
                 backgroundColor: '#f4f4f4',
-                borderLeft: '3px solid #0f62fe',
+                borderLeft: '3px solid #D97706',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
@@ -263,7 +263,7 @@ export const CarbonQuoteModal: React.FC<CarbonQuoteModalProps> = ({
                   fontFamily: 'IBM Plex Mono, monospace',
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  color: '#0f62fe',
+                  color: '#D97706',
                 }}
               >
                 {editingQuote.quote_number}

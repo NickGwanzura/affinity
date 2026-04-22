@@ -158,7 +158,7 @@ export const EmployeesTab: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <button onClick={() => openEditModal(employee)} className="font-semibold" style={{ color: 'var(--cds-interactive, #0f62fe)' }}>Edit</button>
+                      <button onClick={() => openEditModal(employee)} className="font-semibold" style={{ color: 'var(--cds-interactive, #D97706)' }}>Edit</button>
                       <button onClick={() => handleDeleteEmployee(employee.id)} className="font-semibold" style={{ color: 'var(--cds-support-error, #da1e28)' }}>Delete</button>
                     </td>
                   </tr>

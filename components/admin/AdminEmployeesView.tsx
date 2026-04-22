@@ -43,7 +43,7 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
               <div className="mb-1 text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{employee.position} &middot; {employee.employment_type}</div>
               <div className="mb-3 font-semibold text-sm" style={{ color: 'var(--cds-text-primary, #161616)' }}>${employee.base_pay_usd.toLocaleString()} {employee.currency}</div>
               <div className="flex flex-wrap gap-2 border-t border-zinc-50 pt-3">
-                <button onClick={() => onEditEmployee(employee)} className="px-2 py-1 text-xs font-bold" style={{ color: 'var(--cds-interactive, #0f62fe)' }}>Edit</button>
+                <button onClick={() => onEditEmployee(employee)} className="px-2 py-1 text-xs font-bold" style={{ color: 'var(--cds-interactive, #D97706)' }}>Edit</button>
                 <button onClick={() => onDeleteEmployee(employee.id)} className="px-2 py-1 text-xs font-bold" style={{ color: 'var(--cds-support-error, #da1e28)' }}>Delete</button>
               </div>
             </div>
@@ -88,7 +88,7 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
-                    <button onClick={() => onEditEmployee(employee)} className="font-semibold" style={{ color: 'var(--cds-interactive, #0f62fe)' }}>
+                    <button onClick={() => onEditEmployee(employee)} className="font-semibold" style={{ color: 'var(--cds-interactive, #D97706)' }}>
                       Edit
                     </button>
                     <button onClick={() => onDeleteEmployee(employee.id)} className="font-semibold" style={{ color: 'var(--cds-support-error, #da1e28)' }}>

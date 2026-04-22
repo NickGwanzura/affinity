@@ -170,7 +170,7 @@ export const PayslipsTab: React.FC = () => {
                     <div className="font-mono text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{payslip.payslip_number}</div>
                   </div>
                   <span className="inline-block px-2 py-0.5 text-xs font-semibold" style={
-                    payslip.status === 'Generated' ? { background: 'var(--cds-support-info-inverse, #edf5ff)', color: 'var(--cds-interactive, #0f62fe)' } :
+                    payslip.status === 'Generated' ? { background: 'var(--cds-support-info-inverse, #edf5ff)', color: 'var(--cds-interactive, #D97706)' } :
                     payslip.status === 'Approved' ? { background: 'var(--cds-support-warning-inverse, #fdf6dd)', color: 'var(--cds-support-warning-inverse, #b28600)' } :
                     payslip.status === 'Paid' ? { background: 'var(--cds-support-success-inverse, #defbe6)', color: 'var(--cds-support-success, #24a148)' } :
                     { background: 'var(--cds-support-error-inverse, #fff1f1)', color: 'var(--cds-support-error, #da1e28)' }
@@ -235,7 +235,7 @@ export const PayslipsTab: React.FC = () => {
                     <td className="px-6 py-4 font-bold" style={{ color: 'var(--cds-support-success, #24a148)' }}>${payslip.net_pay.toLocaleString()}</td>
                     <td className="px-6 py-4">
                       <span className="inline-block px-2 py-1 text-xs font-semibold" style={
-                        payslip.status === 'Generated' ? { background: 'var(--cds-support-info-inverse, #edf5ff)', color: 'var(--cds-interactive, #0f62fe)' } :
+                        payslip.status === 'Generated' ? { background: 'var(--cds-support-info-inverse, #edf5ff)', color: 'var(--cds-interactive, #D97706)' } :
                         payslip.status === 'Approved' ? { background: 'var(--cds-support-warning-inverse, #fdf6dd)', color: 'var(--cds-support-warning-inverse, #b28600)' } :
                         payslip.status === 'Paid' ? { background: 'var(--cds-support-success-inverse, #defbe6)', color: 'var(--cds-support-success, #24a148)' } :
                         { background: 'var(--cds-support-error-inverse, #fff1f1)', color: 'var(--cds-support-error, #da1e28)' }

@@ -16,27 +16,27 @@ interface StatusBadgeProps {
 }
 
 const statusMap: Record<string, { classes: string; label: string }> = {
-  active:       { classes: 'bg-green-100 text-green-800', label: 'Active' },
-  inactive:     { classes: 'bg-gray-100 text-gray-700', label: 'Inactive' },
-  pending:      { classes: 'bg-amber-100 text-amber-800', label: 'Pending' },
-  paid:         { classes: 'bg-green-100 text-green-800', label: 'Paid' },
-  overdue:      { classes: 'bg-red-100 text-red-800', label: 'Overdue' },
-  draft:        { classes: 'bg-gray-100 text-gray-600', label: 'Draft' },
-  sent:         { classes: 'bg-blue-100 text-blue-800', label: 'Sent' },
-  cancelled:    { classes: 'bg-gray-100 text-gray-600', label: 'Cancelled' },
-  approved:     { classes: 'bg-green-100 text-green-800', label: 'Approved' },
-  accepted:     { classes: 'bg-green-100 text-green-800', label: 'Accepted' },
-  rejected:     { classes: 'bg-red-100 text-red-800', label: 'Rejected' },
-  completed:    { classes: 'bg-teal-100 text-teal-800', label: 'Completed' },
-  'in-progress':{ classes: 'bg-blue-100 text-blue-800', label: 'In Progress' },
-  'on-hold':    { classes: 'bg-amber-100 text-amber-800', label: 'On Hold' },
-  high:         { classes: 'bg-red-100 text-red-800', label: 'High' },
-  medium:       { classes: 'bg-amber-100 text-amber-800', label: 'Medium' },
-  low:          { classes: 'bg-cyan-100 text-cyan-800', label: 'Low' },
-  success:      { classes: 'bg-green-100 text-green-800', label: 'Success' },
-  error:        { classes: 'bg-red-100 text-red-800', label: 'Error' },
-  warning:      { classes: 'bg-amber-100 text-amber-800', label: 'Warning' },
-  info:         { classes: 'bg-blue-100 text-blue-800', label: 'Info' },
+  active:       { classes: 'bg-green-100 text-green-800 border border-green-200', label: 'Active' },
+  inactive:     { classes: 'bg-gray-100 text-gray-700 border border-gray-200', label: 'Inactive' },
+  pending:      { classes: 'bg-amber-100 text-amber-800 border border-amber-200', label: 'Pending' },
+  paid:         { classes: 'bg-green-100 text-green-800 border border-green-200', label: 'Paid' },
+  overdue:      { classes: 'bg-red-100 text-red-800 border border-red-200', label: 'Overdue' },
+  draft:        { classes: 'bg-gray-100 text-gray-600 border border-gray-200', label: 'Draft' },
+  sent:         { classes: 'bg-blue-100 text-blue-800 border border-blue-200', label: 'Sent' },
+  cancelled:    { classes: 'bg-gray-100 text-gray-600 border border-gray-200', label: 'Cancelled' },
+  approved:     { classes: 'bg-green-100 text-green-800 border border-green-200', label: 'Approved' },
+  accepted:     { classes: 'bg-green-100 text-green-800 border border-green-200', label: 'Accepted' },
+  rejected:     { classes: 'bg-red-100 text-red-800 border border-red-200', label: 'Rejected' },
+  completed:    { classes: 'bg-teal-100 text-teal-800 border border-teal-200', label: 'Completed' },
+  'in-progress':{ classes: 'bg-blue-100 text-blue-800 border border-blue-200', label: 'In Progress' },
+  'on-hold':    { classes: 'bg-amber-100 text-amber-800 border border-amber-200', label: 'On Hold' },
+  high:         { classes: 'bg-red-100 text-red-800 border border-red-200', label: 'High' },
+  medium:       { classes: 'bg-amber-100 text-amber-800 border border-amber-200', label: 'Medium' },
+  low:          { classes: 'bg-cyan-100 text-cyan-800 border border-cyan-200', label: 'Low' },
+  success:      { classes: 'bg-green-100 text-green-800 border border-green-200', label: 'Success' },
+  error:        { classes: 'bg-red-100 text-red-800 border border-red-200', label: 'Error' },
+  warning:      { classes: 'bg-amber-100 text-amber-800 border border-amber-200', label: 'Warning' },
+  info:         { classes: 'bg-blue-100 text-blue-800 border border-blue-200', label: 'Info' },
 };
 
 const statusAliases: Record<string, string> = {
@@ -55,7 +55,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
   const normalised = status.toLowerCase().trim();
   const key        = statusAliases[normalised] ?? normalised;
-  const config     = statusMap[key] ?? { classes: 'bg-gray-100 text-gray-600', label: status };
+  const config     = statusMap[key] ?? { classes: 'bg-gray-100 text-gray-600 border border-gray-200', label: status };
 
   if (customColors) {
     return (
