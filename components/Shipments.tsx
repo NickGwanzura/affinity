@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
+import { useConfirm } from './ConfirmModal';
 import { Button, DashboardCard } from './ui';
 import { Plus, Package, Truck, CheckCircle, XCircle, Clock } from 'lucide-react';
 
@@ -35,6 +36,7 @@ const statusIcons: Record<string, React.ComponentType<{ size?: number }>> = {
 
 export const Shipments: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -127,7 +129,13 @@ export const Shipments: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this shipment?')) return;
+    const ok = await confirm({
+      title: 'Delete Shipment',
+      message: 'Are you sure you want to delete this shipment? This cannot be undone.',
+      confirmLabel: 'Delete',
+      isDangerous: true,
+    });
+    if (!ok) return;
     try {
       await dataService.deleteShipment(id);
       showToast('Shipment deleted', 'success');
@@ -155,6 +163,7 @@ export const Shipments: React.FC = () => {
   return (
     <div className="p-6">
       <ToastContainer />
+      <ConfirmDialog />
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">

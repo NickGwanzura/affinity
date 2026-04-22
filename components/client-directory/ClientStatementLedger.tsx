@@ -53,7 +53,7 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
                 type="date"
                 value={dateFrom}
                 onChange={(e) => onDateFromChange(e.target.value)}
-                className="border border-gray-300 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 bg-white px-2 py-1.5 text-sm"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -65,7 +65,7 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
                 type="date"
                 value={dateTo}
                 onChange={(e) => onDateToChange(e.target.value)}
-                className="border border-gray-300 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 bg-white px-2 py-1.5 text-sm"
               />
             </div>
           </div>
