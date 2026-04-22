@@ -3,21 +3,8 @@ import { Plus, Truck, CheckCircle, XCircle, Clock, Package } from 'lucide-react'
 import { Button, Tile, Tag, TextInput, Select, SelectItem, Modal } from '../ui';
 import type { Vehicle } from '../../types';
 import { dataService } from '../../services/dataService';
-
-interface ShipmentRow {
-  id: string;
-  client_id: string;
-  client_name?: string;
-  vehicle_id?: string;
-  vehicle_name?: string;
-  description: string;
-  origin: string;
-  destination: string;
-  status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
-  shipping_date?: string;
-  delivery_date?: string;
-  created_at: string;
-}
+import { useConfirm } from '../ConfirmModal';
+import type { ShipmentRow } from './types';
 
 interface ClientShipmentsPanelProps {
   clientId: string;
@@ -71,6 +58,7 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<ShipmentRow | null>(null);
   const [form, setForm] = useState<ShipmentFormState>(emptyForm);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const clientShipments = useMemo(
     () => shipments.filter((s) => s.client_id === clientId),
@@ -125,6 +113,13 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
   };
 
   const handleDelete = async (s: ShipmentRow) => {
+    const ok = await confirm({
+      title: 'Delete shipment?',
+      message: `Delete shipment "${s.description}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      confirmVariant: 'danger',
+    });
+    if (!ok) return;
     try {
       await dataService.deleteShipment(s.id);
       showToast('Shipment deleted', 'success');
@@ -299,6 +294,7 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
           </div>
         </form>
       </Modal>
+      <ConfirmDialog />
     </div>
   );
 };

@@ -53,7 +53,7 @@ export const ClientListSidebar: React.FC<ClientListSidebarProps> = ({
                   type="button"
                   onClick={() => onSelect(client)}
                   className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-colors hover:bg-gray-50 ${
-                    isActive ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
+                    isActive ? 'bg-amber-50 border-l-4 border-l-amber-600' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">

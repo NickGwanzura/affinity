@@ -53,6 +53,9 @@ export const ClientSchema = z.object({
   address: z.string().optional(),
   company: z.string().max(200).optional(),
   notes: z.string().optional(),
+  opening_balance: z.number().finite().optional(),
+  opening_balance_currency: z.enum(['USD', 'GBP']).optional(),
+  is_active: z.boolean().optional(),
 });
 
 export const ClientUpdateSchema = ClientSchema.partial();

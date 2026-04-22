@@ -7,6 +7,7 @@ import { formatMoney } from './types';
 interface ClientStatementLedgerProps {
   ledger: LedgerRow[];
   stats: ClientStats;
+  openingBalance: number;
   dateFrom: string;
   dateTo: string;
   onDateFromChange: (value: string) => void;
@@ -23,7 +24,8 @@ const typeTag = (type: LedgerRow['type']) => {
 
 export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
   ledger,
-  stats,
+  stats: _stats,
+  openingBalance,
   dateFrom,
   dateTo,
   onDateFromChange,
@@ -31,6 +33,7 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
   onDownloadPdf,
   isGenerating,
 }) => {
+  void _stats;
   const filtered = ledger.filter((entry) => {
     if (!dateFrom && !dateTo) return true;
     const d = entry.date.toISOString().split('T')[0];
@@ -38,6 +41,11 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
     if (dateTo && d > dateTo) return false;
     return true;
   });
+
+  // Closing balance reconciled with the ledger table: last row's running balance,
+  // or the opening balance if the (filtered) view is empty.
+  const closingBalance =
+    filtered.length > 0 ? filtered[filtered.length - 1].balance : openingBalance;
 
   return (
     <div className="flex flex-col gap-4">
@@ -133,17 +141,17 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
                   </td>
                   <td
                     className={`px-3 py-3 text-right font-bold text-lg ${
-                      stats.outstanding > 0
+                      closingBalance > 0
                         ? 'text-red-600'
-                        : stats.creditBalance > 0
+                        : closingBalance < 0
                           ? 'text-green-600'
                           : 'text-gray-900'
                     }`}
                   >
-                    {stats.outstanding > 0
-                      ? `${formatMoney(stats.outstanding)} DR`
-                      : stats.creditBalance > 0
-                        ? `${formatMoney(stats.creditBalance)} CR`
+                    {closingBalance > 0
+                      ? `${formatMoney(closingBalance)} DR`
+                      : closingBalance < 0
+                        ? `${formatMoney(Math.abs(closingBalance))} CR`
                         : formatMoney(0)}
                   </td>
                 </tr>

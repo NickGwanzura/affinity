@@ -73,8 +73,9 @@ export const ClientDirectory: React.FC = () => {
         dateTo
       );
       showToast('Statement downloaded successfully', 'success');
-    } catch (err: any) {
-      showToast(err?.message || 'Failed to generate statement', 'error');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message || 'Failed to generate statement', 'error');
     } finally {
       setIsGeneratingPdf(false);
     }

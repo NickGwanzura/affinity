@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Mail, Phone, MapPin } from 'lucide-react';
 import { IconButton, Tag, Tile } from '../ui';
 import type { EnrichedClient, ClientStats } from './types';
 import { formatMoney } from './types';
@@ -64,9 +64,24 @@ export const ClientDetailHeader: React.FC<ClientDetailHeaderProps> = ({
             <p className="text-gray-500 text-sm mt-0.5">{client.company}</p>
           )}
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-gray-600">
-            {client.email && <span>✉ {client.email}</span>}
-            {client.phone && <span>📞 {client.phone}</span>}
-            {client.address && <span>📍 {client.address}</span>}
+            {client.email && (
+              <span className="inline-flex items-center gap-1.5">
+                <Mail size={14} className="text-gray-600" />
+                {client.email}
+              </span>
+            )}
+            {client.phone && (
+              <span className="inline-flex items-center gap-1.5">
+                <Phone size={14} className="text-gray-600" />
+                {client.phone}
+              </span>
+            )}
+            {client.address && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin size={14} className="text-gray-600" />
+                {client.address}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -103,7 +118,7 @@ const toneColor: Record<string, string> = {
   default: 'text-gray-900',
   success: 'text-green-600',
   danger: 'text-red-600',
-  info: 'text-blue-600',
+  info: 'text-amber-600',
 };
 
 const StatItem: React.FC<{

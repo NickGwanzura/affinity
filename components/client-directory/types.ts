@@ -4,6 +4,21 @@ export interface EnrichedClient extends Client {
   isRegistered: boolean;
 }
 
+export interface ShipmentRow {
+  id: string;
+  client_id: string;
+  client_name?: string;
+  vehicle_id?: string;
+  vehicle_name?: string;
+  description: string;
+  origin: string;
+  destination: string;
+  status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
+  shipping_date?: string;
+  delivery_date?: string;
+  created_at: string;
+}
+
 export interface ClientStats {
   totalBilled: number;
   totalPaid: number;

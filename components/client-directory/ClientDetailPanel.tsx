@@ -13,21 +13,7 @@ import {
   computeClientStats,
   sameName,
 } from './helpers';
-import type { EnrichedClient } from './types';
-
-interface ShipmentRow {
-  id: string;
-  client_id: string;
-  vehicle_id?: string;
-  vehicle_name?: string;
-  description: string;
-  origin: string;
-  destination: string;
-  status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
-  shipping_date?: string;
-  delivery_date?: string;
-  created_at: string;
-}
+import type { EnrichedClient, ShipmentRow } from './types';
 
 interface Props {
   client: EnrichedClient | null;
@@ -119,6 +105,7 @@ export const ClientDetailPanel: React.FC<Props> = ({
               <ClientStatementLedger
                 ledger={buildClientLedger(c, invoices, payments)}
                 stats={stats}
+                openingBalance={Number(c.opening_balance) || 0}
                 dateFrom={dateFrom}
                 dateTo={dateTo}
                 onDateFromChange={onDateFromChange}

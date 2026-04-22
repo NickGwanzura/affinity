@@ -1,20 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Client, Invoice, Quote, Payment, Vehicle } from '../../types';
 import { dataService } from '../../services/dataService';
-
-interface ShipmentRow {
-  id: string;
-  client_id: string;
-  vehicle_id?: string;
-  vehicle_name?: string;
-  description: string;
-  origin: string;
-  destination: string;
-  status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
-  shipping_date?: string;
-  delivery_date?: string;
-  created_at: string;
-}
+import type { ShipmentRow } from './types';
 
 export interface ClientDirectoryData {
   clients: Client[];

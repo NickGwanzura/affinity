@@ -4,6 +4,7 @@ import { Button, IconButton, Tag, Tile, Select, SelectItem } from '../ui';
 import type { Vehicle } from '../../types';
 import { dataService } from '../../services/dataService';
 import VehicleFormModal, { type VehicleFormValue } from '../shared/VehicleFormModal';
+import { useConfirm } from '../ConfirmModal';
 
 interface ClientVehiclesPanelProps {
   clientId: string;
@@ -32,6 +33,7 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [form, setForm] = useState<VehicleFormValue>(emptyVehicleForm);
   const [linkSelection, setLinkSelection] = useState<string>('');
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const linkedVehicles = useMemo(
     () => vehicles.filter((v) => v.client_id === clientId),
@@ -98,6 +100,13 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
   };
 
   const handleUnlink = async (vehicle: Vehicle) => {
+    const ok = await confirm({
+      title: 'Unlink vehicle?',
+      message: `Unlink "${vehicle.make_model}" (${vehicle.vin_number}) from this client?`,
+      confirmLabel: 'Unlink',
+      confirmVariant: 'danger',
+    });
+    if (!ok) return;
     try {
       await dataService.updateVehicle(vehicle.id, { client_id: undefined });
       showToast('Vehicle unlinked from client', 'success');
@@ -203,7 +212,7 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
                         href={v.reg_book_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs"
+                        className="inline-flex items-center gap-1 text-amber-600 hover:underline text-xs"
                       >
                         <FileText size={12} /> View
                       </a>
@@ -242,6 +251,7 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
         form={form}
         onChange={handleFormChange}
       />
+      <ConfirmDialog />
     </div>
   );
 };

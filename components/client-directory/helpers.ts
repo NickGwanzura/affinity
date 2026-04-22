@@ -88,7 +88,13 @@ export function buildClientLedger(
     });
   }
   invoices
-    .filter((i) => sameName(i.client_name, client.name))
+    .filter(
+      (i) =>
+        sameName(i.client_name, client.name) &&
+        i.status !== 'Cancelled' &&
+        !(i as unknown as { is_deleted?: boolean; deleted_at?: string | null }).is_deleted &&
+        !(i as unknown as { is_deleted?: boolean; deleted_at?: string | null }).deleted_at
+    )
     .forEach((i) =>
       entries.push({
         date: new Date(i.created_at),
@@ -101,7 +107,12 @@ export function buildClientLedger(
       })
     );
   payments
-    .filter((p) => sameName(p.client_name, client.name))
+    .filter(
+      (p) =>
+        sameName(p.client_name, client.name) &&
+        !p.is_deleted &&
+        !p.deleted_at
+    )
     .forEach((p) =>
       entries.push({
         date: new Date(p.date),
