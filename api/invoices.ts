@@ -13,75 +13,40 @@ import {
 import { sql, withTransaction, validateOrderColumn } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { InvoiceSchema, InvoiceUpdateSchema, PaginationSchema } from './_schemas.js';
-import { getResendClient, getEmailFromAddress } from './_email-utils.js';
+import { sendDocumentEmail } from './_email.js';
 import type { InvoiceItem } from '../types';
 
-const sendInvoiceEmail = async (invoice: any, type: 'invoice' | 'statement' | 'quote') => {
-  if (!invoice.client_email) return;
+const formatUsd = (value: unknown): string | undefined => {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) return undefined;
+  return `USD ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
 
-  const fromAddress = getEmailFromAddress();
+const formatDueDate = (iso: unknown): string | undefined => {
+  if (typeof iso !== 'string' || !iso) return undefined;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+};
 
-  const subject =
-    type === 'invoice'
-      ? `Invoice ${invoice.invoice_number} from Affinity Logistics`
-      : type === 'statement'
-        ? `Statement from Affinity Logistics`
-        : `Quote ${invoice.quote_number || invoice.invoice_number} from Affinity Logistics`;
-
-  const html = `
-    <div style="font-family: 'Geist Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #000; font-size: 24px; font-weight: 600; margin: 0;">AFFINITY LOGISTICS</h1>
-        <p style="color: #666; font-size: 12px; letter-spacing: 2px; margin: 5px 0 0;">CROSS-BORDER VEHICLE LOGISTICS</p>
-      </div>
-      
-      <h2 style="color: #000; font-size: 20px; margin-bottom: 20px;">
-        ${type === 'invoice' ? `Invoice ${invoice.invoice_number}` : type === 'statement' ? 'Your Statement' : 'Quote'}
-      </h2>
-      
-      <p style="color: #333; font-size: 14px; line-height: 1.6;">
-        Dear ${invoice.client_name || 'Valued Client'},
-      </p>
-      
-      <p style="color: #333; font-size: 14px; line-height: 1.6;">
-        ${
-          type === 'invoice'
-            ? `Please find attached Invoice ${invoice.invoice_number} for $${invoice.amount_usd?.toFixed(2)}.`
-            : type === 'statement'
-              ? 'Please find your current statement attached.'
-              : 'Please find your quote attached. This quote is valid for 30 days.'
-        }
-      </p>
-      
-      ${invoice.description ? `<p style="color: #333; font-size: 14px; line-height: 1.6;">${invoice.description}</p>` : ''}
-      
-      <div style="margin: 30px 0; padding: 20px; background: #f8f8f8; border-radius: 8px;">
-        <p style="margin: 0;">
-          <strong style="color: #000;">Amount:</strong> 
-          <span style="color: #000; font-size: 18px; font-weight: 600;">$${invoice.amount_usd?.toFixed(2)}</span>
-        </p>
-      </div>
-      
-      <p style="color: #666; font-size: 13px; line-height: 1.6;">
-        If you have any questions about this ${type}, please contact us.
-      </p>
-      
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-        <p style="color: #999; font-size: 12px; margin: 0;">
-          Affinity Logistics<br/>
-          Cross-Border Vehicle Logistics<br/>
-          SADC Region
-        </p>
-      </div>
-    </div>
-  `;
-
+const sendInvoiceEmail = async (
+  invoice: any,
+  type: 'invoice' | 'statement' | 'quote',
+): Promise<void> => {
+  if (!invoice?.client_email) return;
   try {
-    await getResendClient().emails.send({
-      from: fromAddress,
+    await sendDocumentEmail({
       to: invoice.client_email,
-      subject,
-      html,
+      kind: type === 'quote' ? 'quote' : type === 'statement' ? 'statement' : 'invoice',
+      documentNumber:
+        type === 'quote'
+          ? invoice.quote_number || invoice.invoice_number
+          : invoice.invoice_number,
+      clientName: invoice.client_name,
+      amountFormatted: formatUsd(invoice.amount_usd),
+      description: invoice.description,
+      dueDateFormatted: formatDueDate(invoice.due_date),
+      validityNote: type === 'quote' ? '30 days' : undefined,
     });
   } catch (error) {
     console.error('Failed to send invoice email:', error);

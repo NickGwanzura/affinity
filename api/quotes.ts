@@ -13,69 +13,28 @@ import {
 import { sql, withTransaction, validateOrderColumn } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { QuoteSchema, QuoteUpdateSchema, PaginationSchema } from './_schemas.js';
-import { getResendClient, getAppBaseUrl, getEmailFromAddress } from './_email-utils.js';
+import { getAppBaseUrl } from './_email-utils.js';
+import { sendDocumentEmail } from './_email.js';
 import type { QuoteItem } from '../types';
 
-const sendQuoteEmail = async (quote: any) => {
-  if (!quote.client_email) return;
+const formatUsd = (value: unknown): string | undefined => {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) return undefined;
+  return `USD ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
 
-  const fromAddress = getEmailFromAddress();
-  const appUrl = getAppBaseUrl();
-
-  const html = `
-    <div style="font-family: 'Geist Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #000; font-size: 24px; font-weight: 600; margin: 0;">AFFINITY LOGISTICS</h1>
-        <p style="color: #666; font-size: 12px; letter-spacing: 2px; margin: 5px 0 0;">CROSS-BORDER VEHICLE LOGISTICS</p>
-      </div>
-      
-      <h2 style="color: #000; font-size: 20px; margin-bottom: 20px;">
-        Quote ${quote.quote_number}
-      </h2>
-      
-      <p style="color: #333; font-size: 14px; line-height: 1.6;">
-        Dear ${quote.client_name || 'Valued Client'},
-      </p>
-      
-      <p style="color: #333; font-size: 14px; line-height: 1.6;">
-        Please find your quote attached. This quote is valid for 30 days.
-      </p>
-      
-      ${quote.description ? `<p style="color: #333; font-size: 14px; line-height: 1.6;">${quote.description}</p>` : ''}
-      
-      <div style="margin: 30px 0; padding: 20px; background: #f8f8f8; border-radius: 8px;">
-        <p style="margin: 0;">
-          <strong style="color: #000;">Amount:</strong> 
-          <span style="color: #000; font-size: 18px; font-weight: 600;">$${quote.amount_usd?.toFixed(2)}</span>
-        </p>
-      </div>
-      
-      <div style="margin: 30px 0;">
-        <a href="${appUrl}" style="display: inline-block; background: #000; color: #fff; padding: 12px 24px; text-decoration: none; font-weight: 600;">
-          View Quote Online
-        </a>
-      </div>
-      
-      <p style="color: #666; font-size: 13px; line-height: 1.6;">
-        If you have any questions about this quote, please contact us.
-      </p>
-      
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-        <p style="color: #999; font-size: 12px; margin: 0;">
-          Affinity Logistics<br/>
-          Cross-Border Vehicle Logistics<br/>
-          SADC Region
-        </p>
-      </div>
-    </div>
-  `;
-
+const sendQuoteEmail = async (quote: any): Promise<void> => {
+  if (!quote?.client_email) return;
   try {
-    await getResendClient().emails.send({
-      from: fromAddress,
+    await sendDocumentEmail({
       to: quote.client_email,
-      subject: `Quote ${quote.quote_number} from Affinity Logistics`,
-      html,
+      kind: 'quote',
+      documentNumber: quote.quote_number,
+      clientName: quote.client_name,
+      amountFormatted: formatUsd(quote.amount_usd),
+      description: quote.description,
+      viewUrl: getAppBaseUrl(),
+      validityNote: '30 days',
     });
   } catch (error) {
     console.error('Failed to send quote email:', error);

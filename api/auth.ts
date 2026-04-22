@@ -19,7 +19,11 @@ import {
   invalidateResetToken,
   getUserById,
 } from './_auth.js';
-import { isEmailTransportConfigured, sendPasswordResetEmail } from './_email.tsx';
+import {
+  isEmailTransportConfigured,
+  sendPasswordChangedEmail,
+  sendPasswordResetEmail,
+} from './_email.js';
 import {
   ChangePasswordSchema,
   ForgotPasswordSchema,
@@ -166,6 +170,32 @@ async function changePasswordHandler(req: VercelRequest, res: VercelResponse) {
       tableName: 'user_profiles',
       recordId: authReq.user.id,
     });
+
+    // Fire-and-forget security notification. Failure here must not block the
+    // password change — the user has already successfully rotated their credential.
+    if (isEmailTransportConfigured()) {
+      const requestIp =
+        (Array.isArray(req.headers['x-forwarded-for'])
+          ? req.headers['x-forwarded-for'][0]
+          : req.headers['x-forwarded-for']) ||
+        req.socket.remoteAddress ||
+        undefined;
+      void (async () => {
+        try {
+          const profile = await getUserById(authReq.user!.id);
+          if (profile?.email) {
+            await sendPasswordChangedEmail({
+              to: profile.email,
+              name: profile.name,
+              changedAt: new Date().toISOString(),
+              requestIp,
+            });
+          }
+        } catch (err) {
+          console.error('Failed to send password-changed notification:', err);
+        }
+      })();
+    }
 
     res.status(200).json({ message: 'Password changed successfully' });
   } catch (error) {
