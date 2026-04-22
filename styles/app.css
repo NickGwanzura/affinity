@@ -403,7 +403,7 @@ input[type='number'] {
 
 .login-shell__tab.is-active {
   border-bottom-color: #0f62fe;
-  color: #000;
+  color: #0f62fe;
   font-weight: 600;
 }
 
