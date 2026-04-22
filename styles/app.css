@@ -86,16 +86,35 @@ select {
   border-radius: 0;
   box-shadow: none;
   transition:
-    border-color 110ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    outline-color 110ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    background-color 110ms cubic-bezier(0.2, 0, 0.38, 0.9);
+    border-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    outline-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    background-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9);
 }
 
+input:not([type='checkbox']):not([type='radio']):not([type='file']):hover:not(:disabled):not(:focus),
+textarea:hover:not(:disabled):not(:focus),
+select:hover:not(:disabled):not(:focus) {
+  background: #e8e8e8;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='file']):focus,
 input:not([type='checkbox']):not([type='radio']):not([type='file']):focus-visible,
+textarea:focus,
 textarea:focus-visible,
+select:focus,
 select:focus-visible {
   outline: 2px solid #0f62fe;
-  outline-offset: 2px;
+  outline-offset: -2px;
+  background: #f4f4f4;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='file']):disabled,
+textarea:disabled,
+select:disabled {
+  color: #a8a8a8;
+  border-color: #e0e0e0;
+  border-bottom-color: #c6c6c6;
+  cursor: not-allowed;
 }
 
 input:not([type='checkbox']):not([type='radio']):not([type='file'])::placeholder,
@@ -103,13 +122,25 @@ textarea::placeholder {
   color: #a8a8a8;
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #f4f4f4 inset;
+  -webkit-text-fill-color: #161616;
+  caret-color: #161616;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 textarea {
   min-height: 6rem;
+  resize: vertical;
 }
 
 button {
   font-family: inherit;
-  letter-spacing: 0.16px;
+  letter-spacing: 0.01em;
   font-weight: 500;
   min-height: 2.5rem;
   display: inline-flex;
@@ -117,12 +148,15 @@ button {
   justify-content: center;
   gap: 0.5rem;
   border-radius: 0;
+  cursor: pointer;
   transition:
-    background-color 110ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    border-color 110ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    color 110ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    box-shadow 110ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    opacity 110ms cubic-bezier(0.2, 0, 0.38, 0.9);
+    background-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    border-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    box-shadow 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    opacity 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    transform 150ms cubic-bezier(0.2, 0, 0.38, 0.9);
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:focus-visible {
@@ -131,9 +165,39 @@ button:focus-visible {
 }
 
 button:disabled {
-  opacity: 0.65;
+  opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none !important;
+  pointer-events: none;
+}
+
+/* Checkbox & radio native polish — component-level classes can still override. */
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: #0f62fe;
+  cursor: pointer;
+}
+
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible {
+  outline: 2px solid #0f62fe;
+  outline-offset: 2px;
+}
+
+input[type='checkbox']:disabled,
+input[type='radio']:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Hide native number spinners — Carbon look is cleaner without them. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
 }
 
 .login-shell {
@@ -174,32 +238,16 @@ button:disabled {
 .login-shell__brand-lockup {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
   margin-bottom: 3rem;
 }
 
-.login-shell__logo-mark {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.login-shell__logo-image {
+  width: 220px;
+  height: auto;
+  display: block;
   background: #fff;
-}
-
-.login-shell__brand-name {
-  color: #fff;
-  font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-
-.login-shell__brand-subtitle {
-  margin-top: 0.25rem;
-  color: #666;
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
+  padding: 0.75rem 1rem;
+  border-radius: 2px;
 }
 
 .login-shell__headline {
