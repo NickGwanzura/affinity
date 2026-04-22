@@ -22,6 +22,12 @@ export {
 } from './Skeleton';
 
 export { DashboardCard } from './DashboardCard';
+export { DashboardPageHeader } from './DashboardPageHeader';
+export type { DashboardPageHeaderProps } from './DashboardPageHeader';
+export { DashboardKpiCard } from './DashboardKpiCard';
+export type { DashboardKpiCardProps, KpiIconTone } from './DashboardKpiCard';
+export { DashboardSection } from './DashboardSection';
+export type { DashboardSectionProps } from './DashboardSection';
 export { DataTableWrapper } from './DataTableWrapper';
 export type { DataTableColumn, DataTableWrapperProps } from './DataTableWrapper';
 

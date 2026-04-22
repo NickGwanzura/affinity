@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { AppUser, UserRole } from '../types';
 import affinityLogo from '../assets/affinity-logo.svg';
+import { Topbar } from './Topbar';
 
 export type AppView =
   | 'admin'
@@ -374,17 +375,29 @@ export const Layout: React.FC<LayoutProps> = ({
       </aside>
 
       {/* Main content */}
-      <main
-        id="main-content"
+      <div
         style={{
           flex: 1,
           marginLeft: sidebarCollapsed ? '64px' : '240px',
           transition: 'margin-left 0.2s ease',
           minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        {children}
-      </main>
+        <Topbar user={{ name: user.name, role: user.role }} hasUnread={false} />
+        <main
+          id="main-content"
+          style={{
+            flex: 1,
+            padding: '1.5rem',
+            overflow: 'auto',
+            background: '#F9F9F8',
+          }}
+        >
+          {children}
+        </main>
+      </div>
     </div>
   );
 };

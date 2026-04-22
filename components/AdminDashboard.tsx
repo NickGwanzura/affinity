@@ -1,5 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { DollarSign, Car, Users, User, FileText, Map } from 'lucide-react';
+import {
+  DollarSign,
+  Car,
+  Users,
+  User,
+  FileText,
+  Map,
+  Truck,
+  Wrench,
+  TrendingUp,
+} from 'lucide-react';
 import {
   LandedCostSummary,
   VehicleStatus,
@@ -15,6 +25,7 @@ import {
   Vehicle,
   ExpenseCategory,
   Trip,
+  Invoice,
 } from '../types';
 import { dataService } from '../services/dataService';
 import { AssetRegister } from './AssetRegister';
@@ -24,7 +35,12 @@ import {
 } from '../services/pdfService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
-import { Button } from './ui';
+import {
+  Button,
+  DashboardPageHeader,
+  DashboardKpiCard,
+  DashboardSection,
+} from './ui';
 import AdminFundsView from './admin/AdminFundsView';
 import AdminClientsView from './admin/AdminClientsView';
 import AdminEmployeesView from './admin/AdminEmployeesView';
@@ -80,7 +96,10 @@ export const AdminDashboard: React.FC = () => {
     'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'trips' | 'assets'
   >('dashboard');
   const [userRole, setUserRole] = useState<UserRole>('Admin');
+  const [userName, setUserName] = useState<string>('');
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [shipments, setShipments] = useState<any[]>([]);
 
   // Clients state
   const [clients, setClients] = useState<Client[]>([]);
@@ -232,6 +251,8 @@ export const AdminDashboard: React.FC = () => {
         balanceData,
         userData,
         tripData,
+        invoiceData,
+        shipmentData,
       ] = await Promise.all([
         dataService.getLandedCostSummaries(),
         dataService.getVehicles(),
@@ -244,10 +265,14 @@ export const AdminDashboard: React.FC = () => {
         dataService.getOperatingFundsBalance(),
         dataService.getUsers(),
         dataService.getTrips(),
+        dataService.getInvoices().catch(() => [] as Invoice[]),
+        dataService.getShipments().catch(() => [] as any[]),
       ]);
       setSummaries(data);
       setVehicles(vehicleData);
       setExpenses(expenseData);
+      setInvoices(invoiceData);
+      setShipments(shipmentData);
       setClients(clientData);
       setEmployees(employeeData);
       setPayslips(payslipData);
@@ -276,6 +301,9 @@ export const AdminDashboard: React.FC = () => {
       .then(session => {
         if (session?.user?.role) {
           setUserRole(session.user.role);
+        }
+        if (session?.user?.name) {
+          setUserName(session.user.name);
         }
       })
       .catch((err: unknown) => console.error('[AdminDashboard] getSession failed:', err));
@@ -869,6 +897,55 @@ export const AdminDashboard: React.FC = () => {
     [summaries]
   );
 
+  // ── Top-line KPIs for the dashboard shell ───────────────────────────
+  // Revenue MTD: sum of paid invoices in the current month
+  // Outstanding: count of unpaid (Sent + Overdue)
+  // Active Shipments: in-transit + pending
+  // Vehicle Utilization: % of fleet not sold (analog for true utilization)
+  const dashboardKpis = useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    const revenueMtd = invoices
+      .filter(invoice => invoice.status === 'Paid')
+      .filter(invoice => {
+        const created = invoice.created_at ? new Date(invoice.created_at).getTime() : 0;
+        return created >= monthStart;
+      })
+      .reduce((sum, invoice) => sum + (invoice.amount_usd || 0), 0);
+
+    const outstandingInvoices = invoices.filter(
+      invoice => invoice.status === 'Sent' || invoice.status === 'Overdue'
+    ).length;
+
+    const activeShipments = shipments.filter(
+      shipment => shipment.status === 'In Transit' || shipment.status === 'Pending'
+    ).length;
+
+    const totalVehicles = summaries.length;
+    const activeVehicles = summaries.filter(s => s.status !== 'Sold').length;
+    const utilizationPct =
+      totalVehicles > 0 ? Math.round((activeVehicles / totalVehicles) * 100) : 0;
+
+    const fmtCompact = (n: number) => {
+      if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+      if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
+      return `$${n.toFixed(0)}`;
+    };
+
+    return {
+      revenueMtd,
+      revenueMtdLabel: fmtCompact(revenueMtd),
+      outstandingInvoices,
+      activeShipments,
+      utilizationLabel: totalVehicles === 0 ? '-' : `${utilizationPct}%`,
+      utilizationTrend:
+        totalVehicles === 0
+          ? 'No fleet data'
+          : `${activeVehicles} of ${totalVehicles} active`,
+    };
+  }, [invoices, shipments, summaries]);
+
   const driverFundsReport = useMemo(
     () => buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles),
     [drivers, expenses, operatingFunds, vehicles]
@@ -966,47 +1043,29 @@ export const AdminDashboard: React.FC = () => {
     },
   ];
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div
-        style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-        className="md:flex-row md:items-center md:justify-between"
-      >
-        <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#161616', margin: 0 }}>
-            Admin Dashboard
-          </h2>
-          <p style={{ color: '#525252', margin: '0.25rem 0 0' }}>
-            Fleet, clients, employees & payroll management
-          </p>
-        </div>
-        <DashboardSectionSwitcher
-          value={activeView}
-          onChange={setActiveView}
-          label="Section"
-          options={adminViewOptions}
-        />
-      </div>
+  const activeViewLabel =
+    adminViewOptions.find(option => option.id === activeView)?.label ?? 'Dashboard';
 
-      {/* Action buttons for active view */}
-      {activeView === 'dashboard' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setShowExpenseModal(true)}
-            leftIcon={<DollarSign size={20} />}
-          >
-            Add Expense
-          </Button>
-          <Button type="button" onClick={openAddVehicleModal} leftIcon={<Car size={20} />}>
-            Add Vehicle
-          </Button>
-        </div>
-      )}
-
-      {activeView === 'clients' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+  const activeViewActions = (() => {
+    switch (activeView) {
+      case 'dashboard':
+        return (
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowExpenseModal(true)}
+              leftIcon={<DollarSign size={20} />}
+            >
+              Add Expense
+            </Button>
+            <Button type="button" onClick={openAddVehicleModal} leftIcon={<Car size={20} />}>
+              Add Vehicle
+            </Button>
+          </>
+        );
+      case 'clients':
+        return (
           <Button
             type="button"
             onClick={() => {
@@ -1025,11 +1084,9 @@ export const AdminDashboard: React.FC = () => {
           >
             Add Client
           </Button>
-        </div>
-      )}
-
-      {activeView === 'employees' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        );
+      case 'employees':
+        return (
           <Button
             type="button"
             onClick={() => {
@@ -1041,11 +1098,9 @@ export const AdminDashboard: React.FC = () => {
           >
             Add Employee
           </Button>
-        </div>
-      )}
-
-      {activeView === 'payslips' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        );
+      case 'payslips':
+        return (
           <Button
             type="button"
             onClick={() => {
@@ -1056,11 +1111,9 @@ export const AdminDashboard: React.FC = () => {
           >
             Generate Payslip
           </Button>
-        </div>
-      )}
-
-      {activeView === 'funds' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        );
+      case 'funds':
+        return (
           <Button
             type="button"
             onClick={() => {
@@ -1079,93 +1132,146 @@ export const AdminDashboard: React.FC = () => {
           >
             Record Transaction
           </Button>
-        </div>
-      )}
-
-      {activeView === 'trips' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        );
+      case 'trips':
+        return (
           <Button type="button" onClick={openCreateTripModal} leftIcon={<Map size={20} />}>
             Create Trip
           </Button>
-        </div>
-      )}
+        );
+      default:
+        return null;
+    }
+  })();
 
-      {activeView === 'dashboard' && (
-        <AdminOverviewView
-          summaries={summaries}
-          statusData={statusData}
-          onEditVehicle={openEditVehicleModal}
-          onDeleteVehicle={openDeleteVehicleDialog}
+  return (
+    <div className="space-y-6">
+      <DashboardPageHeader
+        title="Admin Dashboard"
+        subtitle={
+          userName
+            ? `Welcome back, ${userName}`
+            : 'Fleet, clients, employees & payroll management'
+        }
+        actions={
+          <>
+            <DashboardSectionSwitcher
+              value={activeView}
+              onChange={setActiveView}
+              label="Section"
+              options={adminViewOptions}
+            />
+            {activeViewActions}
+          </>
+        }
+      />
+
+      {/* Top-line KPI grid — rendered for every view so the shell stays consistent */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <DashboardKpiCard
+          label="Revenue MTD"
+          value={dashboardKpis.revenueMtdLabel}
+          icon={DollarSign}
+          iconTone="amber"
+          trend="Paid invoices this month"
+          trendIcon={<TrendingUp className="h-4 w-4" />}
         />
-      )}
-
-      {activeView === 'reports' && <ReportsTab />}
-
-      {/* Clients View */}
-      {activeView === 'clients' && (
-        <AdminClientsView
-          clients={clients}
-          onEditClient={client => {
-            setEditingClient(client);
-            setClientForm({
-              name: client.name,
-              email: client.email || '',
-              phone: client.phone || '',
-              address: client.address || '',
-              company: client.company || '',
-              notes: client.notes || '',
-            });
-            setShowClientModal(true);
-          }}
-          onDeleteClient={handleDeleteClient}
+        <DashboardKpiCard
+          label="Outstanding Invoices"
+          value={dashboardKpis.outstandingInvoices}
+          icon={FileText}
+          iconTone="rose"
+          trend="Sent or overdue"
         />
-      )}
-
-      {/* Employees View */}
-      {activeView === 'employees' && (
-        <AdminEmployeesView
-          employees={employees}
-          onEditEmployee={employee => {
-            setEditingEmployee(employee);
-            setEmployeeForm(toEmployeeFormValue(employee));
-            setShowEmployeeModal(true);
-          }}
-          onDeleteEmployee={handleDeleteEmployee}
+        <DashboardKpiCard
+          label="Active Shipments"
+          value={dashboardKpis.activeShipments}
+          icon={Truck}
+          iconTone="blue"
+          trend="In transit or pending"
         />
-      )}
-
-      {/* Payslips View */}
-      {activeView === 'payslips' && (
-        <PayslipsListView
-          payslips={payslips}
-          onApprove={id => handleUpdatePayslipStatus(id, 'Approved')}
-          onMarkPaid={id => handleUpdatePayslipStatus(id, 'Paid')}
-          onDownload={handleDownloadPayslip}
-          onDelete={handleDeletePayslip}
+        <DashboardKpiCard
+          label="Vehicle Utilization"
+          value={dashboardKpis.utilizationLabel}
+          icon={Wrench}
+          iconTone="emerald"
+          trend={dashboardKpis.utilizationTrend}
         />
-      )}
+      </div>
 
-      {/* Operating Funds View */}
-      {activeView === 'funds' && (
-        <AdminFundsView
-          fundsBalance={fundsBalance}
-          operatingFunds={operatingFunds}
-          driverFundsReport={driverFundsReport}
-          onDeleteOperatingFund={handleDeleteOperatingFund}
-          onExportDriverFundsReport={handleExportDriverFundsReport}
-        />
-      )}
+      <DashboardSection title={activeViewLabel}>
+        {activeView === 'dashboard' && (
+          <AdminOverviewView
+            summaries={summaries}
+            statusData={statusData}
+            onEditVehicle={openEditVehicleModal}
+            onDeleteVehicle={openDeleteVehicleDialog}
+          />
+        )}
 
-      {activeView === 'trips' && (
-        <AdminTripsView
-          trips={trips}
-          onEditTrip={openEditTripModal}
-          onDeleteTrip={handleDeleteTrip}
-        />
-      )}
+        {activeView === 'reports' && <ReportsTab />}
 
-      {/* Asset Register View */}
-      {activeView === 'assets' && <AssetRegister userRole={userRole} />}
+        {activeView === 'clients' && (
+          <AdminClientsView
+            clients={clients}
+            onEditClient={client => {
+              setEditingClient(client);
+              setClientForm({
+                name: client.name,
+                email: client.email || '',
+                phone: client.phone || '',
+                address: client.address || '',
+                company: client.company || '',
+                notes: client.notes || '',
+              });
+              setShowClientModal(true);
+            }}
+            onDeleteClient={handleDeleteClient}
+          />
+        )}
+
+        {activeView === 'employees' && (
+          <AdminEmployeesView
+            employees={employees}
+            onEditEmployee={employee => {
+              setEditingEmployee(employee);
+              setEmployeeForm(toEmployeeFormValue(employee));
+              setShowEmployeeModal(true);
+            }}
+            onDeleteEmployee={handleDeleteEmployee}
+          />
+        )}
+
+        {activeView === 'payslips' && (
+          <PayslipsListView
+            payslips={payslips}
+            onApprove={id => handleUpdatePayslipStatus(id, 'Approved')}
+            onMarkPaid={id => handleUpdatePayslipStatus(id, 'Paid')}
+            onDownload={handleDownloadPayslip}
+            onDelete={handleDeletePayslip}
+          />
+        )}
+
+        {activeView === 'funds' && (
+          <AdminFundsView
+            fundsBalance={fundsBalance}
+            operatingFunds={operatingFunds}
+            driverFundsReport={driverFundsReport}
+            onDeleteOperatingFund={handleDeleteOperatingFund}
+            onExportDriverFundsReport={handleExportDriverFundsReport}
+          />
+        )}
+
+        {activeView === 'trips' && (
+          <AdminTripsView
+            trips={trips}
+            onEditTrip={openEditTripModal}
+            onDeleteTrip={handleDeleteTrip}
+          />
+        )}
+
+        {activeView === 'assets' && <AssetRegister userRole={userRole} />}
+      </DashboardSection>
 
       <TripPlannerModal
         isOpen={showTripModal}
