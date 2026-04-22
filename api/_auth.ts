@@ -376,6 +376,7 @@ export async function getUserById(
   userId: string,
 ): Promise<{
   id: string;
+  name: string;
   email: string;
   role: string;
   status: string;
@@ -385,6 +386,7 @@ export async function getUserById(
   const rows = await sql`
     SELECT
       u.id,
+      u.name,
       u.email,
       u.role,
       u.status,
@@ -398,10 +400,12 @@ export async function getUserById(
     rows[0] as
       | {
           id: string;
+          name: string;
           email: string;
           role: string;
           status: string;
           access_role?: string | null;
+          force_password_change?: boolean;
         }
       | undefined
   ) ?? null;

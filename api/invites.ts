@@ -12,7 +12,7 @@ import {
 import { authenticateUser, createUser } from './_auth.js';
 import { logAuditEvent } from './_audit.js';
 import { sql } from './_db.js';
-import { sendInviteEmail } from './_email.tsx';
+import { sendInviteEmail, sendWelcomeEmail } from './_email.js';
 
 const InviteCreateSchema = z.object({
   email: z.string().email(),
@@ -339,6 +339,14 @@ async function acceptInvite(req: VercelRequest, res: VercelResponse) {
         userId: session.user.id,
       },
     });
+
+    // Fire-and-forget welcome email — don't block the login response on SMTP.
+    sendWelcomeEmail({
+      to: invite.email,
+      name: invite.name || invite.email.split('@')[0],
+      role: invite.role,
+    }).catch((err) => console.error('Failed to send welcome email:', err));
+
     return res.status(200).json(session);
   } catch (error) {
     return apiError(res, 400, 'Failed to accept invite', error);
