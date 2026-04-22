@@ -79,6 +79,8 @@ app.all('/api/trips', mount(tripsHandler));
 app.all('/api/users', mount(usersHandler));
 app.all('/api/vehicles', mount(vehiclesHandler));
 app.all('/api/assets', mount(assetsHandler));
+// assets.ts self-routes based on path (e.g. /api/assets/requests).
+app.all('/api/assets/{*splat}', mount(assetsHandler));
 app.all('/api/ai', mount(aiHandler));
 app.all('/api/audit-logs', mount(auditLogsHandler));
 app.all('/api/emails', mount(emailsHandler));
