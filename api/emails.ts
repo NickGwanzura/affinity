@@ -47,11 +47,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     switch (req.method) {
       case 'GET':
         if (req.query.type === 'templates') {
-          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
           return await listEmailTemplates(authReq, res);
         }
         if (req.query.type === 'queue') {
-          if (!requireRole(authReq, res, ['Admin', 'Accountant'])) return;
+          if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
           return await listEmailQueue(authReq, res);
         }
         return apiError(res, 400, 'Invalid query');
