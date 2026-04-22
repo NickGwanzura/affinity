@@ -9,14 +9,15 @@ import {
   apiError
 } from './_middleware.js';
 import { sql } from './_db.js';
+import { logAuditEvent } from './_audit.js';
 import { ClientSchema, ClientUpdateSchema, PaginationSchema } from './_schemas.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
-  
+
   const authReq = req as AuthenticatedRequest;
-  
+
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
 
@@ -39,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'DELETE':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await deleteClient(authReq, res);
-        
+
       default:
         apiError(res, 405, 'Method not allowed');
     }
@@ -145,7 +146,18 @@ async function createClient(req: AuthenticatedRequest, res: VercelResponse) {
                 created_at, updated_at
     `;
 
-    res.status(201).json(rows[0]);
+    const created = rows[0];
+
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'client.create',
+      tableName: 'clients',
+      recordId: created.id,
+      newData: created,
+    });
+
+    res.status(201).json(created);
   } catch (error) {
     apiError(res, 400, 'Invalid client data', error);
   }
@@ -156,6 +168,19 @@ async function updateClient(req: AuthenticatedRequest, res: VercelResponse) {
 
   try {
     const data = ClientUpdateSchema.parse(req.body);
+
+    // Capture pre-update state so the audit trail shows the real diff.
+    const existing = await sql`
+      SELECT id, name, email, phone, address, company, notes,
+             is_active, deleted_at, opening_balance, opening_balance_currency,
+             created_at, updated_at
+      FROM clients
+      WHERE id = ${id}::uuid AND deleted_at IS NULL
+    `;
+
+    if (existing.length === 0) {
+      return apiError(res, 404, 'Client not found');
+    }
 
     const rows = await sql`
       UPDATE clients
@@ -180,6 +205,16 @@ async function updateClient(req: AuthenticatedRequest, res: VercelResponse) {
       return apiError(res, 404, 'Client not found');
     }
 
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'client.update',
+      tableName: 'clients',
+      recordId: String(id),
+      oldData: existing[0],
+      newData: rows[0],
+    });
+
     res.status(200).json(rows[0]);
   } catch (error) {
     apiError(res, 400, 'Invalid client data', error);
@@ -196,12 +231,22 @@ async function deleteClient(req: AuthenticatedRequest, res: VercelResponse) {
         deleted_at = NOW(),
         updated_at = NOW()
     WHERE id = ${id}::uuid AND deleted_at IS NULL
-    RETURNING id
+    RETURNING id, deleted_at
   `;
 
   if (rows.length === 0) {
     return apiError(res, 404, 'Client not found');
   }
+
+  await logAuditEvent({
+    req,
+    userId: req.user?.id,
+    action: 'client.soft_delete',
+    tableName: 'clients',
+    recordId: String(id),
+    oldData: { is_active: true, deleted_at: null },
+    newData: { is_active: false, deleted_at: rows[0].deleted_at },
+  });
 
   res.status(204).end();
 }

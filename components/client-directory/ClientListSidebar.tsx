@@ -67,15 +67,7 @@ export const ClientListSidebar: React.FC<ClientListSidebarProps> = ({
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-xs font-semibold text-gray-700">{stats.invoiceCount} inv</p>
-                      {stats.outstanding > 0 ? (
-                        <p className="text-xs font-semibold text-red-600">
-                          {formatMoney(stats.outstanding)} due
-                        </p>
-                      ) : stats.creditBalance > 0 ? (
-                        <p className="text-xs font-semibold text-green-600">
-                          {formatMoney(stats.creditBalance)} cr
-                        </p>
-                      ) : null}
+                      <SidebarBalance usd={stats.usdBalance} gbp={stats.gbpBalance} />
                     </div>
                   </div>
                 </button>
@@ -84,6 +76,48 @@ export const ClientListSidebar: React.FC<ClientListSidebarProps> = ({
           )}
         </div>
       </div>
+    </div>
+  );
+};
+
+const SidebarBalance: React.FC<{ usd: number; gbp: number }> = ({ usd, gbp }) => {
+  const hasUsd = Math.abs(usd) > 0.005;
+  const hasGbp = Math.abs(gbp) > 0.005;
+  if (!hasUsd && !hasGbp) return null;
+
+  // Primary line shows USD balance; GBP exposure gets a tiny "+£" marker
+  // so the sidebar stays visually tight. Detail header is the place for
+  // the full two-currency breakdown.
+  const usdLabel =
+    usd > 0
+      ? `${formatMoney(usd, 'USD')} due`
+      : usd < 0
+        ? `${formatMoney(Math.abs(usd), 'USD')} cr`
+        : null;
+  const usdClass = usd > 0 ? 'text-red-600' : 'text-green-600';
+
+  const gbpMarker = hasGbp
+    ? gbp > 0
+      ? `+${formatMoney(gbp, 'GBP')}`
+      : `+${formatMoney(Math.abs(gbp), 'GBP')} cr`
+    : null;
+
+  return (
+    <div className="flex flex-col items-end">
+      {usdLabel ? (
+        <p className={`text-xs font-semibold ${usdClass}`}>{usdLabel}</p>
+      ) : hasGbp ? (
+        <p
+          className={`text-xs font-semibold ${gbp > 0 ? 'text-red-600' : 'text-green-600'}`}
+        >
+          {gbp > 0
+            ? `${formatMoney(gbp, 'GBP')} due`
+            : `${formatMoney(Math.abs(gbp), 'GBP')} cr`}
+        </p>
+      ) : null}
+      {usdLabel && gbpMarker ? (
+        <p className="text-[10px] font-semibold text-amber-600">{gbpMarker}</p>
+      ) : null}
     </div>
   );
 };

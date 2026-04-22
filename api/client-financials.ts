@@ -241,58 +241,87 @@ async function getAllClientBalances(req: AuthenticatedRequest, res: VercelRespon
   const { minBalance, hasOutstanding, search } = req.query;
 
   try {
+    // Per-currency aggregates: USD and GBP are rolled up independently so
+    // a GBP opening balance is never silently summed into a "USD" total.
+    // Matching prefers client_id; legacy rows without client_id fall back
+    // to case-insensitive name match on client_name.
     let query = sql`
-      SELECT 
+      SELECT
         c.id,
         c.name,
         c.email,
         c.company,
         c.opening_balance,
         c.opening_balance_currency as currency,
-        COALESCE(inv.total_invoiced, 0) as total_invoiced,
-        COALESCE(pay.total_paid, 0) as total_paid,
-        c.opening_balance + COALESCE(inv.total_invoiced, 0) - COALESCE(pay.total_paid, 0) as balance_due,
-        CASE 
-          WHEN c.opening_balance + COALESCE(inv.total_invoiced, 0) - COALESCE(pay.total_paid, 0) < 0 
-          THEN ABS(c.opening_balance + COALESCE(inv.total_invoiced, 0) - COALESCE(pay.total_paid, 0))
-          ELSE 0 
+        COALESCE(inv.total_invoiced_usd, 0) as total_invoiced_usd,
+        COALESCE(inv.total_invoiced_gbp, 0) as total_invoiced_gbp,
+        COALESCE(pay.total_paid_usd, 0) as total_paid_usd,
+        COALESCE(pay.total_paid_gbp, 0) as total_paid_gbp,
+        CASE WHEN c.opening_balance_currency = 'USD' THEN COALESCE(c.opening_balance, 0) ELSE 0 END
+          + COALESCE(inv.total_invoiced_usd, 0)
+          - COALESCE(pay.total_paid_usd, 0) as usd_balance,
+        CASE WHEN c.opening_balance_currency = 'GBP' THEN COALESCE(c.opening_balance, 0) ELSE 0 END
+          + COALESCE(inv.total_invoiced_gbp, 0)
+          - COALESCE(pay.total_paid_gbp, 0) as gbp_balance,
+        COALESCE(c.opening_balance, 0)
+          + COALESCE(inv.total_invoiced_usd, 0) + COALESCE(inv.total_invoiced_gbp, 0)
+          - COALESCE(pay.total_paid_usd, 0) - COALESCE(pay.total_paid_gbp, 0) as balance_due,
+        CASE
+          WHEN COALESCE(c.opening_balance, 0)
+            + COALESCE(inv.total_invoiced_usd, 0) + COALESCE(inv.total_invoiced_gbp, 0)
+            - COALESCE(pay.total_paid_usd, 0) - COALESCE(pay.total_paid_gbp, 0) < 0
+          THEN ABS(COALESCE(c.opening_balance, 0)
+            + COALESCE(inv.total_invoiced_usd, 0) + COALESCE(inv.total_invoiced_gbp, 0)
+            - COALESCE(pay.total_paid_usd, 0) - COALESCE(pay.total_paid_gbp, 0))
+          ELSE 0
         END as credit_balance,
         c.is_active,
         c.created_at
       FROM public.clients c
-      -- Name-based fallback removed — use data migration to populate client_id on legacy records
       LEFT JOIN (
         SELECT
-          client_id,
-          SUM(amount_usd) as total_invoiced
-        FROM public.invoices
-        WHERE status != 'Cancelled'
-          AND client_id IS NOT NULL
-        GROUP BY client_id
-      ) inv ON c.id = inv.client_id
+          COALESCE(i.client_id, legacy.id) as resolved_client_id,
+          SUM(CASE WHEN COALESCE(i.currency, 'USD') = 'GBP' THEN 0 ELSE i.amount_usd END) as total_invoiced_usd,
+          SUM(CASE WHEN COALESCE(i.currency, 'USD') = 'GBP' THEN i.amount_usd ELSE 0 END) as total_invoiced_gbp
+        FROM public.invoices i
+        LEFT JOIN public.clients legacy
+          ON i.client_id IS NULL
+          AND LOWER(TRIM(legacy.name)) = LOWER(TRIM(i.client_name))
+        WHERE i.status != 'Cancelled'
+          AND COALESCE(i.client_id, legacy.id) IS NOT NULL
+        GROUP BY COALESCE(i.client_id, legacy.id)
+      ) inv ON c.id = inv.resolved_client_id
       LEFT JOIN (
         SELECT
-          client_id,
-          SUM(amount_usd) as total_paid
-        FROM public.payments
-        WHERE type = 'Inbound'
-          AND client_id IS NOT NULL
-          AND (is_deleted = false OR is_deleted IS NULL)
-        GROUP BY client_id
-      ) pay ON c.id = pay.client_id
+          COALESCE(p.client_id, legacy.id) as resolved_client_id,
+          SUM(CASE WHEN COALESCE(p.currency, 'USD') = 'GBP' THEN 0 ELSE p.amount_usd END) as total_paid_usd,
+          SUM(CASE WHEN COALESCE(p.currency, 'USD') = 'GBP' THEN p.amount_usd ELSE 0 END) as total_paid_gbp
+        FROM public.payments p
+        LEFT JOIN public.clients legacy
+          ON p.client_id IS NULL
+          AND LOWER(TRIM(legacy.name)) = LOWER(TRIM(p.client_name))
+        WHERE p.type = 'Inbound'
+          AND (p.is_deleted = false OR p.is_deleted IS NULL)
+          AND COALESCE(p.client_id, legacy.id) IS NOT NULL
+        GROUP BY COALESCE(p.client_id, legacy.id)
+      ) pay ON c.id = pay.resolved_client_id
       WHERE c.is_active = true
         AND c.deleted_at IS NULL
     `;
 
     // Add filters
     if (hasOutstanding === 'true') {
-      query = sql`${query} AND (c.opening_balance + COALESCE(inv.total_invoiced, 0) - COALESCE(pay.total_paid, 0)) > 0`;
+      query = sql`${query} AND (COALESCE(c.opening_balance, 0)
+        + COALESCE(inv.total_invoiced_usd, 0) + COALESCE(inv.total_invoiced_gbp, 0)
+        - COALESCE(pay.total_paid_usd, 0) - COALESCE(pay.total_paid_gbp, 0)) > 0`;
     }
 
     if (minBalance && typeof minBalance === 'string') {
       const minBal = parseFloat(minBalance);
       if (!isNaN(minBal)) {
-        query = sql`${query} AND (c.opening_balance + COALESCE(inv.total_invoiced, 0) - COALESCE(pay.total_paid, 0)) >= ${minBal}`;
+        query = sql`${query} AND (COALESCE(c.opening_balance, 0)
+          + COALESCE(inv.total_invoiced_usd, 0) + COALESCE(inv.total_invoiced_gbp, 0)
+          - COALESCE(pay.total_paid_usd, 0) - COALESCE(pay.total_paid_gbp, 0)) >= ${minBal}`;
       }
     }
 
@@ -311,22 +340,30 @@ async function getAllClientBalances(req: AuthenticatedRequest, res: VercelRespon
 
     return res.status(200).json({
       count: results.length,
-      clients: results.map((row: any) => ({
-        id: row.id,
-        name: row.name,
-        email: row.email,
-        company: row.company,
-        balance: {
-          opening_balance: Number(row.opening_balance) || 0,
-          total_invoiced: Number(row.total_invoiced) || 0,
-          total_paid: Number(row.total_paid) || 0,
-          current_balance: Number(row.balance_due) || 0,
-          credit_balance: Number(row.credit_balance) || 0,
-          currency: row.currency || 'USD',
-        },
-        is_active: row.is_active,
-        created_at: row.created_at,
-      })),
+      clients: results.map((row: any) => {
+        const totalInvoiced =
+          (Number(row.total_invoiced_usd) || 0) + (Number(row.total_invoiced_gbp) || 0);
+        const totalPaid =
+          (Number(row.total_paid_usd) || 0) + (Number(row.total_paid_gbp) || 0);
+        return {
+          id: row.id,
+          name: row.name,
+          email: row.email,
+          company: row.company,
+          balance: {
+            opening_balance: Number(row.opening_balance) || 0,
+            total_invoiced: totalInvoiced,
+            total_paid: totalPaid,
+            current_balance: Number(row.balance_due) || 0,
+            credit_balance: Number(row.credit_balance) || 0,
+            currency: row.currency || 'USD',
+            usd_balance: Number(row.usd_balance) || 0,
+            gbp_balance: Number(row.gbp_balance) || 0,
+          },
+          is_active: row.is_active,
+          created_at: row.created_at,
+        };
+      }),
     });
   } catch (error) {
     console.error('[ClientFinancials] getAllClientBalances error:', error);

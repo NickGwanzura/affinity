@@ -6,7 +6,12 @@ import type { ClientWithBalanceFormValue } from './ClientFormModalWithBalance';
 import { emptyClientWithBalanceForm } from './ClientFormModalWithBalance';
 
 interface UseClientCrudOpts {
-  onSuccess: () => Promise<void> | void;
+  // Incremental state patchers from useClientDirectoryData. Replaces the
+  // previous onSuccess=reload() pattern so rename/create/delete no longer
+  // triggers a 6-endpoint refetch and a split-pane spinner flash.
+  addClient: (client: Client) => void;
+  patchClient: (id: string, partial: Partial<Client>) => void;
+  removeClient: (id: string) => void;
   showToast: (message: string, variant?: 'success' | 'error' | 'info' | 'warning') => void;
   confirm: (opts: {
     title: string;
@@ -19,7 +24,9 @@ interface UseClientCrudOpts {
 }
 
 export function useClientCrud({
-  onSuccess,
+  addClient,
+  patchClient,
+  removeClient,
   showToast,
   confirm,
   onDeleteSelected,
@@ -65,14 +72,17 @@ export function useClientCrud({
         opening_balance_currency: form.opening_balance_currency,
       };
       if (editing) {
-        await dataService.updateClient(editing.id, payload);
+        const updated = await dataService.updateClient(editing.id, payload);
+        patchClient(editing.id, updated);
         showToast('Client updated successfully', 'success');
       } else {
-        await dataService.createClient(payload as Omit<Client, 'id' | 'created_at'>);
+        const created = await dataService.createClient(
+          payload as Omit<Client, 'id' | 'created_at'>
+        );
+        addClient(created);
         showToast('Client created successfully', 'success');
       }
       setIsOpen(false);
-      await onSuccess();
     } catch (err: any) {
       showToast(err?.message || 'Failed to save client', 'error');
     } finally {
@@ -90,9 +100,10 @@ export function useClientCrud({
     if (!ok) return;
     try {
       await dataService.deleteClient(c.id);
+      // Soft delete: drop from visible state without refetching.
+      removeClient(c.id);
       showToast('Client deleted successfully', 'success');
       onDeleteSelected(c.id);
-      await onSuccess();
     } catch (err: any) {
       showToast(err?.message || 'Failed to delete client', 'error');
     }

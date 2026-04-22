@@ -9,7 +9,11 @@ import { useConfirm } from '../ConfirmModal';
 interface ClientVehiclesPanelProps {
   clientId: string;
   vehicles: Vehicle[];
-  onChange: () => Promise<void> | void;
+  // Incremental patchers replace the old onChange=reload() plumbing so
+  // add/edit/unlink no longer refetches the whole directory.
+  addVehicle: (vehicle: Vehicle) => void;
+  patchVehicle: (id: string, partial: Partial<Vehicle>) => void;
+  removeVehicle: (id: string) => void;
   showToast: (message: string, variant?: 'success' | 'error' | 'info' | 'warning') => void;
 }
 
@@ -26,9 +30,15 @@ const emptyVehicleForm: VehicleFormValue = {
 export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
   clientId,
   vehicles,
-  onChange,
+  addVehicle,
+  patchVehicle,
+  // Vehicles here are only linked/unlinked (patched), never hard-deleted,
+  // so removeVehicle is accepted but unused. Kept on the props for shape
+  // consistency with the other fleet panel.
+  removeVehicle: _removeVehicle,
   showToast,
 }) => {
+  void _removeVehicle;
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [form, setForm] = useState<VehicleFormValue>(emptyVehicleForm);
@@ -83,17 +93,18 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
         client_id: clientId,
       };
       if (editingVehicle) {
-        await dataService.updateVehicle(editingVehicle.id, payload);
+        const updated = await dataService.updateVehicle(editingVehicle.id, payload);
+        patchVehicle(editingVehicle.id, updated);
         showToast('Vehicle updated successfully', 'success');
       } else {
-        await dataService.addVehicle({ ...payload, status: 'UK' } as Omit<
-          Vehicle,
-          'id' | 'created_at'
-        >);
+        const created = await dataService.addVehicle({
+          ...payload,
+          status: 'UK',
+        } as Omit<Vehicle, 'id' | 'created_at'>);
+        addVehicle(created);
         showToast('Vehicle added successfully', 'success');
       }
       setIsFormOpen(false);
-      await onChange();
     } catch (err: any) {
       showToast(err?.message || 'Failed to save vehicle', 'error');
     }
@@ -109,8 +120,9 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
     if (!ok) return;
     try {
       await dataService.updateVehicle(vehicle.id, { client_id: undefined });
+      // Clear the linkage locally so the row falls out of linkedVehicles.
+      patchVehicle(vehicle.id, { client_id: undefined });
       showToast('Vehicle unlinked from client', 'success');
-      await onChange();
     } catch (err: any) {
       showToast(err?.message || 'Failed to unlink vehicle', 'error');
     }
@@ -120,9 +132,9 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
     if (!linkSelection) return;
     try {
       await dataService.updateVehicle(linkSelection, { client_id: clientId });
+      patchVehicle(linkSelection, { client_id: clientId });
       showToast('Vehicle linked to client', 'success');
       setLinkSelection('');
-      await onChange();
     } catch (err: any) {
       showToast(err?.message || 'Failed to link vehicle', 'error');
     }

@@ -2,6 +2,7 @@ import React from 'react';
 import { Users } from 'lucide-react';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from '../ui';
 import type { Client, Invoice, Quote, Payment, Vehicle } from '../../types';
+import type { ClientDirectoryData } from './useClientDirectoryData';
 import { ClientDetailHeader } from './ClientDetailHeader';
 import { ClientEntityTable } from './ClientEntityTable';
 import { ClientStatementLedger } from './ClientStatementLedger';
@@ -11,7 +12,7 @@ import { invoiceColumns, quoteColumns, paymentColumns } from './columns';
 import {
   buildClientLedger,
   computeClientStats,
-  sameName,
+  matchesClient,
 } from './helpers';
 import type { EnrichedClient, ShipmentRow } from './types';
 
@@ -28,7 +29,14 @@ interface Props {
   onBack: () => void;
   onEdit: (client: Client) => void;
   onDelete: (client: Client) => void;
-  onRefresh: () => Promise<void> | void;
+  // Incremental patchers threaded through to child panels so vehicle /
+  // shipment CRUD doesn't have to refetch everything.
+  addVehicle: ClientDirectoryData['addVehicle'];
+  patchVehicle: ClientDirectoryData['patchVehicle'];
+  removeVehicle: ClientDirectoryData['removeVehicle'];
+  addShipment: ClientDirectoryData['addShipment'];
+  patchShipment: ClientDirectoryData['patchShipment'];
+  removeShipment: ClientDirectoryData['removeShipment'];
   showToast: (message: string, variant?: 'success' | 'error' | 'info' | 'warning') => void;
   dateFrom: string;
   dateTo: string;
@@ -51,7 +59,12 @@ export const ClientDetailPanel: React.FC<Props> = ({
   onBack,
   onEdit,
   onDelete,
-  onRefresh,
+  addVehicle,
+  patchVehicle,
+  removeVehicle,
+  addShipment,
+  patchShipment,
+  removeShipment,
   showToast,
   dateFrom,
   dateTo,
@@ -71,9 +84,9 @@ export const ClientDetailPanel: React.FC<Props> = ({
     );
   }
 
-  const clientInvoices = invoices.filter((i) => sameName(i.client_name, c.name));
-  const clientQuotes = quotes.filter((q) => sameName(q.client_name, c.name));
-  const clientPayments = payments.filter((p) => sameName(p.client_name, c.name));
+  const clientInvoices = invoices.filter((i) => matchesClient(i, c));
+  const clientQuotes = quotes.filter((q) => matchesClient(q, c));
+  const clientPayments = payments.filter((p) => matchesClient(p, c));
   const stats = computeClientStats(c.name, enrichedClients, invoices, quotes, payments);
   const canShowFleet = c.isRegistered && !c.id.startsWith('inv-');
 
@@ -140,7 +153,9 @@ export const ClientDetailPanel: React.FC<Props> = ({
                 <ClientVehiclesPanel
                   clientId={c.id}
                   vehicles={vehicles}
-                  onChange={onRefresh}
+                  addVehicle={addVehicle}
+                  patchVehicle={patchVehicle}
+                  removeVehicle={removeVehicle}
                   showToast={showToast}
                 />
               </TabPanel>
@@ -151,7 +166,9 @@ export const ClientDetailPanel: React.FC<Props> = ({
                   clientId={c.id}
                   shipments={shipments}
                   vehicles={vehicles}
-                  onChange={onRefresh}
+                  addShipment={addShipment}
+                  patchShipment={patchShipment}
+                  removeShipment={removeShipment}
                   showToast={showToast}
                 />
               </TabPanel>

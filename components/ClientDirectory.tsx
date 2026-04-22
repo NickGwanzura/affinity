@@ -31,7 +31,9 @@ export const ClientDirectory: React.FC = () => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const crud = useClientCrud({
-    onSuccess: data.reload,
+    addClient: data.addClient,
+    patchClient: data.patchClient,
+    removeClient: data.removeClient,
     showToast,
     confirm,
     onDeleteSelected: (id) => {
@@ -126,7 +128,12 @@ export const ClientDirectory: React.FC = () => {
             onBack={() => setSelectedClient(null)}
             onEdit={crud.openEdit}
             onDelete={crud.handleDelete}
-            onRefresh={data.reload}
+            addVehicle={data.addVehicle}
+            patchVehicle={data.patchVehicle}
+            removeVehicle={data.removeVehicle}
+            addShipment={data.addShipment}
+            patchShipment={data.patchShipment}
+            removeShipment={data.removeShipment}
             showToast={showToast}
             dateFrom={dateFrom}
             dateTo={dateTo}

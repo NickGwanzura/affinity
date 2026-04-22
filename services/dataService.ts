@@ -538,6 +538,8 @@ class DataService {
         current_balance: number;
         credit_balance: number;
         currency: 'USD' | 'GBP';
+        usd_balance: number;
+        gbp_balance: number;
       };
       is_active: boolean;
       created_at: string;
@@ -560,8 +562,15 @@ class DataService {
   }
 
   /**
-   * Calculate client balance locally (for when API is unavailable)
-   * Uses the same formula: opening_balance + total_invoiced - total_paid
+   * Calculate client balance locally (for when API is unavailable).
+   *
+   * Matching: prefer `client_id` when both sides have it; fall back to
+   * lowercase name only for legacy rows without `client_id`.
+   *
+   * Currency: USD and GBP are computed independently. A client with a
+   * GBP opening balance no longer has that number silently summed into
+   * a "USD" total. Callers that need a single scalar can combine
+   * `usd_balance` and `gbp_balance` with an explicit FX rate.
    */
   calculateClientBalance(
     client: Client,
@@ -573,34 +582,61 @@ class DataService {
     total_paid: number;
     opening_balance: number;
     credit_balance: number;
+    usd_balance: number;
+    gbp_balance: number;
   } {
     const openingBalance = client.opening_balance || 0;
+    const openingCurrency: 'USD' | 'GBP' = client.opening_balance_currency || 'USD';
 
-    // Calculate total invoiced (excluding cancelled invoices)
-    const totalInvoiced = invoices
-      .filter(
-        inv =>
-          (inv.client_id === client.id || inv.client_name === client.name) &&
-          inv.status !== 'Cancelled'
-      )
-      .reduce((sum, inv) => sum + (Number(inv.amount_usd) || 0), 0);
+    const matches = (row: { client_id?: string | null; client_name?: string | null }) => {
+      if (row.client_id && client.id) return row.client_id === client.id;
+      return (row.client_name || '').trim().toLowerCase() ===
+        (client.name || '').trim().toLowerCase();
+    };
 
-    // Calculate total paid (excluding deleted payments)
-    const totalPaid = payments
-      .filter(
-        pay =>
-          (pay.client_id === client.id || pay.client_name === client.name) &&
-          pay.type === 'Inbound' &&
-          !pay.is_deleted
-      )
-      .reduce((sum, pay) => sum + (Number(pay.amount_usd) || 0), 0);
+    const clientInvoices = invoices.filter(
+      inv => matches(inv) && inv.status !== 'Cancelled'
+    );
+    const clientPayments = payments.filter(
+      pay => matches(pay) && pay.type === 'Inbound' && !pay.is_deleted
+    );
 
+    // Per-currency totals: USD and GBP never mix.
+    let usdInvoiced = 0;
+    let gbpInvoiced = 0;
+    clientInvoices.forEach(inv => {
+      const amount = Number(inv.amount_usd) || 0;
+      if ((inv.currency || 'USD') === 'GBP') gbpInvoiced += amount;
+      else usdInvoiced += amount;
+    });
+
+    let usdPaid = 0;
+    let gbpPaid = 0;
+    clientPayments.forEach(pay => {
+      const amount = Number(pay.amount_usd) || 0;
+      if ((pay.currency || 'USD') === 'GBP') gbpPaid += amount;
+      else usdPaid += amount;
+    });
+
+    // Opening balance is currency-scoped: a GBP opening belongs to the GBP
+    // ledger, NOT the USD one. This was the real-money bug.
+    const usdOpening = openingCurrency === 'USD' ? openingBalance : 0;
+    const gbpOpening = openingCurrency === 'GBP' ? openingBalance : 0;
+
+    const usdBalance = usdOpening + usdInvoiced - usdPaid;
+    const gbpBalance = gbpOpening + gbpInvoiced - gbpPaid;
+
+    // Legacy aggregate (kept for callers that still want a single scalar).
+    // We keep the old "single currency" shape semantically — total_invoiced
+    // and total_paid sum both currencies' amount_usd because that's what
+    // the pre-existing callers (FinancialsShell, etc.) rely on — but the
+    // real per-currency numbers are in usd_balance / gbp_balance.
+    const totalInvoiced = usdInvoiced + gbpInvoiced;
+    const totalPaid = usdPaid + gbpPaid;
     const rawBalance = openingBalance + totalInvoiced - totalPaid;
 
-    // If overpaid, show credit balance
     let currentBalance = rawBalance;
     let creditBalance = 0;
-
     if (rawBalance < 0) {
       creditBalance = Math.abs(rawBalance);
       currentBalance = 0;
@@ -612,6 +648,8 @@ class DataService {
       total_paid: totalPaid,
       opening_balance: openingBalance,
       credit_balance: creditBalance,
+      usd_balance: usdBalance,
+      gbp_balance: gbpBalance,
     };
   }
 
@@ -644,6 +682,12 @@ class DataService {
 
     const currency = client.opening_balance_currency || 'USD';
 
+    const matches = (row: { client_id?: string | null; client_name?: string | null }) => {
+      if (row.client_id && client.id) return row.client_id === client.id;
+      return (row.client_name || '').trim().toLowerCase() ===
+        (client.name || '').trim().toLowerCase();
+    };
+
     // Opening balance entry
     if (client.opening_balance && client.opening_balance !== 0) {
       entries.push({
@@ -658,11 +702,7 @@ class DataService {
 
     // Invoice entries
     invoices
-      .filter(
-        inv =>
-          (inv.client_id === client.id || inv.client_name === client.name) &&
-          inv.status !== 'Cancelled'
-      )
+      .filter(inv => matches(inv) && inv.status !== 'Cancelled')
       .forEach(inv => {
         entries.push({
           date: inv.created_at,
@@ -677,12 +717,7 @@ class DataService {
 
     // Payment entries
     payments
-      .filter(
-        pay =>
-          (pay.client_id === client.id || pay.client_name === client.name) &&
-          pay.type === 'Inbound' &&
-          !pay.is_deleted
-      )
+      .filter(pay => matches(pay) && pay.type === 'Inbound' && !pay.is_deleted)
       .forEach(pay => {
         entries.push({
           date: pay.date,

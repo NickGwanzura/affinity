@@ -3,30 +3,67 @@ import { dataService } from '../../services/dataService';
 import { generateStatementPDF } from '../../services/pdfService';
 import type { ClientStats, EnrichedClient, LedgerRow } from './types';
 
+/**
+ * Approximate GBP->USD rate used ONLY for sort ordering and the sidebar
+ * "quick scan" combined total. This is not for financial reporting —
+ * ledger, PDF, and detail-header math always keeps USD and GBP split.
+ */
+export const GBP_USD_APPROX = 1.27;
+
 export const sameName = (a?: string, b?: string): boolean =>
   (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
 
+/**
+ * True when `record` belongs to `client`. Prefers id-based matching
+ * (correct even when names get retyped / duplicated) and falls back to
+ * case-insensitive name matching only for legacy rows whose client_id
+ * was never populated.
+ */
+export const matchesClient = (
+  record: { client_id?: string | null; client_name?: string | null },
+  client: Pick<Client, 'id' | 'name'>
+): boolean => {
+  const rid = record.client_id;
+  if (rid && client.id) {
+    // Both sides have an id — only the id decides. Prevents a same-named
+    // second client from being credited with another client's invoices.
+    return rid === client.id;
+  }
+  // Legacy row with no client_id → fall back to name.
+  return sameName(record.client_name ?? undefined, client.name);
+};
+
 export function buildEnrichedClients(clients: Client[], invoices: Invoice[]): EnrichedClient[] {
   const map = new Map<string, EnrichedClient>();
+  // Seed with registered clients keyed by id so duplicate names stay distinct.
   clients.forEach((c) => {
-    map.set(c.name.trim().toLowerCase(), { ...c, isRegistered: true });
+    map.set(`id:${c.id}`, { ...c, isRegistered: true });
   });
+  // Fold in unregistered clients (invoices whose client_id does not resolve
+  // to a registered client). These are name-only by definition.
+  const registeredById = new Map(clients.map((c) => [c.id, c]));
+  const unregisteredByName = new Map<string, EnrichedClient>();
   invoices.forEach((inv) => {
-    const key = inv.client_name.trim().toLowerCase();
-    if (!map.has(key)) {
-      map.set(key, {
-        id: `inv-${key}`,
-        name: inv.client_name,
-        email: inv.client_email || '',
-        address: inv.client_address,
-        opening_balance: 0,
-        opening_balance_currency: 'USD',
-        is_active: true,
-        created_at: new Date().toISOString(),
-        isRegistered: false,
-      } as EnrichedClient);
-    }
+    if (inv.client_id && registeredById.has(inv.client_id)) return;
+    const nameKey = (inv.client_name || '').trim().toLowerCase();
+    if (!nameKey) return;
+    // If a registered client already matches this name, don't fabricate a ghost.
+    const nameMatchesRegistered = clients.some((c) => sameName(c.name, inv.client_name));
+    if (nameMatchesRegistered) return;
+    if (unregisteredByName.has(nameKey)) return;
+    unregisteredByName.set(nameKey, {
+      id: `inv-${nameKey}`,
+      name: inv.client_name,
+      email: inv.client_email || '',
+      address: inv.client_address,
+      opening_balance: 0,
+      opening_balance_currency: 'USD',
+      is_active: true,
+      created_at: new Date().toISOString(),
+      isRegistered: false,
+    } as EnrichedClient);
   });
+  unregisteredByName.forEach((v, k) => map.set(`name:${k}`, v));
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -38,12 +75,13 @@ export function computeClientStats(
   payments: Payment[]
 ): ClientStats {
   const match = enrichedClients.find((c) => sameName(c.name, name));
-  const clientInvoices = invoices.filter((i) => sameName(i.client_name, name));
-  const clientQuotes = quotes.filter((q) => sameName(q.client_name, name));
-  const clientPayments = payments.filter((p) => sameName(p.client_name, name));
 
   if (match && match.isRegistered) {
-    const balance = dataService.calculateClientBalance(match, invoices, payments);
+    const client = match as Client;
+    const clientInvoices = invoices.filter((i) => matchesClient(i, client));
+    const clientQuotes = quotes.filter((q) => matchesClient(q, client));
+    const clientPayments = payments.filter((p) => matchesClient(p, client));
+    const balance = dataService.calculateClientBalance(client, invoices, payments);
     return {
       totalBilled: balance.total_invoiced,
       totalPaid: balance.total_paid,
@@ -53,8 +91,15 @@ export function computeClientStats(
       invoiceCount: clientInvoices.length,
       quoteCount: clientQuotes.length,
       paymentCount: clientPayments.length,
+      usdBalance: balance.usd_balance,
+      gbpBalance: balance.gbp_balance,
     };
   }
+
+  // Unregistered client — name-only matching is correct here by definition.
+  const clientInvoices = invoices.filter((i) => sameName(i.client_name, name));
+  const clientQuotes = quotes.filter((q) => sameName(q.client_name, name));
+  const clientPayments = payments.filter((p) => sameName(p.client_name, name));
   const totalBilled = clientInvoices.reduce((s, i) => s + (Number(i.amount_usd) || 0), 0);
   const totalPaid = clientPayments.reduce((s, p) => s + (Number(p.amount_usd) || 0), 0);
   const outstanding = totalBilled - totalPaid;
@@ -67,6 +112,8 @@ export function computeClientStats(
     invoiceCount: clientInvoices.length,
     quoteCount: clientQuotes.length,
     paymentCount: clientPayments.length,
+    usdBalance: outstanding,
+    gbpBalance: 0,
   };
 }
 
@@ -77,6 +124,7 @@ export function buildClientLedger(
 ): LedgerRow[] {
   const entries: LedgerRow[] = [];
   const opening = Number(client.opening_balance) || 0;
+  const openingCurrency: 'USD' | 'GBP' = client.opening_balance_currency || 'USD';
   if (opening !== 0) {
     entries.push({
       date: new Date(client.created_at),
@@ -85,12 +133,13 @@ export function buildClientLedger(
       debit: opening > 0 ? opening : 0,
       credit: opening < 0 ? Math.abs(opening) : 0,
       balance: 0,
+      currency: openingCurrency,
     });
   }
   invoices
     .filter(
       (i) =>
-        sameName(i.client_name, client.name) &&
+        matchesClient(i, client) &&
         i.status !== 'Cancelled' &&
         !(i as unknown as { is_deleted?: boolean; deleted_at?: string | null }).is_deleted &&
         !(i as unknown as { is_deleted?: boolean; deleted_at?: string | null }).deleted_at
@@ -104,12 +153,13 @@ export function buildClientLedger(
         credit: 0,
         balance: 0,
         id: i.id,
+        currency: (i.currency || 'USD') as 'USD' | 'GBP',
       })
     );
   payments
     .filter(
       (p) =>
-        sameName(p.client_name, client.name) &&
+        matchesClient(p, client) &&
         !p.is_deleted &&
         !p.deleted_at
     )
@@ -122,13 +172,18 @@ export function buildClientLedger(
         credit: Number(p.amount_usd) || 0,
         balance: 0,
         id: p.id,
+        currency: (p.currency || 'USD') as 'USD' | 'GBP',
       })
     );
   entries.sort((a, b) => a.date.getTime() - b.date.getTime());
-  let running = 0;
+  // Running balance is currency-aware: each row's `balance` reflects the
+  // running total for its own currency, so USD and GBP ledgers can be
+  // separated cleanly downstream.
+  const running: Record<'USD' | 'GBP', number> = { USD: 0, GBP: 0 };
   return entries.map((e) => {
-    running += e.debit - e.credit;
-    return { ...e, balance: running };
+    const cur = e.currency || 'USD';
+    running[cur] += e.debit - e.credit;
+    return { ...e, balance: running[cur] };
   });
 }
 
@@ -140,8 +195,8 @@ export async function downloadClientStatementPdf(
   dateFrom: string,
   dateTo: string
 ): Promise<void> {
-  const clientInvoices = invoices.filter((i) => sameName(i.client_name, client.name));
-  const clientPayments = payments.filter((p) => sameName(p.client_name, client.name));
+  const clientInvoices = invoices.filter((i) => matchesClient(i, client));
+  const clientPayments = payments.filter((p) => matchesClient(p, client));
   const inRange = (iso: string) => {
     if (!dateFrom && !dateTo) return true;
     const d = new Date(iso).toISOString().split('T')[0];

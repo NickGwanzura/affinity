@@ -10,7 +10,10 @@ interface ClientShipmentsPanelProps {
   clientId: string;
   shipments: ShipmentRow[];
   vehicles: Vehicle[];
-  onChange: () => Promise<void> | void;
+  // Incremental patchers replace the old onChange=reload() plumbing.
+  addShipment: (shipment: ShipmentRow) => void;
+  patchShipment: (id: string, partial: Partial<ShipmentRow>) => void;
+  removeShipment: (id: string) => void;
   showToast: (message: string, variant?: 'success' | 'error' | 'info' | 'warning') => void;
 }
 
@@ -52,7 +55,9 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
   clientId,
   shipments,
   vehicles,
-  onChange,
+  addShipment,
+  patchShipment,
+  removeShipment,
   showToast,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -99,14 +104,15 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
         delivery_date: form.delivery_date || undefined,
       };
       if (editing) {
-        await dataService.updateShipment(editing.id, payload);
+        const updated = (await dataService.updateShipment(editing.id, payload)) as ShipmentRow;
+        patchShipment(editing.id, updated);
         showToast('Shipment updated', 'success');
       } else {
-        await dataService.addShipment(payload);
+        const created = (await dataService.addShipment(payload)) as ShipmentRow;
+        addShipment(created);
         showToast('Shipment created', 'success');
       }
       setIsOpen(false);
-      await onChange();
     } catch (err: any) {
       showToast(err?.message || 'Failed to save shipment', 'error');
     }
@@ -122,8 +128,8 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
     if (!ok) return;
     try {
       await dataService.deleteShipment(s.id);
+      removeShipment(s.id);
       showToast('Shipment deleted', 'success');
-      await onChange();
     } catch (err: any) {
       showToast(err?.message || 'Failed to delete shipment', 'error');
     }

@@ -14,10 +14,12 @@ export type { EnrichedClient, ClientStats, LedgerRow } from './types';
 export { formatMoney } from './types';
 export {
   sameName,
+  matchesClient,
   buildEnrichedClients,
   computeClientStats,
   buildClientLedger,
   downloadClientStatementPdf,
+  GBP_USD_APPROX,
 } from './helpers';
 export { invoiceColumns, quoteColumns, paymentColumns } from './columns';
 export { useClientDirectoryData } from './useClientDirectoryData';

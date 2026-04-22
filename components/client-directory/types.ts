@@ -28,6 +28,11 @@ export interface ClientStats {
   invoiceCount: number;
   quoteCount: number;
   paymentCount: number;
+  // Signed per-currency net balance (positive = client owes us,
+  // negative = client is in credit). Used by ClientDetailHeader and
+  // ClientListSidebar to render USD + GBP side by side.
+  usdBalance: number;
+  gbpBalance: number;
 }
 
 export interface LedgerRow {
@@ -38,6 +43,7 @@ export interface LedgerRow {
   credit: number;
   balance: number;
   id?: string;
+  currency?: 'USD' | 'GBP';
 }
 
 export const formatMoney = (amount: number, currency: string = 'USD'): string => {

@@ -634,6 +634,8 @@ export const api = {
             current_balance: number;
             credit_balance: number;
             currency: 'USD' | 'GBP';
+            usd_balance: number;
+            gbp_balance: number;
           };
           is_active: boolean;
           created_at: string;

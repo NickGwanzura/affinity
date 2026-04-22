@@ -95,23 +95,50 @@ export const ClientDetailHeader: React.FC<ClientDetailHeaderProps> = ({
           value={formatMoney(stats.totalPaid)}
           tone="success"
         />
-        <StatItem
-          label={
-            stats.outstanding > 0 ? 'Balance Due' : stats.creditBalance > 0 ? 'Credit' : 'Balance'
-          }
-          value={
-            stats.outstanding > 0
-              ? formatMoney(stats.outstanding)
-              : stats.creditBalance > 0
-                ? formatMoney(stats.creditBalance)
-                : formatMoney(0)
-          }
-          tone={stats.outstanding > 0 ? 'danger' : stats.creditBalance > 0 ? 'success' : 'default'}
-        />
+        <OutstandingStats usd={stats.usdBalance} gbp={stats.gbpBalance} />
         <StatItem label="Quotes" value={String(stats.quoteCount)} tone="info" />
       </div>
     </Tile>
   );
+};
+
+const OutstandingStats: React.FC<{ usd: number; gbp: number }> = ({ usd, gbp }) => {
+  const hasUsd = Math.abs(usd) > 0.005;
+  const hasGbp = Math.abs(gbp) > 0.005;
+
+  if (!hasUsd && !hasGbp) {
+    return <StatItem label="Balance" value="Settled" tone="default" />;
+  }
+
+  const renderOne = (amount: number, currency: 'USD' | 'GBP') => {
+    const label =
+      amount > 0
+        ? `Outstanding (${currency})`
+        : amount < 0
+          ? `Credit (${currency})`
+          : `Balance (${currency})`;
+    const tone: 'danger' | 'success' | 'default' =
+      amount > 0 ? 'danger' : amount < 0 ? 'success' : 'default';
+    return (
+      <StatItem
+        key={currency}
+        label={label}
+        value={formatMoney(Math.abs(amount), currency)}
+        tone={tone}
+      />
+    );
+  };
+
+  if (hasUsd && hasGbp) {
+    // Stack both mini-stats in the grid cell so the row stays 5-column.
+    return (
+      <div className="flex flex-col gap-2">
+        {renderOne(usd, 'USD')}
+        {renderOne(gbp, 'GBP')}
+      </div>
+    );
+  }
+  return hasUsd ? renderOne(usd, 'USD') : renderOne(gbp, 'GBP');
 };
 
 const toneColor: Record<string, string> = {
