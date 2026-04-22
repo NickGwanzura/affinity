@@ -73,7 +73,7 @@ export default function App() {
     setRoutePath(path);
   };
 
-  const resolveTenantDefaultView = (role: string) => {
+  const resolveDefaultView = (role: string) => {
     if (role === 'Driver') return 'driver' as const;
     if (role === 'Accountant') return 'accountant' as const;
     return 'admin' as const;
@@ -110,7 +110,7 @@ export default function App() {
           if (s.forcePasswordChange) {
             setForcePasswordChange(true);
           } else {
-            setCurrentView(resolveTenantDefaultView(s.user.role));
+            setCurrentView(resolveDefaultView(s.user.role));
           }
         }
       } catch (error) {
@@ -154,7 +154,7 @@ export default function App() {
       return;
     }
 
-    const nextView = resolveTenantDefaultView(newSession.user.role);
+    const nextView = resolveDefaultView(newSession.user.role);
     setCurrentView(nextView);
     navigate('/dashboard', true);
   };
@@ -209,7 +209,7 @@ export default function App() {
         userName={session.user.name}
         onComplete={() => {
           setForcePasswordChange(false);
-          const nextView = resolveTenantDefaultView(session.user.role);
+          const nextView = resolveDefaultView(session.user.role);
           setCurrentView(nextView);
           navigate('/dashboard', true);
         }}

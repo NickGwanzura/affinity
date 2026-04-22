@@ -17,7 +17,14 @@ BEGIN;
 ALTER TABLE public.user_profiles
   ADD COLUMN IF NOT EXISTS access_role TEXT;
 
--- 2) Backfill access_role from legacy role for any NULLs or from
+-- 2) Drop any legacy check constraint on access_role. The earlier
+--    super-admin arch migration added one that allowed the old
+--    `tenant_admin` value but not the canonical `admin`, which
+--    would block the backfill in step 3.
+ALTER TABLE public.user_profiles
+  DROP CONSTRAINT IF EXISTS user_profiles_access_role_check;
+
+-- 3) Backfill access_role from legacy role for any NULLs or from
 --    the intermediate `tenant_admin` value used in the earlier
 --    super-admin architecture migration.
 --    Mapping (single-tenant app, tenant_id is being removed):
@@ -35,28 +42,20 @@ END
 WHERE access_role IS NULL
    OR LOWER(access_role) NOT IN ('super_admin', 'admin', 'user');
 
--- 3) Enforce check constraint on access_role values.
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'user_profiles_access_role_check'
-  ) THEN
-    ALTER TABLE public.user_profiles
-      ADD CONSTRAINT user_profiles_access_role_check
-      CHECK (access_role IN ('super_admin', 'admin', 'user'));
-  END IF;
-END
-$$;
+-- 4) Enforce the canonical check constraint.
+ALTER TABLE public.user_profiles
+  ADD CONSTRAINT user_profiles_access_role_check
+  CHECK (access_role IN ('super_admin', 'admin', 'user'));
 
--- 4) Make access_role NOT NULL after backfill.
+-- 5) Make access_role NOT NULL after backfill.
 ALTER TABLE public.user_profiles
   ALTER COLUMN access_role SET NOT NULL;
 
--- 5) Helpful index for role-based queries.
+-- 6) Helpful index for role-based queries.
 CREATE INDEX IF NOT EXISTS idx_user_profiles_access_role
   ON public.user_profiles(access_role);
 
--- 6) Document the legacy `role` column as display-only.
+-- 7) Document the legacy `role` column as display-only.
 --    We deliberately KEEP the column because the Settings UI
 --    surfaces Admin/Manager/Accountant/Driver labels and they
 --    are stored there. DO NOT read it for authorization.
@@ -67,9 +66,22 @@ COMMENT ON COLUMN public.user_profiles.role IS
 COMMENT ON COLUMN public.user_profiles.access_role IS
   'Canonical authorization role: super_admin | admin | user.';
 
--- 7) Password-reset hardening: per-token attempt counter used by
---    /api/auth?action=reset-password to invalidate tokens that
---    are brute-forced.
+-- 8) Password-reset hardening: ensure the password_resets table
+--    exists (API_SECURITY_MIGRATION.sql defines it but was never
+--    run against this DB), then add the per-token attempt counter
+--    used by /api/auth?action=reset-password to invalidate tokens
+--    that are brute-forced.
+CREATE TABLE IF NOT EXISTS public.password_resets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_password_resets_token   ON public.password_resets(token);
+CREATE INDEX IF NOT EXISTS idx_password_resets_expires ON public.password_resets(expires_at);
+
 ALTER TABLE public.password_resets
   ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0;
 

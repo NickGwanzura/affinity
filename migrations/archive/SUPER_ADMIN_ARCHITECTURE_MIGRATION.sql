@@ -1,4 +1,14 @@
 -- ============================================================
+-- SUPERSEDED on 2026-04-22 by TENANT_ISOLATION_REVERT.sql.
+-- The app is single-tenant. The tenants table, tenant_id columns,
+-- and related FKs/constraints/indexes created here have been
+-- dropped. DO NOT RE-RUN this file — doing so will recreate the
+-- schema the revert just removed.
+--
+-- Original migration below is kept for historical reference only.
+-- ============================================================
+
+-- ============================================================
 -- Super Admin Architecture Migration
 -- Super Admin is platform-level and must not belong to tenant
 -- ============================================================
