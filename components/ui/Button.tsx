@@ -1,7 +1,15 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success' | 'ghost' | 'warning';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'tertiary'
+  | 'ghost'
+  | 'danger'
+  | 'danger-tertiary'
+  | 'success'
+  | 'warning';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
@@ -22,17 +30,23 @@ const variantClasses: Record<ButtonVariant, string> = {
     'bg-[#0f62fe] text-white border border-transparent ' +
     'hover:bg-[#0353e9] active:bg-[#002d9c]',
   secondary:
-    'bg-white text-gray-900 border border-gray-300 ' +
-    'hover:bg-gray-50 hover:border-gray-400 active:bg-gray-100',
+    'bg-[#393939] text-white border border-transparent ' +
+    'hover:bg-[#4c4c4c] active:bg-[#6f6f6f]',
+  tertiary:
+    'bg-transparent text-[#0f62fe] border border-[#0f62fe] ' +
+    'hover:bg-[#0f62fe] hover:text-white active:bg-[#002d9c] active:border-[#002d9c]',
   danger:
     'bg-[#da1e28] text-white border border-transparent ' +
     'hover:bg-[#b81921] active:bg-[#750e13]',
+  'danger-tertiary':
+    'bg-transparent text-[#da1e28] border border-[#da1e28] ' +
+    'hover:bg-[#da1e28] hover:text-white active:bg-[#750e13] active:border-[#750e13]',
   success:
     'bg-[#198038] text-white border border-transparent ' +
     'hover:bg-[#0e6027] active:bg-[#044317]',
   ghost:
-    'bg-transparent text-gray-700 border border-transparent ' +
-    'hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200',
+    'bg-transparent text-[#0f62fe] border border-transparent ' +
+    'hover:bg-gray-100 active:bg-gray-200',
   warning:
     'bg-[#f1c21b] text-gray-900 border border-transparent ' +
     'hover:bg-[#ddab06] active:bg-[#b28600]',

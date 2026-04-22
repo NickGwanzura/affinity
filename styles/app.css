@@ -8,6 +8,23 @@
 @source "../services/**/*.{ts,tsx}";
 @source "../hooks/**/*.{ts,tsx}";
 
+/* ─── Design tokens (Tailwind v4 @theme) ─────────────────────────────────────
+   Palette distilled from the prior Carbon-based look.  Consumers can now write
+   `bg-primary`, `text-secondary`, `border-subtle`, etc., without knowing hex.  */
+@theme {
+  --color-primary: #0f62fe;        /* Carbon Blue 60 */
+  --color-primary-hover: #0353e9;
+  --color-primary-active: #002d9c;
+  --color-text-primary: #161616;
+  --color-text-secondary: #525252;
+  --color-text-muted: #6f6f6f;
+  --color-border-subtle: #e0e0e0;
+  --color-surface: #ffffff;
+  --color-danger: #da1e28;
+  --color-success: #24a148;
+  --color-warning: #f1c21b;
+}
+
 :root {
   --app-font-sans: 'Geist Sans', 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'Geist Mono', 'IBM Plex Mono', monospace;
