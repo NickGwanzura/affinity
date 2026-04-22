@@ -1,15 +1,31 @@
 /* global process */
 
+import React from 'react';
 import nodemailer from 'nodemailer';
 import { render } from '@react-email/render';
-import React from 'react';
 import {
-  getResendClient,
   getAppBaseUrl,
   getEmailFromAddress,
+  getResendClient,
   isResendConfigured,
 } from './_email-utils.js';
+import { InviteEmail, type InviteEmailProps } from './emails/invite.js';
+import {
+  PasswordResetEmail,
+  type PasswordResetEmailProps,
+} from './emails/password-reset.js';
+import { WelcomeEmail, type WelcomeEmailProps } from './emails/welcome.js';
+import {
+  PasswordChangedEmail,
+  type PasswordChangedEmailProps,
+} from './emails/password-changed.js';
+import {
+  NotificationEmail,
+  type NotificationEmailProps,
+} from './emails/notification.js';
+import { DocumentEmail, type DocumentEmailProps } from './emails/document.js';
 
+// ── Transport configuration ─────────────────────────────────────────────
 type MailConfig = {
   host: string;
   port: number;
@@ -18,20 +34,6 @@ type MailConfig = {
   pass: string;
   from: string;
   replyTo?: string;
-};
-
-type InviteEmailArgs = {
-  to: string;
-  name: string;
-  role: string;
-  inviteToken: string;
-  invitedBy?: string;
-};
-
-type PasswordResetEmailArgs = {
-  to: string;
-  name?: string;
-  token: string;
 };
 
 let transporterPromise: Promise<nodemailer.Transporter> | null = null;
@@ -58,7 +60,8 @@ const getMailConfig = (): MailConfig | null => {
   };
 };
 
-export const isEmailTransportConfigured = (): boolean => getMailConfig() !== null;
+export const isEmailTransportConfigured = (): boolean =>
+  isResendConfigured() || getMailConfig() !== null;
 
 const getTransporter = async (): Promise<nodemailer.Transporter> => {
   if (!transporterPromise) {
@@ -66,21 +69,80 @@ const getTransporter = async (): Promise<nodemailer.Transporter> => {
     if (!config) {
       throw new Error('SMTP transport is not configured');
     }
-
     transporterPromise = Promise.resolve(
       nodemailer.createTransport({
         host: config.host,
         port: config.port,
         secure: config.secure,
-        auth: {
-          user: config.user,
-          pass: config.pass,
-        },
-      })
+        auth: { user: config.user, pass: config.pass },
+      }),
     );
   }
-
   return transporterPromise;
+};
+
+// ── Delivery primitive ──────────────────────────────────────────────────
+// Resolves Resend first, falls back to SMTP. Callers provide plain text for
+// clients that strip HTML.
+type DispatchArgs = {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  replyTo?: string;
+};
+
+async function dispatch({ to, subject, html, text, replyTo }: DispatchArgs): Promise<void> {
+  const fromAddress = getEmailFromAddress();
+
+  if (isResendConfigured()) {
+    const result = await getResendClient().emails.send({
+      from: fromAddress,
+      to,
+      subject,
+      html,
+      text,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    });
+    if ('error' in result && result.error) {
+      throw new Error(`Resend error: ${result.error.message ?? 'unknown'}`);
+    }
+    return;
+  }
+
+  const config = getMailConfig();
+  if (config) {
+    const transporter = await getTransporter();
+    await transporter.sendMail({
+      from: config.from,
+      to,
+      replyTo: replyTo ?? config.replyTo,
+      subject,
+      text,
+      html,
+    });
+    return;
+  }
+
+  throw new Error('No email transport configured');
+}
+
+// Render helper — React-email's render returns a string. Plain text is rendered
+// separately for clients that prefer it.
+const renderBoth = async (node: React.ReactElement) => {
+  const [html, text] = await Promise.all([
+    render(node),
+    render(node, { plainText: true }),
+  ]);
+  return { html, text };
+};
+
+// ── URL builders ────────────────────────────────────────────────────────
+const buildInviteUrl = (token: string): string => {
+  const url = new URL(getAppBaseUrl());
+  url.searchParams.set('type', 'invite');
+  url.searchParams.set('token', token);
+  return url.toString();
 };
 
 const buildPasswordResetUrl = (token: string): string => {
@@ -90,138 +152,149 @@ const buildPasswordResetUrl = (token: string): string => {
   return url.toString();
 };
 
-export async function sendPasswordResetEmail({
-  to,
-  name,
-  token,
-}: PasswordResetEmailArgs): Promise<void> {
-  const config = getMailConfig();
-  if (!config) {
-    throw new Error('SMTP transport is not configured');
-  }
+// ── Public API: lifecycle emails ────────────────────────────────────────
+export type SendInviteEmailArgs = {
+  to: string;
+  name: string;
+  role: string;
+  inviteToken: string;
+  invitedBy?: string;
+  expiresInDays?: number;
+};
 
-  const transporter = await getTransporter();
-  const resetUrl = buildPasswordResetUrl(token);
-  const greetingName = name?.trim() || 'there';
-
-  await transporter.sendMail({
-    from: config.from,
-    to,
-    replyTo: config.replyTo,
-    subject: 'Reset your Affinity Logistics password',
-    text: [
-      `Hello ${greetingName},`,
-      '',
-      'We received a request to reset your Affinity Logistics password.',
-      `Reset your password using this link: ${resetUrl}`,
-      '',
-      'If you did not request this change, you can ignore this email.',
-      'This link expires in 1 hour.',
-    ].join('\n'),
-    html: `
-      <p>Hello ${greetingName},</p>
-      <p>We received a request to reset your Affinity Logistics password.</p>
-      <p><a href="${resetUrl}">Reset your password</a></p>
-      <p>If you did not request this change, you can ignore this email.</p>
-      <p>This link expires in 1 hour.</p>
-    `,
+export async function sendInviteEmail(args: SendInviteEmailArgs): Promise<void> {
+  const inviteUrl = buildInviteUrl(args.inviteToken);
+  const props: InviteEmailProps = {
+    name: args.name,
+    role: args.role,
+    inviteUrl,
+    invitedBy: args.invitedBy,
+    expiresInDays: args.expiresInDays,
+  };
+  const { html, text } = await renderBoth(React.createElement(InviteEmail, props));
+  await dispatch({
+    to: args.to,
+    subject: `You're invited to join Affinity Logistics as ${args.role}`,
+    html,
+    text,
   });
 }
 
-const InviteEmailTemplate: React.FC<InviteEmailArgs> = ({ name, role, inviteToken, invitedBy }) => (
-  <div
-    style={{
-      fontFamily: 'IBM Plex Sans, Arial, sans-serif',
-      padding: '20px',
-      maxWidth: '600px',
-      margin: '0 auto',
-    }}
-  >
-    <h1 style={{ color: '#161616', fontSize: '24px', marginBottom: '16px' }}>You're Invited!</h1>
-    <p style={{ color: '#525252', fontSize: '16px', marginBottom: '16px' }}>Hello {name},</p>
-    <p style={{ color: '#525252', fontSize: '16px', marginBottom: '16px' }}>
-      You've been invited to join <strong>Affinity Logistics</strong> as a <strong>{role}</strong>.
-    </p>
-    <p style={{ color: '#525252', fontSize: '16px', marginBottom: '16px' }}>
-      {invitedBy ? `Invited by: ${invitedBy}` : 'Invited by: Administrator'}
-    </p>
-    <div style={{ margin: '24px 0' }}>
-      <a
-        href={`${getAppBaseUrl()}?type=invite&token=${inviteToken}`}
-        style={{
-          backgroundColor: '#0f62fe',
-          color: '#ffffff',
-          padding: '12px 24px',
-          textDecoration: 'none',
-          fontSize: '16px',
-          fontWeight: '600',
-          borderRadius: '0',
-          display: 'inline-block',
-        }}
-      >
-        Accept Invitation
-      </a>
-    </div>
-    <p style={{ color: '#525252', fontSize: '14px', marginBottom: '8px' }}>Or copy this link:</p>
-    <p style={{ color: '#0f62fe', fontSize: '14px', wordBreak: 'break-all' }}>
-      {getAppBaseUrl()}?type=invite&token={inviteToken}
-    </p>
-    <p style={{ color: '#a8a8a8', fontSize: '14px', marginTop: '24px' }}>
-      This invitation expires in 7 days.
-    </p>
-    <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '24px 0' }} />
-    <p style={{ color: '#a8a8a8', fontSize: '12px' }}>Affinity Logistics CRM</p>
-  </div>
-);
+export type SendPasswordResetEmailArgs = {
+  to: string;
+  name?: string;
+  token: string;
+  expiresInMinutes?: number;
+  requestIp?: string;
+};
 
-export async function sendInviteEmail({
-  to,
-  name,
-  role,
-  inviteToken,
-  invitedBy,
-}: InviteEmailArgs): Promise<void> {
-  const fromAddress = getEmailFromAddress();
-
-  if (isResendConfigured()) {
-    const html = await render(
-      React.createElement(InviteEmailTemplate, { name, role, inviteToken, invitedBy })
-    );
-
-    await getResendClient().emails.send({
-      from: fromAddress,
-      to,
-      subject: `You're invited to join Affinity Logistics as ${role}`,
-      html,
-    });
-    return;
-  }
-
-  const nodemailerConfig = getMailConfig();
-  if (nodemailerConfig) {
-    const transporter = await getTransporter();
-    const inviteUrl = `${getAppBaseUrl()}?type=invite&token=${inviteToken}`;
-
-    await transporter.sendMail({
-      from: nodemailerConfig.from,
-      to,
-      subject: `You're invited to join Affinity Logistics as ${role}`,
-      text: [
-        `Hello ${name},`,
-        '',
-        `You've been invited to join Affinity Logistics as a ${role}.`,
-        invitedBy ? `Invited by: ${invitedBy}` : 'Invited by: Administrator',
-        '',
-        `Accept your invitation: ${inviteUrl}`,
-        '',
-        'This invitation expires in 7 days.',
-      ].join('\n'),
-      html: await render(
-        React.createElement(InviteEmailTemplate, { name, role, inviteToken, invitedBy })
-      ),
-    });
-    return;
-  }
-
-  throw new Error('No email transport configured');
+export async function sendPasswordResetEmail(
+  args: SendPasswordResetEmailArgs,
+): Promise<void> {
+  const resetUrl = buildPasswordResetUrl(args.token);
+  const props: PasswordResetEmailProps = {
+    name: args.name,
+    resetUrl,
+    expiresInMinutes: args.expiresInMinutes,
+    requestIp: args.requestIp,
+  };
+  const { html, text } = await renderBoth(React.createElement(PasswordResetEmail, props));
+  await dispatch({
+    to: args.to,
+    subject: 'Reset your Affinity Logistics password',
+    html,
+    text,
+  });
 }
+
+export type SendWelcomeEmailArgs = {
+  to: string;
+  name: string;
+  role: string;
+};
+
+export async function sendWelcomeEmail(args: SendWelcomeEmailArgs): Promise<void> {
+  const props: WelcomeEmailProps = {
+    name: args.name,
+    role: args.role,
+    appUrl: getAppBaseUrl(),
+  };
+  const { html, text } = await renderBoth(React.createElement(WelcomeEmail, props));
+  await dispatch({
+    to: args.to,
+    subject: `Welcome to Affinity Logistics, ${args.name.split(' ')[0]}`,
+    html,
+    text,
+  });
+}
+
+export type SendPasswordChangedEmailArgs = {
+  to: string;
+  name?: string;
+  changedAt?: string;
+  requestIp?: string;
+  supportUrl?: string;
+};
+
+export async function sendPasswordChangedEmail(
+  args: SendPasswordChangedEmailArgs,
+): Promise<void> {
+  const props: PasswordChangedEmailProps = {
+    name: args.name,
+    changedAt: args.changedAt ?? new Date().toISOString(),
+    requestIp: args.requestIp,
+    supportUrl: args.supportUrl,
+  };
+  const { html, text } = await renderBoth(
+    React.createElement(PasswordChangedEmail, props),
+  );
+  await dispatch({
+    to: args.to,
+    subject: 'Your Affinity Logistics password was changed',
+    html,
+    text,
+  });
+}
+
+// ── Public API: transactional documents ─────────────────────────────────
+export type SendDocumentEmailArgs = {
+  to: string;
+  subject?: string;
+} & DocumentEmailProps;
+
+export async function sendDocumentEmail(args: SendDocumentEmailArgs): Promise<void> {
+  const { to, subject, ...docProps } = args;
+  const { html, text } = await renderBoth(React.createElement(DocumentEmail, docProps));
+  const finalSubject =
+    subject ??
+    (docProps.documentNumber
+      ? `${docProps.kind[0].toUpperCase() + docProps.kind.slice(1)} ${docProps.documentNumber} from Affinity Logistics`
+      : `${docProps.kind[0].toUpperCase() + docProps.kind.slice(1)} from Affinity Logistics`);
+  await dispatch({ to, subject: finalSubject, html, text });
+}
+
+// Back-compat: keep name-matching senders that invoices.ts / quotes.ts used before.
+export const sendInvoiceEmail = (
+  args: Omit<SendDocumentEmailArgs, 'kind'> & { kind?: 'invoice' | 'statement' | 'receipt' },
+) => sendDocumentEmail({ kind: args.kind ?? 'invoice', ...args });
+
+export const sendQuoteEmail = (
+  args: Omit<SendDocumentEmailArgs, 'kind'>,
+) => sendDocumentEmail({ kind: 'quote', ...args });
+
+// ── Public API: generic branded notification ────────────────────────────
+export type SendNotificationEmailArgs = {
+  to: string;
+  subject: string;
+} & NotificationEmailProps;
+
+export async function sendNotificationEmail(
+  args: SendNotificationEmailArgs,
+): Promise<void> {
+  const { to, subject, ...props } = args;
+  const { html, text } = await renderBoth(React.createElement(NotificationEmail, props));
+  await dispatch({ to, subject, html, text });
+}
+
+// Re-export low-level helpers that callers depend on.
+export { getAppBaseUrl, getEmailFromAddress, getResendClient, isResendConfigured };
