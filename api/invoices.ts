@@ -366,10 +366,18 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
       newData: data,
     });
 
-    // Send email notification to client if email provided and not a draft
+    // Send email notification to client if email provided and not a draft.
+    // Fire-and-forget — wrapped so an unhandled rejection cannot crash the Node
+    // process on Railway.
     if (result.client_email && result.status !== 'Draft' && result.invoice_kind) {
       const emailType = result.invoice_kind === 'Statement' ? 'statement' : 'invoice';
-      sendInvoiceEmail(result, emailType);
+      void (async () => {
+        try {
+          await sendInvoiceEmail(result, emailType);
+        } catch (err) {
+          console.error('Failed to send invoice email:', err);
+        }
+      })();
     }
 
     res.status(201).json(result);

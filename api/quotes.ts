@@ -341,9 +341,17 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
       newData: data,
     });
 
-    // Send email notification to client if email provided and status is Sent
+    // Send email notification to client if email provided and status is Sent.
+    // Fire-and-forget — wrapped so an unhandled rejection cannot crash the Node
+    // process on Railway.
     if (result.client_email && result.status === 'Sent') {
-      sendQuoteEmail(result);
+      void (async () => {
+        try {
+          await sendQuoteEmail(result);
+        } catch (err) {
+          console.error('Failed to send quote email:', err);
+        }
+      })();
     }
 
     res.status(201).json(result);

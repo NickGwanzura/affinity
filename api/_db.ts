@@ -117,12 +117,22 @@ export function validateOrderColumn(table: string, column: string): string | nul
   return allowed.includes(column) ? column : null;
 }
 
+// Singleton pool — reused across withTransaction calls.
+// Never call pool.end(); cold starts recreate it on the next warm invocation.
+let poolInstance: Pool | null = null;
+
+function getPool(): Pool {
+  if (!poolInstance) {
+    poolInstance = new Pool({ connectionString: getDatabaseUrl() });
+  }
+  return poolInstance;
+}
+
 // Transaction helper
 export async function withTransaction<T>(
   operations: (client: import('@neondatabase/serverless').PoolClient) => Promise<T>
 ): Promise<T> {
-  const pool = new Pool({ connectionString: getDatabaseUrl() });
-  const client = await pool.connect();
+  const client = await getPool().connect();
 
   try {
     await client.query('BEGIN');
@@ -134,7 +144,6 @@ export async function withTransaction<T>(
     throw error;
   } finally {
     client.release();
-    await pool.end();
   }
 }
 

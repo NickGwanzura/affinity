@@ -9,6 +9,7 @@ import {
   verifyToken,
 } from './_middleware.js';
 import { sql } from './_db.js';
+import { logAuditEvent } from './_audit.js';
 import { PayslipSchema } from './_schemas.js';
 
 type PayslipStatus = 'Generated' | 'Approved' | 'Paid' | 'Cancelled';
@@ -138,6 +139,15 @@ async function createPayslip(req: AuthenticatedRequest, res: VercelResponse) {
       WHERE p.id = ${rows[0].id}::uuid
     `;
 
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'payslip.create',
+      tableName: 'payslips',
+      recordId: String(rows[0].id),
+      newData: fullRows[0],
+    });
+
     return res.status(201).json(fullRows[0]);
   } catch (error) {
     return apiError(res, 400, 'Invalid payslip data', error);
@@ -145,6 +155,7 @@ async function createPayslip(req: AuthenticatedRequest, res: VercelResponse) {
 }
 
 async function updatePayslipStatus(req: VercelRequest, res: VercelResponse) {
+  const authReq = req as AuthenticatedRequest;
   const newStatus = req.body?.status as PayslipStatus | undefined;
   if (!newStatus || !['Generated', 'Approved', 'Paid', 'Cancelled'].includes(newStatus)) {
     return apiError(res, 400, 'Invalid payslip status');
@@ -158,13 +169,13 @@ async function updatePayslipStatus(req: VercelRequest, res: VercelResponse) {
     'Cancelled': [],
   };
 
-  const current = await sql`SELECT status FROM payslips WHERE id = ${req.query.id}::uuid`;
-  if (!current.length) return apiError(res, 404, 'Not found');
+  const existing = await sql`SELECT * FROM payslips WHERE id = ${req.query.id}::uuid`;
+  if (!existing.length) return apiError(res, 404, 'Not found');
 
-  const allowed = VALID_TRANSITIONS[current[0].status] ?? [];
+  const allowed = VALID_TRANSITIONS[existing[0].status] ?? [];
   if (!allowed.includes(newStatus)) {
     return res.status(422).json({
-      error: `Cannot transition from '${current[0].status}' to '${newStatus}'`,
+      error: `Cannot transition from '${existing[0].status}' to '${newStatus}'`,
       allowedTransitions: allowed,
     });
   }
@@ -184,13 +195,35 @@ async function updatePayslipStatus(req: VercelRequest, res: VercelResponse) {
     WHERE p.id = ${req.query.id}::uuid
   `;
 
+  await logAuditEvent({
+    req,
+    userId: authReq.user?.id,
+    action: 'payslip.update',
+    tableName: 'payslips',
+    recordId: String(req.query.id),
+    oldData: existing[0],
+    newData: fullRows[0],
+  });
+
   return res.status(200).json(fullRows[0]);
 }
 
 async function deletePayslip(req: VercelRequest, res: VercelResponse) {
-  const rows = await sql`DELETE FROM payslips WHERE id = ${req.query.id}::uuid RETURNING id`;
-  if (rows.length === 0) {
+  const authReq = req as AuthenticatedRequest;
+  const existing = await sql`SELECT * FROM payslips WHERE id = ${req.query.id}::uuid`;
+  if (existing.length === 0) {
     return res.status(404).json({ error: 'Not found' });
   }
+  await sql`DELETE FROM payslips WHERE id = ${req.query.id}::uuid`;
+
+  await logAuditEvent({
+    req,
+    userId: authReq.user?.id,
+    action: 'payslip.delete',
+    tableName: 'payslips',
+    recordId: String(req.query.id),
+    oldData: existing[0],
+  });
+
   return res.status(204).end();
 }

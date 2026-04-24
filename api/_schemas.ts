@@ -326,6 +326,40 @@ export const OperatingFundSchema = z.object({
 
 export const OperatingFundUpdateSchema = OperatingFundSchema.partial();
 
+// Asset schemas
+export const AssetSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().optional().nullable(),
+  category: z.string().min(1).max(100),
+  serial_number: z.string().max(200).optional().nullable(),
+  status: z.enum(['Available', 'Borrowed', 'Under Maintenance', 'Retired']).default('Available'),
+  location: z.string().max(200).optional().nullable(),
+  purchase_date: DateLikeSchema.optional().nullable(),
+  purchase_value: z.number().nonnegative().optional().nullable(),
+  condition: z.string().max(100).optional().nullable(),
+});
+
+export const AssetUpdateSchema = AssetSchema.partial();
+
+export const AssetRequestSchema = z.object({
+  asset_id: z.string().uuid(),
+  requested_by: z.string().min(1).max(200),
+  requester_email: z.string().email().optional().or(z.literal('')).nullable(),
+  requester_department: z.string().max(200).optional().nullable(),
+  requested_take_date: DateLikeSchema.optional().nullable(),
+  approved_by: z.string().max(200).optional().nullable(),
+  approval_date: DateLikeSchema.optional().nullable(),
+  actual_take_date: DateLikeSchema.optional().nullable(),
+  expected_return_date: DateLikeSchema.optional().nullable(),
+  actual_return_date: DateLikeSchema.optional().nullable(),
+  status: z.enum(['Pending', 'Approved', 'Rejected', 'Taken', 'Returned', 'Overdue']).default('Pending'),
+  rejection_reason: z.string().optional().nullable(),
+  purpose: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+export const AssetRequestUpdateSchema = AssetRequestSchema.partial();
+
 export const PayslipSchema = z.object({
   employee_id: z.string().uuid(),
   month: z.number().int().min(1).max(12),
@@ -372,3 +406,5 @@ export type CompanyInput = z.infer<typeof CompanySchema>;
 export type UserInput = z.infer<typeof UserSchema>;
 export type OperatingFundInput = z.infer<typeof OperatingFundSchema>;
 export type PayslipInput = z.infer<typeof PayslipSchema>;
+export type AssetInput = z.infer<typeof AssetSchema>;
+export type AssetRequestInput = z.infer<typeof AssetRequestSchema>;

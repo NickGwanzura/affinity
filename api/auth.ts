@@ -239,7 +239,7 @@ async function forgotPassword(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    if (process.env.NODE_ENV === 'development' && resetRequest?.token) {
+    if (process.env.DEV_EXPOSE_RESET_TOKEN === '1' && resetRequest?.token) {
       res.status(200).json({
         message: 'If an account exists, a reset email has been sent',
         dev_token: resetRequest.token,

@@ -1,6 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
 import type { LandedCostSummary } from '../types';
+import {
+  AuthenticatedRequest,
+  verifyToken,
+  requireAccessRole,
+  requirePasswordCurrent,
+  setSecurityHeaders,
+  handleCors,
+} from './_middleware.js';
+import { checkRateLimit } from './_db.js';
 
 type SanitizedSummary = {
   vehicle_id: string;
@@ -18,13 +27,6 @@ type AiResponse = {
   source: 'gemini' | 'manual';
   generatedAt: string;
 };
-
-function setCors(res: VercelResponse) {
-  const allowedOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '*';
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-}
 
 function json(res: VercelResponse, status: number, body: unknown) {
   res.status(status).json(body);
@@ -195,10 +197,16 @@ async function generateGeminiSummary(data: SanitizedSummary[], question: string 
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  setCors(res);
+  setSecurityHeaders(res);
+  if (handleCors(req, res)) return;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  const authReq = req as AuthenticatedRequest;
+  if (!(await verifyToken(authReq, res))) return;
+  if (!requirePasswordCurrent(authReq, res)) return;
+  if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
+
+  if (!checkRateLimit(`ai:${authReq.user!.id}`, 10, 60000)) {
+    return json(res, 429, { error: 'Rate limit exceeded. Try again in a minute.' });
   }
 
   if (req.method === 'GET') {

@@ -186,12 +186,16 @@ async function updateExpense(req: VercelRequest, res: VercelResponse) {
     const existing = await sql`SELECT * FROM expenses WHERE id = ${id}::uuid`;
     if (existing.length === 0) return apiError(res, 404, 'Expense not found');
 
-    // Drivers can only update their own expenses
-    if (authReq.user?.role === 'Driver') {
-      const userRows = await sql`SELECT name FROM user_profiles WHERE id = ${authReq.user.id}::uuid LIMIT 1`;
+    // Ownership check: admins bypass; everyone else may only modify expenses
+    // attributed to their own profile name (driver_name). This replaces the
+    // drift-prone legacy `role === 'Driver'` label comparison.
+    const isAdmin =
+      authReq.user?.accessRole === 'super_admin' || authReq.user?.accessRole === 'admin';
+    if (!isAdmin) {
+      const userRows = await sql`SELECT name FROM user_profiles WHERE id = ${authReq.user!.id}::uuid LIMIT 1`;
       const userName = userRows[0]?.name;
       if (!userName || existing[0].driver_name !== userName) {
-        return res.status(403).json({ error: 'Drivers can only update their own expenses' });
+        return res.status(403).json({ error: 'You can only update your own expenses' });
       }
     }
 

@@ -9,6 +9,7 @@ import {
   apiError,
 } from './_middleware.js';
 import { sql, validateOrderColumn } from './_db.js';
+import { logAuditEvent } from './_audit.js';
 import {
   VehicleSchema,
   VehicleUpdateSchema,
@@ -136,6 +137,15 @@ async function createVehicle(req: AuthenticatedRequest, res: VercelResponse) {
       RETURNING id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, reg_book_url, created_at
     `;
 
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'vehicle.create',
+      tableName: 'vehicles',
+      recordId: String(rows[0].id),
+      newData: rows[0],
+    });
+
     res.status(201).json(rows[0]);
   } catch (error) {
     if (error instanceof Error && error.message.includes('unique constraint')) {
@@ -151,9 +161,15 @@ async function updateVehicle(req: AuthenticatedRequest, res: VercelResponse) {
   try {
     const data = VehicleUpdateSchema.parse(req.body);
 
+    const existing = await sql`
+      SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, reg_book_url, created_at
+      FROM vehicles WHERE id = ${id}::uuid
+    `;
+    if (existing.length === 0) return apiError(res, 404, 'Vehicle not found');
+
     const rows = await sql`
       UPDATE vehicles
-      SET 
+      SET
         vin_number = COALESCE(${data.vin_number ?? null}, vin_number),
         reg_number = COALESCE(${data.reg_number ?? null}, reg_number),
         make_model = COALESCE(${data.make_model ?? null}, make_model),
@@ -175,6 +191,16 @@ async function updateVehicle(req: AuthenticatedRequest, res: VercelResponse) {
       return apiError(res, 404, 'Vehicle not found');
     }
 
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'vehicle.update',
+      tableName: 'vehicles',
+      recordId: String(id),
+      oldData: existing[0],
+      newData: rows[0],
+    });
+
     res.status(200).json(rows[0]);
   } catch (error) {
     apiError(res, 400, 'Invalid vehicle data', error);
@@ -184,7 +210,22 @@ async function updateVehicle(req: AuthenticatedRequest, res: VercelResponse) {
 async function deleteVehicle(req: AuthenticatedRequest, res: VercelResponse) {
   const { id } = req.query;
 
+  const existing = await sql`
+    SELECT id, vin_number, reg_number, make_model, purchase_price_gbp, status, purpose, client_id, cbca_applied, reg_book_url, created_at
+    FROM vehicles WHERE id = ${id}::uuid
+  `;
+  if (existing.length === 0) return apiError(res, 404, 'Vehicle not found');
+
   await sql`DELETE FROM vehicles WHERE id = ${id}::uuid`;
+
+  await logAuditEvent({
+    req,
+    userId: req.user?.id,
+    action: 'vehicle.delete',
+    tableName: 'vehicles',
+    recordId: String(id),
+    oldData: existing[0],
+  });
 
   res.status(204).end();
 }
@@ -259,6 +300,15 @@ async function createShipment(req: AuthenticatedRequest, res: VercelResponse) {
       RETURNING id, client_id, vehicle_id, description, origin, destination, status, shipping_date, delivery_date, created_at
     `;
 
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'shipment.create',
+      tableName: 'shipments',
+      recordId: String(rows[0].id),
+      newData: rows[0],
+    });
+
     res.status(201).json(rows[0]);
   } catch (error) {
     apiError(res, 400, 'Invalid shipment data', error);
@@ -270,6 +320,12 @@ async function updateShipment(req: AuthenticatedRequest, res: VercelResponse) {
 
   try {
     const data = ShipmentUpdateSchema.parse(req.body);
+
+    const existing = await sql`
+      SELECT id, client_id, vehicle_id, description, origin, destination, status, shipping_date, delivery_date, created_at
+      FROM shipments WHERE id = ${id}::uuid
+    `;
+    if (existing.length === 0) return apiError(res, 404, 'Shipment not found');
 
     const rows = await sql`
       UPDATE shipments
@@ -294,6 +350,16 @@ async function updateShipment(req: AuthenticatedRequest, res: VercelResponse) {
       return apiError(res, 404, 'Shipment not found');
     }
 
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'shipment.update',
+      tableName: 'shipments',
+      recordId: String(id),
+      oldData: existing[0],
+      newData: rows[0],
+    });
+
     res.status(200).json(rows[0]);
   } catch (error) {
     apiError(res, 400, 'Invalid shipment data', error);
@@ -303,7 +369,22 @@ async function updateShipment(req: AuthenticatedRequest, res: VercelResponse) {
 async function deleteShipment(req: AuthenticatedRequest, res: VercelResponse) {
   const { id } = req.query;
 
+  const existing = await sql`
+    SELECT id, client_id, vehicle_id, description, origin, destination, status, shipping_date, delivery_date, created_at
+    FROM shipments WHERE id = ${id}::uuid
+  `;
+  if (existing.length === 0) return apiError(res, 404, 'Shipment not found');
+
   await sql`DELETE FROM shipments WHERE id = ${id}::uuid`;
+
+  await logAuditEvent({
+    req,
+    userId: req.user?.id,
+    action: 'shipment.delete',
+    tableName: 'shipments',
+    recordId: String(id),
+    oldData: existing[0],
+  });
 
   res.status(204).end();
 }

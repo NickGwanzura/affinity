@@ -109,7 +109,6 @@ export async function verifyToken(req: AuthenticatedRequest, res: VercelResponse
     console.error('CRITICAL ERROR:', error);
     res.status(500).json({
       error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
     return false;
   }
@@ -178,7 +177,7 @@ export async function verifyToken(req: AuthenticatedRequest, res: VercelResponse
   } catch (error) {
     console.error('CRITICAL ERROR:', error);
     if (error instanceof Error) {
-      res.status(500).json({ error: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
+      res.status(500).json({ error: error.message });
     } else {
       res.status(500).json({ error: 'Authentication validation failed' });
     }
@@ -272,11 +271,8 @@ export function apiError(res: VercelResponse, status: number, message: string, d
 
   if (details instanceof Error) {
     payload.details = details.message;
-    if (process.env.NODE_ENV === 'development') {
-      payload.stack = details.stack;
-    }
   } else if (details !== undefined) {
-    payload.details = typeof details === 'object' ? JSON.stringify(details) : details;
+    payload.details = typeof details === 'object' ? JSON.stringify(details) : String(details);
   }
 
   res.status(status).json(payload);

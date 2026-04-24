@@ -76,14 +76,15 @@ async function createUser(req: AuthenticatedRequest, res: VercelResponse) {
     const passwordHash = await hashPassword(data.password);
     const accessRole = data.role === 'Admin' ? 'admin' : 'user';
     const rows = await sql`
-      INSERT INTO user_profiles (name, email, role, access_role, status, password_hash)
+      INSERT INTO user_profiles (name, email, role, access_role, status, password_hash, force_password_change)
       VALUES (
         ${data.name},
         ${data.email.toLowerCase()},
         ${data.role},
         ${accessRole},
         ${data.status},
-        ${passwordHash}
+        ${passwordHash},
+        true
       )
       RETURNING id, name, email, role, access_role, status, created_at
     `;

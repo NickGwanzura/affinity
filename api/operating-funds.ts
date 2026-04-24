@@ -9,7 +9,8 @@ import {
   verifyToken,
 } from './_middleware.js';
 import { sql } from './_db.js';
-import { OperatingFundSchema } from './_schemas.js';
+import { logAuditEvent } from './_audit.js';
+import { OperatingFundSchema, OperatingFundUpdateSchema } from './_schemas.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setSecurityHeaders(res);
@@ -25,10 +26,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await listFunds(req, res);
       case 'POST':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
-        return await createFund(req, res);
+        return await createFund(authReq, res);
+      case 'PUT':
+        if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
+        return await updateFund(authReq, res);
       case 'DELETE':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
-        return await deleteFund(req, res);
+        return await deleteFund(authReq, res);
       default:
         return apiError(res, 405, 'Method not allowed');
     }
@@ -55,7 +59,7 @@ async function listFunds(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json(rows);
 }
 
-async function createFund(req: VercelRequest, res: VercelResponse) {
+async function createFund(req: AuthenticatedRequest, res: VercelResponse) {
   try {
     const data = OperatingFundSchema.parse(req.body);
     const rows = await sql`
@@ -73,16 +77,82 @@ async function createFund(req: VercelRequest, res: VercelResponse) {
       RETURNING id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
     `;
 
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'operating_fund.create',
+      tableName: 'operating_funds',
+      recordId: String(rows[0].id),
+      newData: rows[0],
+    });
+
     return res.status(201).json(rows[0]);
   } catch (error) {
     return apiError(res, 400, 'Invalid operating fund data', error);
   }
 }
 
-async function deleteFund(req: VercelRequest, res: VercelResponse) {
-  const rows = await sql`DELETE FROM operating_funds WHERE id = ${req.query.id}::uuid RETURNING id`;
-  if (rows.length === 0) {
+async function updateFund(req: AuthenticatedRequest, res: VercelResponse) {
+  try {
+    const data = OperatingFundUpdateSchema.parse(req.body);
+    const id = req.query.id;
+
+    const existing = await sql`
+      SELECT id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
+      FROM operating_funds WHERE id = ${id}::uuid
+    `;
+    if (existing.length === 0) return apiError(res, 404, 'Operating fund not found');
+
+    const rows = await sql`
+      UPDATE operating_funds
+      SET
+        type = COALESCE(${data.type ?? null}, type),
+        amount = COALESCE(${data.amount ?? null}, amount),
+        currency = COALESCE(${data.currency ?? null}, currency),
+        description = COALESCE(${data.description ?? null}, description),
+        reference = COALESCE(${data.reference ?? null}, reference),
+        recipient = COALESCE(${data.recipient ?? null}, recipient),
+        approved_by = COALESCE(${data.approved_by ?? null}, approved_by),
+        date = COALESCE(${data.date ?? null}, date)
+      WHERE id = ${id}::uuid
+      RETURNING id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
+    `;
+
+    if (rows.length === 0) return apiError(res, 404, 'Operating fund not found');
+
+    await logAuditEvent({
+      req,
+      userId: req.user?.id,
+      action: 'operating_fund.update',
+      tableName: 'operating_funds',
+      recordId: String(id),
+      oldData: existing[0],
+      newData: rows[0],
+    });
+
+    return res.status(200).json(rows[0]);
+  } catch (error) {
+    return apiError(res, 400, 'Invalid operating fund update', error);
+  }
+}
+
+async function deleteFund(req: AuthenticatedRequest, res: VercelResponse) {
+  const id = req.query.id;
+  const existing = await sql`SELECT * FROM operating_funds WHERE id = ${id}::uuid`;
+  if (existing.length === 0) {
     return res.status(404).json({ error: 'Not found' });
   }
+
+  await sql`DELETE FROM operating_funds WHERE id = ${id}::uuid`;
+
+  await logAuditEvent({
+    req,
+    userId: req.user?.id,
+    action: 'operating_fund.delete',
+    tableName: 'operating_funds',
+    recordId: String(id),
+    oldData: existing[0],
+  });
+
   return res.status(204).end();
 }
