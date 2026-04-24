@@ -15,8 +15,7 @@
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,css}\"",
-    "db:migrate": "psql $NEON_DATABASE_URL -f API_SECURITY_MIGRATION.sql",
-    "db:indexes": "psql $NEON_DATABASE_URL -f PERFORMANCE_INDEXES_MIGRATION.sql"
+    "db:migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
     "@google/genai": "^1.37.0",
