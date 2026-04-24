@@ -656,6 +656,43 @@ export const api = {
       }),
   },
 
+  // Assets
+  assets: {
+    list: () => apiRequest<any[]>('/assets'),
+    get: (id: string) => apiRequest<any>(`/assets?id=${id}`),
+    create: (data: any) =>
+      apiRequest<any>('/assets', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: any) =>
+      apiRequest<any>(`/assets?id=${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      apiRequest<void>(`/assets?id=${id}`, {
+        method: 'DELETE',
+      }),
+    requests: {
+      list: () => apiRequest<any[]>('/assets/requests'),
+      create: (data: any) =>
+        apiRequest<any>('/assets/requests', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+      update: (id: string, data: any) =>
+        apiRequest<any>(`/assets/requests?id=${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+        }),
+      delete: (id: string) =>
+        apiRequest<void>(`/assets/requests?id=${id}`, {
+          method: 'DELETE',
+        }),
+    },
+  },
+
   // Generic request for future endpoints
   request: apiRequest,
 };

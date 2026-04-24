@@ -125,7 +125,7 @@ export const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({
                     value={currentPassword}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-[#D97706]"
                   />
                 </div>
 
@@ -141,7 +141,7 @@ export const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({
                     value={newPassword}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-[#D97706]"
                   />
                   <p className="text-xs text-gray-500 mt-0.5">
                     Must include uppercase, number, and special character
@@ -160,7 +160,7 @@ export const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({
                     value={confirmPassword}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                     required
-                    className={`w-full px-3 py-2 text-sm bg-white border text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${confirmPassword.length > 0 && newPassword !== confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`w-full px-3 py-2 text-sm bg-white border text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-[#D97706] ${confirmPassword.length > 0 && newPassword !== confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
                   />
                   {confirmPassword.length > 0 && newPassword !== confirmPassword && (
                     <p className="text-xs text-red-600 mt-0.5">Passwords do not match</p>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Asset, CompanyDetails, LandedCostSummary, OperatingFund, AppUser } from '../../types';
 import { dataService } from '../../services/dataService';
+import { api } from '../../services/apiClient';
 import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload, generateDriverFundsReportPDFAndDownload, generateDebtorsReportPDFAndDownload, DebtorEntry } from '../../services/pdfService';
 import { useToast } from '../Toast';
 import { Button, DriverFundsSnapshotPanel, DriverFundsSummaryPanel, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
@@ -48,11 +49,8 @@ export const ReportsTab: React.FC = () => {
         setDrivers(userData.filter((user) => user.role === 'Driver' && user.status === 'Active'));
 
         try {
-          const token = localStorage.getItem('affinity_auth_token');
-          const assetRes = await fetch('/api/assets', {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-          if (assetRes.ok) setAssets(await assetRes.json());
+          const assetData = (await api.assets.list()) as Asset[];
+          setAssets(assetData);
         } catch {
           // assets are optional for reports
         }
@@ -297,7 +295,7 @@ export const ReportsTab: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#D97706]"></div>
         <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Loading Report Data</p>
       </div>
     );
@@ -323,9 +321,9 @@ export const ReportsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-8 text-white">
+      <div className="bg-[#1C1917] p-8 text-white">
         <h3 className="text-2xl font-black mb-2">Fleet Analytics &amp; Reports</h3>
-        <p className="text-purple-100">Comprehensive insights into your logistics operations</p>
+        <p className="text-white/70">Comprehensive insights into your logistics operations</p>
       </div>
 
       {/* Filters */}
@@ -339,15 +337,15 @@ export const ReportsTab: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-semibold text-zinc-700 mb-2">Date From</label>
-            <input type="date" value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-purple-500 outline-none" style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)' }} />
+            <input type="date" value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-[#D97706] outline-none" style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)' }} />
           </div>
           <div>
             <label className="block text-sm font-semibold text-zinc-700 mb-2">Date To</label>
-            <input type="date" value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-purple-500 outline-none" style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)' }} />
+            <input type="date" value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-[#D97706] outline-none" style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)' }} />
           </div>
           <div>
             <label className="block text-sm font-semibold text-zinc-700 mb-2">Filter by Vehicle</label>
-            <select value={reportVehicleFilter} onChange={(e) => setReportVehicleFilter(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-purple-500 outline-none" style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
+            <select value={reportVehicleFilter} onChange={(e) => setReportVehicleFilter(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-[#D97706] outline-none" style={{ border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
               <option value="all">All Vehicles</option>
               {vehicles.map(v => <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>)}
             </select>
@@ -518,7 +516,7 @@ export const ReportsTab: React.FC = () => {
                 .map((summary, index) => (
                   <tr key={summary.vehicle_id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs">{index + 1}</div>
+                      <div className="w-8 h-8 bg-[#D97706] text-white flex items-center justify-center font-bold text-xs">{index + 1}</div>
                     </td>
                     <td className="px-4 py-3 font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{summary.make_model}</td>
                     <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{summary.vin_number ? `${truncateValue(summary.vin_number, 12)}...` : '-'}</td>
@@ -535,11 +533,11 @@ export const ReportsTab: React.FC = () => {
       </div>
 
       {/* Export Section */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8  text-white">
+      <div className="bg-[#1C1917] p-8 text-white">
         <div className="flex justify-between items-start mb-6">
           <div>
             <h3 className="text-xl font-bold mb-2">Export Comprehensive Reports</h3>
-            <p className="text-indigo-100">Download detailed analytics and reports for stakeholders</p>
+            <p className="text-white/70">Download detailed analytics and reports for stakeholders</p>
           </div>
           {isExporting && (
             <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm">
@@ -574,7 +572,7 @@ export const ReportsTab: React.FC = () => {
             Debtors Report PDF
           </Button>
         </div>
-        <p className="text-sm text-indigo-100 mt-4">
+        <p className="text-sm text-white/70 mt-4">
           {(reportDateFrom || reportDateTo || reportVehicleFilter !== 'all')
             ? '✓ Exports will include only filtered data'
             : 'Exports include all data across the entire fleet'}

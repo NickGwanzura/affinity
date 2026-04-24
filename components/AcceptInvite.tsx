@@ -162,7 +162,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
 
                         {error && (
                             <div className="login-shell__notice">
-                                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-md">
+                                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 text-red-800 text-sm">
                                     <span className="font-semibold shrink-0">Error:</span>
                                     <span className="flex-1">{error}</span>
                                 </div>
@@ -183,7 +183,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                                         required
                                         placeholder="At least 8 characters"
                                         autoComplete="new-password"
-                                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 rounded-md"
+                                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400"
                                     />
                                 </div>
 
@@ -199,7 +199,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                                         required
                                         placeholder="Re-enter password"
                                         autoComplete="new-password"
-                                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 rounded-md"
+                                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400"
                                     />
                                 </div>
 

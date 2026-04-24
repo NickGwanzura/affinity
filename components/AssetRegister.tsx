@@ -3,9 +3,7 @@ import { Asset, AssetRequest, AssetStatus, AssetRequestStatus } from '../types';
 import { Button, StatCard, EmptyState, StatusBadge, SkeletonTable, defaultIcons, DashboardPageHeader, DashboardSection } from './ui';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
-
-// API endpoint for assets
-const API_URL = '/api/assets';
+import { api } from '../services/apiClient';
 
 interface AssetRegisterProps {
   userRole: 'Admin' | 'Manager' | 'Accountant';
@@ -42,22 +40,10 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
   const notifySuccess = (message: string) => showToast(message, 'success');
   const notifyError = (message: string) => showToast(message, 'error');
 
-  const getAuthHeaders = (headers: Record<string, string> = {}) => {
-    const token = localStorage.getItem('affinity_auth_token');
-    return token
-      ? { ...headers, Authorization: `Bearer ${token}` }
-      : headers;
-  };
-
   // Fetch assets
   const fetchAssets = async () => {
     try {
-      const res = await fetch(API_URL, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error('Failed to fetch assets');
-      const data = await res.json();
+      const data = (await api.assets.list()) as Asset[];
       setAssets(data);
     } catch (err) {
       console.error('Error fetching assets:', err);
@@ -68,12 +54,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
   // Fetch asset requests
   const fetchRequests = async () => {
     try {
-      const res = await fetch(`${API_URL}/requests`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error('Failed to fetch requests');
-      const data = await res.json();
+      const data = (await api.assets.requests.list()) as AssetRequest[];
       setRequests(data);
     } catch (err) {
       console.error('Error fetching requests:', err);
@@ -100,24 +81,14 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
     }
 
     try {
-      const method = editingAsset ? 'PUT' : 'POST';
-      const url = editingAsset ? `${API_URL}?id=${editingAsset.id}` : API_URL;
-      
       const body = {
         ...assetForm,
         purchase_value: assetForm.purchase_value ? parseFloat(assetForm.purchase_value) : null,
       };
-
-      const res = await fetch(url, {
-        method,
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(body),
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to save asset');
+      if (editingAsset) {
+        await api.assets.update(editingAsset.id, body);
+      } else {
+        await api.assets.create(body);
       }
 
       setShowAssetModal(false);
@@ -142,19 +113,10 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
     }
 
     try {
-      const method = editingRequest ? 'PUT' : 'POST';
-      const url = editingRequest ? `${API_URL}/requests?id=${editingRequest.id}` : `${API_URL}/requests`;
-
-      const res = await fetch(url, {
-        method,
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(requestForm),
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to save request');
+      if (editingRequest) {
+        await api.assets.requests.update(editingRequest.id, requestForm);
+      } else {
+        await api.assets.requests.create(requestForm);
       }
 
       setShowRequestModal(false);
@@ -195,17 +157,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
           break;
       }
 
-      const res = await fetch(`${API_URL}/requests?id=${request.id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(updates),
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to update request');
-      }
+      await api.assets.requests.update(request.id, updates);
 
       await Promise.all([fetchAssets(), fetchRequests()]);
       notifySuccess(`Request ${action}d successfully`);
@@ -225,12 +177,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
     if (!ok) return;
 
     try {
-      const res = await fetch(`${API_URL}?id=${asset.id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to delete asset');
+      await api.assets.delete(asset.id);
       await fetchAssets();
       notifySuccess('Asset deleted');
     } catch (err: any) {
@@ -249,12 +196,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
     if (!ok) return;
 
     try {
-      const res = await fetch(`${API_URL}/requests?id=${request.id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to delete request');
+      await api.assets.requests.delete(request.id);
       await Promise.all([fetchAssets(), fetchRequests()]);
       notifySuccess('Request deleted');
     } catch (err: any) {
@@ -299,13 +241,13 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Available': return 'bg-green-100 text-green-800';
-      case 'Borrowed': return 'bg-blue-100 text-blue-800';
+      case 'Borrowed': return 'bg-[#D97706]/10 text-[#D97706]';
       case 'Under Maintenance': return 'bg-yellow-100 text-yellow-800';
       case 'Retired': return 'bg-gray-100 text-gray-800';
       case 'Pending': return 'bg-yellow-100 text-yellow-800';
-      case 'Approved': return 'bg-blue-100 text-blue-800';
+      case 'Approved': return 'bg-[#D97706]/10 text-[#D97706]';
       case 'Rejected': return 'bg-red-100 text-red-800';
-      case 'Taken': return 'bg-purple-100 text-purple-800';
+      case 'Taken': return 'bg-stone-200 text-stone-800';
       case 'Returned': return 'bg-green-100 text-green-800';
       case 'Overdue': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -349,7 +291,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard title="Total" value={totalAssets.toString()} />
         <StatCard title="Available" value={availableAssets.toString()} className="bg-green-50" />
-        <StatCard title="Borrowed" value={borrowedAssets.toString()} className="bg-blue-50" />
+        <StatCard title="Borrowed" value={borrowedAssets.toString()} className="bg-stone-50" />
         <StatCard title="Pending" value={pendingRequests.toString()} className="bg-yellow-50" />
       </div>
 
@@ -358,7 +300,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
         <select
           value={activeTab}
           onChange={(event) => setActiveTab(event.target.value as 'assets' | 'requests')}
-          className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#D97706]/20"
           aria-label="Select asset register section"
         >
           <option value="assets">Assets</option>
@@ -374,7 +316,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
             onClick={() => setActiveTab('assets')}
             className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === 'assets'
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-[#D97706] text-[#D97706]'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -384,7 +326,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
             onClick={() => setActiveTab('requests')}
             className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === 'requests'
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-[#D97706] text-[#D97706]'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -480,7 +422,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <button
                             onClick={() => handleEditAsset(asset)}
-                            className="text-blue-600 hover:text-blue-900 mr-3"
+                            className="text-[#D97706] hover:text-[#B45309] mr-3"
                           >
                             Edit
                           </button>
@@ -638,7 +580,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                         {canEdit && request.status === 'Approved' && (
                           <button
                             onClick={() => handleRequestAction(request, 'take')}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-[#D97706] hover:text-[#B45309]"
                           >
                             Mark Taken
                           </button>
@@ -646,7 +588,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                         {canEdit && request.status === 'Taken' && (
                           <button
                             onClick={() => handleRequestAction(request, 'return')}
-                            className="text-purple-600 hover:text-purple-900"
+                            className="text-stone-700 hover:text-stone-900"
                           >
                             Mark Returned
                           </button>
@@ -691,7 +633,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   type="text"
                   value={assetForm.name}
                   onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                   required
                 />
               </div>
@@ -700,7 +642,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <select
                   value={assetForm.category}
                   onChange={(e) => setAssetForm({ ...assetForm, category: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                   required
                 >
                   <option value="">Select…</option>
@@ -719,7 +661,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <textarea
                   value={assetForm.description}
                   onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                   rows={2}
                 />
               </div>
@@ -729,7 +671,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   type="text"
                   value={assetForm.serial_number}
                   onChange={(e) => setAssetForm({ ...assetForm, serial_number: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -738,7 +680,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   <select
                     value={assetForm.status}
                     onChange={(e) => setAssetForm({ ...assetForm, status: e.target.value as AssetStatus })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                   >
                     <option value="Available">Available</option>
                     <option value="Borrowed">Borrowed</option>
@@ -751,7 +693,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   <select
                     value={assetForm.condition}
                     onChange={(e) => setAssetForm({ ...assetForm, condition: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                   >
                     <option value="Excellent">Excellent</option>
                     <option value="Good">Good</option>
@@ -766,7 +708,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   type="text"
                   value={assetForm.location}
                   onChange={(e) => setAssetForm({ ...assetForm, location: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -776,7 +718,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="date"
                     value={assetForm.purchase_date}
                     onChange={(e) => setAssetForm({ ...assetForm, purchase_date: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
                   />
                 </div>
                 <div>
@@ -786,7 +728,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     step="0.01"
                     value={assetForm.purchase_value}
                     onChange={(e) => setAssetForm({ ...assetForm, purchase_value: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
                   />
                 </div>
               </div>
@@ -816,7 +758,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <select
                   value={requestForm.asset_id}
                   onChange={(e) => setRequestForm({ ...requestForm, asset_id: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                   required
                   disabled={!!editingRequest}
                 >
@@ -834,7 +776,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                   type="text"
                   value={requestForm.requested_by}
                   onChange={(e) => setRequestForm({ ...requestForm, requested_by: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                   required
                 />
               </div>
@@ -845,7 +787,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="email"
                     value={requestForm.requester_email}
                     onChange={(e) => setRequestForm({ ...requestForm, requester_email: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
                   />
                 </div>
                 <div>
@@ -854,7 +796,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="text"
                     value={requestForm.requester_department}
                     onChange={(e) => setRequestForm({ ...requestForm, requester_department: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
                   />
                 </div>
               </div>
@@ -865,7 +807,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="date"
                     value={requestForm.requested_take_date}
                     onChange={(e) => setRequestForm({ ...requestForm, requested_take_date: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
                   />
                 </div>
                 <div>
@@ -874,7 +816,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                     type="date"
                     value={requestForm.expected_return_date}
                     onChange={(e) => setRequestForm({ ...requestForm, expected_return_date: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
                   />
                 </div>
               </div>
@@ -883,7 +825,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <textarea
                   value={requestForm.purpose}
                   onChange={(e) => setRequestForm({ ...requestForm, purpose: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
                   rows={2}
                 />
               </div>
@@ -892,7 +834,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                 <textarea
                   value={requestForm.notes}
                   onChange={(e) => setRequestForm({ ...requestForm, notes: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
                   rows={2}
                 />
               </div>

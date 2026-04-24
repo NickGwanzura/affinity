@@ -195,7 +195,7 @@ export const UpdateCenter: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <ToastContainer />
 
       <DashboardPageHeader
@@ -247,7 +247,7 @@ export const UpdateCenter: React.FC = () => {
       )}
 
       {activeTab === 'templates' && (
-        <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="bg-white border overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
@@ -280,7 +280,7 @@ export const UpdateCenter: React.FC = () => {
                   <tr key={template.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium">{template.name}</td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                      <span className="px-2 py-1 bg-stone-100 text-stone-700 text-xs">
                         {template.type}
                       </span>
                     </td>
@@ -314,7 +314,7 @@ export const UpdateCenter: React.FC = () => {
       )}
 
       {activeTab === 'queue' && (
-        <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="bg-white border overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
@@ -382,7 +382,7 @@ export const UpdateCenter: React.FC = () => {
 
       {showTemplateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">
               {editingTemplate ? 'Edit Template' : 'New Template'}
             </h2>
@@ -394,7 +394,7 @@ export const UpdateCenter: React.FC = () => {
                   value={templateForm.name}
                   onChange={e => setTemplateForm({ ...templateForm, name: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                   placeholder="e.g. Monthly Statement"
                 />
               </div>
@@ -403,7 +403,7 @@ export const UpdateCenter: React.FC = () => {
                 <select
                   value={templateForm.type}
                   onChange={e => setTemplateForm({ ...templateForm, type: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                 >
                   {templateTypes.map(t => (
                     <option key={t.value} value={t.value}>
@@ -419,7 +419,7 @@ export const UpdateCenter: React.FC = () => {
                   value={templateForm.subject}
                   onChange={e => setTemplateForm({ ...templateForm, subject: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                   placeholder="e.g. Your Monthly Statement from Affinity Logistics"
                 />
               </div>
@@ -430,7 +430,7 @@ export const UpdateCenter: React.FC = () => {
                   onChange={e => setTemplateForm({ ...templateForm, body: e.target.value })}
                   required
                   rows={10}
-                  className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                  className="w-full px-3 py-2 border font-mono text-sm"
                   placeholder="<html>...</html>"
                 />
               </div>
@@ -454,7 +454,7 @@ export const UpdateCenter: React.FC = () => {
 
       {showSendModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Send Email</h2>
             <form onSubmit={handleSendEmail} className="space-y-4">
               <div>
@@ -462,7 +462,7 @@ export const UpdateCenter: React.FC = () => {
                 <select
                   value={sendForm.template_id}
                   onChange={e => loadTemplate(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                 >
                   <option value="">No template</option>
                   {templates
@@ -479,7 +479,7 @@ export const UpdateCenter: React.FC = () => {
                 <select
                   value=""
                   onChange={e => selectClient(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                 >
                   <option value="">Select client</option>
                   {clients.map(c => (
@@ -496,7 +496,7 @@ export const UpdateCenter: React.FC = () => {
                   value={sendForm.to_email}
                   onChange={e => setSendForm({ ...sendForm, to_email: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                   placeholder="client@example.com"
                 />
               </div>
@@ -506,7 +506,7 @@ export const UpdateCenter: React.FC = () => {
                   type="text"
                   value={sendForm.to_name}
                   onChange={e => setSendForm({ ...sendForm, to_name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                   placeholder="Client Name"
                 />
               </div>
@@ -517,7 +517,7 @@ export const UpdateCenter: React.FC = () => {
                   value={sendForm.subject}
                   onChange={e => setSendForm({ ...sendForm, subject: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                 />
               </div>
               <div>
@@ -527,7 +527,7 @@ export const UpdateCenter: React.FC = () => {
                   onChange={e => setSendForm({ ...sendForm, body: e.target.value })}
                   required
                   rows={8}
-                  className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                  className="w-full px-3 py-2 border font-mono text-sm"
                 />
               </div>
               <div className="flex gap-3 pt-4">

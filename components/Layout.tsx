@@ -59,9 +59,9 @@ const navItems: {
 ];
 
 const roleTagClass: Record<UserRole, string> = {
-  Admin: 'bg-purple-100 text-purple-800',
-  Manager: 'bg-blue-100 text-blue-800',
-  Accountant: 'bg-teal-100 text-teal-800',
+  Admin: 'bg-stone-200 text-stone-800',
+  Manager: 'bg-amber-100 text-amber-800',
+  Accountant: 'bg-stone-100 text-stone-700',
   Driver: 'bg-gray-100 text-gray-800',
 };
 

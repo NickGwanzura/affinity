@@ -107,29 +107,25 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-sans">
       {/* Left Column: Visual */}
-      <div className="md:w-1/2 bg-blue-900 relative flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-800 via-blue-900 to-slate-900"></div>
-        </div>
-        
+      <div className="md:w-1/2 bg-[#1C1917] relative flex items-center justify-center overflow-hidden">
         <div className="relative z-10 px-12 py-24 text-white max-w-xl">
           <div className="flex items-center gap-3 mb-12">
             <div className="w-12 h-12 bg-white flex items-center justify-center shadow-2xl">
-              <svg className="w-8 h-8 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-[#1C1917]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
               <h1 className="text-3xl font-black tracking-tighter leading-none">AFFINITY</h1>
-              <p className="text-xs font-bold tracking-[0.3em] text-blue-300 uppercase">Operations Engine</p>
+              <p className="text-xs font-bold tracking-[0.3em] text-white/70 uppercase">Operations Engine</p>
             </div>
           </div>
-          
+
           <h2 className="text-4xl font-black leading-tight mb-6">
             Reset Your<br />
-            <span className="text-blue-400">Password</span>
+            <span className="text-[#D97706]">Password</span>
           </h2>
-          <p className="text-lg text-blue-100 font-medium">
+          <p className="text-lg text-white/70 font-medium">
             Create a new secure password for your account.
           </p>
         </div>
@@ -178,7 +174,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
                   value={manualToken}
                   onChange={(e) => setManualToken(e.target.value)}
                   placeholder="Paste your reset token here"
-                  className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium font-mono text-sm"
+                  className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-amber-100 focus:border-[#D97706] outline-none transition-all font-medium font-mono text-sm"
                 />
                 <p className="text-xs text-zinc-500 mt-1">
                   Copy the token from your reset email and paste it here.
@@ -200,7 +196,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
                   required
                   autoComplete="new-password"
                   placeholder="••••••••"
-                  className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium pr-12"
+                  className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-amber-100 focus:border-[#D97706] outline-none transition-all font-medium pr-12"
                 />
                 <button
                   type="button"
@@ -252,7 +248,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
                   required
                   autoComplete="new-password"
                   placeholder="••••••••"
-                  className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium pr-12"
+                  className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-amber-100 focus:border-[#D97706] outline-none transition-all font-medium pr-12"
                 />
                 <button
                   type="button"
@@ -288,7 +284,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
             <button
               type="submit"
               disabled={loading || validationErrors.length > 0 || newPassword !== confirmPassword}
-              className="w-full bg-blue-600 text-white font-black py-5  shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#D97706] text-white font-black py-5 shadow-xl hover:bg-[#B45309] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/20 border-t-white  animate-spin"></div>

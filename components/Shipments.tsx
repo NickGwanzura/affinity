@@ -22,7 +22,7 @@ interface Shipment {
 
 const statusColors: Record<string, string> = {
   Pending: 'bg-yellow-100 text-yellow-800',
-  'In Transit': 'bg-blue-100 text-blue-800',
+  'In Transit': 'bg-[#D97706]/10 text-[#D97706]',
   Delivered: 'bg-green-100 text-green-800',
   Cancelled: 'bg-red-100 text-red-800',
 };
@@ -161,7 +161,7 @@ export const Shipments: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <ToastContainer />
       <ConfirmDialog />
 
@@ -263,7 +263,7 @@ export const Shipments: React.FC = () => {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">
               {editingShipment ? 'Edit Shipment' : 'New Shipment'}
             </h2>
@@ -274,7 +274,7 @@ export const Shipments: React.FC = () => {
                   value={form.client_id}
                   onChange={e => setForm({ ...form, client_id: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                 >
                   <option value="">Select client</option>
                   {clients.map(c => (
@@ -289,7 +289,7 @@ export const Shipments: React.FC = () => {
                 <select
                   value={form.vehicle_id}
                   onChange={e => setForm({ ...form, vehicle_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                 >
                   <option value="">No vehicle</option>
                   {vehicles.map(v => (
@@ -306,7 +306,7 @@ export const Shipments: React.FC = () => {
                   value={form.description}
                   onChange={e => setForm({ ...form, description: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                   placeholder="e.g. Toyota Land Cruiser V8"
                 />
               </div>
@@ -318,7 +318,7 @@ export const Shipments: React.FC = () => {
                     value={form.origin}
                     onChange={e => setForm({ ...form, origin: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border"
                     placeholder="e.g. UK"
                   />
                 </div>
@@ -329,7 +329,7 @@ export const Shipments: React.FC = () => {
                     value={form.destination}
                     onChange={e => setForm({ ...form, destination: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border"
                     placeholder="e.g. Namibia"
                   />
                 </div>
@@ -339,7 +339,7 @@ export const Shipments: React.FC = () => {
                 <select
                   value={form.status}
                   onChange={e => setForm({ ...form, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border"
                 >
                   <option value="Pending">Pending</option>
                   <option value="In Transit">In Transit</option>
@@ -354,7 +354,7 @@ export const Shipments: React.FC = () => {
                     type="date"
                     value={form.shipping_date}
                     onChange={e => setForm({ ...form, shipping_date: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border"
                   />
                 </div>
                 <div>
@@ -363,7 +363,7 @@ export const Shipments: React.FC = () => {
                     type="date"
                     value={form.delivery_date}
                     onChange={e => setForm({ ...form, delivery_date: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border"
                   />
                 </div>
               </div>
