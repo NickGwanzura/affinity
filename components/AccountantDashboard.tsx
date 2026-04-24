@@ -18,6 +18,7 @@ import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/O
 import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from './shared/PayslipFormModal';
 import PayslipsListView from './shared/PayslipsListView';
 import { dataService } from '../services/dataService';
+import { useSession } from '../contexts/SessionContext';
 import { EXCHANGE_RATES } from '../constants';
 import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
 import { Plus, FileText, DollarSign, Wallet, LineChart, Clock, Receipt } from 'lucide-react';
@@ -52,8 +53,9 @@ export const AccountantDashboard: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'expenses' | 'payments' | 'reports' | 'clients' | 'payslips' | 'operating-funds' | 'expense-reports' | 'assets'>('overview');
-  const [userRole, setUserRole] = useState<UserRole>('Accountant');
-  const [userName, setUserName] = useState<string>('');
+  const session = useSession();
+  const userRole: UserRole = session?.user?.role ?? 'Accountant';
+  const userName: string = session?.user?.name ?? '';
   const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundForm, setFundForm] = useState<{ type: OperatingFundType; amount: string; currency: Currency; description: string; reference: string; recipient: string; approved_by: string; date: string }>({
@@ -219,15 +221,6 @@ export const AccountantDashboard: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // Get current user role
-    dataService.getSession().then(session => {
-      if (session?.user?.role) {
-        setUserRole(session.user.role);
-      }
-      if (session?.user?.name) {
-        setUserName(session.user.name);
-      }
-    }).catch((err: unknown) => console.error('[AccountantDashboard] getSession failed:', err));
   }, []);
 
   const totalRevenue = invoices

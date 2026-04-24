@@ -8,6 +8,7 @@ import { Layout, AppView } from './components/Layout';
 import { ToastViewport } from './components/Toast';
 import { AuthSession } from './types';
 import { authService } from './services/authService';
+import { SessionProvider } from './contexts/SessionContext';
 
 const AdminDashboard = lazy(() =>
   import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard }))
@@ -166,6 +167,23 @@ export default function App() {
     navigate('/login', true);
   };
 
+  const refreshSession = async (): Promise<AuthSession | null> => {
+    try {
+      const s = await authService.getSession();
+      setSession(s);
+      return s;
+    } catch (error) {
+      console.error('Error refreshing session:', error);
+      return null;
+    }
+  };
+
+  const clearSession = () => {
+    setSession(null);
+    setForcePasswordChange(false);
+    navigate('/login', true);
+  };
+
   const renderCurrentView = () => {
     switch (currentView) {
       case 'admin':
@@ -242,14 +260,20 @@ export default function App() {
     }
   } else {
     content = (
-      <Layout
-        currentView={currentView}
-        onNavigate={setCurrentView}
-        user={session.user}
-        onLogout={handleLogout}
+      <SessionProvider
+        session={session}
+        refreshSession={refreshSession}
+        clearSession={clearSession}
       >
-        <Suspense fallback={<ScreenLoader />}>{renderCurrentView()}</Suspense>
-      </Layout>
+        <Layout
+          currentView={currentView}
+          onNavigate={setCurrentView}
+          user={session.user}
+          onLogout={handleLogout}
+        >
+          <Suspense fallback={<ScreenLoader />}>{renderCurrentView()}</Suspense>
+        </Layout>
+      </SessionProvider>
     );
   }
 

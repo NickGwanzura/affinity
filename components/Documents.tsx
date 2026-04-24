@@ -2,17 +2,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Expense, Vehicle, CompanyDetails, UserRole } from '../types';
 import { dataService } from '../services/dataService';
+import { useSession } from '../contexts/SessionContext';
 import { generateVehicleStatementPDFAndDownload } from '../services/pdfService';
 import { useToast } from '../components/Toast';
 import { getDriverIdentityAliases } from '../utils/driverIdentity';
 import { DashboardPageHeader, DashboardSection } from './ui';
 
 export const Documents: React.FC = () => {
+  const session = useSession();
   const [activeTab, setActiveTab] = useState<'receipts' | 'statements'>('receipts');
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [company, setCompany] = useState<CompanyDetails | null>(null);
-  const [viewerRole, setViewerRole] = useState<UserRole | null>(null);
+  const viewerRole: UserRole | null = session?.user?.role ?? null;
   const [loading, setLoading] = useState(true);
   const [selectedReceipt, setSelectedReceipt] = useState<Expense | null>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
@@ -31,9 +33,7 @@ export const Documents: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const session = await dataService.getSession();
         const role = session?.user?.role || null;
-        setViewerRole(role);
 
         const driverAliases = role === 'Driver' ? getDriverIdentityAliases(session?.user) : [];
 

@@ -24,6 +24,7 @@ import {
 } from '../types';
 import { dataService } from '../services/dataService';
 import { authService } from '../services/authService';
+import { useSession } from '../contexts/SessionContext';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 import {
@@ -40,6 +41,7 @@ import ForensicLogPanel from './shared/ForensicLogPanel';
 export const Settings: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
   const { confirm, ConfirmDialog } = useConfirm();
+  const session = useSession();
   const [activeTab, setActiveTab] = useState<
     'company' | 'users' | 'forensics' | 'clients' | 'requests' | 'invites'
   >('company');
@@ -303,12 +305,11 @@ export const Settings: React.FC = () => {
     e.preventDefault();
     try {
       inviteFormSchema.parse(inviteForm);
-      const currentUser = await dataService.getSession();
       const invite = await dataService.createInvite(
         inviteForm.email,
         inviteForm.role,
         inviteForm.name,
-        currentUser?.user?.email || 'admin'
+        session?.user?.email || 'admin'
       );
       setInvites([...invites, invite]);
       setShowInviteModal(false);
@@ -365,8 +366,7 @@ export const Settings: React.FC = () => {
 
   const handleApproveRequest = async (requestId: string) => {
     try {
-      const currentUser = await dataService.getSession();
-      await dataService.approveRegistrationRequest(requestId, currentUser?.user?.id || 'admin');
+      await dataService.approveRegistrationRequest(requestId, session?.user?.id || 'admin');
 
       // Refresh the lists
       const [updatedRequests, updatedUsers, updatedInvites] = await Promise.all([
@@ -391,8 +391,7 @@ export const Settings: React.FC = () => {
 
   const handleRejectRequest = async (requestId: string) => {
     try {
-      const currentUser = await dataService.getSession();
-      await dataService.rejectRegistrationRequest(requestId, currentUser?.user?.id || 'admin');
+      await dataService.rejectRegistrationRequest(requestId, session?.user?.id || 'admin');
 
       const updatedRequests = await dataService.getRegistrationRequests();
       setRegistrationRequests(updatedRequests);

@@ -3,6 +3,7 @@ import { Loader2, Route, CheckCircle2, Wallet } from 'lucide-react';
 import { Currency, Expense, ExpenseCategory, OperatingFund, Trip, Vehicle, VehicleStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
 import { dataService } from '../services/dataService';
+import { useSession } from '../contexts/SessionContext';
 import {
   Button,
   StatCard,
@@ -62,6 +63,7 @@ const formatCurrencyBreakdown = (totals: CurrencyTotals): string =>
 
 export const DriverPortal: React.FC = () => {
   const { showToast } = useToast();
+  const session = useSession();
   const [currentDriver, setCurrentDriver] = useState('');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [driverExpenses, setDriverExpenses] = useState<Expense[]>([]);
@@ -97,7 +99,6 @@ export const DriverPortal: React.FC = () => {
       setLoading(true);
       setUploadError('');
 
-      const session = await dataService.getSession();
       const driverAliases = getDriverIdentityAliases(session?.user);
       const driverName = session?.user?.name?.trim() || driverAliases[0];
 

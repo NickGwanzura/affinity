@@ -28,6 +28,7 @@ import {
   Invoice,
 } from '../types';
 import { dataService } from '../services/dataService';
+import { useSession } from '../contexts/SessionContext';
 import { AssetRegister } from './AssetRegister';
 import {
   generateDriverFundsReportPDFAndDownload,
@@ -95,8 +96,9 @@ export const AdminDashboard: React.FC = () => {
   const [activeView, setActiveView] = useState<
     'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'trips' | 'assets'
   >('dashboard');
-  const [userRole, setUserRole] = useState<UserRole>('Admin');
-  const [userName, setUserName] = useState<string>('');
+  const session = useSession();
+  const userRole: UserRole = session?.user?.role ?? 'Admin';
+  const userName: string = session?.user?.name ?? '';
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
@@ -295,18 +297,6 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-    // Get current user role
-    dataService
-      .getSession()
-      .then(session => {
-        if (session?.user?.role) {
-          setUserRole(session.user.role);
-        }
-        if (session?.user?.name) {
-          setUserName(session.user.name);
-        }
-      })
-      .catch((err: unknown) => console.error('[AdminDashboard] getSession failed:', err));
   }, []);
 
   const handleSaveVehicle = async (e: React.FormEvent) => {
