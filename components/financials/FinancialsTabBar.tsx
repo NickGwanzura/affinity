@@ -51,7 +51,7 @@ export const FinancialsTabBar: React.FC<FinancialsTabBarProps> = ({
               onClick={() => onChange(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                 isActive
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-[#D97706] text-[#D97706]'
                   : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
               }`}
             >

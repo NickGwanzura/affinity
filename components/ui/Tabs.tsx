@@ -68,9 +68,9 @@ export const Tab: React.FC<TabProps> = ({ children, disabled, className = '', in
       aria-selected={isActive}
       disabled={disabled}
       onClick={() => !disabled && ctx.setSelected(index)}
-      className={`px-4 py-3 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 disabled:opacity-50 ${
+      className={`px-4 py-3 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#D97706] disabled:opacity-50 ${
         isActive
-          ? 'border-blue-600 text-blue-600 font-semibold'
+          ? 'border-[#D97706] text-[#D97706] font-semibold'
           : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
       } ${className}`}
     >

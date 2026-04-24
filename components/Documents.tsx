@@ -113,7 +113,7 @@ export const Documents: React.FC = () => {
   if (loading) return <div className="p-20 text-center text-zinc-400">Loading Document Center...</div>;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <DashboardPageHeader
         title="Documents"
         subtitle={
@@ -128,7 +128,7 @@ export const Documents: React.FC = () => {
           onClick={() => setActiveTab('receipts')}
           aria-label="View Digital Receipts"
           aria-pressed={activeTab === 'receipts'}
-          className={`min-h-[44px] flex-1 px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'receipts' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
+          className={`min-h-[44px] flex-1 px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'receipts' ? 'bg-white text-[#D97706] shadow-sm' : 'text-zinc-400'}`}
         >
           Digital Receipts
         </button>
@@ -136,7 +136,7 @@ export const Documents: React.FC = () => {
           onClick={() => setActiveTab('statements')}
           aria-label="View Fleet Statements"
           aria-pressed={activeTab === 'statements'}
-          className={`min-h-[44px] flex-1 px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'statements' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}
+          className={`min-h-[44px] flex-1 px-4 py-2 text-xs font-black uppercase tracking-widest transition-all sm:flex-none sm:px-8 ${activeTab === 'statements' ? 'bg-white text-[#D97706] shadow-sm' : 'text-zinc-400'}`}
         >
           Fleet Statements
         </button>
@@ -157,7 +157,7 @@ export const Documents: React.FC = () => {
             </div>
           ) : (
             expenses.map((exp) => (
-              <div key={exp.id} onClick={() => viewReceiptDetails(exp)} className="bg-white overflow-hidden border border-zinc-200 shadow-sm group cursor-pointer hover:border-blue-300 transition-all">
+              <div key={exp.id} onClick={() => viewReceiptDetails(exp)} className="bg-white overflow-hidden border border-zinc-200 shadow-sm group cursor-pointer hover:border-[#D97706] transition-all">
                 <div className="aspect-[3/4] bg-zinc-100 relative overflow-hidden flex items-center justify-center">
                   {exp.receipt_url ? (
                     failedImages.has(exp.id) ? (
@@ -195,7 +195,7 @@ export const Documents: React.FC = () => {
                   </div>
                 </div>
                 <div className="p-4 bg-white">
-                  <p className="text-xs font-black text-blue-600 uppercase tracking-widest mb-1">{exp.category}</p>
+                  <p className="text-xs font-black text-[#D97706] uppercase tracking-widest mb-1">{exp.category}</p>
                   <p className="text-sm font-bold text-zinc-900 truncate">{exp.description}</p>
                   <div className="flex justify-between items-center mt-2">
                     <span className="text-xs font-black text-zinc-400">{new Date(exp.created_at).toLocaleDateString()}</span>
@@ -252,10 +252,10 @@ export const Documents: React.FC = () => {
             </div>
           ) : (
             vehicleData.map(({ vehicle: v, expenses: vehicleExpenses, totalExpenses }) => (
-              <div key={v.id} className="bg-white p-8 border border-zinc-200 shadow-sm group hover:shadow-xl hover:shadow-blue-50 transition-all">
+              <div key={v.id} className="bg-white p-8 border border-zinc-200 shadow-sm group hover:shadow-xl hover:shadow-stone-100 transition-all">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                    <div className="w-14 h-14 bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-amber-50 group-hover:text-[#D97706] transition-colors">
                       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeWidth="2.5" /></svg>
                     </div>
                     <div>
@@ -279,7 +279,7 @@ export const Documents: React.FC = () => {
                 <button 
                   onClick={() => generateVehicleStatement(v)}
                   aria-label={`Generate statement for ${v.make_model}`}
-                  className="bg-zinc-900 text-white px-5 py-2.5 font-black text-xs uppercase tracking-widest shadow-lg hover:bg-blue-600 transition-all w-full"
+                  className="bg-zinc-900 text-white px-5 py-2.5 font-black text-xs uppercase tracking-widest shadow-lg hover:bg-[#B45309] transition-all w-full"
                 >
                   Generate Statement
                 </button>
@@ -339,7 +339,7 @@ export const Documents: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">USD Equivalent</label>
-                  <p className="text-xl font-black text-blue-600 mt-1">${(selectedReceipt.amount * selectedReceipt.exchange_rate_to_usd).toLocaleString(undefined, {maximumFractionDigits: 2})}</p>
+                  <p className="text-xl font-black text-[#D97706] mt-1">${(selectedReceipt.amount * selectedReceipt.exchange_rate_to_usd).toLocaleString(undefined, {maximumFractionDigits: 2})}</p>
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Date</label>
@@ -375,10 +375,10 @@ export const Documents: React.FC = () => {
                 </div>
               )}
               
-              <div className="bg-blue-50 border border-blue-200 p-4 mt-6">
-                <p className="text-xs font-semibold text-blue-900 mb-2">✓ Audit Trail</p>
-                <p className="text-sm text-blue-800">Created: {new Date(selectedReceipt.created_at).toLocaleString()}</p>
-                <p className="text-sm text-blue-800">Vehicle ID: {selectedReceipt.vehicle_id}</p>
+              <div className="bg-amber-50 border border-amber-200 p-4 mt-6">
+                <p className="text-xs font-semibold text-amber-900 mb-2">✓ Audit Trail</p>
+                <p className="text-sm text-amber-800">Created: {new Date(selectedReceipt.created_at).toLocaleString()}</p>
+                <p className="text-sm text-amber-800">Vehicle ID: {selectedReceipt.vehicle_id}</p>
               </div>
             </div>
             
@@ -396,7 +396,7 @@ export const Documents: React.FC = () => {
                   target="_blank" 
                   rel="noopener noreferrer" 
                   aria-label="Open receipt in new tab"
-                  className="flex-1 px-4 py-3 font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 text-center"
+                  className="flex-1 px-4 py-3 font-bold text-sm bg-[#D97706] text-white hover:bg-[#B45309] text-center"
                 >
                   Open Receipt
                 </a>
