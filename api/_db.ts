@@ -7,6 +7,8 @@
 
 import { neon, neonConfig, NeonQueryFunction, Pool } from '@neondatabase/serverless';
 import ws from 'ws';
+import { logger } from './_logger.js';
+import { captureException } from './_sentry.js';
 
 // Required for Node.js environments (Railway, local server).
 // Neon's serverless driver uses WebSockets for Pool connections;
@@ -52,7 +54,8 @@ export async function checkConnection(): Promise<boolean> {
     const result = await sql`SELECT 1 as health_check, NOW() as server_time`;
     return Array.isArray(result) && result.length > 0;
   } catch (error) {
-    console.error('[DB] Connection check failed:', error);
+    logger.error({ err: error }, '[DB] Connection check failed');
+    captureException(error, { stage: 'db.checkConnection' });
     return false;
   }
 }
@@ -140,6 +143,8 @@ export async function withTransaction<T>(
     await client.query('COMMIT');
     return result;
   } catch (error) {
+    logger.error({ err: error }, '[DB] Transaction rolled back');
+    captureException(error, { stage: 'db.withTransaction' });
     await client.query('ROLLBACK');
     throw error;
   } finally {

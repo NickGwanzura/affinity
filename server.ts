@@ -7,6 +7,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 config();
 
+import { initSentry, Sentry } from './api/_sentry.js';
+import { logger } from './api/_logger.js';
+
+// Initialise Sentry before any request handling so cold starts capture
+// init-time errors. No-op when SENTRY_DSN is unset.
+initSentry();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -121,6 +128,12 @@ app.get('/{*splat}', (req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
+// Sentry error handler — must be registered after all routes. No-op when
+// SENTRY_DSN is unset.
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
+
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info({ port: PORT }, `Server running on port ${PORT}`);
 });
