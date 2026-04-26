@@ -3,6 +3,7 @@ import { authService } from '../services/authService';
 import { useToast } from './Toast';
 import { getFirstValidationMessage, passwordResetFormSchema } from '../utils/clientValidation';
 import { ZodError } from 'zod';
+import affinityLogo from '../assets/affinity-logo.svg';
 
 interface ResetPasswordProps {
   onComplete: () => void;
@@ -40,21 +41,21 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
 
     // Get token from URL or manual input
     let token = manualToken.trim();
-    
+
     if (!token) {
       // Try to extract from URL (hash or query params)
       const hash = window.location.hash;
       const search = window.location.search;
       const fullUrl = hash + search;
-      
+
       // Try multiple token formats
-      const tokenMatch = fullUrl.match(/[?&]token=([^&]+)/) || 
+      const tokenMatch = fullUrl.match(/[?&]token=([^&]+)/) ||
                          fullUrl.match(/[?&]access_token=([^&]+)/) ||
                          fullUrl.match(/token[:=]([^&]+)/i);
       token = tokenMatch ? tokenMatch[1] : '';
-      
+
     }
-    
+
     if (!token) {
       const message = 'Invalid or missing reset token. Please check your email link or enter the token manually below.';
       setError(message);
@@ -63,7 +64,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
       setLoading(false);
       return;
     }
-    
+
     try {
       passwordResetFormSchema.parse({ token, newPassword, confirmPassword });
       await authService.updatePassword(token, newPassword);
@@ -105,199 +106,207 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row font-sans">
-      {/* Left Column: Visual */}
-      <div className="md:w-1/2 bg-[#1C1917] relative flex items-center justify-center overflow-hidden">
-        <div className="relative z-10 px-12 py-24 text-white max-w-xl">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-12 h-12 bg-white flex items-center justify-center shadow-2xl">
-              <svg className="w-8 h-8 text-[#1C1917]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-3xl font-black tracking-tighter leading-none">AFFINITY</h1>
-              <p className="text-xs font-bold tracking-[0.3em] text-white/70 uppercase">Operations Engine</p>
-            </div>
+    <div className="login-shell">
+      <div className="login-shell__brand">
+        <div className="login-shell__brand-grid" />
+
+        <div className="login-shell__brand-content">
+          <div className="login-shell__brand-lockup">
+            <img
+              src={affinityLogo}
+              alt="Affinity Logistics"
+              className="login-shell__logo-image"
+            />
           </div>
 
-          <h2 className="text-4xl font-black leading-tight mb-6">
-            Reset Your<br />
-            <span className="text-[#D97706]">Password</span>
+          <h2 className="login-shell__headline">
+            Reset your
+            <br />
+            <strong>Password.</strong>
           </h2>
-          <p className="text-lg text-white/70 font-medium">
-            Create a new secure password for your account.
+          <p className="login-shell__headline-copy">
+            Create a new secure password to regain access to the Affinity logistics workspace.
           </p>
         </div>
       </div>
 
-      {/* Right Column: Reset Form */}
-      <div className="md:w-1/2 bg-white flex items-center justify-center p-8">
-        <div className="max-w-md w-full">
-          <div className="mb-10">
-            <h3 className="text-3xl font-black text-zinc-900 mb-2">Create New Password</h3>
-            <p className="text-zinc-500 font-medium">
-              Enter a new password for your account.
-            </p>
+      <div className="login-shell__panel">
+        <div className="login-shell__panel-inner">
+          <div className="login-shell__mobile-brand">
+            <div className="login-shell__mobile-brand-row">
+              <div className="login-shell__mobile-copy">
+                <h2 className="login-shell__mobile-title">Reset your password.</h2>
+              </div>
+              <span style={{ color: '#fff', fontWeight: 600, fontSize: '0.75rem' }}>AL</span>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-4 border border-red-100 text-sm font-bold" role="alert">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {error}
+          <div className="login-shell__card">
+            <div className="login-shell__intro">
+              <h3 className="login-shell__title">Create new password</h3>
+              <p className="login-shell__description">
+                Enter a new password for your account. Make it strong and unique.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="bg-red-50 text-red-600 p-4 border border-red-100 text-sm font-bold" role="alert">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {error}
+                  </div>
+                  {!showManualInput && (
+                    <button
+                      type="button"
+                      onClick={() => setShowManualInput(true)}
+                      className="text-xs underline hover:text-red-800"
+                    >
+                      Enter token manually
+                    </button>
+                  )}
                 </div>
-                {!showManualInput && (
+              )}
+
+              {/* Manual Token Input */}
+              {showManualInput && (
+                <div className="space-y-1">
+                  <label htmlFor="reset-token" className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">
+                    Reset Token (from email)
+                  </label>
+                  <input
+                    id="reset-token"
+                    type="text"
+                    value={manualToken}
+                    onChange={(e) => setManualToken(e.target.value)}
+                    placeholder="Paste your reset token here"
+                    className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-amber-100 focus:border-[#D97706] outline-none transition-all font-medium font-mono text-sm"
+                  />
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Copy the token from your reset email and paste it here.
+                  </p>
+                </div>
+              )}
+
+              {/* New Password */}
+              <div className="space-y-1">
+                <label htmlFor="new-password" className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">
+                  New Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="new-password"
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-amber-100 focus:border-[#D97706] outline-none transition-all font-medium pr-12"
+                  />
                   <button
                     type="button"
-                    onClick={() => setShowManualInput(true)}
-                    className="text-xs underline hover:text-red-800"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                    aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                    tabIndex={-1}
                   >
-                    Enter token manually
+                    {showNewPassword ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
                   </button>
-                )}
+                </div>
               </div>
-            )}
 
-            {/* Manual Token Input */}
-            {showManualInput && (
-              <div className="space-y-1">
-                <label htmlFor="reset-token" className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">
-                  Reset Token (from email)
-                </label>
-                <input
-                  id="reset-token"
-                  type="text"
-                  value={manualToken}
-                  onChange={(e) => setManualToken(e.target.value)}
-                  placeholder="Paste your reset token here"
-                  className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-amber-100 focus:border-[#D97706] outline-none transition-all font-medium font-mono text-sm"
-                />
-                <p className="text-xs text-zinc-500 mt-1">
-                  Copy the token from your reset email and paste it here.
-                </p>
-              </div>
-            )}
-
-            {/* New Password */}
-            <div className="space-y-1">
-              <label htmlFor="new-password" className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">
-                New Password
-              </label>
-              <div className="relative">
-                <input
-                  id="new-password"
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  placeholder="••••••••"
-                  className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-amber-100 focus:border-[#D97706] outline-none transition-all font-medium pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
-                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-                  tabIndex={-1}
-                >
-                  {showNewPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Password Requirements */}
-            {newPassword.length > 0 && validationErrors.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 p-4">
-                <p className="text-xs font-bold text-amber-800 mb-2">Password must contain:</p>
-                <ul className="space-y-1">
-                  {validationErrors.map((err, i) => (
-                    <li key={i} className="text-xs text-amber-700 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 bg-amber-500"></span>
-                      {err}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Confirm Password */}
-            <div className="space-y-1">
-              <label htmlFor="confirm-password" className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  id="confirm-password"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  placeholder="••••••••"
-                  className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-amber-100 focus:border-[#D97706] outline-none transition-all font-medium pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Password Mismatch Warning */}
-            {confirmPassword && newPassword !== confirmPassword && (
-              <p className="text-xs text-red-600 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                Passwords do not match
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || validationErrors.length > 0 || newPassword !== confirmPassword}
-              className="w-full bg-[#D97706] text-white font-black py-5 shadow-xl hover:bg-[#B45309] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/20 border-t-white  animate-spin"></div>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  Reset Password
-                </>
+              {/* Password Requirements */}
+              {newPassword.length > 0 && validationErrors.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 p-4">
+                  <p className="text-xs font-bold text-amber-800 mb-2">Password must contain:</p>
+                  <ul className="space-y-1">
+                    {validationErrors.map((err, i) => (
+                      <li key={i} className="text-xs text-amber-700 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-amber-500"></span>
+                        {err}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
-            </button>
-          </form>
+
+              {/* Confirm Password */}
+              <div className="space-y-1">
+                <label htmlFor="confirm-password" className="text-xs font-black uppercase text-zinc-400 tracking-widest ml-1">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="confirm-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    className="w-full px-5 py-4  border border-zinc-200 bg-transparent focus:ring-4 focus:ring-amber-100 focus:border-[#D97706] outline-none transition-all font-medium pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Password Mismatch Warning */}
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-red-600 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Passwords do not match
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || validationErrors.length > 0 || newPassword !== confirmPassword}
+                className="w-full bg-[#D97706] text-white font-black py-5 shadow-xl hover:bg-[#B45309] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white  animate-spin"></div>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Reset Password
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

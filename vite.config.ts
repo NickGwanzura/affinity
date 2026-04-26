@@ -37,7 +37,8 @@ export default defineConfig(({ mode }) => {
             manualChunks: {
               'vendor': ['react', 'react-dom'],
               'ui': ['lucide-react'],
-              'pdf': ['jspdf', 'jspdf-autotable'],
+              'pdf-html2canvas': ['html2canvas'],
+              'pdf-jspdf': ['jspdf', 'jspdf-autotable'],
             }
           }
         }

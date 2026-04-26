@@ -9,6 +9,7 @@ import { ToastViewport } from './components/Toast';
 import { AuthSession } from './types';
 import { authService } from './services/authService';
 import { SessionProvider } from './contexts/SessionContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { logger } from './utils/logger';
 import { captureException } from './utils/sentry';
 
@@ -191,25 +192,25 @@ export default function App() {
   const renderCurrentView = () => {
     switch (currentView) {
       case 'admin':
-        return <AdminDashboard />;
+        return <ErrorBoundary view="admin"><AdminDashboard /></ErrorBoundary>;
       case 'accountant':
-        return <AccountantDashboard />;
+        return <ErrorBoundary view="accountant"><AccountantDashboard /></ErrorBoundary>;
       case 'driver':
-        return <DriverPortal />;
+        return <ErrorBoundary view="driver"><DriverPortal /></ErrorBoundary>;
       case 'settings':
-        return <Settings />;
+        return <ErrorBoundary view="settings"><Settings /></ErrorBoundary>;
       case 'financials':
-        return <Financials />;
+        return <ErrorBoundary view="financials"><Financials /></ErrorBoundary>;
       case 'documents':
-        return <Documents />;
+        return <ErrorBoundary view="documents"><Documents /></ErrorBoundary>;
       case 'clients':
-        return <ClientDirectory />;
+        return <ErrorBoundary view="clients"><ClientDirectory /></ErrorBoundary>;
       case 'shipments':
-        return <Shipments />;
+        return <ErrorBoundary view="shipments"><Shipments /></ErrorBoundary>;
       case 'updates':
-        return <UpdateCenter />;
+        return <ErrorBoundary view="updates"><UpdateCenter /></ErrorBoundary>;
       default:
-        return <AdminDashboard />;
+        return <ErrorBoundary view="admin"><AdminDashboard /></ErrorBoundary>;
     }
   };
 

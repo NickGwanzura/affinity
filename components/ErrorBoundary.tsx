@@ -1,9 +1,12 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from './ui';
+import { logger } from '../utils/logger';
+import { captureException } from '../utils/sentry';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  view?: string;
 }
 
 interface State {
@@ -24,13 +27,40 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    const view = this.props.view;
+    logger.error('View crashed', {
+      view,
+      err: error,
+      stack: errorInfo.componentStack,
+    });
+    captureException(error, {
+      view,
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   public render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
+      }
+
+      // Per-view inline fallback so a crash in one tab doesn't kill the shell.
+      if (this.props.view) {
+        return (
+          <div className="p-8 max-w-2xl mx-auto">
+            <h2 className="text-xl font-semibold text-[#161616] mb-2">Something went wrong</h2>
+            <p className="text-sm text-[#525252] mb-4">
+              The {this.props.view} view crashed. Reload the page or switch to another view.
+            </p>
+            <details className="text-xs text-[#6f6f6f]">
+              <summary>Error details</summary>
+              <pre className="mt-2 p-3 bg-stone-50 border border-[#e0e0e0] overflow-auto">
+                {this.state.error?.message || 'Unknown error'}
+              </pre>
+            </details>
+          </div>
+        );
       }
 
       return (
