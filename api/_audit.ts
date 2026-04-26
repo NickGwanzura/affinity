@@ -1,5 +1,7 @@
 import type { VercelRequest } from '@vercel/node';
 import { sql } from './_db.js';
+import { logger } from './_logger.js';
+import { captureException } from './_sentry.js';
 
 type JsonValue =
   | string
@@ -126,6 +128,10 @@ export async function logAuditEvent(payload: AuditPayload): Promise<void> {
       )
     `;
   } catch (error) {
-    console.error('[Audit] Failed to record audit log:', error);
+    logger.error(
+      { err: error, action: payload.action, tableName: payload.tableName },
+      '[Audit] Failed to record audit log',
+    );
+    captureException(error, { stage: 'audit.record', action: payload.action });
   }
 }

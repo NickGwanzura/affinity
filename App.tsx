@@ -9,6 +9,8 @@ import { ToastViewport } from './components/Toast';
 import { AuthSession } from './types';
 import { authService } from './services/authService';
 import { SessionProvider } from './contexts/SessionContext';
+import { logger } from './utils/logger';
+import { captureException } from './utils/sentry';
 
 const AdminDashboard = lazy(() =>
   import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard }))
@@ -115,7 +117,8 @@ export default function App() {
           }
         }
       } catch (error) {
-        console.error('Error checking session:', error);
+        logger.error('Error checking session', { err: error });
+        captureException(error, { stage: 'app.checkSession' });
       } finally {
         setLoading(false);
       }
@@ -173,7 +176,8 @@ export default function App() {
       setSession(s);
       return s;
     } catch (error) {
-      console.error('Error refreshing session:', error);
+      logger.error('Error refreshing session', { err: error });
+      captureException(error, { stage: 'app.refreshSession' });
       return null;
     }
   };

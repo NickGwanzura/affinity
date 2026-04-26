@@ -10,6 +10,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import { sql } from './_db.js';
+import { logger } from './_logger.js';
+import { captureException, initSentry } from './_sentry.js';
+
+// Vercel-style serverless cold starts skip server.ts, so init at module
+// load to ensure Sentry is armed for the first request. No-op when
+// SENTRY_DSN is unset.
+initSentry();
 
 export type AccessRole = 'super_admin' | 'admin' | 'user';
 
@@ -106,7 +113,8 @@ export async function verifyToken(req: AuthenticatedRequest, res: VercelResponse
 
   if (!secret) {
     const error = new Error('Server authentication misconfigured (missing JWT secret)');
-    console.error('CRITICAL ERROR:', error);
+    logger.error({ err: error }, 'JWT secret missing');
+    captureException(error, { stage: 'verifyToken.config' });
     res.status(500).json({
       error: error.message,
     });
@@ -175,7 +183,8 @@ export async function verifyToken(req: AuthenticatedRequest, res: VercelResponse
   try {
     return await validate();
   } catch (error) {
-    console.error('CRITICAL ERROR:', error);
+    logger.error({ err: error, pathname }, 'Token validation failed');
+    captureException(error, { stage: 'verifyToken.validate', pathname });
     if (error instanceof Error) {
       res.status(500).json({ error: error.message });
     } else {
@@ -265,7 +274,10 @@ export function handleCors(req: VercelRequest, res: VercelResponse): boolean {
  * API Error wrapper
  */
 export function apiError(res: VercelResponse, status: number, message: string, details?: any): void {
-  console.error('CRITICAL ERROR:', details || message);
+  logger.error({ err: details, status, message }, 'API error response');
+  if (details instanceof Error || (status >= 500 && details !== undefined)) {
+    captureException(details ?? new Error(message), { status, message });
+  }
 
   const payload: Record<string, unknown> = { error: message };
 
