@@ -12,6 +12,7 @@ import { sql } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { z } from 'zod';
 import { ReceiptSchema, ReceiptUpdateSchema } from './_schemas.js';
+import { withIdempotency } from './_idempotency.js';
 
 const isMissingTableError = (error: unknown, tableName: string): boolean =>
   error instanceof Error && error.message.includes(`relation "public.${tableName}" does not exist`);
@@ -69,7 +70,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await listReceipts(res);
       case 'POST':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
-        return await createReceipt(req, res);
+        return await withIdempotency(authReq, res, 'POST /receipts', () =>
+          createReceipt(authReq, res)
+        );
       case 'PUT':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updateReceipt(req, res);

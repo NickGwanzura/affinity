@@ -13,6 +13,7 @@ import {
 import { sql, withTransaction } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { PaymentAllocationSchema, PaymentSchema, PaymentUpdateSchema } from './_schemas.js';
+import { withIdempotency } from './_idempotency.js';
 
 type PaymentRow = {
   id: string;
@@ -233,7 +234,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await listPayments(res);
       case 'POST':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
-        return await createPayment(req, res);
+        return await withIdempotency(authReq, res, 'POST /payments', () =>
+          createPayment(authReq, res)
+        );
       case 'PUT':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await updatePayment(req, res);

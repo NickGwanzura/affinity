@@ -9,7 +9,7 @@ import {
   setSecurityHeaders,
   handleCors,
 } from './_middleware.js';
-import { checkRateLimit } from './_db.js';
+import { checkRateLimit } from './_rate_limit.js';
 
 type SanitizedSummary = {
   vehicle_id: string;
@@ -205,7 +205,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!requirePasswordCurrent(authReq, res)) return;
   if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
 
-  if (!checkRateLimit(`ai:${authReq.user!.id}`, 10, 60000)) {
+  if (!(await checkRateLimit(`ai:${authReq.user!.id}`, 10, 60000))) {
     return json(res, 429, { error: 'Rate limit exceeded. Try again in a minute.' });
   }
 

@@ -408,3 +408,288 @@ export type OperatingFundInput = z.infer<typeof OperatingFundSchema>;
 export type PayslipInput = z.infer<typeof PayslipSchema>;
 export type AssetInput = z.infer<typeof AssetSchema>;
 export type AssetRequestInput = z.infer<typeof AssetRequestSchema>;
+
+// ---------------------------------------------------------------------------
+// Response schemas — derive runtime/JSON shape from the validation schemas so
+// API clients get strict types. We extend the input schemas with server-owned
+// columns (id, timestamps, generated numbers, joined fields).
+// ---------------------------------------------------------------------------
+
+const SoftDeleteFieldsSchema = z.object({
+  is_deleted: z.boolean().optional(),
+  deleted_at: z.string().nullable().optional(),
+  deleted_by: z.string().nullable().optional(),
+  created_by: z.string().nullable().optional(),
+  updated_by: z.string().nullable().optional(),
+});
+
+export const ClientResponseSchema = ClientSchema.partial().extend({
+  id: z.string(),
+  name: z.string(),
+  created_at: z.string(),
+  updated_at: z.string().nullable().optional(),
+  deleted_at: z.string().nullable().optional(),
+});
+
+export const VehicleResponseSchema = VehicleSchema.partial().extend({
+  id: z.string(),
+  vin_number: z.string(),
+  make_model: z.string(),
+  created_at: z.string(),
+});
+
+export const ShipmentResponseSchema = ShipmentSchema.partial().extend({
+  id: z.string(),
+  created_at: z.string(),
+});
+
+const LineItemResponseSchema = LineItemSchema.partial().extend({
+  id: z.string().optional(),
+  line_number: z.number().optional(),
+  amount: z.number().optional(),
+  discount_amount: z.number().optional(),
+  tax_amount: z.number().optional(),
+  description: z.string(),
+  quantity: z.number(),
+  unit_price: z.number(),
+});
+
+export const QuoteResponseSchema = QuoteSchema.partial().extend({
+  id: z.string(),
+  quote_number: z.string(),
+  client_name: z.string(),
+  amount_usd: z.number(),
+  status: z.enum(['Draft', 'Sent', 'Accepted', 'Rejected']),
+  items: z.array(LineItemResponseSchema).optional(),
+  created_at: z.string(),
+});
+
+export const InvoiceResponseSchema = InvoiceSchema.partial().extend({
+  id: z.string(),
+  invoice_number: z.string(),
+  client_name: z.string(),
+  amount_usd: z.number(),
+  status: z.enum(['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled']),
+  due_date: z.string(),
+  items: z.array(LineItemResponseSchema).optional(),
+  created_at: z.string(),
+});
+
+const PaymentAllocationResponseSchema = PaymentAllocationSchema.partial().extend({
+  id: z.string(),
+  payment_id: z.string(),
+  amount_allocated: z.number(),
+  currency: z.enum(['USD', 'GBP']),
+  client_id: z.string().nullable().optional(),
+  created_at: z.string(),
+});
+
+export const PaymentResponseSchema = PaymentSchema.partial()
+  .merge(SoftDeleteFieldsSchema)
+  .extend({
+    id: z.string(),
+    reference_id: z.string(),
+    amount_usd: z.number(),
+    method: z.string(),
+    date: z.string(),
+    type: z.string(),
+    created_at: z.string(),
+    updated_at: z.string().nullable().optional(),
+    allocations: z.array(PaymentAllocationResponseSchema).optional(),
+  });
+
+const ReceiptItemResponseSchema = ReceiptItemSchema.partial().extend({
+  description: z.string(),
+  quantity: z.number(),
+  unit_price: z.number(),
+});
+
+export const ReceiptResponseSchema = ReceiptSchema.partial().extend({
+  id: z.string(),
+  receipt_number: z.string(),
+  client_name: z.string(),
+  amount_received: z.number(),
+  currency: z.enum(['USD', 'GBP']),
+  payment_method: z.string(),
+  payment_date: z.string(),
+  items: z.array(ReceiptItemResponseSchema).optional(),
+  created_at: z.string(),
+});
+
+export const AssetResponseSchema = AssetSchema.partial().extend({
+  id: z.string(),
+  name: z.string(),
+  category: z.string(),
+  status: z.enum(['Available', 'Borrowed', 'Under Maintenance', 'Retired']),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const AssetRequestResponseSchema = AssetRequestSchema.partial().extend({
+  id: z.string(),
+  asset_id: z.string(),
+  requested_by: z.string(),
+  request_date: z.string(),
+  status: z.enum(['Pending', 'Approved', 'Rejected', 'Taken', 'Returned', 'Overdue']),
+  created_at: z.string(),
+  updated_at: z.string(),
+  asset_name: z.string().optional(),
+  asset_category: z.string().optional(),
+  asset_serial: z.string().optional(),
+});
+
+export const EmployeeResponseSchema = EmployeeSchema.partial().extend({
+  id: z.string(),
+  employee_number: z.string(),
+  name: z.string(),
+  email: z.string(),
+  position: z.string(),
+  base_pay_usd: z.number(),
+  date_hired: z.string(),
+  status: z.enum(['Active', 'On Leave', 'Terminated']),
+  created_at: z.string(),
+  updated_at: z.string().optional(),
+});
+
+export const PayslipResponseSchema = PayslipSchema.partial().extend({
+  id: z.string(),
+  payslip_number: z.string(),
+  employee_id: z.string(),
+  month: z.number(),
+  year: z.number(),
+  base_pay: z.number(),
+  gross_pay: z.number(),
+  total_deductions: z.number(),
+  net_pay: z.number(),
+  currency: z.enum(['USD', 'NAD', 'GBP', 'BWP']),
+  status: z.enum(['Generated', 'Approved', 'Paid', 'Cancelled']),
+  created_at: z.string(),
+  updated_at: z.string().optional(),
+});
+
+export const OperatingFundResponseSchema = OperatingFundSchema.partial().extend({
+  id: z.string(),
+  type: z.enum(['Received', 'Disbursed']),
+  amount: z.number(),
+  currency: z.enum(['USD', 'GBP', 'NAD', 'BWP', 'ZAR']),
+  description: z.string(),
+  date: z.string(),
+  created_at: z.string(),
+});
+
+export const ExpenseResponseSchema = ExpenseSchema.partial().extend({
+  id: z.string(),
+  description: z.string(),
+  amount: z.number(),
+  currency: z.enum(['USD', 'GBP', 'NAD', 'BWP', 'ZAR']),
+  category: z.string(),
+  exchange_rate_to_usd: z.number().optional(),
+  created_at: z.string(),
+});
+
+export const TripResponseSchema = z.object({
+  id: z.string(),
+  trip_number: z.string(),
+  title: z.string(),
+  status: TripStatusSchema,
+  assigned_driver_id: z.string().nullable().optional(),
+  assigned_driver_name: z.string().nullable().optional(),
+  assigned_vehicle_id: z.string().nullable().optional(),
+  assigned_vehicle_label: z.string().nullable().optional(),
+  route_origin: z.string(),
+  route_destination: z.string(),
+  route_waypoints: z.array(z.string()).optional(),
+  departure_date: z.string(),
+  eta_date: z.string(),
+  actual_departure_at: z.string().nullable().optional(),
+  actual_arrival_at: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  created_by: z.string().nullable().optional(),
+  created_at: z.string(),
+  updated_at: z.string().optional(),
+});
+
+export const RegistrationRequestResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']),
+  status: z.enum(['Pending', 'Approved', 'Rejected']),
+  requested_at: z.string(),
+  reviewed_at: z.string().nullable().optional(),
+  reviewed_by: z.string().nullable().optional(),
+});
+
+export const InviteResponseSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']),
+  name: z.string(),
+  status: z.enum(['Pending', 'Accepted', 'Expired']),
+  invitedBy: z.string(),
+  inviteToken: z.string(),
+  expiresAt: z.string(),
+  createdAt: z.string(),
+});
+
+export const EmailTemplateResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.string(),
+  subject: z.string(),
+  body: z.string(),
+  is_active: z.boolean().optional(),
+  created_at: z.string(),
+  updated_at: z.string().optional(),
+});
+
+export const EmailQueueItemResponseSchema = z.object({
+  id: z.string(),
+  to_email: z.string(),
+  to_name: z.string().nullable().optional(),
+  subject: z.string(),
+  body: z.string().optional(),
+  type: z.string().optional(),
+  status: z.enum(['pending', 'sent', 'failed']),
+  template_id: z.string().nullable().optional(),
+  error_message: z.string().nullable().optional(),
+  sent_at: z.string().nullable().optional(),
+  created_at: z.string(),
+});
+
+export const AuditLogResponseSchema = z.object({
+  id: z.string(),
+  user_id: z.string().nullable().optional(),
+  user_name: z.string().nullable().optional(),
+  user_email: z.string().nullable().optional(),
+  action: z.string(),
+  table_name: z.string().nullable().optional(),
+  record_id: z.string().nullable().optional(),
+  old_data: z.unknown().optional(),
+  new_data: z.unknown().optional(),
+  ip_address: z.string().nullable().optional(),
+  user_agent: z.string().nullable().optional(),
+  created_at: z.string(),
+});
+
+// Response type aliases — what the API returns to the client.
+export type Client = z.infer<typeof ClientResponseSchema>;
+export type Vehicle = z.infer<typeof VehicleResponseSchema>;
+export type Shipment = z.infer<typeof ShipmentResponseSchema>;
+export type Quote = z.infer<typeof QuoteResponseSchema>;
+export type Invoice = z.infer<typeof InvoiceResponseSchema>;
+export type Payment = z.infer<typeof PaymentResponseSchema>;
+export type PaymentAllocation = z.infer<typeof PaymentAllocationResponseSchema>;
+export type Receipt = z.infer<typeof ReceiptResponseSchema>;
+export type Asset = z.infer<typeof AssetResponseSchema>;
+export type AssetRequest = z.infer<typeof AssetRequestResponseSchema>;
+export type Employee = z.infer<typeof EmployeeResponseSchema>;
+export type Payslip = z.infer<typeof PayslipResponseSchema>;
+export type OperatingFund = z.infer<typeof OperatingFundResponseSchema>;
+export type Expense = z.infer<typeof ExpenseResponseSchema>;
+export type Trip = z.infer<typeof TripResponseSchema>;
+export type RegistrationRequest = z.infer<typeof RegistrationRequestResponseSchema>;
+export type Invite = z.infer<typeof InviteResponseSchema>;
+export type EmailTemplate = z.infer<typeof EmailTemplateResponseSchema>;
+export type EmailQueueItem = z.infer<typeof EmailQueueItemResponseSchema>;
+export type AuditLog = z.infer<typeof AuditLogResponseSchema>;

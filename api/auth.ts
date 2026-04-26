@@ -8,7 +8,7 @@ import {
   handleCors,
   apiError,
 } from './_middleware.js';
-import { checkRateLimit } from './_db.js';
+import { checkRateLimit } from './_rate_limit.js';
 import { logAuditEvent } from './_audit.js';
 import {
   authenticateUser,
@@ -83,7 +83,7 @@ async function login(req: VercelRequest, res: VercelResponse) {
   try {
     const { email, password } = LoginSchema.parse(req.body);
 
-    if (!checkRateLimit(`login:${clientIp}`, 5, 60000)) {
+    if (!(await checkRateLimit(`login:${clientIp}`, 5, 60000))) {
       return apiError(res, 429, 'Too many login attempts. Please try again later.');
     }
 
@@ -212,7 +212,7 @@ async function forgotPassword(req: VercelRequest, res: VercelResponse) {
 
     // Rate limiting
     const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (!checkRateLimit(`forgot:${clientIp}`, 3, 3600000)) {
+    if (!(await checkRateLimit(`forgot:${clientIp}`, 3, 3600000))) {
       return apiError(res, 429, 'Too many requests. Please try again later.');
     }
 
@@ -265,7 +265,7 @@ async function resetPasswordHandler(req: VercelRequest, res: VercelResponse) {
 
     // Rate limit: max 10 attempts per IP per 15 minutes.
     const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (!checkRateLimit(`reset:${clientIp}`, 10, 15 * 60 * 1000)) {
+    if (!(await checkRateLimit(`reset:${clientIp}`, 10, 15 * 60 * 1000))) {
       return apiError(res, 429, 'Too many password reset attempts. Please try again later.');
     }
 

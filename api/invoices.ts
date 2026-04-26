@@ -14,6 +14,7 @@ import { sql, withTransaction, validateOrderColumn } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { InvoiceSchema, InvoiceUpdateSchema, PaginationSchema } from './_schemas.js';
 import { sendDocumentEmail } from './_email.js';
+import { withIdempotency } from './_idempotency.js';
 import type { InvoiceItem } from '../types';
 
 const formatUsd = (value: unknown): string | undefined => {
@@ -167,7 +168,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       case 'POST':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
-        return await createInvoice(authReq, res);
+        return await withIdempotency(authReq, res, 'POST /invoices', () =>
+          createInvoice(authReq, res)
+        );
 
       case 'PUT':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
