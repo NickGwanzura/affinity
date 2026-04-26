@@ -9,25 +9,63 @@
 @source "../hooks/**/*.{ts,tsx}";
 
 /* ─── Design tokens (Tailwind v4 @theme) ─────────────────────────────────────
-   Palette distilled from the prior Carbon-based look.  Consumers can now write
-   `bg-primary`, `text-secondary`, `border-subtle`, etc., without knowing hex.  */
+   Modern semantic palette. Brand stays amber (#D97706); intents align with
+   Tailwind defaults so utility classes and custom hexes stay consistent.    */
 @theme {
-  --color-primary: #D97706;        /* Amber 600 (coolpro accent) */
+  /* Brand */
+  --color-primary: #D97706;        /* amber-600 */
   --color-primary-hover: #B45309;
   --color-primary-active: #92400E;
-  --color-text-primary: #161616;
-  --color-text-secondary: #525252;
-  --color-text-muted: #6f6f6f;
-  --color-border-subtle: #e0e0e0;
+  --color-primary-soft: #fef3c7;
+
+  /* Semantic intents (Tailwind-aligned) */
+  --color-success: #059669;        /* emerald-600 */
+  --color-success-soft: #d1fae5;
+  --color-success-strong: #065f46;
+  --color-danger: #dc2626;         /* red-600 */
+  --color-danger-soft: #fee2e2;
+  --color-danger-strong: #991b1b;
+  --color-warning: #f59e0b;        /* amber-500 */
+  --color-warning-soft: #fef3c7;
+  --color-warning-strong: #92400e;
+  --color-info: #2563eb;           /* blue-600 */
+  --color-info-soft: #dbeafe;
+  --color-info-strong: #1e40af;
+
+  /* Text */
+  --color-text-primary: #18181b;   /* zinc-900 */
+  --color-text-secondary: #52525b; /* zinc-600 */
+  --color-text-muted: #71717a;     /* zinc-500 */
+  --color-text-subtle: #a1a1aa;    /* zinc-400 */
+
+  /* Surfaces */
   --color-surface: #ffffff;
-  --color-danger: #da1e28;
-  --color-success: #24a148;
-  --color-warning: #f1c21b;
+  --color-surface-muted: #fafaf9;  /* stone-50 */
+  --color-surface-subtle: #f5f5f4; /* stone-100 */
+
+  /* Borders */
+  --color-border-subtle: #e7e5e4;  /* stone-200 */
+  --color-border-default: #d6d3d1; /* stone-300 */
+  --color-border-strong: #a8a29e;  /* stone-400 */
+
+  /* Sidebar (dark stone) */
+  --color-sidebar-bg: #1C1917;
+  --color-sidebar-border: #292524;
+  --color-sidebar-surface: #292524;
+  --color-sidebar-surface-hover: #44403C;
+  --color-sidebar-text: #ffffff;
+  --color-sidebar-text-muted: #a1a1aa;
+
+  /* Radius scale (subtle, modern) */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 }
 
 :root {
-  --app-font-sans: 'Geist Sans', 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'Geist Mono', 'IBM Plex Mono', monospace;
+  --app-font-sans: 'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, 'Menlo', monospace;
 }
 
 @font-face {
@@ -91,27 +129,27 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Form inputs: white surface, soft rounded, brand-amber focus ─────────── */
 input:not([type='checkbox']):not([type='radio']):not([type='file']),
 textarea,
 select {
   font-family: inherit;
   min-height: 2.5rem;
-  background: #f4f4f4;
-  color: #161616;
-  border: 1px solid #c6c6c6;
-  border-bottom-color: #8d8d8d;
-  border-radius: 0;
-  box-shadow: none;
+  background: #ffffff;
+  color: #18181b;
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
   transition:
-    border-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    outline-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    background-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9);
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
 }
 
 input:not([type='checkbox']):not([type='radio']):not([type='file']):hover:not(:disabled):not(:focus),
 textarea:hover:not(:disabled):not(:focus),
 select:hover:not(:disabled):not(:focus) {
-  background: #e8e8e8;
+  border-color: #a8a29e;
 }
 
 input:not([type='checkbox']):not([type='radio']):not([type='file']):focus,
@@ -120,23 +158,25 @@ textarea:focus,
 textarea:focus-visible,
 select:focus,
 select:focus-visible {
-  outline: 2px solid #D97706;
-  outline-offset: -2px;
-  background: #f4f4f4;
+  outline: none;
+  border-color: #D97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.18);
+  background: #ffffff;
 }
 
 input:not([type='checkbox']):not([type='radio']):not([type='file']):disabled,
 textarea:disabled,
 select:disabled {
-  color: #a8a8a8;
-  border-color: #e0e0e0;
-  border-bottom-color: #c6c6c6;
+  color: #a1a1aa;
+  background: #f5f5f4;
+  border-color: #e7e5e4;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 input:not([type='checkbox']):not([type='radio']):not([type='file'])::placeholder,
 textarea::placeholder {
-  color: #a8a8a8;
+  color: #a1a1aa;
 }
 
 input:-webkit-autofill,
@@ -144,9 +184,9 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
 select:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px #f4f4f4 inset;
-  -webkit-text-fill-color: #161616;
-  caret-color: #161616;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #18181b;
+  caret-color: #18181b;
   transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -155,30 +195,31 @@ textarea {
   resize: vertical;
 }
 
+/* ─── Buttons: rounded, brand-amber focus ring ────────────────────────────── */
 button {
   font-family: inherit;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   font-weight: 500;
   min-height: 2.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0;
+  border-radius: 6px;
   cursor: pointer;
   transition:
-    background-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    border-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    color 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    box-shadow 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    opacity 150ms cubic-bezier(0.2, 0, 0.38, 0.9),
-    transform 150ms cubic-bezier(0.2, 0, 0.38, 0.9);
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease,
+    transform 150ms ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 button:focus-visible {
-  outline: 2px solid #D97706;
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.35);
 }
 
 button:disabled {
@@ -188,7 +229,7 @@ button:disabled {
   pointer-events: none;
 }
 
-/* Checkbox & radio native polish — component-level classes can still override. */
+/* Native checkbox / radio with brand accent */
 input[type='checkbox'],
 input[type='radio'] {
   accent-color: #D97706;
@@ -207,7 +248,7 @@ input[type='radio']:disabled {
   opacity: 0.6;
 }
 
-/* Hide native number spinners — Carbon look is cleaner without them. */
+/* Hide native number spinners for cleaner numeric fields */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -264,7 +305,7 @@ input[type='number'] {
   display: block;
   background: #fff;
   padding: 0.75rem 1rem;
-  border-radius: 2px;
+  border-radius: 6px;
 }
 
 .login-shell__headline {
@@ -540,31 +581,14 @@ input[type='number'] {
     font-size: 1rem;
   }
 
-  .login-shell__card {
-    padding: 0;
-  }
-
-  .login-shell__tabs {
-    margin-bottom: 1rem;
-  }
-
-  .login-shell__tab {
-    min-height: 2.75rem;
-    font-size: 0.8125rem;
-  }
-
-  .login-shell__title {
-    font-size: 1.25rem;
-  }
-
   .login-shell__headline {
     font-size: 2rem;
   }
 }
 
-/* ─── Custom scrollbar (coolpro port) ─────────────────────────────────────── */
+/* ─── Custom scrollbar (warm stone, matches surfaces) ─────────────────────── */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 0; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-* { scrollbar-width: thin; scrollbar-color: #cbd5e1 #f1f5f9; }
+::-webkit-scrollbar-track { background: #f5f5f4; }
+::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+* { scrollbar-width: thin; scrollbar-color: #d6d3d1 #f5f5f4; }

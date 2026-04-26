@@ -1,5 +1,5 @@
 import React from 'react';
-import CarbonFormModal from './FormModal';
+import FormModalShell from './FormModal';
 import { Button, Stack, TextArea, TextInput } from '../ui';
 
 export interface ClientFormValue {
@@ -35,7 +35,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   }
 
   return (
-    <CarbonFormModal
+    <FormModalShell
       isOpen={isOpen}
       title={title}
       label="Client details"
@@ -95,7 +95,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
           <Button type="submit">{submitLabel}</Button>
         </div>
       </form>
-    </CarbonFormModal>
+    </FormModalShell>
   );
 };
 

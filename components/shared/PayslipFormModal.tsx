@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Employee } from '../../types';
 import { getMonthName } from '../../utils/formatters';
-import CarbonFormModal from './FormModal';
+import FormModalShell from './FormModal';
 import { Button } from '../ui';
 
 export interface PayslipFormValue {
@@ -94,7 +94,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
   const deductionsInputClasses = 'w-full px-3 py-2 border border-red-300 focus:ring-2 focus:ring-red-500 outline-none';
 
   return (
-    <CarbonFormModal
+    <FormModalShell
       isOpen={isOpen}
       title={title}
       label="Payroll"
@@ -266,7 +266,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
             </Button>
           </div>
       </form>
-    </CarbonFormModal>
+    </FormModalShell>
   );
 };
 

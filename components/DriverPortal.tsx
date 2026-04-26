@@ -554,19 +554,19 @@ export const DriverPortal: React.FC = () => {
             title="Allocated"
             value={formatPreferredDisplay(allocatedUsd, allocationCurrencyTotals)}
             subtitle={`${expenseDisbursements.length + driverFunds.length} allocation${expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded`}
-            color="blue"
+            intent="primary"
           />
           <StatCard
             title="Spent"
             value={formatPreferredDisplay(spentUsd, spentCurrencyTotals)}
             subtitle={`${drawdowns.length} drawdown${drawdowns.length === 1 ? '' : 's'} submitted`}
-            color="red"
+            intent="danger"
           />
           <StatCard
             title="Allocation Mix"
             value={formatPreferredDisplay(allocatedFromExpenseUsd, expenseAllocationCurrencyTotals)}
             subtitle={`Operating fund top-ups: ${formatPreferredDisplay(allocatedFromFundsUsd, fundAllocationCurrencyTotals)}`}
-            color="green"
+            intent="success"
           />
         </section>
       </DashboardSection>

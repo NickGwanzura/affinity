@@ -13,7 +13,7 @@ import {
   DashboardSection,
 } from './ui';
 import { useToast } from './Toast';
-import { useCarbonConfirm } from './shared';
+import { useConfirm } from './shared';
 
 type DashboardSection = 'overview' | 'users' | 'submissions' | 'system' | 'logs';
 
@@ -174,7 +174,7 @@ const tdCls   = 'px-3 py-2 text-sm text-gray-800 border-t border-gray-100';
 
 export const SuperAdminDashboard: React.FC = () => {
   const { showToast } = useToast();
-  const { confirm, ConfirmDialog } = useCarbonConfirm();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [loading, setLoading] = useState(true);
   const [sectionLoading, setSectionLoading] = useState<Record<string, boolean>>({});
@@ -292,8 +292,8 @@ export const SuperAdminDashboard: React.FC = () => {
   const overviewContent = (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <StatCard title="Total Users" value={metrics?.totals.users ?? 0} color="blue" />
-        <StatCard title="Pending Approvals" value={metrics?.totals.pendingApprovals ?? 0} color="amber" />
+        <StatCard title="Total Users" value={metrics?.totals.users ?? 0} intent="primary" />
+        <StatCard title="Pending Approvals" value={metrics?.totals.pendingApprovals ?? 0} intent="warning" />
       </div>
 
       <TableContainer title="Recent Platform Activity" description="Latest actions across the platform.">
@@ -373,9 +373,9 @@ export const SuperAdminDashboard: React.FC = () => {
   const submissionsContent = (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Questionnaires" value={submissions?.summary.questionnaires ?? 0} color="purple" />
-        <StatCard title="Submissions" value={submissions?.summary.submissions ?? 0} color="blue" />
-        <StatCard title="Pending" value={submissions?.summary.pendingSubmissions ?? 0} color="amber" />
+        <StatCard title="Questionnaires" value={submissions?.summary.questionnaires ?? 0} intent="info" />
+        <StatCard title="Submissions" value={submissions?.summary.submissions ?? 0} intent="primary" />
+        <StatCard title="Pending" value={submissions?.summary.pendingSubmissions ?? 0} intent="warning" />
         <Tile>
           <h3 className="m-0 text-sm font-semibold text-gray-900">Data Sources</h3>
           <div className="mt-3 flex flex-wrap gap-2">

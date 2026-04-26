@@ -299,13 +299,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
           <p
             className="text-2xl sm:text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #161616)' }}
+            style={{ color: 'var(--cds-text-primary, #18181b)' }}
           >
             {users.length}
           </p>
           <p
             className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1"
-            style={{ color: 'var(--cds-text-secondary, #525252)' }}
+            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
           >
             Total Users
           </p>
@@ -315,7 +315,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           <div className="flex items-center justify-between mb-2">
             <svg
               className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0"
-              style={{ color: 'var(--cds-support-success, #24a148)' }}
+              style={{ color: 'var(--cds-support-success, #10b981)' }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -330,13 +330,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
           <p
             className="text-2xl sm:text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #161616)' }}
+            style={{ color: 'var(--cds-text-primary, #18181b)' }}
           >
             {users.filter(u => u.status === 'Active').length}
           </p>
           <p
             className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1"
-            style={{ color: 'var(--cds-support-success, #24a148)' }}
+            style={{ color: 'var(--cds-support-success, #10b981)' }}
           >
             Active Users
           </p>
@@ -359,7 +359,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
           <p
             className="text-2xl sm:text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #161616)' }}
+            style={{ color: 'var(--cds-text-primary, #18181b)' }}
           >
             {users.filter(u => u.role === 'Admin').length}
           </p>
@@ -375,7 +375,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           <div className="flex items-center justify-between mb-2">
             <svg
               className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0"
-              style={{ color: 'var(--cds-tag-color-warm-gray, #8d8d8d)' }}
+              style={{ color: 'var(--cds-tag-color-warm-gray, #a8a29e)' }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -390,13 +390,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
           <p
             className="text-2xl sm:text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #161616)' }}
+            style={{ color: 'var(--cds-text-primary, #18181b)' }}
           >
             {users.filter(u => u.status === 'Inactive').length}
           </p>
           <p
             className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1"
-            style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }}
+            style={{ color: 'var(--cds-text-disabled, #a8a29e)' }}
           >
             Inactive Users
           </p>
@@ -408,13 +408,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
         <div className="flex-shrink-0">
           <h3
             className="text-base sm:text-lg font-bold"
-            style={{ color: 'var(--cds-text-primary, #161616)' }}
+            style={{ color: 'var(--cds-text-primary, #18181b)' }}
           >
             Team Directory
           </h3>
           <p
             className="text-xs sm:text-sm mt-0.5 sm:mt-1"
-            style={{ color: 'var(--cds-text-secondary, #525252)' }}
+            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
           >
             {users.length} user{users.length !== 1 ? 's' : ''} in database
           </p>
@@ -520,12 +520,12 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
       {/* User List Container */}
       <div
         className="overflow-hidden"
-        style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+        style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
       >
         {loading ? (
           <div
             className="p-6 sm:p-8 text-center"
-            style={{ color: 'var(--cds-text-secondary, #525252)' }}
+            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
           >
             Loading users...
           </div>
@@ -534,7 +534,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
             <div className="max-w-md mx-auto">
               <svg
                 className="w-16 h-16 mx-auto mb-4"
-                style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }}
+                style={{ color: 'var(--cds-text-disabled, #a8a29e)' }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -548,13 +548,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               </svg>
               <h3
                 className="text-lg font-bold mb-2"
-                style={{ color: 'var(--cds-text-primary, #161616)' }}
+                style={{ color: 'var(--cds-text-primary, #18181b)' }}
               >
                 No Users Found
               </h3>
               <p
                 className="mb-4 text-sm sm:text-base"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Users appear here after they log in. Click <strong>"Sync & Refresh"</strong>{' '}
                 to add yourself, or invite new team members.
@@ -591,7 +591,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               </div>
               <p
                 className="text-xs mt-4"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 To change a user's role: Click the <strong>Edit</strong> (pencil) icon next
                 to their name.
@@ -605,8 +605,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               <table className="w-full text-left text-xs lg:text-sm">
                 <thead
                   style={{
-                    background: 'var(--cds-layer-02, #f4f4f4)',
-                    borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)',
+                    background: 'var(--cds-layer-02, #ffffff)',
+                    borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)',
                   }}
                 >
                   <tr>
@@ -618,48 +618,48 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         }
                         onChange={toggleSelectAll}
                         className="w-4 h-4"
-                        style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
+                        style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
                       />
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold"
-                      style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                     >
                       User
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold hidden lg:table-cell"
-                      style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                     >
                       Email
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold"
-                      style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                     >
                       Role
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold"
-                      style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                     >
                       Status
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold text-right"
-                      style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                     >
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
+                <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #d6d3d1)' }}>
                   {users.map(user => (
                     <tr
                       key={user.id}
                       className="group"
                       style={{
-                        borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)',
+                        borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)',
                       }}
                     >
                       <td className="px-4 lg:px-6 py-4">
@@ -668,7 +668,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                           checked={selectedUserIds.includes(user.id)}
                           onChange={() => toggleSelectUser(user.id)}
                           className="w-4 h-4"
-                          style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
+                          style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
                         />
                       </td>
                       <td className="px-4 lg:px-6 py-4">
@@ -694,22 +694,22 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                                 borderColor: 'var(--cds-layer-01, #ffffff)',
                                 background:
                                   user.status === 'Active'
-                                    ? 'var(--cds-support-success, #24a148)'
-                                    : 'var(--cds-text-disabled, #8d8d8d)',
+                                    ? 'var(--cds-support-success, #10b981)'
+                                    : 'var(--cds-text-disabled, #a8a29e)',
                               }}
                             ></div>
                           </div>
                           <div className="min-w-0">
                             <p
                               className="font-semibold truncate"
-                              style={{ color: 'var(--cds-text-primary, #161616)' }}
+                              style={{ color: 'var(--cds-text-primary, #18181b)' }}
                             >
                               {user.name}
                             </p>
                             {/* Email shown under name on tablet, hidden on desktop (shown in separate column) */}
                             <p
                               className="text-xs truncate lg:hidden"
-                              style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                              style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                             >
                               {user.email}
                             </p>
@@ -719,7 +719,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                       <td className="px-4 lg:px-6 py-4 hidden lg:table-cell">
                         <span
                           className="font-mono text-xs truncate block max-w-[200px]"
-                          style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                          style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                           title={user.email}
                         >
                           {user.email}
@@ -800,35 +800,35 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               {/* Select All Header for Mobile */}
               <div
                 className="px-4 py-3 flex items-center justify-between"
-                style={{ background: 'var(--cds-layer-02, #f4f4f4)' }}
+                style={{ background: 'var(--cds-layer-02, #ffffff)' }}
               >
                 <label
                   className="flex items-center gap-2 text-sm font-medium"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   <input
                     type="checkbox"
                     checked={selectedUserIds.length === users.length && users.length > 0}
                     onChange={toggleSelectAll}
                     className="w-4 h-4 flex-shrink-0"
-                    style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
+                    style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
                   />
                   Select All
                 </label>
                 <span
                   className="text-xs"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   {users.length} user{users.length !== 1 ? 's' : ''}
                 </span>
               </div>
 
-              <div style={{ borderTop: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
+              <div style={{ borderTop: '1px solid var(--cds-border-subtle, #d6d3d1)' }}>
                 {users.map(user => (
                   <div
                     key={user.id}
                     className="p-4"
-                    style={{ borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                    style={{ borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                   >
                     {/* Top Row: Checkbox, Avatar, Name/Email, Actions */}
                     <div className="flex items-center gap-3">
@@ -837,7 +837,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         checked={selectedUserIds.includes(user.id)}
                         onChange={() => toggleSelectUser(user.id)}
                         className="w-4 h-4 flex-shrink-0"
-                        style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
+                        style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
                       />
                       <div className="relative flex-shrink-0">
                         <div
@@ -860,21 +860,21 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                             borderColor: 'var(--cds-layer-01, #ffffff)',
                             background:
                               user.status === 'Active'
-                                ? 'var(--cds-support-success, #24a148)'
-                                : 'var(--cds-text-disabled, #8d8d8d)',
+                                ? 'var(--cds-support-success, #10b981)'
+                                : 'var(--cds-text-disabled, #a8a29e)',
                           }}
                         ></div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p
                           className="font-semibold truncate"
-                          style={{ color: 'var(--cds-text-primary, #161616)' }}
+                          style={{ color: 'var(--cds-text-primary, #18181b)' }}
                         >
                           {user.name}
                         </p>
                         <p
                           className="text-xs truncate"
-                          style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                          style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                         >
                           {user.email}
                         </p>
@@ -980,7 +980,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           >
             <h3
               className="text-2xl font-black mb-6"
-              style={{ color: 'var(--cds-text-primary, #161616)' }}
+              style={{ color: 'var(--cds-text-primary, #18181b)' }}
             >
               Add New User
             </h3>
@@ -988,7 +988,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Full Name
                 </label>
@@ -999,13 +999,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   onChange={e => setUserForm({ ...userForm, name: e.target.value })}
                   placeholder="John Doe"
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Email Address
                 </label>
@@ -1016,13 +1016,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   onChange={e => setUserForm({ ...userForm, email: e.target.value })}
                   placeholder="john@affinity.com"
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Password
                 </label>
@@ -1034,16 +1034,16 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   placeholder="Min 8 characters"
                   minLength={8}
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
-                <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                   Must be at least 8 characters
                 </p>
               </div>
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Role
                 </label>
@@ -1052,7 +1052,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     onClick={() => setUserForm({ ...userForm, role: 'Admin' })}
                     className="p-4 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${userForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${userForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                       background:
                         userForm.role === 'Admin'
                           ? 'var(--cds-tag-background-purple, #f6f2ff)'
@@ -1062,7 +1062,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className="font-bold"
-                        style={{ color: 'var(--cds-text-primary, #161616)' }}
+                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
                       >
                         Administrator
                       </span>
@@ -1070,7 +1070,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${userForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                           background:
                             userForm.role === 'Admin'
                               ? 'var(--cds-tag-color-purple, #8a3ffc)'
@@ -1092,7 +1092,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                       Full system access, user management, and all settings
                     </p>
                   </div>
@@ -1101,7 +1101,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     onClick={() => setUserForm({ ...userForm, role: 'Manager' })}
                     className="p-4 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                       background:
                         userForm.role === 'Manager'
                           ? 'var(--cds-layer-selected-01, #e5f6ff)'
@@ -1111,7 +1111,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className="font-bold"
-                        style={{ color: 'var(--cds-text-primary, #161616)' }}
+                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
                       >
                         Manager
                       </span>
@@ -1119,7 +1119,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                           background:
                             userForm.role === 'Manager'
                               ? 'var(--cds-interactive, #D97706)'
@@ -1141,7 +1141,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                       Dashboard, reports, vehicles, and operational data
                     </p>
                   </div>
@@ -1150,17 +1150,17 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     onClick={() => setUserForm({ ...userForm, role: 'Accountant' })}
                     className="p-4 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${userForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${userForm.role === 'Accountant' ? 'var(--cds-support-success, #10b981)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                       background:
                         userForm.role === 'Accountant'
-                          ? 'var(--cds-tag-background-green, #defbe6)'
+                          ? 'var(--cds-tag-background-green, #d1fae5)'
                           : 'transparent',
                     }}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className="font-bold"
-                        style={{ color: 'var(--cds-text-primary, #161616)' }}
+                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
                       >
                         Accountant
                       </span>
@@ -1168,10 +1168,10 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${userForm.role === 'Accountant' ? 'var(--cds-support-success, #10b981)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                           background:
                             userForm.role === 'Accountant'
-                              ? 'var(--cds-support-success, #24a148)'
+                              ? 'var(--cds-support-success, #10b981)'
                               : 'transparent',
                         }}
                       >
@@ -1190,7 +1190,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                       Financial data, expenses, quotes, invoices, and payments
                     </p>
                   </div>
@@ -1199,7 +1199,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     onClick={() => setUserForm({ ...userForm, role: 'Driver' })}
                     className="p-4 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${userForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${userForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                       background:
                         userForm.role === 'Driver'
                           ? 'var(--cds-tag-background-cyan, #e5f6ff)'
@@ -1209,7 +1209,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className="font-bold"
-                        style={{ color: 'var(--cds-text-primary, #161616)' }}
+                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
                       >
                         Driver
                       </span>
@@ -1217,7 +1217,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${userForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                           background:
                             userForm.role === 'Driver'
                               ? 'var(--cds-tag-color-cyan, #1192e8)'
@@ -1239,7 +1239,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                       Driver portal, document uploads, and trip logs
                     </p>
                   </div>
@@ -1310,11 +1310,11 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               <div>
                 <h3
                   className="text-2xl font-black"
-                  style={{ color: 'var(--cds-text-primary, #161616)' }}
+                  style={{ color: 'var(--cds-text-primary, #18181b)' }}
                 >
                   Set Password
                 </h3>
-                <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                   Set a new password for {userToSetPassword.name}
                 </p>
               </div>
@@ -1323,7 +1323,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   New Password
                 </label>
@@ -1335,13 +1335,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   placeholder="Min 8 characters"
                   minLength={8}
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Confirm Password
                 </label>
@@ -1355,7 +1355,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   placeholder="Re-enter password"
                   minLength={8}
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
               <div
@@ -1367,7 +1367,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               >
                 <p
                   className="text-xs font-medium"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   ⚠️ This will immediately change the user's password. They will need to use the new
                   password on their next login.
@@ -1383,8 +1383,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   }}
                   className="flex-1 px-4 py-3 font-bold text-sm"
                   style={{
-                    color: 'var(--cds-text-secondary, #525252)',
-                    border: '1px solid var(--cds-border-subtle, #c6c6c6)',
+                    color: 'var(--cds-text-secondary, #52525b)',
+                    border: '1px solid var(--cds-border-subtle, #d6d3d1)',
                   }}
                 >
                   Cancel
@@ -1419,7 +1419,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           >
             <h3
               className="text-2xl font-black mb-6"
-              style={{ color: 'var(--cds-text-primary, #161616)' }}
+              style={{ color: 'var(--cds-text-primary, #18181b)' }}
             >
               Edit User
             </h3>
@@ -1427,7 +1427,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Full Name
                 </label>
@@ -1438,13 +1438,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   onChange={e => setEditForm({ ...editForm, name: e.target.value })}
                   placeholder="John Doe"
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Email Address
                 </label>
@@ -1455,13 +1455,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   onChange={e => setEditForm({ ...editForm, email: e.target.value })}
                   placeholder="john@affinity.com"
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Role
                 </label>
@@ -1470,7 +1470,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     onClick={() => setEditForm({ ...editForm, role: 'Admin' })}
                     className="p-3 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${editForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${editForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                       background:
                         editForm.role === 'Admin'
                           ? 'var(--cds-tag-background-purple, #f6f2ff)'
@@ -1480,7 +1480,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     <div className="flex items-center justify-between">
                       <span
                         className="font-bold text-sm"
-                        style={{ color: 'var(--cds-text-primary, #161616)' }}
+                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
                       >
                         Administrator
                       </span>
@@ -1488,7 +1488,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-4 h-4 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${editForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${editForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                           background:
                             editForm.role === 'Admin'
                               ? 'var(--cds-tag-color-purple, #8a3ffc)'
@@ -1516,7 +1516,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     onClick={() => setEditForm({ ...editForm, role: 'Manager' })}
                     className="p-3 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                       background:
                         editForm.role === 'Manager'
                           ? 'var(--cds-layer-selected-01, #e5f6ff)'
@@ -1526,7 +1526,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     <div className="flex items-center justify-between">
                       <span
                         className="font-bold text-sm"
-                        style={{ color: 'var(--cds-text-primary, #161616)' }}
+                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
                       >
                         Manager
                       </span>
@@ -1534,7 +1534,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-4 h-4 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                           background:
                             editForm.role === 'Manager'
                               ? 'var(--cds-interactive, #D97706)'
@@ -1562,17 +1562,17 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     onClick={() => setEditForm({ ...editForm, role: 'Accountant' })}
                     className="p-3 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${editForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${editForm.role === 'Accountant' ? 'var(--cds-support-success, #10b981)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                       background:
                         editForm.role === 'Accountant'
-                          ? 'var(--cds-tag-background-green, #defbe6)'
+                          ? 'var(--cds-tag-background-green, #d1fae5)'
                           : 'transparent',
                     }}
                   >
                     <div className="flex items-center justify-between">
                       <span
                         className="font-bold text-sm"
-                        style={{ color: 'var(--cds-text-primary, #161616)' }}
+                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
                       >
                         Accountant
                       </span>
@@ -1580,10 +1580,10 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-4 h-4 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${editForm.role === 'Accountant' ? 'var(--cds-support-success, #24a148)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${editForm.role === 'Accountant' ? 'var(--cds-support-success, #10b981)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                           background:
                             editForm.role === 'Accountant'
-                              ? 'var(--cds-support-success, #24a148)'
+                              ? 'var(--cds-support-success, #10b981)'
                               : 'transparent',
                         }}
                       >
@@ -1608,7 +1608,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     onClick={() => setEditForm({ ...editForm, role: 'Driver' })}
                     className="p-3 cursor-pointer transition-all"
                     style={{
-                      border: `2px solid ${editForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                      border: `2px solid ${editForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                       background:
                         editForm.role === 'Driver'
                           ? 'var(--cds-tag-background-cyan, #e5f6ff)'
@@ -1618,7 +1618,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     <div className="flex items-center justify-between">
                       <span
                         className="font-bold text-sm"
-                        style={{ color: 'var(--cds-text-primary, #161616)' }}
+                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
                       >
                         Driver
                       </span>
@@ -1626,7 +1626,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-4 h-4 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${editForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #c6c6c6)'}`,
+                          border: `2px solid ${editForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
                           background:
                             editForm.role === 'Driver'
                               ? 'var(--cds-tag-color-cyan, #1192e8)'
@@ -1654,7 +1654,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Status
                 </label>
@@ -1665,7 +1665,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     setEditForm({ ...editForm, status: e.target.value as 'Active' | 'Inactive' })
                   }
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 >
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
@@ -1677,8 +1677,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   onClick={() => setShowEditModal(false)}
                   className="flex-1 px-4 py-3 font-bold text-sm"
                   style={{
-                    color: 'var(--cds-text-secondary, #525252)',
-                    border: '1px solid var(--cds-border-subtle, #c6c6c6)',
+                    color: 'var(--cds-text-secondary, #52525b)',
+                    border: '1px solid var(--cds-border-subtle, #d6d3d1)',
                   }}
                 >
                   Cancel
@@ -1721,7 +1721,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               >
                 <svg
                   className="w-6 h-6"
-                  style={{ color: 'var(--cds-support-error, #da1e28)' }}
+                  style={{ color: 'var(--cds-support-error, #dc2626)' }}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1737,24 +1737,24 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               <div>
                 <h3
                   className="text-xl font-black"
-                  style={{ color: 'var(--cds-text-primary, #161616)' }}
+                  style={{ color: 'var(--cds-text-primary, #18181b)' }}
                 >
                   Delete User
                 </h3>
-                <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                   This action cannot be undone
                 </p>
               </div>
             </div>
-            <div className="p-4 mb-6" style={{ background: 'var(--cds-layer-02, #f4f4f4)' }}>
-              <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+            <div className="p-4 mb-6" style={{ background: 'var(--cds-layer-02, #ffffff)' }}>
+              <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                 Are you sure you want to delete{' '}
-                <span className="font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>
+                <span className="font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
                   {userToDelete.name}
                 </span>
                 ?
               </p>
-              <p className="text-xs mt-2" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+              <p className="text-xs mt-2" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                 {userToDelete.email}
               </p>
             </div>
@@ -1763,8 +1763,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                 onClick={() => setShowDeleteDialog(false)}
                 className="flex-1 px-4 py-3 font-bold text-sm"
                 style={{
-                  color: 'var(--cds-text-secondary, #525252)',
-                  border: '1px solid var(--cds-border-subtle, #c6c6c6)',
+                  color: 'var(--cds-text-secondary, #52525b)',
+                  border: '1px solid var(--cds-border-subtle, #d6d3d1)',
                 }}
               >
                 Cancel
@@ -1772,7 +1772,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               <button
                 onClick={handleDeleteUser}
                 className="flex-1 px-4 py-3 font-bold text-sm text-white"
-                style={{ background: 'var(--cds-support-error, #da1e28)' }}
+                style={{ background: 'var(--cds-support-error, #dc2626)' }}
               >
                 Delete User
               </button>

@@ -43,7 +43,7 @@ interface InvoiceFormData {
 
 type LineItemSubmit = Omit<LineItemDraft, 'id'>;
 
-interface CarbonInvoiceModalProps {
+interface InvoiceModalProps {
   open: boolean;
   editingInvoice: Invoice | null;
   clients: Client[];
@@ -95,7 +95,7 @@ const formatMoney = (amount: number, currency: 'USD' | 'GBP'): string => {
   return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
-export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
+export const InvoiceModal: React.FC<InvoiceModalProps> = ({
   open,
   editingInvoice,
   clients,
@@ -254,8 +254,8 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
             <div
               style={{
                 padding: '0.75rem 1rem',
-                backgroundColor: '#f4f4f4',
-                borderLeft: '3px solid #24a148',
+                backgroundColor: '#ffffff',
+                borderLeft: '3px solid #10b981',
               }}
             >
               <span
@@ -263,7 +263,7 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
                   fontFamily: 'IBM Plex Mono, monospace',
                   fontSize: '0.875rem',
                   fontWeight: 600,
-                  color: '#24a148',
+                  color: '#10b981',
                 }}
               >
                 {editingInvoice.invoice_number}
@@ -458,8 +458,8 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
                 key={item.id || index}
                 style={{
                   padding: '0.75rem',
-                  backgroundColor: '#f4f4f4',
-                  borderLeft: '3px solid #c6c6c6',
+                  backgroundColor: '#ffffff',
+                  borderLeft: '3px solid #d6d3d1',
                 }}
               >
                 <Grid narrow>
@@ -522,10 +522,10 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
                         textAlign: 'right',
                       }}
                     >
-                      <div style={{ fontSize: '0.75rem', color: '#525252' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#52525b' }}>
                         Amount
                       </div>
-                      <div style={{ color: '#161616' }}>
+                      <div style={{ color: '#18181b' }}>
                         {formatMoney(calculateLineAmount(item), formData.currency)}
                       </div>
                     </div>
@@ -538,7 +538,7 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
                         icon={<Trash2 size={14} />}
                         label="Remove line item"
                         onClick={() => removeLineItem(index)}
-                        style={{ color: '#da1e28' }}
+                        style={{ color: '#dc2626' }}
                       />
                     )}
                   </Column>
@@ -548,7 +548,7 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
                   <p
                     style={{
                       fontSize: '0.75rem',
-                      color: '#525252',
+                      color: '#52525b',
                       marginTop: '0.25rem',
                     }}
                   >
@@ -570,8 +570,8 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
                   ? 'repeat(3, 1fr)'
                   : 'repeat(2, 1fr)',
               gap: '1px',
-              background: '#e0e0e0',
-              border: '1px solid #e0e0e0',
+              background: '#e7e5e4',
+              border: '1px solid #e7e5e4',
             }}
           >
             <InvoiceSummaryCell label="Subtotal" value={formatMoney(totals.subtotal, formData.currency)} />
@@ -589,7 +589,7 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
             style={{
               marginTop: '0.75rem',
               padding: '0.75rem 1rem',
-              backgroundColor: '#161616',
+              backgroundColor: '#18181b',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -599,7 +599,7 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
               style={{
                 fontWeight: 600,
                 fontSize: '0.875rem',
-                color: '#525252',
+                color: '#52525b',
               }}
             >
               Invoice Total
@@ -641,11 +641,11 @@ export const CarbonInvoiceModal: React.FC<CarbonInvoiceModalProps> = ({
   );
 };
 
-// ── Summary cell helper (matches CarbonPaymentModal style) ─────────────────
+// ── Summary cell helper (matches PaymentModal style) ─────────────────
 
 const invoiceAccentColor = {
-  error: '#da1e28',
-  success: '#24a148',
+  error: '#dc2626',
+  success: '#10b981',
   warning: '#8e4e00',
 };
 
@@ -657,7 +657,7 @@ const InvoiceSummaryCell: React.FC<{
 }> = ({ label, value, emphasis, accent }) => (
   <div
     style={{
-      background: '#f4f4f4',
+      background: '#ffffff',
       padding: '0.875rem 1rem',
       textAlign: 'center',
     }}
@@ -668,7 +668,7 @@ const InvoiceSummaryCell: React.FC<{
         fontWeight: 600,
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
-        color: '#525252',
+        color: '#52525b',
         marginBottom: '0.25rem',
       }}
     >
@@ -678,7 +678,7 @@ const InvoiceSummaryCell: React.FC<{
       style={{
         fontSize: emphasis ? '1.125rem' : '0.9375rem',
         fontWeight: 700,
-        color: accent ? invoiceAccentColor[accent] : '#161616',
+        color: accent ? invoiceAccentColor[accent] : '#18181b',
       }}
     >
       {value}
@@ -686,4 +686,4 @@ const InvoiceSummaryCell: React.FC<{
   </div>
 );
 
-export default CarbonInvoiceModal;
+export default InvoiceModal;

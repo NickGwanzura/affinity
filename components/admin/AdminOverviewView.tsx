@@ -24,13 +24,13 @@ interface InventoryRow {
   landedCost: React.ReactNode;
 }
 
-// Carbon-inspired region palette — kept stable across the dashboard.
+// modern region palette — kept stable across the dashboard.
 const REGION_STYLES: Record<string, { bg: string; fg: string }> = {
-  UK:        { bg: '#e0e0e0', fg: '#161616' },
-  Namibia:   { bg: '#f1c21b', fg: '#161616' },
-  Zimbabwe:  { bg: '#24a148', fg: '#ffffff' },
+  UK:        { bg: '#e7e5e4', fg: '#18181b' },
+  Namibia:   { bg: '#f59e0b', fg: '#18181b' },
+  Zimbabwe:  { bg: '#10b981', fg: '#ffffff' },
   Botswana:  { bg: '#8a3ffc', fg: '#ffffff' },
-  Sold:      { bg: '#525252', fg: '#ffffff' },
+  Sold:      { bg: '#52525b', fg: '#ffffff' },
 };
 const DEFAULT_REGION = { bg: '#D97706', fg: '#ffffff' };
 
@@ -45,7 +45,7 @@ interface KpiProps {
 }
 
 const Kpi: React.FC<KpiProps> = ({ eyebrow, value, caption, accent, icon, footer }) => (
-  <div className="group relative flex flex-col bg-white border border-[#e0e0e0] transition-colors duration-150 hover:border-[#c6c6c6]">
+  <div className="group relative flex flex-col bg-white border border-[#e7e5e4] transition-colors duration-150 hover:border-[#d6d3d1]">
     <span
       aria-hidden="true"
       className="absolute inset-y-0 left-0 w-[3px]"
@@ -53,13 +53,13 @@ const Kpi: React.FC<KpiProps> = ({ eyebrow, value, caption, accent, icon, footer
     />
     <div className="flex items-start justify-between gap-3 p-6 pl-7">
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#525252] mb-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#52525b] mb-3">
           {eyebrow}
         </p>
-        <p className="text-[32px] font-light leading-none tabular-nums text-[#161616] mb-2">
+        <p className="text-[32px] font-light leading-none tabular-nums text-[#18181b] mb-2">
           {value}
         </p>
-        <p className="text-sm text-[#525252] leading-snug">{caption}</p>
+        <p className="text-sm text-[#52525b] leading-snug">{caption}</p>
       </div>
       <div
         aria-hidden="true"
@@ -70,7 +70,7 @@ const Kpi: React.FC<KpiProps> = ({ eyebrow, value, caption, accent, icon, footer
       </div>
     </div>
     {footer ? (
-      <div className="border-t border-[#e0e0e0] px-6 py-3 pl-7 text-sm text-[#525252]">
+      <div className="border-t border-[#e7e5e4] px-6 py-3 pl-7 text-sm text-[#52525b]">
         {footer}
       </div>
     ) : null}
@@ -108,8 +108,8 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
       vehicle: summary,
       asset: (
         <div className="flex flex-col">
-          <span className="font-semibold text-[#161616]">{summary.make_model}</span>
-          <span className="mt-0.5 font-mono text-[11px] uppercase tracking-wider text-[#6f6f6f]">
+          <span className="font-semibold text-[#18181b]">{summary.make_model}</span>
+          <span className="mt-0.5 font-mono text-[11px] uppercase tracking-wider text-[#71717a]">
             {summary.vin_number}
           </span>
         </div>
@@ -125,10 +125,10 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
       purchaseCost: `£${summary.purchase_price_gbp.toLocaleString()}`,
       landedCost: (
         <div className="flex flex-col">
-          <span className="font-semibold text-[#161616] tabular-nums">
+          <span className="font-semibold text-[#18181b] tabular-nums">
             {fmtMoney(summary.total_landed_cost_usd)}
           </span>
-          <span className="mt-0.5 text-[11px] uppercase tracking-wider text-[#6f6f6f]">
+          <span className="mt-0.5 text-[11px] uppercase tracking-wider text-[#71717a]">
             Total landed
           </span>
         </div>
@@ -171,7 +171,7 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
   return (
     <div className="flex flex-col gap-8">
       {/* Hero strip */}
-      <section className="relative overflow-hidden bg-[#161616] text-white">
+      <section className="relative overflow-hidden bg-[#18181b] text-white">
         <div
           aria-hidden="true"
           className="absolute inset-0 opacity-[0.04]"
@@ -183,7 +183,7 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
         />
         <div className="relative flex flex-col gap-6 p-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8d8d8d]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a8a29e]">
               Fleet overview
             </p>
             <h1 className="mt-2 text-3xl font-medium leading-tight tracking-[-0.02em] md:text-4xl">
@@ -191,26 +191,26 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
                 ? 'No fleet data yet.'
                 : `${summaries.length} ${summaries.length === 1 ? 'vehicle' : 'vehicles'} under management.`}
             </h1>
-            <p className="mt-3 text-sm leading-relaxed text-[#a8a8a8]">
+            <p className="mt-3 text-sm leading-relaxed text-[#a1a1aa]">
               Landed-cost, region breakdown, and inventory health in one view. Figures update
               as expenses and transits are recorded.
             </p>
           </div>
           <dl className="grid grid-cols-3 gap-8 text-left">
             <div>
-              <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8d8d8d]">
+              <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a8a29e]">
                 Book value
               </dt>
               <dd className="mt-1 text-2xl font-light tabular-nums">{fmtCompact(totalValuation)}</dd>
             </div>
             <div>
-              <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8d8d8d]">
+              <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a8a29e]">
                 In transit
               </dt>
               <dd className="mt-1 text-2xl font-light tabular-nums">{inTransitCount}</dd>
             </div>
             <div>
-              <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8d8d8d]">
+              <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a8a29e]">
                 Efficiency
               </dt>
               <dd className="mt-1 text-2xl font-light tabular-nums">
@@ -230,7 +230,7 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
           accent="#D97706"
           icon={<Wallet size={18} strokeWidth={2} />}
           footer={
-            <span className="inline-flex items-center gap-1.5 font-medium text-[#24a148]">
+            <span className="inline-flex items-center gap-1.5 font-medium text-[#10b981]">
               <ArrowUpRight size={14} strokeWidth={2.5} />
               Healthy inventory
             </span>
@@ -244,7 +244,7 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
               ? `${soldCount} sold · ${summaries.length} total`
               : 'Active routes across the corridor'
           }
-          accent="#198038"
+          accent="#059669"
           icon={<Truck size={18} strokeWidth={2} />}
           footer={
             <span className="flex items-center gap-1.5">
@@ -264,13 +264,13 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
           icon={<Activity size={18} strokeWidth={2} />}
           footer={
             <div className="flex items-center gap-3">
-              <div className="relative h-1.5 flex-1 bg-[#e8e8e8]">
+              <div className="relative h-1.5 flex-1 bg-[#f5f5f4]">
                 <div
                   className="absolute inset-y-0 left-0 transition-[width] duration-500"
-                  style={{ width: `${efficiencyRate}%`, background: '#24a148' }}
+                  style={{ width: `${efficiencyRate}%`, background: '#10b981' }}
                 />
               </div>
-              <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-[#6f6f6f]">
+              <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-[#71717a]">
                 Target 95%
               </span>
             </div>
@@ -280,7 +280,7 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
           eyebrow="Avg cost / vehicle"
           value={summaries.length === 0 ? '—' : fmtCompact(avgLandedCost)}
           caption={`Transit spend ${fmtCompact(totalExpenses)}`}
-          accent="#f1c21b"
+          accent="#f59e0b"
           icon={<Package size={18} strokeWidth={2} />}
           footer={
             <span>

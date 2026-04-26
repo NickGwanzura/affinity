@@ -39,7 +39,7 @@ export const TabList: React.FC<TabListProps> = ({ children, className = '', ...r
   return (
     <div
       role="tablist"
-      className={`flex border-b border-gray-200 overflow-x-auto ${className}`}
+      className={`flex border-b border-stone-200 overflow-x-auto ${className}`}
       {...rest}
     >
       {arr.map((child, i) =>
@@ -68,10 +68,10 @@ export const Tab: React.FC<TabProps> = ({ children, disabled, className = '', in
       aria-selected={isActive}
       disabled={disabled}
       onClick={() => !disabled && ctx.setSelected(index)}
-      className={`px-4 py-3 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#D97706] disabled:opacity-50 ${
+      className={`px-4 py-3 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#D97706] disabled:opacity-50 ${
         isActive
           ? 'border-[#D97706] text-[#D97706] font-semibold'
-          : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+          : 'border-transparent text-zinc-600 hover:text-zinc-900 hover:border-stone-300'
       } ${className}`}
     >
       {children}

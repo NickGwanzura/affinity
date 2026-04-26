@@ -17,9 +17,9 @@ import { Button, DashboardPageHeader } from '../ui';
 import { useConfirm } from '../ConfirmModal';
 import { useToast } from '../Toast';
 import { ClientFormModal, type ClientFormValue } from '../shared/ClientFormModal';
-import { CarbonInvoiceModal } from '../shared/InvoiceModal';
-import { CarbonQuoteModal } from '../shared/QuoteModal';
-import { CarbonPaymentModal } from '../shared/PaymentModal';
+import { InvoiceModal } from '../shared/InvoiceModal';
+import { QuoteModal } from '../shared/QuoteModal';
+import { PaymentModal } from '../shared/PaymentModal';
 
 import { FinancialsTabBar, type FinancialsTab } from './FinancialsTabBar';
 import { QuotesSection } from './sections/QuotesSection';
@@ -1514,7 +1514,7 @@ export const Financials: React.FC = () => {
     backgroundColor: 'var(--cds-layer-01, #ffffff)',
     borderWidth: '1px',
     borderStyle: 'solid',
-    borderColor: 'var(--cds-border-subtle, #c6c6c6)',
+    borderColor: 'var(--cds-border-subtle, #d6d3d1)',
   };
 
   return (
@@ -1542,7 +1542,7 @@ export const Financials: React.FC = () => {
       />
 
       {/* Modals */}
-      <CarbonQuoteModal
+      <QuoteModal
         open={showQuoteModal}
         editingQuote={editingQuote}
         clients={clients}
@@ -1576,7 +1576,7 @@ export const Financials: React.FC = () => {
         }}
       />
 
-      <CarbonInvoiceModal
+      <InvoiceModal
         open={showInvoiceModal}
         editingInvoice={editingInvoice}
         clients={clients}
@@ -1614,7 +1614,7 @@ export const Financials: React.FC = () => {
         }}
       />
 
-      <CarbonPaymentModal
+      <PaymentModal
         open={showPaymentModal}
         editingPayment={editingPayment}
         clientOptions={clientOptions}
@@ -1678,20 +1678,20 @@ export const Financials: React.FC = () => {
               style={{
                 borderBottomWidth: '1px',
                 borderBottomStyle: 'solid',
-                borderBottomColor: 'var(--cds-border-subtle, #c6c6c6)',
-                backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
+                borderBottomColor: 'var(--cds-border-subtle, #d6d3d1)',
+                backgroundColor: 'var(--cds-layer-02, #ffffff)',
               }}
             >
               <div>
                 <h3
                   className="text-lg font-black"
-                  style={{ color: 'var(--cds-text-primary, #161616)' }}
+                  style={{ color: 'var(--cds-text-primary, #18181b)' }}
                 >
                   {previewTitle} Preview
                 </h3>
                 <p
                   className="text-sm"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Review the PDF before downloading or sharing it.
                 </p>
@@ -1719,7 +1719,7 @@ export const Financials: React.FC = () => {
               src={previewUrl}
               title={previewTitle}
               className="h-[calc(88vh-73px)] w-full"
-              style={{ backgroundColor: 'var(--cds-layer-02, #f4f4f4)' }}
+              style={{ backgroundColor: 'var(--cds-layer-02, #ffffff)' }}
             />
           </div>
         </div>

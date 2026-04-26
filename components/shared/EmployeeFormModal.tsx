@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Employee } from '../../types';
-import CarbonFormModal from './FormModal';
+import FormModalShell from './FormModal';
 import { Button, Select, SelectItem, Stack, TextInput } from '../ui';
 
 export interface EmployeeFormValue {
@@ -75,7 +75,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   }
 
   return (
-    <CarbonFormModal
+    <FormModalShell
       isOpen={isOpen}
       title={title}
       label="Employee record"
@@ -209,7 +209,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           <Button type="submit">{submitLabel}</Button>
         </div>
       </form>
-    </CarbonFormModal>
+    </FormModalShell>
   );
 };
 

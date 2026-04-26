@@ -1,22 +1,23 @@
 import React from 'react';
+import type { Intent } from './StatCard';
 
 interface DashboardCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
   footer?: React.ReactNode;
-  color?: 'blue' | 'green' | 'red' | 'amber' | 'purple' | 'neutral';
+  intent?: Intent;
   className?: string;
   icon?: React.ReactNode;
 }
 
-const accentMap: Record<NonNullable<DashboardCardProps['color']>, string> = {
-  blue:    '#D97706',
-  green:   '#198038',
-  red:     '#da1e28',
-  amber:   '#f1c21b',
-  purple:  '#8a3ffc',
-  neutral: '#6f6f6f',
+const accentMap: Record<Intent, string> = {
+  primary: '#D97706',
+  success: '#059669',
+  danger:  '#dc2626',
+  warning: '#f59e0b',
+  info:    '#2563eb',
+  neutral: '#71717a',
 };
 
 export const DashboardCard: React.FC<DashboardCardProps> = ({
@@ -24,15 +25,15 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   value,
   subtitle,
   footer,
-  color = 'blue',
+  intent = 'primary',
   className = '',
   icon,
 }) => {
-  const accent = accentMap[color];
+  const accent = accentMap[intent];
 
   return (
     <div
-      className={`group relative flex flex-col bg-white border border-[#e0e0e0] transition-colors duration-150 hover:border-[#c6c6c6] ${className}`}
+      className={`group relative flex flex-col overflow-hidden rounded-lg bg-white border border-stone-200 transition-shadow duration-150 hover:shadow-sm ${className}`}
     >
       <span
         aria-hidden="true"
@@ -41,20 +42,20 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
       />
       <div className="flex items-start justify-between gap-3 p-6 pl-7">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#525252] mb-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-600 mb-3">
             {title}
           </p>
-          <p className="text-[32px] font-light leading-none tabular-nums text-[#161616] mb-2">
+          <p className="text-[32px] font-semibold leading-none tabular-nums text-zinc-900 mb-2">
             {value}
           </p>
           {subtitle && (
-            <p className="text-sm text-[#525252] leading-snug">{subtitle}</p>
+            <p className="text-sm text-zinc-600 leading-snug">{subtitle}</p>
           )}
         </div>
         {icon ? (
           <div
             aria-hidden="true"
-            className="flex h-10 w-10 shrink-0 items-center justify-center text-white"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-white"
             style={{ background: accent }}
           >
             {icon}
@@ -62,7 +63,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
         ) : null}
       </div>
       {footer && (
-        <div className="border-t border-[#e0e0e0] px-6 py-3 pl-7 text-sm text-[#525252]">
+        <div className="border-t border-stone-200 px-6 py-3 pl-7 text-sm text-zinc-600">
           {footer}
         </div>
       )}

@@ -135,7 +135,7 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
     <tr className="hover:bg-zinc-50 transition-colors group">
       {/* Date Column */}
       <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{formattedDate}</span>
+        <span className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{formattedDate}</span>
       </td>
 
       {/* Category Column */}
@@ -154,9 +154,9 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
       {showVehicleColumn && (
         <td className="px-6 py-4">
           {vehicleName ? (
-            <span className="text-sm font-medium" style={{ color: 'var(--cds-text-primary, #161616)' }}>{vehicleName}</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{vehicleName}</span>
           ) : (
-            <span className="text-sm italic" style={{ color: 'var(--cds-text-secondary, #525252)' }}>General</span>
+            <span className="text-sm italic" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>General</span>
           )}
         </td>
       )}
@@ -171,7 +171,7 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
       {/* Description Column */}
       <td className="px-6 py-4">
         <div className="flex flex-col">
-          <span className="text-sm line-clamp-1" style={{ color: 'var(--cds-text-primary, #161616)' }} title={expense.description}>
+          <span className="text-sm line-clamp-1" style={{ color: 'var(--cds-text-primary, #18181b)' }} title={expense.description}>
             {expense.description}
           </span>
           {isDriverDisbursement && expense.driver_name && (
@@ -185,9 +185,9 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
       {/* Amount Column */}
       <td className="px-6 py-4 text-right tabular-nums">
         <div className="flex flex-col items-end">
-          <span className="text-sm font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{formattedAmount}</span>
+          <span className="text-sm font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{formattedAmount}</span>
           {expense.currency !== CURRENCIES.USD && (
-            <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+            <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
               ${usdAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD
             </span>
           )}
@@ -261,7 +261,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
 
   if (expenses.length === 0) {
     return (
-      <div className="p-12 text-center" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
+      <div className="p-12 text-center" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
         <svg
           className="w-16 h-16 text-zinc-300 mx-auto mb-4"
           fill="none" 
@@ -270,25 +270,25 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--cds-text-primary, #161616)' }}>No Expenses Found</h3>
-        <p style={{ color: 'var(--cds-text-secondary, #525252)' }}>{emptyMessage}</p>
+        <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>No Expenses Found</h3>
+        <p style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
+    <div className="overflow-hidden" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
       {/* Header */}
       <div className="px-6 py-5 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/30">
         <div>
-          <h3 className="text-lg font-black tracking-tight" style={{ color: 'var(--cds-text-primary, #161616)' }}>{title}</h3>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+          <h3 className="text-lg font-black tracking-tight" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{title}</h3>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
             {totals.count} transaction{totals.count !== 1 ? 's' : ''}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Total (USD)</p>
-          <p className="text-xl font-black tabular-nums" style={{ color: 'var(--cds-text-primary, #161616)' }}>
+          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Total (USD)</p>
+          <p className="text-xl font-black tabular-nums" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
             ${totals.usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </p>
         </div>
@@ -306,14 +306,14 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Date
               </th>
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Category
               </th>
@@ -321,7 +321,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
                 <th
                   scope="col"
                   className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Vehicle
                 </th>
@@ -329,21 +329,21 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Location
               </th>
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Description
               </th>
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs text-right"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Amount
               </th>
@@ -351,7 +351,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
                 <th
                   scope="col"
                   className="px-6 py-4 font-black uppercase tracking-widest text-xs text-right"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Actions
                 </th>

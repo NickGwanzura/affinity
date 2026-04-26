@@ -38,7 +38,7 @@ export const FinancialsTabBar: React.FC<FinancialsTabBarProps> = ({
   return (
     <div
       className="border-b"
-      style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
+      style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
     >
       <div className="flex overflow-x-auto">
         {TABS.map(tab => {

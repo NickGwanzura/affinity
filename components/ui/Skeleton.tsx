@@ -27,9 +27,9 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   );
 };
 
-// ── Carbon-compatible primitives ──────────────────────────────────────────────
-// These mirror @carbon/react's SkeletonText / SkeletonPlaceholder so consumers
-// that still reach for the Carbon names (or Layer 4 swaps) keep working.
+// ── Named primitives ────────────────────────────────────────────────────────
+// SkeletonText (multi-line placeholder) and SkeletonPlaceholder (block placeholder)
+// for places where the call site wants those specific variants.
 
 interface SkeletonTextProps {
   /** number of bar lines to render */

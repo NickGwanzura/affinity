@@ -74,13 +74,13 @@ export const RequestsTab: React.FC<RequestsTabProps> = ({ onPendingCountChange }
         <div>
           <h2
             className="text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #161616)' }}
+            style={{ color: 'var(--cds-text-primary, #18181b)' }}
           >
             Registration Requests
           </h2>
           <p
             className="font-medium"
-            style={{ color: 'var(--cds-text-secondary, #525252)' }}
+            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
           >
             Review and approve account requests from users
           </p>
@@ -100,62 +100,62 @@ export const RequestsTab: React.FC<RequestsTabProps> = ({ onPendingCountChange }
         className="overflow-hidden"
         style={{
           background: 'var(--cds-layer-01, #ffffff)',
-          border: '1px solid var(--cds-border-subtle, #c6c6c6)',
+          border: '1px solid var(--cds-border-subtle, #d6d3d1)',
         }}
       >
         <table className="w-full">
           <thead
             style={{
-              background: 'var(--cds-layer-02, #f4f4f4)',
-              borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)',
+              background: 'var(--cds-layer-02, #ffffff)',
+              borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)',
             }}
           >
             <tr>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Name
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Email
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Role
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Status
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Requested
               </th>
               <th
                 className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
+          <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #d6d3d1)' }}>
             {registrationRequests.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
                   className="px-6 py-12 text-center font-medium"
-                  style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }}
+                  style={{ color: 'var(--cds-text-disabled, #a8a29e)' }}
                 >
                   No registration requests yet. Users can request access from the sign-in
                   page.
@@ -165,17 +165,17 @@ export const RequestsTab: React.FC<RequestsTabProps> = ({ onPendingCountChange }
               registrationRequests.map(request => (
                 <tr
                   key={request.id}
-                  style={{ borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 >
                   <td
                     className="px-6 py-4 font-semibold"
-                    style={{ color: 'var(--cds-text-primary, #161616)' }}
+                    style={{ color: 'var(--cds-text-primary, #18181b)' }}
                   >
                     {request.name}
                   </td>
                   <td
                     className="px-6 py-4 font-mono text-sm"
-                    style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                    style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                   >
                     {request.email}
                   </td>
@@ -209,7 +209,7 @@ export const RequestsTab: React.FC<RequestsTabProps> = ({ onPendingCountChange }
                   </td>
                   <td
                     className="px-6 py-4 text-sm"
-                    style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                    style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                   >
                     {new Date(request.requested_at).toLocaleDateString()}
                   </td>
@@ -235,7 +235,7 @@ export const RequestsTab: React.FC<RequestsTabProps> = ({ onPendingCountChange }
                     {request.status !== 'Pending' && (
                       <span
                         className="text-xs font-medium"
-                        style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }}
+                        style={{ color: 'var(--cds-text-disabled, #a8a29e)' }}
                       >
                         Reviewed{' '}
                         {request.reviewed_at

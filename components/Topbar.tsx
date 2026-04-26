@@ -1,76 +1,57 @@
-import React, { useState } from 'react';
-import { Bell, Search } from 'lucide-react';
+import React from 'react';
+import { Menu, Search } from 'lucide-react';
+import { Avatar } from './ui/Avatar';
 
 export interface TopbarProps {
   user: { name: string; role: string };
-  hasUnread?: boolean;
-  onSearch?: (query: string) => void;
+  onMenuClick?: () => void;
+  /**
+   * Triggers the global command palette. When provided, the topbar renders a
+   * search-shaped button that opens the palette and shows the ⌘K hint.
+   */
+  onCommandPalette?: () => void;
 }
 
-/**
- * Topbar shell. Sticky row above the main content.
- * Left: optional search input. Right: bell + square amber avatar + name/role.
- * Visual-only: no menus or auth wiring. Port of coolpro2026's Topbar.
- */
-export const Topbar: React.FC<TopbarProps> = ({ user, hasUnread = false, onSearch }) => {
-  const [query, setQuery] = useState('');
+const isMac =
+  typeof navigator !== 'undefined' && /mac/i.test(navigator.platform || navigator.userAgent || '');
 
-  const initials = user.name
-    .split(' ')
-    .map(part => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    onSearch?.(query);
-  };
-
+export const Topbar: React.FC<TopbarProps> = ({
+  user,
+  onMenuClick,
+  onCommandPalette,
+}) => {
   return (
-    <header className="sticky top-0 z-30 h-14 bg-white border-b border-[#E7E5E4] flex items-center justify-between px-6">
-      <div className="flex items-center gap-4 flex-1 max-w-md">
-        {onSearch && (
-          <form onSubmit={handleSubmit} className="relative w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A8A29E] pointer-events-none"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              value={query}
-              onChange={event => setQuery(event.target.value)}
-              placeholder="Search..."
-              className="w-full h-9 pl-9 pr-3 text-sm bg-[#f4f4f4] border border-transparent text-[#1C1917] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#D97706]"
-              aria-label="Search"
-            />
-          </form>
+    <header className="sticky top-0 z-30 h-14 bg-white border-b border-[#E7E5E4] flex items-center justify-between px-4 lg:px-6">
+      <div className="flex items-center gap-3 flex-1 max-w-md">
+        {onMenuClick && (
+          <button
+            type="button"
+            onClick={onMenuClick}
+            aria-label="Open sidebar"
+            className="lg:hidden p-2 -ml-2 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F5F4] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
+        {onCommandPalette && (
+          <button
+            type="button"
+            onClick={onCommandPalette}
+            aria-label="Open command palette"
+            className="group relative flex h-9 w-full items-center gap-2 bg-[#F5F5F4] px-3 text-left text-sm text-[#78716C] hover:bg-[#EDEBE9] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706] transition-colors"
+          >
+            <Search className="h-4 w-4 text-[#A8A29E]" aria-hidden="true" />
+            <span className="flex-1 truncate">Search…</span>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 border border-[#E7E5E4] bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#78716C]">
+              {isMac ? '⌘' : 'Ctrl'}K
+            </kbd>
+          </button>
         )}
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="relative p-2 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F5F4] transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          {hasUnread && (
-            <span
-              aria-hidden="true"
-              className="absolute top-1.5 right-1.5 h-1.5 w-1.5 bg-[#D97706]"
-            />
-          )}
-        </button>
-
-        <div className="flex items-center gap-2 pl-3 border-l border-[#E7E5E4]">
-          <div
-            aria-hidden="true"
-            className="h-8 w-8 bg-[#D97706] flex items-center justify-center text-white text-xs font-bold"
-          >
-            {initials || 'U'}
-          </div>
+        <div className="flex items-center gap-2">
+          <Avatar name={user.name} size="md" tone="brand" />
           <div className="hidden md:flex flex-col leading-tight">
             <span className="text-sm font-medium text-[#1C1917]">{user.name}</span>
             <span className="text-xs text-[#78716C]">{user.role}</span>

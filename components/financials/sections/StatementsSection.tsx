@@ -29,11 +29,11 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
     backgroundColor: 'var(--cds-layer-01, #ffffff)',
     borderWidth: '1px',
     borderStyle: 'solid',
-    borderColor: 'var(--cds-border-subtle, #c6c6c6)',
+    borderColor: 'var(--cds-border-subtle, #d6d3d1)',
   };
 
   const labelStyle: React.CSSProperties = {
-    color: 'var(--cds-text-secondary, #525252)',
+    color: 'var(--cds-text-secondary, #52525b)',
   };
 
   return (
@@ -42,7 +42,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
         <BarChart3 size={48} className="mx-auto text-blue-600 mb-3" />
         <h3
           className="text-lg font-semibold mb-2"
-          style={{ color: 'var(--cds-text-primary, #161616)' }}
+          style={{ color: 'var(--cds-text-primary, #18181b)' }}
         >
           Client Statements
         </h3>

@@ -1,5 +1,7 @@
 import React from 'react';
 
+export type Intent = 'primary' | 'success' | 'danger' | 'warning' | 'info' | 'neutral';
+
 interface StatCardProps {
   title:     string;
   value:     string | number;
@@ -9,18 +11,18 @@ interface StatCardProps {
     value:      number;
     isPositive: boolean;
   };
-  color?:     'blue' | 'green' | 'red' | 'amber' | 'purple' | 'zinc';
+  intent?:    Intent;
   isLoading?: boolean;
   className?: string;
 }
 
-const accentMap: Record<string, { bg: string; text: string }> = {
-  blue:   { bg: '#D97706', text: '#ffffff' },
-  green:  { bg: '#16a34a', text: '#ffffff' },
-  red:    { bg: '#dc2626', text: '#ffffff' },
-  amber:  { bg: '#f59e0b', text: '#111827' },
-  purple: { bg: '#7c3aed', text: '#ffffff' },
-  zinc:   { bg: '#e4e4e7', text: '#111827' },
+const intentMap: Record<Intent, { bg: string; text: string }> = {
+  primary: { bg: '#D97706', text: '#ffffff' },
+  success: { bg: '#059669', text: '#ffffff' },
+  danger:  { bg: '#dc2626', text: '#ffffff' },
+  warning: { bg: '#f59e0b', text: '#18181b' },
+  info:    { bg: '#2563eb', text: '#ffffff' },
+  neutral: { bg: '#e4e4e7', text: '#18181b' },
 };
 
 const SkeletonLine = ({ width, className = '' }: { width: string; className?: string }) => (
@@ -37,15 +39,15 @@ export const StatCard: React.FC<StatCardProps> = ({
   subtitle,
   icon,
   trend,
-  color     = 'blue',
+  intent    = 'primary',
   isLoading = false,
   className = '',
 }) => {
-  const accent = accentMap[color] ?? accentMap.blue;
+  const accent = intentMap[intent];
 
   if (isLoading) {
     return (
-      <div className={`bg-white border border-gray-200 p-6 ${className}`}>
+      <div className={`bg-white rounded-lg border border-stone-200 p-6 ${className}`}>
         <div className="flex justify-between items-start mb-4">
           <SkeletonLine width="60%" />
           <SkeletonBox width={40} height={40} />
@@ -57,19 +59,17 @@ export const StatCard: React.FC<StatCardProps> = ({
   }
 
   return (
-    <div className={`relative overflow-hidden bg-white border border-gray-200 p-6 ${className}`}>
-      {/* Left accent bar */}
+    <div className={`relative overflow-hidden bg-white rounded-lg border border-stone-200 p-6 transition-shadow hover:shadow-sm ${className}`}>
       <div className="absolute top-0 left-0 w-1 h-full" style={{ background: accent.bg }} />
 
       <div className="pl-2">
-        {/* Header row */}
         <div className="flex justify-between items-start mb-3">
-          <p className="text-xs font-semibold text-gray-500 tracking-wider uppercase">
+          <p className="text-xs font-semibold text-zinc-500 tracking-wider uppercase">
             {title}
           </p>
           {icon && (
             <div
-              className="w-10 h-10 flex items-center justify-center flex-shrink-0"
+              className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
               style={{ background: accent.bg, color: accent.text }}
             >
               {icon}
@@ -77,22 +77,20 @@ export const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
 
-        {/* Value */}
-        <p className="text-3xl font-light text-gray-900 tabular-nums leading-tight mb-2">
+        <p className="text-3xl font-semibold text-zinc-900 tabular-nums leading-tight mb-2">
           {value}
         </p>
 
-        {/* Trend / subtitle */}
         {(trend || subtitle) && (
           <div className="flex items-center gap-2 flex-wrap">
             {trend && (
-              <span className={`inline-flex items-center gap-1 text-xs font-semibold ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`inline-flex items-center gap-1 text-xs font-semibold ${trend.isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
                 {trend.isPositive ? '↑' : '↓'}
                 {Math.abs(trend.value)}%
               </span>
             )}
             {subtitle && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-zinc-500">
                 {subtitle}
               </span>
             )}

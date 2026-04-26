@@ -23,33 +23,31 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
   renderIcon?: React.ComponentType<{ size?: number }>;
 }
 
-// Carbon-inspired, square-cornered button palette.
-// Each variant defines idle / hover / active states for background + text + border.
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-[#D97706] text-white border border-transparent ' +
+    'bg-[#D97706] text-white border border-transparent shadow-sm ' +
     'hover:bg-[#B45309] active:bg-[#92400E]',
   secondary:
-    'bg-[#393939] text-white border border-transparent ' +
-    'hover:bg-[#4c4c4c] active:bg-[#6f6f6f]',
+    'bg-zinc-800 text-white border border-transparent shadow-sm ' +
+    'hover:bg-zinc-700 active:bg-zinc-900',
   tertiary:
-    'bg-transparent text-[#D97706] border border-[#D97706] ' +
-    'hover:bg-[#D97706] hover:text-white active:bg-[#92400E] active:border-[#92400E]',
+    'bg-white text-[#D97706] border border-[#D97706] ' +
+    'hover:bg-[#fef3c7] active:bg-[#fde68a]',
   danger:
-    'bg-[#da1e28] text-white border border-transparent ' +
-    'hover:bg-[#b81921] active:bg-[#750e13]',
+    'bg-red-600 text-white border border-transparent shadow-sm ' +
+    'hover:bg-red-700 active:bg-red-800',
   'danger-tertiary':
-    'bg-transparent text-[#da1e28] border border-[#da1e28] ' +
-    'hover:bg-[#da1e28] hover:text-white active:bg-[#750e13] active:border-[#750e13]',
+    'bg-white text-red-600 border border-red-600 ' +
+    'hover:bg-red-50 active:bg-red-100',
   success:
-    'bg-[#198038] text-white border border-transparent ' +
-    'hover:bg-[#0e6027] active:bg-[#044317]',
+    'bg-emerald-600 text-white border border-transparent shadow-sm ' +
+    'hover:bg-emerald-700 active:bg-emerald-800',
   ghost:
     'bg-transparent text-[#D97706] border border-transparent ' +
-    'hover:bg-gray-100 active:bg-gray-200',
+    'hover:bg-stone-100 active:bg-stone-200',
   warning:
-    'bg-[#f1c21b] text-gray-900 border border-transparent ' +
-    'hover:bg-[#ddab06] active:bg-[#b28600]',
+    'bg-amber-500 text-white border border-transparent shadow-sm ' +
+    'hover:bg-amber-600 active:bg-amber-700',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -60,13 +58,12 @@ const sizeClasses: Record<ButtonSize, string> = {
 
 const baseButton = [
   'relative inline-flex items-center justify-center gap-2 select-none',
-  'font-medium tracking-[0.01em] whitespace-nowrap',
-  'rounded-none',
-  'transition-[background-color,border-color,color,box-shadow,opacity] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)]',
+  'font-medium whitespace-nowrap',
+  'rounded-md',
+  'transition-[background-color,border-color,color,box-shadow,opacity] duration-150 ease-out',
   'focus:outline-none focus-visible:outline-none',
   'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#D97706] focus-visible:ring-offset-white',
   'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:pointer-events-none',
-  'active:translate-y-0',
 ].join(' ');
 
 export const Button: React.FC<ButtonProps> = ({
@@ -123,7 +120,6 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
-// ── Icon button ─────────────────────────────────────────────────────────────
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon: React.ReactNode;
   variant?: ButtonVariant;

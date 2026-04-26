@@ -4,23 +4,22 @@ import { Eye, EyeOff, Loader2, Check, AlertCircle, ChevronDown } from 'lucide-re
 /* ──────────────────────────────────────────────────────────────────────────
    Shared tokens
    ──────────────────────────────────────────────────────────────────────── */
-const labelCls = 'block text-xs font-medium text-gray-700 mb-1.5 tracking-[0.02em]';
-const helperCls = 'mt-1.5 text-xs text-gray-500 leading-snug';
-const errorCls = 'mt-1.5 flex items-start gap-1 text-xs text-[#da1e28] leading-snug';
+const labelCls = 'block text-xs font-medium text-zinc-700 mb-1.5';
+const helperCls = 'mt-1.5 text-xs text-zinc-500 leading-snug';
+const errorCls = 'mt-1.5 flex items-start gap-1 text-xs text-red-600 leading-snug';
 
-// Carbon-style input: #f4f4f4 fill, top/side 1px #c6c6c6, bottom 1px #8d8d8d,
-// focus ring in Carbon Blue (#D97706), invalid red (#da1e28).
+// Modern input: white surface, soft 1px stone border, brand-amber focus ring.
 const baseInput =
-  'block w-full bg-[#f4f4f4] text-gray-900 text-sm placeholder-gray-400 ' +
-  'border border-[#c6c6c6] border-b-[#8d8d8d] rounded-none ' +
-  'px-3 py-2 min-h-[2.5rem] shadow-none appearance-none ' +
-  'transition-[background-color,border-color,outline-color] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] ' +
-  'hover:bg-[#e8e8e8] ' +
-  'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#D97706] ' +
-  'disabled:bg-[#f4f4f4] disabled:text-gray-400 disabled:border-[#e0e0e0] disabled:border-b-[#c6c6c6] disabled:cursor-not-allowed';
+  'block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 ' +
+  'border border-stone-300 rounded-md ' +
+  'px-3 py-2 min-h-[2.5rem] shadow-sm appearance-none ' +
+  'transition-[border-color,box-shadow,background-color] duration-150 ease-out ' +
+  'hover:border-stone-400 ' +
+  'focus:outline-none focus-visible:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 ' +
+  'disabled:bg-stone-100 disabled:text-zinc-400 disabled:border-stone-200 disabled:cursor-not-allowed disabled:shadow-none';
 
 const invalidCls =
-  'border-[#da1e28] border-b-[#da1e28] focus-visible:outline-[#da1e28]';
+  'border-red-500 focus-visible:border-red-600 focus-visible:ring-red-500/30';
 
 /* ── Field wrapper ─────────────────────────────────────────────────────── */
 interface FieldProps {
@@ -316,7 +315,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         id={id}
         type="checkbox"
         disabled={disabled}
-        className={`peer absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-none border border-gray-500 bg-white transition-colors duration-150 checked:border-[#D97706] checked:bg-[#D97706] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D97706] disabled:cursor-not-allowed disabled:border-gray-300 ${className}`}
+        className={`peer absolute inset-0 h-full w-full cursor-pointer appearance-none rounded border border-stone-400 bg-white transition-colors duration-150 checked:border-[#D97706] checked:bg-[#D97706] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D97706] disabled:cursor-not-allowed disabled:border-stone-300 ${className}`}
         {...props}
       />
       <Check
@@ -355,8 +354,8 @@ export const InlineLoading: React.FC<InlineLoadingProps> = ({
     aria-live="polite"
   >
     {status === 'active' && <Loader2 className="animate-spin text-[#D97706]" size={16} />}
-    {status === 'finished' && <Check className="text-[#198038]" size={16} />}
-    {status === 'error' && <AlertCircle className="text-[#da1e28]" size={16} />}
+    {status === 'finished' && <Check className="text-emerald-600" size={16} />}
+    {status === 'error' && <AlertCircle className="text-red-600" size={16} />}
     {description && <span>{description}</span>}
   </div>
 );
@@ -395,10 +394,10 @@ interface InlineNotificationProps {
   className?: string;
 }
 const kindStyles: Record<InlineNotificationProps['kind'], string> = {
-  error: 'bg-red-50 border-l-[3px] border-[#da1e28] text-red-900',
-  success: 'bg-green-50 border-l-[3px] border-[#198038] text-green-900',
-  info: 'bg-blue-50 border-l-[3px] border-[#D97706] text-blue-900',
-  warning: 'bg-amber-50 border-l-[3px] border-[#f1c21b] text-amber-900',
+  error:   'bg-red-50 border-l-[3px] border-red-600 text-red-900',
+  success: 'bg-emerald-50 border-l-[3px] border-emerald-600 text-emerald-900',
+  info:    'bg-blue-50 border-l-[3px] border-blue-600 text-blue-900',
+  warning: 'bg-amber-50 border-l-[3px] border-amber-500 text-amber-900',
 };
 export const InlineNotification: React.FC<InlineNotificationProps> = ({
   kind,
@@ -429,10 +428,10 @@ export const InlineNotification: React.FC<InlineNotificationProps> = ({
 
 /* ── Stack / Tile / Tag ────────────────────────────────────────────────── */
 interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
-  gap?: number; // Carbon gap: 1-10 (≈ 0.25rem per step)
+  /** Spacing step (0–10, ~0.25rem per step beyond 2). */
+  gap?: number;
   orientation?: 'vertical' | 'horizontal';
 }
-// Carbon spacing tokens: 1→2px, 2→4px, 3→8px, 4→12px, 5→16px, 6→24px, 7→32px, 8→40px, 9→48px, 10→64px
 const stackGapPx: Record<number, number> = {
   0: 0, 1: 2, 2: 4, 3: 8, 4: 12, 5: 16, 6: 24, 7: 32, 8: 40, 9: 48, 10: 64,
 };
@@ -461,7 +460,7 @@ interface TileProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 export const Tile: React.FC<TileProps> = ({ light, className = '', children, ...props }) => (
   <div
-    className={`border border-gray-200 ${light ? 'bg-gray-50' : 'bg-white'} p-4 ${className}`}
+    className={`rounded-md border border-stone-200 ${light ? 'bg-stone-50' : 'bg-white'} p-4 ${className}`}
     {...props}
   >
     {children}
@@ -500,7 +499,7 @@ export const Tag: React.FC<TagProps> = ({
   const Comp = onClick ? 'button' : 'span';
   return (
     <Comp
-      className={`inline-flex items-center font-medium ${sz} ${tagTypeCls[type]} ${className}`}
+      className={`inline-flex items-center rounded font-medium ${sz} ${tagTypeCls[type]} ${className}`}
       onClick={onClick}
       {...(onClick ? { type: 'button' as const } : {})}
     >

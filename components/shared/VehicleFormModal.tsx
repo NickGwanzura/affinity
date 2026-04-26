@@ -1,5 +1,5 @@
 import React from 'react';
-import CarbonFormModal from './FormModal';
+import FormModalShell from './FormModal';
 import { Button, Stack, TextInput, Select, SelectItem } from '../ui';
 import { Upload, AlertCircle } from 'lucide-react';
 
@@ -35,7 +35,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
   }
 
   return (
-    <CarbonFormModal
+    <FormModalShell
       isOpen={isOpen}
       title={isEditing ? 'Edit Vehicle' : 'Add Vehicle'}
       label="Fleet record"
@@ -110,7 +110,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
             <label
               htmlFor="vehicle-reg-book"
               className="text-sm font-medium"
-              style={{ color: 'var(--cds-text-primary, #161616)' }}
+              style={{ color: 'var(--cds-text-primary, #18181b)' }}
             >
               Registration Book URL
             </label>
@@ -124,7 +124,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                 value={form.regBookUrl}
                 onChange={event => onChange({ regBookUrl: event.target.value })}
                 placeholder="https://storage.example.com/reg-book.pdf"
-                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md rounded-r-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
             </div>
             {isEditing && !form.regBookUrl && (
@@ -147,7 +147,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
           <Button type="submit">{isEditing ? 'Save Changes' : 'Add Vehicle'}</Button>
         </div>
       </form>
-    </CarbonFormModal>
+    </FormModalShell>
   );
 };
 

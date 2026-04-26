@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, type ModalSize } from '../ui';
 
-interface CarbonFormModalProps {
+interface FormModalShellProps {
   isOpen:   boolean;
   title:    string;
   label?:   string;
@@ -10,7 +10,7 @@ interface CarbonFormModalProps {
   children: React.ReactNode;
 }
 
-export const CarbonFormModal: React.FC<CarbonFormModalProps> = ({
+export const FormModalShell: React.FC<FormModalShellProps> = ({
   isOpen, title, label, size = 'lg', onClose, children,
 }) => (
   <Modal isOpen={isOpen} title={title} label={label} size={size} onClose={onClose}>
@@ -18,4 +18,4 @@ export const CarbonFormModal: React.FC<CarbonFormModalProps> = ({
   </Modal>
 );
 
-export default CarbonFormModal;
+export default FormModalShell;

@@ -2,6 +2,16 @@ export { Button, IconButton } from './Button';
 export type { ButtonVariant, ButtonSize } from './Button';
 
 export { StatCard } from './StatCard';
+export type { Intent } from './StatCard';
+
+export { Avatar } from './Avatar';
+export type { AvatarSize, AvatarTone } from './Avatar';
+
+export { CommandPalette } from './CommandPalette';
+export type { CommandItem } from './CommandPalette';
+
+export { Breadcrumbs } from './Breadcrumbs';
+export type { BreadcrumbItem } from './Breadcrumbs';
 
 export { EmptyState, defaultIcons } from './EmptyState';
 

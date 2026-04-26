@@ -1,5 +1,5 @@
 import React from 'react';
-import CarbonFormModal from '../shared/FormModal';
+import FormModalShell from '../shared/FormModal';
 import {
   Button,
   Stack,
@@ -55,7 +55,7 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
   if (!isOpen) return null;
 
   return (
-    <CarbonFormModal
+    <FormModalShell
       isOpen={isOpen}
       title={title}
       label="Client details"
@@ -140,7 +140,7 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
           </Button>
         </div>
       </form>
-    </CarbonFormModal>
+    </FormModalShell>
   );
 };
 

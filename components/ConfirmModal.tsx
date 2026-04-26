@@ -1,2 +1,2 @@
-// Deprecated — use components/shared/CarbonConfirmModal instead
-export { useCarbonConfirm as useConfirm, CarbonConfirmModal as ConfirmModalComponent } from './shared/ConfirmModal';
+// Deprecated — use components/shared/ConfirmModal instead
+export { useConfirm, ConfirmModal as ConfirmModalComponent } from './shared/ConfirmModal';

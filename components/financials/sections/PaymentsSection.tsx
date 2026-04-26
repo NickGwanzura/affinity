@@ -99,7 +99,7 @@ export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
       {onRecordPayment && (
         <div
           className="px-4 py-3 border-b flex justify-end"
-          style={{ borderColor: 'var(--cds-border-subtle, #c6c6c6)' }}
+          style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
         >
           <Button renderIcon={Plus} onClick={onRecordPayment}>
             Record Payment

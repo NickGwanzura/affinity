@@ -117,13 +117,13 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
         <div>
           <h2
             className="text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #161616)' }}
+            style={{ color: 'var(--cds-text-primary, #18181b)' }}
           >
             User Invitations
           </h2>
           <p
             className="font-medium"
-            style={{ color: 'var(--cds-text-secondary, #525252)' }}
+            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
           >
             Send email invitations to new team members
           </p>
@@ -146,68 +146,68 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
         className="overflow-hidden"
         style={{
           background: 'var(--cds-layer-01, #ffffff)',
-          border: '1px solid var(--cds-border-subtle, #c6c6c6)',
+          border: '1px solid var(--cds-border-subtle, #d6d3d1)',
         }}
       >
         <table className="w-full">
           <thead
             style={{
-              background: 'var(--cds-layer-02, #f4f4f4)',
-              borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)',
+              background: 'var(--cds-layer-02, #ffffff)',
+              borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)',
             }}
           >
             <tr>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Name
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Email
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Role
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Status
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Expires
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Invited By
               </th>
               <th
                 className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
               >
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #c6c6c6)' }}>
+          <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #d6d3d1)' }}>
             {invites.length === 0 ? (
               <tr>
                 <td
                   colSpan={7}
                   className="px-6 py-12 text-center font-medium"
-                  style={{ color: 'var(--cds-text-disabled, #8d8d8d)' }}
+                  style={{ color: 'var(--cds-text-disabled, #a8a29e)' }}
                 >
                   No pending invitations. Click "Send Invitation" to invite team members.
                 </td>
@@ -216,17 +216,17 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
               invites.map(invite => (
                 <tr
                   key={invite.id}
-                  style={{ borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 >
                   <td
                     className="px-6 py-4 font-semibold"
-                    style={{ color: 'var(--cds-text-primary, #161616)' }}
+                    style={{ color: 'var(--cds-text-primary, #18181b)' }}
                   >
                     {invite.name}
                   </td>
                   <td
                     className="px-6 py-4 font-mono text-sm"
-                    style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                    style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                   >
                     {invite.email}
                   </td>
@@ -262,13 +262,13 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
                   </td>
                   <td
                     className="px-6 py-4 text-sm"
-                    style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                    style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                   >
                     {new Date(invite.expiresAt).toLocaleDateString()}
                   </td>
                   <td
                     className="px-6 py-4 text-sm"
-                    style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                    style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                   >
                     {invite.invitedBy}
                   </td>
@@ -328,12 +328,12 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
                 className="w-12 h-12 flex items-center justify-center"
                 style={{
                   borderRadius: '50%',
-                  background: 'var(--cds-tag-background-green, #defbe6)',
+                  background: 'var(--cds-tag-background-green, #d1fae5)',
                 }}
               >
                 <svg
                   className="w-6 h-6"
-                  style={{ color: 'var(--cds-support-success, #24a148)' }}
+                  style={{ color: 'var(--cds-support-success, #10b981)' }}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -349,11 +349,11 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
               <div>
                 <h3
                   className="text-2xl font-black"
-                  style={{ color: 'var(--cds-text-primary, #161616)' }}
+                  style={{ color: 'var(--cds-text-primary, #18181b)' }}
                 >
                   Send Invitation
                 </h3>
-                <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                   Invite a new team member via email
                 </p>
               </div>
@@ -362,7 +362,7 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Full Name
                 </label>
@@ -373,13 +373,13 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
                   onChange={e => setInviteForm({ ...inviteForm, name: e.target.value })}
                   placeholder="John Doe"
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Email Address
                 </label>
@@ -390,13 +390,13 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
                   onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })}
                   placeholder="john@company.com"
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
               <div className="space-y-1">
                 <label
                   className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   Role
                 </label>
@@ -405,7 +405,7 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
                   value={inviteForm.role}
                   onChange={e => setInviteForm({ ...inviteForm, role: e.target.value as UserRole })}
                   className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #c6c6c6)' }}
+                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 >
                   <option value="Driver">Driver</option>
                   <option value="Manager">Manager</option>
@@ -417,12 +417,12 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
                 className="p-4"
                 style={{
                   background: 'var(--cds-layer-selected-01, #e5f6ff)',
-                  border: '1px solid var(--cds-border-subtle, #c6c6c6)',
+                  border: '1px solid var(--cds-border-subtle, #d6d3d1)',
                 }}
               >
                 <p
                   className="text-xs font-medium"
-                  style={{ color: 'var(--cds-text-secondary, #525252)' }}
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
                 >
                   📧 An email invitation will be sent with a secure signup link. The invitation
                   expires in 7 days.
@@ -434,8 +434,8 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
                   onClick={() => setShowInviteModal(false)}
                   className="flex-1 px-4 py-3 font-bold text-sm"
                   style={{
-                    color: 'var(--cds-text-secondary, #525252)',
-                    border: '1px solid var(--cds-border-subtle, #c6c6c6)',
+                    color: 'var(--cds-text-secondary, #52525b)',
+                    border: '1px solid var(--cds-border-subtle, #d6d3d1)',
                   }}
                 >
                   Cancel
@@ -443,7 +443,7 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
                 <button
                   type="submit"
                   className="flex-1 px-4 py-3 font-bold text-sm text-white"
-                  style={{ background: 'var(--cds-support-success, #24a148)' }}
+                  style={{ background: 'var(--cds-support-success, #10b981)' }}
                 >
                   Send Invite
                 </button>

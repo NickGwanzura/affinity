@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppUser, TripStatus, Vehicle } from '../../types';
-import CarbonFormModal from './FormModal';
+import FormModalShell from './FormModal';
 import { Button, Select, SelectItem, Stack, TextArea, TextInput } from '../ui';
 
 export type TripFormValue = {
@@ -76,7 +76,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <CarbonFormModal
+    <FormModalShell
       isOpen={isOpen}
       title={mode === 'create' ? 'Create Trip' : 'Update Trip'}
       label="Trip planner"
@@ -221,7 +221,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
           </Button>
         </div>
       </form>
-    </CarbonFormModal>
+    </FormModalShell>
   );
 };
 

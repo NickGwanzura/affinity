@@ -281,7 +281,7 @@ export const VehiclesTab: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <div className="animate-spin w-10 h-10 border-2 border-[#D97706] border-t-transparent rounded-full"></div>
-        <p className="text-[#525252] font-semibold uppercase tracking-widest text-xs">
+        <p className="text-[#52525b] font-semibold uppercase tracking-widest text-xs">
           Loading Fleet Data
         </p>
       </div>
@@ -314,9 +314,9 @@ export const VehiclesTab: React.FC = () => {
           title="Total Asset Valuation"
           value={`$${totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           subtitle="Fleet book value"
-          color="blue"
+          intent="primary"
           footer={
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#24a148]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#10b981]">
               <ArrowUp size={16} />
               <span>Healthy Inventory</span>
             </div>
@@ -327,9 +327,9 @@ export const VehiclesTab: React.FC = () => {
           title="In-Transit Assets"
           value={inTransitCount}
           subtitle="Active routes"
-          color="green"
+          intent="success"
           footer={
-            <div className="flex items-center gap-2 text-sm text-[#525252]">
+            <div className="flex items-center gap-2 text-sm text-[#52525b]">
               <Car size={16} />
               <span>Across Namibia & Zimbabwe</span>
             </div>
@@ -340,10 +340,10 @@ export const VehiclesTab: React.FC = () => {
           title="Fleet Efficiency"
           value="94%"
           subtitle="Operational uptime"
-          color="purple"
+          intent="info"
           footer={
-            <div className="w-full h-2 bg-[#e8e8e8] mt-2">
-              <div className="h-full bg-[#24a148]" style={{ width: '94%' }} />
+            <div className="w-full h-2 bg-[#f5f5f4] mt-2">
+              <div className="h-full bg-[#10b981]" style={{ width: '94%' }} />
             </div>
           }
         />
@@ -404,20 +404,20 @@ export const VehiclesTab: React.FC = () => {
       </div>
 
       {/* Inventory Table */}
-      <div className="bg-white border border-[#e0e0e0]">
-        <div className="px-6 py-4 border-b border-[#e0e0e0] flex justify-between items-center">
+      <div className="bg-white border border-[#e7e5e4]">
+        <div className="px-6 py-4 border-b border-[#e7e5e4] flex justify-between items-center">
           <div>
-            <h3 className="m-0 text-base font-semibold text-[#161616]">Current Inventory</h3>
-            <p className="mt-1 text-sm text-[#525252]">
+            <h3 className="m-0 text-base font-semibold text-[#18181b]">Current Inventory</h3>
+            <p className="mt-1 text-sm text-[#52525b]">
               {summaries.length} vehicle{summaries.length !== 1 ? 's' : ''} &bull; {inTransitCount}{' '}
               in transit
             </p>
           </div>
           <div className="text-right">
-            <p className="m-0 text-xs text-[#525252] uppercase tracking-wider font-semibold">
+            <p className="m-0 text-xs text-[#52525b] uppercase tracking-wider font-semibold">
               Total Value
             </p>
-            <p className="mt-1 text-xl font-semibold text-[#161616] tabular-nums">
+            <p className="mt-1 text-xl font-semibold text-[#18181b] tabular-nums">
               ${totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
           </div>
@@ -425,17 +425,17 @@ export const VehiclesTab: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="bg-[#f4f4f4] border-b border-[#e0e0e0]">
-                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">
+              <tr className="bg-[#ffffff] border-b border-[#e7e5e4]">
+                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-wider">
                   Asset / VIN
                 </th>
-                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">
+                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-wider">
                   Region
                 </th>
-                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">
+                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-wider">
                   Purchase Cost
                 </th>
-                <th className="px-6 py-4 text-left font-semibold text-[#525252] uppercase text-xs tracking-wider">
+                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-wider">
                   Landed Cost
                 </th>
               </tr>
@@ -444,12 +444,12 @@ export const VehiclesTab: React.FC = () => {
               {summaries.map(s => (
                 <tr
                   key={s.vehicle_id}
-                  className="border-b border-[#e0e0e0] hover:bg-[#f4f4f4] transition-colors group"
+                  className="border-b border-[#e7e5e4] hover:bg-[#ffffff] transition-colors group"
                 >
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-[#161616]">{s.make_model}</span>
-                      <span className="font-mono text-xs text-[#525252] uppercase">
+                      <span className="font-semibold text-[#18181b]">{s.make_model}</span>
+                      <span className="font-mono text-xs text-[#52525b] uppercase">
                         {s.vin_number}
                       </span>
                     </div>
@@ -460,33 +460,33 @@ export const VehiclesTab: React.FC = () => {
                       style={{
                         background:
                           s.status === 'UK'
-                            ? '#e0e0e0'
+                            ? '#e7e5e4'
                             : s.status === 'Namibia'
-                              ? '#f1c21b'
+                              ? '#f59e0b'
                               : s.status === 'Zimbabwe'
-                                ? '#24a148'
+                                ? '#10b981'
                                 : s.status === 'Botswana'
                                   ? '#8a3ffc'
                                   : '#D97706',
-                        color: s.status === 'UK' || s.status === 'Namibia' ? '#161616' : '#ffffff',
+                        color: s.status === 'UK' || s.status === 'Namibia' ? '#18181b' : '#ffffff',
                       }}
                     >
                       {s.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-[#525252] tabular-nums">
+                  <td className="px-6 py-4 text-[#52525b] tabular-nums">
                     £{s.purchase_price_gbp.toLocaleString()}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="font-semibold text-[#161616] tabular-nums">
+                        <span className="font-semibold text-[#18181b] tabular-nums">
                           $
                           {s.total_landed_cost_usd.toLocaleString(undefined, {
                             maximumFractionDigits: 0,
                           })}
                         </span>
-                        <span className="text-xs text-[#525252] uppercase tracking-wider">
+                        <span className="text-xs text-[#52525b] uppercase tracking-wider">
                           Total Valuation
                         </span>
                       </div>
@@ -500,7 +500,7 @@ export const VehiclesTab: React.FC = () => {
                         </button>
                         <button
                           onClick={() => openDeleteDialog(s)}
-                          className="p-2 bg-transparent border-none cursor-pointer text-[#da1e28] opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-2 bg-transparent border-none cursor-pointer text-[#dc2626] opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Delete vehicle"
                         >
                           <Trash2 size={16} />
@@ -544,20 +544,20 @@ export const VehiclesTab: React.FC = () => {
       {showDeleteDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white w-full max-w-lg mx-4 shadow-lg">
-            <div className="px-6 py-4 border-b border-[#e0e0e0]">
-              <h3 className="text-lg font-semibold text-[#161616]">Delete Vehicle?</h3>
+            <div className="px-6 py-4 border-b border-[#e7e5e4]">
+              <h3 className="text-lg font-semibold text-[#18181b]">Delete Vehicle?</h3>
             </div>
             <div className="px-6 py-6 flex flex-col gap-4">
               {vehicleToDelete && (
                 <>
-                  <p className="text-[#161616]">
+                  <p className="text-[#18181b]">
                     Are you sure you want to delete <strong>{vehicleToDelete.make_model}</strong>?
                   </p>
-                  <p className="font-mono text-sm text-[#525252]">
+                  <p className="font-mono text-sm text-[#52525b]">
                     VIN: {vehicleToDelete.vin_number}
                   </p>
-                  <div className="p-4" style={{ background: '#f1c21b' }}>
-                    <p className="m-0 text-sm font-semibold text-[#161616]">
+                  <div className="p-4" style={{ background: '#f59e0b' }}>
+                    <p className="m-0 text-sm font-semibold text-[#18181b]">
                       Warning: This action cannot be undone. All associated expenses will also be
                       deleted.
                     </p>
@@ -565,18 +565,18 @@ export const VehiclesTab: React.FC = () => {
                 </>
               )}
             </div>
-            <div className="px-6 py-4 flex justify-end gap-2 bg-[#f4f4f4]">
+            <div className="px-6 py-4 flex justify-end gap-2 bg-[#ffffff]">
               <button
                 type="button"
                 onClick={() => setShowDeleteDialog(false)}
-                className="px-4 py-2 text-sm font-semibold text-[#161616] bg-transparent border border-[#c6c6c6] hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2 text-sm font-semibold text-[#18181b] bg-transparent border border-[#d6d3d1] hover:bg-[#f5f5f4] transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDeleteVehicle}
-                className="px-4 py-2 text-sm font-semibold text-white bg-[#da1e28] hover:bg-red-700 transition-colors"
+                className="px-4 py-2 text-sm font-semibold text-white bg-[#dc2626] hover:bg-red-700 transition-colors"
               >
                 Delete Vehicle
               </button>

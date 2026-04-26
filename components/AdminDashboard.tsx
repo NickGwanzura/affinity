@@ -963,7 +963,7 @@ export const AdminDashboard: React.FC = () => {
         ></div>
         <p
           style={{
-            color: '#525252',
+            color: '#52525b',
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.1em',

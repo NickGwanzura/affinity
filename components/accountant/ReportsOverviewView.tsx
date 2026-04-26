@@ -85,7 +85,7 @@ export const ReportsOverviewView: React.FC<ReportsOverviewViewProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <InsightPanel
         title="Revenue vs Expenses Trend"
-        subtitle="A clearer Carbon-style readout of the last six months of movement."
+        subtitle="A clearer readout of the last six months of movement."
       >
         <RankedMetricList
           items={monthlyTrendData

@@ -33,8 +33,8 @@ export const SettingsTabBar: React.FC<SettingsTabBarProps> = ({
     <div
       className="flex overflow-x-auto"
       style={{
-        borderBottom: '1px solid var(--cds-border-subtle, #c6c6c6)',
-        background: 'var(--cds-layer-02, #f4f4f4)',
+        borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)',
+        background: 'var(--cds-layer-02, #ffffff)',
       }}
     >
       {TABS.map(({ key, label }) => {
@@ -68,7 +68,7 @@ export const SettingsTabBar: React.FC<SettingsTabBarProps> = ({
                     color: 'var(--cds-interactive, #D97706)',
                     background: 'var(--cds-background, #ffffff)',
                   }
-                : { color: 'var(--cds-text-secondary, #525252)' }
+                : { color: 'var(--cds-text-secondary, #52525b)' }
             }
           >
             {label}

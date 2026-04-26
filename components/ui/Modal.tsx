@@ -64,19 +64,19 @@ export const Modal: React.FC<ModalProps> = ({
       className="fixed inset-0 z-[9000] flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
     >
       <div
-        className={`flex max-h-[95vh] w-full flex-col bg-white shadow-xl sm:max-h-[90vh] ${sizeClasses[size]}`}
+        className={`flex max-h-[95vh] w-full flex-col bg-white shadow-2xl sm:max-h-[90vh] sm:rounded-lg ${sizeClasses[size]}`}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {(title || label) && (
-          <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
+          <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-6 py-4">
             <div className="min-w-0">
               {label && (
-                <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
                   {label}
                 </p>
               )}
               {title && (
-                <h2 className="mt-0.5 text-lg font-semibold text-gray-900 truncate">
+                <h2 className="mt-0.5 text-lg font-semibold text-zinc-900 truncate">
                   {title}
                 </h2>
               )}
@@ -85,7 +85,7 @@ export const Modal: React.FC<ModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="-m-2 shrink-0 p-2 text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]"
+              className="-m-2 shrink-0 rounded-md p-2 text-zinc-500 hover:bg-stone-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]"
             >
               <X size={20} />
             </button>
@@ -95,7 +95,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
 
         {footer && (
-          <div className="border-t border-gray-200 px-6 py-4">{footer}</div>
+          <div className="border-t border-stone-200 px-6 py-4">{footer}</div>
         )}
       </div>
     </div>

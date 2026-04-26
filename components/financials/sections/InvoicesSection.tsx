@@ -106,8 +106,8 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
       <div
         className="px-4 py-3 border-b"
         style={{
-          backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
-          borderColor: 'var(--cds-border-subtle, #c6c6c6)',
+          backgroundColor: 'var(--cds-layer-02, #ffffff)',
+          borderColor: 'var(--cds-border-subtle, #d6d3d1)',
         }}
       >
         <div className="flex items-end gap-2">
@@ -115,7 +115,7 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
             <label
               htmlFor="invoice-batch-filter"
               className="block text-xs mb-1"
-              style={{ color: 'var(--cds-text-secondary, #525252)' }}
+              style={{ color: 'var(--cds-text-secondary, #52525b)' }}
             >
               Filter by batch
             </label>
@@ -136,7 +136,7 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
           {batchFilter && (
             <span
               className="text-xs pb-2"
-              style={{ color: 'var(--cds-text-secondary, #525252)' }}
+              style={{ color: 'var(--cds-text-secondary, #52525b)' }}
             >
               {filteredInvoices.length} result(s)
             </span>

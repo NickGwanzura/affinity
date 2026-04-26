@@ -22,10 +22,10 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
   const clamped = Math.max(0, Math.min(100, efficiencyRate));
   const statusColor =
     clamped >= 90
-      ? '#24a148'
+      ? '#10b981'
       : clamped >= 70
-      ? '#f1c21b'
-      : '#da1e28';
+      ? '#f59e0b'
+      : '#dc2626';
   const statusLabel =
     clamped >= 90 ? 'Excellent performance' : clamped >= 70 ? 'Good performance' : 'Needs attention';
 
@@ -41,16 +41,16 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
         style={{ background: statusColor }}
       />
       <div className="pl-2">
-        <p className="text-xs font-semibold text-[#525252] tracking-wider uppercase mb-3">
+        <p className="text-xs font-semibold text-[#52525b] tracking-wider uppercase mb-3">
           Fleet Efficiency
         </p>
-        <p className="text-3xl font-light text-[#161616] tabular-nums leading-tight mb-4">
+        <p className="text-3xl font-light text-[#18181b] tabular-nums leading-tight mb-4">
           {clamped}%
         </p>
 
         {/* Progress bar */}
         <div className="mb-3">
-          <div className="flex justify-between text-xs text-[#525252] mb-1 font-semibold">
+          <div className="flex justify-between text-xs text-[#52525b] mb-1 font-semibold">
             <span>0%</span>
             <span>Target: 95%</span>
           </div>
@@ -60,7 +60,7 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label="Fleet efficiency percentage"
-            className="h-2 bg-[#e0e0e0] overflow-hidden"
+            className="h-2 bg-[#e7e5e4] overflow-hidden"
           >
             <div
               className="h-full transition-all duration-500"
@@ -79,7 +79,7 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
             className="w-2 h-2 rounded-full shrink-0"
             style={{ background: statusColor }}
           />
-          <span className="text-xs font-semibold text-[#525252]">
+          <span className="text-xs font-semibold text-[#52525b]">
             {statusLabel}
           </span>
         </div>
@@ -126,7 +126,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = memo(({ summaries, 
         title="Total Asset Valuation"
         value={formatCurrency(totalValuation)}
         subtitle="↑ Healthy Inventory"
-        color="blue"
+        intent="primary"
       />
 
       <StatCard
@@ -137,7 +137,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = memo(({ summaries, 
             ? `${soldCount} sold · ${summaries.length} total`
             : 'Active routes across Namibia & Zim'
         }
-        color="green"
+        intent="success"
       />
 
       <EfficiencyCard efficiencyRate={efficiencyRate} />
@@ -187,25 +187,25 @@ export const ExtendedDashboardStats: React.FC<ExtendedDashboardStatsProps> = mem
           title="Total Fleet Value"
           value={`$${totalValuation.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           subtitle={`${summaries.length} vehicles`}
-          color="blue"
+          intent="primary"
         />
         <StatCard
           title="In-Transit Assets"
           value={inTransitCount}
           subtitle="Active fleet"
-          color="green"
+          intent="success"
         />
         <StatCard
           title="Total Expenses"
           value={`$${totalExpenses.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           subtitle={`${expenses.length} transactions`}
-          color="amber"
+          intent="warning"
         />
         <StatCard
           title="Avg Cost Per Vehicle"
           value={`$${averageCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           subtitle={`${expenseRatio.toFixed(1)}% expense ratio`}
-          color="blue"
+          intent="primary"
         />
       </div>
     );

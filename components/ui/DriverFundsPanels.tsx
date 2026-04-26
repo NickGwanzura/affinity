@@ -54,7 +54,7 @@ export const DriverFundsSummaryPanel: React.FC<DriverFundsSummaryPanelProps> = (
 export const DriverFundsSnapshotPanel: React.FC<DriverFundsSnapshotPanelProps> = ({
   report,
   title = 'Driver Funds Snapshot',
-  subtitle = 'Carbon-style operational view of the disbursement cycle.',
+  subtitle = 'Operational view of the disbursement cycle.',
   allocatedLabel = 'Allocated to drivers',
   spentLabel = 'Spent by drivers',
   balanceLabel = 'Remaining balance',

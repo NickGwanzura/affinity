@@ -49,13 +49,13 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.view) {
         return (
           <div className="p-8 max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold text-[#161616] mb-2">Something went wrong</h2>
-            <p className="text-sm text-[#525252] mb-4">
+            <h2 className="text-xl font-semibold text-[#18181b] mb-2">Something went wrong</h2>
+            <p className="text-sm text-[#52525b] mb-4">
               The {this.props.view} view crashed. Reload the page or switch to another view.
             </p>
-            <details className="text-xs text-[#6f6f6f]">
+            <details className="text-xs text-[#71717a]">
               <summary>Error details</summary>
-              <pre className="mt-2 p-3 bg-stone-50 border border-[#e0e0e0] overflow-auto">
+              <pre className="mt-2 p-3 bg-stone-50 border border-[#e7e5e4] overflow-auto">
                 {this.state.error?.message || 'Unknown error'}
               </pre>
             </details>

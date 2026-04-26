@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { AlertTriangle, Info } from 'lucide-react';
 import { Modal, Button } from '../ui';
 
-interface CarbonConfirmModalProps {
+interface ConfirmModalProps {
   isOpen:          boolean;
   title:           string;
   message:         string;
@@ -13,7 +13,7 @@ interface CarbonConfirmModalProps {
   onCancel:        () => void;
 }
 
-export const CarbonConfirmModal: React.FC<CarbonConfirmModalProps> = ({
+export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   isOpen, title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel',
   confirmVariant = 'danger', onConfirm, onCancel,
 }) => {
@@ -61,7 +61,7 @@ interface ConfirmOptions {
   confirmVariant?: 'danger' | 'primary';
 }
 
-export const useCarbonConfirm = () => {
+export const useConfirm = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const [resolveRef, setResolveRef] = useState<((value: boolean) => void) | null>(null);
@@ -86,7 +86,7 @@ export const useCarbonConfirm = () => {
 
   const ConfirmDialog = () =>
     options ? (
-      <CarbonConfirmModal
+      <ConfirmModal
         isOpen={isOpen}
         title={options.title}
         message={options.message}
@@ -101,6 +101,4 @@ export const useCarbonConfirm = () => {
   return { confirm, ConfirmDialog };
 };
 
-export const useConfirm = useCarbonConfirm;
-
-export default CarbonConfirmModal;
+export default ConfirmModal;

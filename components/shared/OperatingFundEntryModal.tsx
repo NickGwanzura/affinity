@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppUser, Currency, OperatingFundType } from '../../types';
-import CarbonFormModal from './FormModal';
+import FormModalShell from './FormModal';
 import { Button } from '../ui';
 
 const CURRENCY_LABELS: Record<Currency, string> = {
@@ -80,7 +80,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
       : resolvedSubmitLabelSource(form.type);
 
   return (
-    <CarbonFormModal
+    <FormModalShell
       isOpen={isOpen}
       title={title}
       label="Operating funds"
@@ -342,7 +342,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
             </Button>
           </div>
       </form>
-    </CarbonFormModal>
+    </FormModalShell>
   );
 };
 

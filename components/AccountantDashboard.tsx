@@ -898,8 +898,8 @@ export const AccountantDashboard: React.FC = () => {
               {/* Header */}
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-bold" style={{ color: '#161616' }}>Clients</h3>
-                  <p className="text-xs mt-0.5" style={{ color: '#525252' }}>{mergedClients.length} total — includes all clients from invoices</p>
+                  <h3 className="text-lg font-bold" style={{ color: '#18181b' }}>Clients</h3>
+                  <p className="text-xs mt-0.5" style={{ color: '#52525b' }}>{mergedClients.length} total — includes all clients from invoices</p>
                 </div>
                 <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => { setEditingClient(null); setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' }); setShowClientModal(true); }}>
                   Add Client
@@ -929,7 +929,7 @@ export const AccountantDashboard: React.FC = () => {
           {activeTab === 'payslips' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold" style={{ color: '#161616' }}>Payslips</h3>
+                <h3 className="text-lg font-bold" style={{ color: '#18181b' }}>Payslips</h3>
                 <Button variant="primary" size="sm" leftIcon={<FileText size={16} />} onClick={() => { setPayslipForm(createEmptyPayslipForm()); setShowPayslipModal(true); }}>Generate Payslip</Button>
               </div>
               <PayslipsListView

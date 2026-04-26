@@ -94,7 +94,7 @@ export const EmployeesTab: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-600"></div>
-        <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Loading Employees</p>
+        <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Loading Employees</p>
       </div>
     );
   }
@@ -119,47 +119,47 @@ export const EmployeesTab: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden shadow-lg" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
+      <div className="overflow-hidden shadow-lg" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Employee #</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Name</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Position</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Base Pay</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Type</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Status</th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Employee #</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Name</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Position</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Base Pay</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Type</th>
+                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Status</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200">
               {employees.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center" style={{ color: 'var(--cds-text-secondary, #525252)' }}>
+                  <td colSpan={7} className="px-6 py-12 text-center" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
                     No employees yet. Click &quot;Add Employee&quot; to get started.
                   </td>
                 </tr>
               ) : (
                 employees.map((employee) => (
                   <tr key={employee.id} className="hover:bg-zinc-50">
-                    <td className="px-6 py-4 font-mono text-sm" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{employee.employee_number}</td>
-                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>{employee.name}</td>
-                    <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{employee.position}</td>
-                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #161616)' }}>${employee.base_pay_usd.toLocaleString()} {employee.currency}</td>
-                    <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{employee.employment_type}</td>
+                    <td className="px-6 py-4 font-mono text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{employee.employee_number}</td>
+                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{employee.name}</td>
+                    <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{employee.position}</td>
+                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>${employee.base_pay_usd.toLocaleString()} {employee.currency}</td>
+                    <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{employee.employment_type}</td>
                     <td className="px-6 py-4">
                       <span className="inline-block px-2 py-1 text-xs font-semibold" style={
-                        employee.status === 'Active' ? { background: 'var(--cds-support-success-inverse, #defbe6)', color: 'var(--cds-support-success, #24a148)' } :
-                        employee.status === 'On Leave' ? { background: 'var(--cds-support-warning-inverse, #fdf6dd)', color: 'var(--cds-support-warning-inverse, #b28600)' } :
-                        { background: 'var(--cds-support-error-inverse, #fff1f1)', color: 'var(--cds-support-error, #da1e28)' }
+                        employee.status === 'Active' ? { background: 'var(--cds-support-success-inverse, #d1fae5)', color: 'var(--cds-support-success, #10b981)' } :
+                        employee.status === 'On Leave' ? { background: 'var(--cds-support-warning-inverse, #fdf6dd)', color: 'var(--cds-support-warning-inverse, #92400e)' } :
+                        { background: 'var(--cds-support-error-inverse, #fee2e2)', color: 'var(--cds-support-error, #dc2626)' }
                       }>
                         {employee.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button onClick={() => openEditModal(employee)} className="font-semibold" style={{ color: 'var(--cds-interactive, #D97706)' }}>Edit</button>
-                      <button onClick={() => handleDeleteEmployee(employee.id)} className="font-semibold" style={{ color: 'var(--cds-support-error, #da1e28)' }}>Delete</button>
+                      <button onClick={() => handleDeleteEmployee(employee.id)} className="font-semibold" style={{ color: 'var(--cds-support-error, #dc2626)' }}>Delete</button>
                     </td>
                   </tr>
                 ))

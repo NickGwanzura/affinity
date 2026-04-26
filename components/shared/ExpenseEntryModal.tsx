@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppUser, Currency, ExpenseCategory, Vehicle, VehicleStatus } from '../../types';
-import CarbonFormModal from './FormModal';
+import FormModalShell from './FormModal';
 import { Button } from '../ui';
 
 export interface ExpenseEntryFormValue {
@@ -69,7 +69,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
   const showDriverSelector = showDriverDisbursement && form.category === 'Driver Disbursement';
 
   return (
-    <CarbonFormModal
+    <FormModalShell
       isOpen={isOpen}
       title={title}
       label="Expense entry"
@@ -218,7 +218,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
             </Button>
           </div>
       </form>
-    </CarbonFormModal>
+    </FormModalShell>
   );
 };
 
