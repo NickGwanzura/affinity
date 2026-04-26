@@ -335,7 +335,7 @@ export const ReportsTab: React.FC = () => {
       {/* Filters */}
       <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
         <h4 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #161616)' }}>
-          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#D97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
           Report Filters
@@ -362,7 +362,7 @@ export const ReportsTab: React.FC = () => {
             Clear Filters
           </button>
           {(reportDateFrom || reportDateTo || reportVehicleFilter !== 'all') && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700  text-sm font-semibold">
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#D97706]/10 text-[#D97706]  text-sm font-semibold">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               Filters active - Showing filtered results
             </div>
@@ -408,8 +408,8 @@ export const ReportsTab: React.FC = () => {
         <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #525252)' }}>Expense Ratio</p>
-            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center">
-              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+            <div className="w-10 h-10 bg-stone-100 flex items-center justify-center">
+              <svg className="w-5 h-5 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
             </div>
           </div>
           <p className="text-3xl font-bold" style={{ color: 'var(--cds-text-primary, #161616)' }}>
@@ -446,7 +446,7 @@ export const ReportsTab: React.FC = () => {
         {/* Expense Breakdown by Category */}
         <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e0e0e0)' }}>
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #161616)' }}>
-            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
+            <svg className="w-5 h-5 text-[#D97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
             Expenses by Category
           </h3>
           <div className="space-y-3">
@@ -459,10 +459,10 @@ export const ReportsTab: React.FC = () => {
                 <div key={category} className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{category}</span>
-                    <span className="text-sm font-bold text-purple-600">${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    <span className="text-sm font-bold text-[#D97706]">${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                   </div>
                   <div className="w-full rounded-full h-2" style={{ background: 'var(--cds-layer-01, #f4f4f4)' }}>
-                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${percentage}%` }}></div>
+                    <div className="bg-[#D97706] h-2 rounded-full" style={{ width: `${percentage}%` }}></div>
                   </div>
                   <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #525252)' }}>{catExpenses.length} transactions &bull; {percentage.toFixed(1)}%</p>
                 </div>
