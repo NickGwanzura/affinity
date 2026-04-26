@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Employee, Payslip, CompanyDetails } from '../../types';
 import { dataService } from '../../services/dataService';
-import { generatePayslipPDFAndDownload } from '../../services/pdfService';
 import { useToast } from '../Toast';
 import { useConfirm } from '../ConfirmModal';
 import PayslipFormModal, { createEmptyPayslipForm, type PayslipFormValue } from '../shared/PayslipFormModal';
@@ -119,6 +118,7 @@ export const PayslipsTab: React.FC = () => {
       return;
     }
     try {
+      const { generatePayslipPDFAndDownload } = await import('../../services/pdfService');
       await generatePayslipPDFAndDownload(payslip, company);
     } catch (err) {
       console.error('[PayslipsTab] handleDownloadPayslip error:', err);

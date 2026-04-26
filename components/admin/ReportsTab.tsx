@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Asset, CompanyDetails, LandedCostSummary, OperatingFund, AppUser } from '../../types';
 import { dataService } from '../../services/dataService';
 import { api } from '../../services/apiClient';
-import { generateExpensesReportPDFAndDownload, generateAssetRegisterReportPDFAndDownload, generateFleetReportPDFAndDownload, generateAuditReportPDFAndDownload, generateDriverFundsReportPDFAndDownload, generateDebtorsReportPDFAndDownload, DebtorEntry } from '../../services/pdfService';
+import type { DebtorEntry } from '../../services/pdfService';
 import { useToast } from '../Toast';
 import { Button, DriverFundsSnapshotPanel, DriverFundsSummaryPanel, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
 import { buildDriverFundsReportData } from '../../utils/driverFunds';
@@ -150,6 +150,7 @@ export const ReportsTab: React.FC = () => {
     if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
     setIsExporting(true);
     try {
+      const { generateFleetReportPDFAndDownload } = await import('../../services/pdfService');
       await generateFleetReportPDFAndDownload(
         filteredSummaries,
         filteredExpenses,
@@ -205,6 +206,7 @@ export const ReportsTab: React.FC = () => {
     if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
     setIsExporting(true);
     try {
+      const { generateAuditReportPDFAndDownload } = await import('../../services/pdfService');
       await generateAuditReportPDFAndDownload(
         filteredSummaries,
         filteredExpenses,
@@ -224,6 +226,7 @@ export const ReportsTab: React.FC = () => {
     if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
     setIsExporting(true);
     try {
+      const { generateExpensesReportPDFAndDownload } = await import('../../services/pdfService');
       await generateExpensesReportPDFAndDownload(
         filteredExpenses,
         company,
@@ -243,6 +246,7 @@ export const ReportsTab: React.FC = () => {
     if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
     setIsExporting(true);
     try {
+      const { generateAssetRegisterReportPDFAndDownload } = await import('../../services/pdfService');
       await generateAssetRegisterReportPDFAndDownload(assets, company);
       notifySuccess('Asset register report PDF downloaded!');
     } catch (err) {
@@ -257,6 +261,7 @@ export const ReportsTab: React.FC = () => {
     if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
     setIsExporting(true);
     try {
+      const { generateDebtorsReportPDFAndDownload } = await import('../../services/pdfService');
       await generateDebtorsReportPDFAndDownload(debtors, company);
       notifySuccess('Debtors report PDF downloaded!');
     } catch (err) {
@@ -271,6 +276,7 @@ export const ReportsTab: React.FC = () => {
     if (!company) { notifyError('Company details not loaded. Please try again.'); return; }
     setIsExporting(true);
     try {
+      const { generateDriverFundsReportPDFAndDownload } = await import('../../services/pdfService');
       await generateDriverFundsReportPDFAndDownload(
         filteredExpenses,
         filteredOperatingFunds,

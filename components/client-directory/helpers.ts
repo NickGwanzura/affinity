@@ -1,6 +1,5 @@
 import type { Client, Invoice, Payment, Quote, CompanyDetails } from '../../types';
 import { dataService } from '../../services/dataService';
-import { generateStatementPDF } from '../../services/pdfService';
 import type { ClientStats, EnrichedClient, LedgerRow } from './types';
 
 /**
@@ -210,6 +209,7 @@ export async function downloadClientStatementPdf(
   filteredPayments.forEach((p) => {
     if (p.id && p.currency) paymentCurrencyMap[p.id] = p.currency;
   });
+  const { generateStatementPDF } = await import('../../services/pdfService');
   const blob = await generateStatementPDF(
     {
       client_name: client.name,

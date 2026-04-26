@@ -20,7 +20,6 @@ import PayslipsListView from './shared/PayslipsListView';
 import { dataService } from '../services/dataService';
 import { useSession } from '../contexts/SessionContext';
 import { EXCHANGE_RATES } from '../constants';
-import { generateDriverFundsReportPDFAndDownload, generatePayslipPDFAndDownload, generateExpensesReportPDFAndDownload } from '../services/pdfService';
 import { Plus, FileText, DollarSign, Wallet, LineChart, Clock, Receipt } from 'lucide-react';
 import {
   Button,
@@ -682,6 +681,7 @@ export const AccountantDashboard: React.FC = () => {
       return;
     }
     try {
+      const { generatePayslipPDFAndDownload } = await import('../services/pdfService');
       await generatePayslipPDFAndDownload(payslip, company);
     } catch (error) {
       console.error('Error generating payslip PDF:', error);
@@ -692,6 +692,7 @@ export const AccountantDashboard: React.FC = () => {
   const handleExportPDF = async () => {
     if (!company) { notifyError('Company details not loaded.'); return; }
     try {
+      const { generateExpensesReportPDFAndDownload } = await import('../services/pdfService');
       await generateExpensesReportPDFAndDownload(expenses, company, vehicles);
     } catch (err) {
       console.error('[AccountantDashboard] handleExportPDF error:', err);
@@ -702,6 +703,7 @@ export const AccountantDashboard: React.FC = () => {
   const handleExportExpenseReportPDF = async () => {
     if (!company) { notifyError('Company details not loaded.'); return; }
     try {
+      const { generateExpensesReportPDFAndDownload } = await import('../services/pdfService');
       await generateExpensesReportPDFAndDownload(
         filteredExpensesForReport,
         company,
@@ -742,6 +744,7 @@ export const AccountantDashboard: React.FC = () => {
     }
 
     try {
+      const { generateDriverFundsReportPDFAndDownload } = await import('../services/pdfService');
       await generateDriverFundsReportPDFAndDownload(expenses, operatingFunds, drivers, vehicles, company);
       notifySuccess('Driver funds report downloaded.');
     } catch (err) {

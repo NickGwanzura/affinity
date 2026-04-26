@@ -12,15 +12,7 @@ import type {
   Vehicle,
 } from '../../types';
 import { dataService } from '../../services/dataService';
-import {
-  generateInvoicePDF,
-  generateInvoicePDFAndDownload,
-  generateQuotePDF,
-  generateQuotePDFAndDownload,
-  generateReceiptPDF,
-  generateStatementPDF,
-  type StatementData,
-} from '../../services/pdfService';
+import type { StatementData } from '../../services/pdfService';
 import { Button, DashboardPageHeader } from '../ui';
 import { useConfirm } from '../ConfirmModal';
 import { useToast } from '../Toast';
@@ -830,6 +822,7 @@ export const Financials: React.FC = () => {
     const c = requireCompany();
     if (!c) return;
     try {
+      const { generateQuotePDF } = await import('../../services/pdfService');
       const blob = await generateQuotePDF(quote, c);
       openPreview(blob, `Quote ${quote.quote_number}`);
     } catch (error) {
@@ -842,6 +835,7 @@ export const Financials: React.FC = () => {
     const c = requireCompany();
     if (!c) return;
     try {
+      const { generateInvoicePDF } = await import('../../services/pdfService');
       const blob = await generateInvoicePDF(invoice, c);
       openPreview(blob, `Invoice ${invoice.invoice_number}`);
     } catch (error) {
@@ -854,6 +848,7 @@ export const Financials: React.FC = () => {
     const c = requireCompany();
     if (!c) return;
     try {
+      const { generateQuotePDFAndDownload } = await import('../../services/pdfService');
       await generateQuotePDFAndDownload(quote, c);
     } catch (error) {
       console.error('Error generating quote PDF:', error);
@@ -865,6 +860,7 @@ export const Financials: React.FC = () => {
     const c = requireCompany();
     if (!c) return;
     try {
+      const { generateInvoicePDFAndDownload } = await import('../../services/pdfService');
       await generateInvoicePDFAndDownload(invoice, c);
     } catch (error) {
       console.error('Error generating invoice PDF:', error);
@@ -876,6 +872,7 @@ export const Financials: React.FC = () => {
     const c = requireCompany();
     if (!c) return;
     try {
+      const { generateReceiptPDF } = await import('../../services/pdfService');
       const blob = await generateReceiptPDF(buildReceiptForPdf(receipt), c);
       openPreview(blob, `Receipt ${receipt.receipt_number}`);
     } catch (error) {
@@ -920,6 +917,7 @@ export const Financials: React.FC = () => {
   const issueReceiptPdf = async (receipt: Receipt, fallbackItems: ReceiptItem[]) => {
     if (!company) return;
     try {
+      const { generateReceiptPDF } = await import('../../services/pdfService');
       const blob = await generateReceiptPDF(
         { ...receipt, items: receipt.items || fallbackItems },
         company
@@ -1156,6 +1154,7 @@ export const Financials: React.FC = () => {
         endDate:
           statementDateTo || sortedDates[sortedDates.length - 1] || new Date().toISOString(),
       };
+      const { generateStatementPDF } = await import('../../services/pdfService');
       const blob = await generateStatementPDF(statementData, company);
       openPreview(blob, `Statement ${selectedClient}`);
       showToast('Statement generated successfully!', 'success');
@@ -1276,6 +1275,7 @@ export const Financials: React.FC = () => {
     const c = requireCompany();
     if (!c) return;
     try {
+      const { generateReceiptPDF } = await import('../../services/pdfService');
       const blob = await generateReceiptPDF(buildReceiptForPdf(receipt), c);
       openPreview(blob, `Receipt ${receipt.receipt_number}`);
       showToast(

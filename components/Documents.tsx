@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Expense, Vehicle, CompanyDetails, UserRole } from '../types';
 import { dataService } from '../services/dataService';
 import { useSession } from '../contexts/SessionContext';
-import { generateVehicleStatementPDFAndDownload } from '../services/pdfService';
 import { useToast } from '../components/Toast';
 import { getDriverIdentityAliases } from '../utils/driverIdentity';
 import { DashboardPageHeader, DashboardSection } from './ui';
@@ -89,6 +88,7 @@ export const Documents: React.FC = () => {
 
     try {
       const vehicleExpenses = expenses.filter(e => e.vehicle_id === vehicle.id);
+      const { generateVehicleStatementPDFAndDownload } = await import('../services/pdfService');
       await generateVehicleStatementPDFAndDownload(vehicle, vehicleExpenses, company);
       showToast('Vehicle statement generated successfully!', 'success');
     } catch {

@@ -30,10 +30,6 @@ import {
 import { dataService } from '../services/dataService';
 import { useSession } from '../contexts/SessionContext';
 import { AssetRegister } from './AssetRegister';
-import {
-  generateDriverFundsReportPDFAndDownload,
-  generatePayslipPDFAndDownload,
-} from '../services/pdfService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 import {
@@ -773,6 +769,7 @@ export const AdminDashboard: React.FC = () => {
       return;
     }
     try {
+      const { generatePayslipPDFAndDownload } = await import('../services/pdfService');
       await generatePayslipPDFAndDownload(payslip, company);
     } catch (error) {
       console.error('Error generating payslip PDF:', error);
@@ -862,6 +859,7 @@ export const AdminDashboard: React.FC = () => {
     }
 
     try {
+      const { generateDriverFundsReportPDFAndDownload } = await import('../services/pdfService');
       await generateDriverFundsReportPDFAndDownload(
         expenses,
         operatingFunds,
