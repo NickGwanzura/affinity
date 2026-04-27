@@ -70,7 +70,21 @@ import { toVehicleEditorRecord, type VehicleEditorRecord } from '../utils/dashbo
 import { tripPlannerFormSchema, getFirstValidationMessage } from '../utils/clientValidation';
 import { ZodError } from 'zod';
 
-export const AdminDashboard: React.FC = () => {
+export type AdminDashboardView =
+  | 'dashboard'
+  | 'reports'
+  | 'clients'
+  | 'employees'
+  | 'payslips'
+  | 'funds'
+  | 'trips'
+  | 'assets';
+
+export interface AdminDashboardProps {
+  initialView?: AdminDashboardView;
+}
+
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'dashboard' }) => {
   const truncateValue = (
     value: string | null | undefined,
     length: number,
@@ -89,9 +103,10 @@ export const AdminDashboard: React.FC = () => {
     make_model: string;
     vin_number: string;
   } | null>(null);
-  const [activeView, setActiveView] = useState<
-    'dashboard' | 'reports' | 'clients' | 'employees' | 'payslips' | 'funds' | 'trips' | 'assets'
-  >('dashboard');
+  const [activeView, setActiveView] = useState<AdminDashboardView>(initialView);
+  useEffect(() => {
+    setActiveView(initialView);
+  }, [initialView]);
   const session = useSession();
   const userRole: UserRole = session?.user?.role ?? 'Admin';
   const userName: string = session?.user?.name ?? '';

@@ -237,6 +237,8 @@ export default function App() {
     switch (currentView) {
       case 'admin':
         return <ErrorBoundary view="admin"><AdminDashboard /></ErrorBoundary>;
+      case 'employees':
+        return <ErrorBoundary view="admin"><AdminDashboard initialView="employees" /></ErrorBoundary>;
       case 'accountant':
         return <ErrorBoundary view="accountant"><AccountantDashboard /></ErrorBoundary>;
       case 'driver':

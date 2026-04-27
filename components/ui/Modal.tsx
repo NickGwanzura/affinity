@@ -1,14 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
-export type ModalSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type ModalSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
 const sizeClasses: Record<ModalSize, string> = {
   xs: 'max-w-sm',
   sm: 'max-w-md',
-  md: 'max-w-xl',
-  lg: 'max-w-3xl',
-  xl: 'max-w-5xl',
+  md: 'max-w-2xl',
+  lg: 'max-w-4xl',
+  xl: 'max-w-6xl',
+  '2xl': 'max-w-7xl',
 };
 
 interface ModalProps {
@@ -68,7 +69,7 @@ export const Modal: React.FC<ModalProps> = ({
         onMouseDown={(e) => e.stopPropagation()}
       >
         {(title || label) && (
-          <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-6 py-4">
+          <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-8 py-5">
             <div className="min-w-0">
               {label && (
                 <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
@@ -92,10 +93,10 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        <div className="flex-1 overflow-y-auto px-8 py-6">{children}</div>
 
         {footer && (
-          <div className="border-t border-stone-200 px-6 py-4">{footer}</div>
+          <div className="border-t border-stone-200 px-8 py-4">{footer}</div>
         )}
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   BarChart3,
+  Briefcase,
   Calculator,
   DollarSign,
   FileText,
@@ -29,6 +30,7 @@ export type AppView =
   | 'financials'
   | 'documents'
   | 'clients'
+  | 'employees'
   | 'shipments'
   | 'updates';
 
@@ -57,6 +59,7 @@ const navItems: {
   { id: 'documents', label: 'Documents', roles: ['Admin', 'Manager', 'Driver'], Icon: FileText },
   { id: 'driver', label: 'Driver Portal', roles: ['Admin', 'Driver'], Icon: Truck },
   { id: 'clients', label: 'Clients', roles: ['Admin', 'Accountant'], Icon: Users },
+  { id: 'employees', label: 'Employees', roles: ['Admin', 'Manager'], Icon: Briefcase },
   { id: 'shipments', label: 'Shipments', roles: ['Admin', 'Manager', 'Accountant'], Icon: Package },
   { id: 'updates', label: 'Updates', roles: ['Admin'], Icon: Mail },
   { id: 'settings', label: 'Settings', roles: ['Admin'], Icon: Settings },

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Employee } from '../../types';
 import FormModalShell from './FormModal';
-import { Button, Select, SelectItem, Stack, TextInput } from '../ui';
+import { Button, Select, SelectItem, TextInput } from '../ui';
 
 export interface EmployeeFormValue {
   name: string;
@@ -79,12 +79,15 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       isOpen={isOpen}
       title={title}
       label="Employee record"
-      size="lg"
+      size="2xl"
       onClose={onClose}
     >
-      <form onSubmit={onSubmit} className="space-y-6">
-        <Stack gap={5}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={onSubmit} className="space-y-8">
+        <section className="space-y-5">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Personal &amp; contact
+          </h4>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <TextInput
               id="employee-name"
               labelText="Full Name"
@@ -100,9 +103,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               onChange={(event) => onChange({ email: event.target.value })}
               required
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <TextInput
               id="employee-phone"
               type="tel"
@@ -117,8 +117,13 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               onChange={(event) => onChange({ department: event.target.value })}
             />
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section className="space-y-5">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Role &amp; compensation
+          </h4>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             <TextInput
               id="employee-position"
               labelText="Position"
@@ -147,8 +152,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               <SelectItem value="BWP" text="BWP" />
             </Select>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <Select
               id="employee-employment-type"
               labelText="Employment Type"
@@ -169,40 +173,44 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               required
             />
           </div>
+        </section>
 
-          <div className="border-t border-zinc-200 pt-4 mt-4">
-            <h4 className="text-sm font-bold text-zinc-700 mb-3">Optional Banking &amp; Tax Details</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TextInput
-                id="employee-national-id"
-                labelText="National ID"
-                value={form.national_id}
-                onChange={(event) => onChange({ national_id: event.target.value })}
-              />
-              <TextInput
-                id="employee-tax-number"
-                labelText="Tax Number"
-                value={form.tax_number}
-                onChange={(event) => onChange({ tax_number: event.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <TextInput
-                id="employee-bank-name"
-                labelText="Bank Name"
-                value={form.bank_name}
-                onChange={(event) => onChange({ bank_name: event.target.value })}
-              />
-              <TextInput
-                id="employee-bank-account"
-                labelText="Bank Account"
-                value={form.bank_account}
-                onChange={(event) => onChange({ bank_account: event.target.value })}
-              />
-            </div>
+        <section className="space-y-5 rounded-lg border border-stone-200 bg-stone-50/60 p-5">
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Banking &amp; tax
+            </h4>
+            <p className="mt-1 text-xs text-zinc-500">Optional — used on payslip PDFs.</p>
           </div>
-        </Stack>
-        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <TextInput
+              id="employee-national-id"
+              labelText="National ID"
+              value={form.national_id}
+              onChange={(event) => onChange({ national_id: event.target.value })}
+            />
+            <TextInput
+              id="employee-tax-number"
+              labelText="Tax Number"
+              value={form.tax_number}
+              onChange={(event) => onChange({ tax_number: event.target.value })}
+            />
+            <TextInput
+              id="employee-bank-name"
+              labelText="Bank Name"
+              value={form.bank_name}
+              onChange={(event) => onChange({ bank_name: event.target.value })}
+            />
+            <TextInput
+              id="employee-bank-account"
+              labelText="Bank Account"
+              value={form.bank_account}
+              onChange={(event) => onChange({ bank_account: event.target.value })}
+            />
+          </div>
+        </section>
+
+        <div className="flex flex-col-reverse gap-3 border-t border-stone-200 pt-5 sm:flex-row sm:justify-end">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>

@@ -192,14 +192,11 @@ export const ToastViewport: React.FC = () => {
   );
 };
 
-export const useToast = () => {
-  const showToast = (
-    message: string,
-    type: ToastType = 'info',
-    duration: number = DEFAULT_DURATION,
-  ) => showGlobalToast(message, type, duration);
+const NoopToastContainer: React.FC = () => null;
 
-  const ToastContainer = () => null;
-
-  return { showToast, ToastContainer };
+const stableToastApi = {
+  showToast: showGlobalToast,
+  ToastContainer: NoopToastContainer,
 };
+
+export const useToast = () => stableToastApi;
