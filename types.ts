@@ -319,7 +319,7 @@ export interface Employee {
   department?: string;
   position: string;
   base_pay_usd: number;
-  currency: 'USD' | 'NAD' | 'GBP' | 'BWP';
+  currency: 'USD' | 'NAD' | 'GBP' | 'BWP' | 'ZAR';
   employment_type: 'Full-time' | 'Part-time' | 'Contract' | 'Intern';
   date_hired: string;
   status: 'Active' | 'On Leave' | 'Terminated';
