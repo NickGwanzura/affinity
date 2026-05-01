@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { EXPENSE_CATEGORIES, CURRENCIES, VEHICLE_STATUS, EXCHANGE_RATES } from '../../constants';
 import type { Expense, Vehicle, ExpenseCategory, VehicleStatus, Currency } from '../../types';
+import { EmptyState, defaultIcons } from '../ui';
 
 // ============================================
 // Types
@@ -10,6 +11,7 @@ interface ExpenseListProps {
   vehicles: Vehicle[];
   onDelete?: (expenseId: string) => void;
   showVehicleColumn?: boolean;
+  showDriverColumn?: boolean;
   maxItems?: number;
   title?: string;
   emptyMessage?: string;
@@ -20,6 +22,7 @@ interface ExpenseRowProps {
   vehicleName: string | null;
   onDelete?: (expenseId: string) => void;
   showVehicleColumn: boolean;
+  showDriverColumn: boolean;
 }
 
 // ============================================
@@ -110,11 +113,12 @@ const formatDate = (dateString: string): string => {
 // Sub-Components
 // ============================================
 
-const ExpenseRow: React.FC<ExpenseRowProps> = memo(({ 
-  expense, 
-  vehicleName, 
-  onDelete, 
-  showVehicleColumn 
+const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
+  expense,
+  vehicleName,
+  onDelete,
+  showVehicleColumn,
+  showDriverColumn,
 }) => {
   const handleDelete = useCallback(() => {
     if (onDelete) {
@@ -157,6 +161,17 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
             <span className="text-sm font-medium" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{vehicleName}</span>
           ) : (
             <span className="text-sm italic" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>General</span>
+          )}
+        </td>
+      )}
+
+      {/* Driver Column (optional) */}
+      {showDriverColumn && (
+        <td className="px-6 py-4">
+          {expense.driver_name ? (
+            <span className="text-sm font-medium" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{expense.driver_name}</span>
+          ) : (
+            <span className="text-sm italic" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>—</span>
           )}
         </td>
       )}
@@ -225,6 +240,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
   vehicles,
   onDelete,
   showVehicleColumn = true,
+  showDriverColumn = false,
   maxItems,
   title = 'Recent Expenses',
   emptyMessage = 'No expenses yet.'
@@ -261,17 +277,12 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
 
   if (expenses.length === 0) {
     return (
-      <div className="p-12 text-center" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
-        <svg
-          className="w-16 h-16 text-zinc-300 mx-auto mb-4"
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>No Expenses Found</h3>
-        <p style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{emptyMessage}</p>
+      <div className="rounded-md border border-stone-200 bg-white">
+        <EmptyState
+          icon={defaultIcons.receipt}
+          title="No expenses found"
+          description={emptyMessage}
+        />
       </div>
     );
   }
@@ -326,6 +337,15 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
                   Vehicle
                 </th>
               )}
+              {showDriverColumn && (
+                <th
+                  scope="col"
+                  className="px-6 py-4 font-black uppercase tracking-widest text-xs"
+                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                >
+                  Driver
+                </th>
+              )}
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs"
@@ -366,6 +386,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
                 vehicleName={getVehicleName(expense.vehicle_id)}
                 onDelete={onDelete}
                 showVehicleColumn={showVehicleColumn}
+                showDriverColumn={showDriverColumn}
               />
             ))}
           </tbody>

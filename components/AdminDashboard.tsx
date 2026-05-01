@@ -6,6 +6,7 @@ import {
   User,
   FileText,
   Map,
+  Receipt,
   Truck,
   Wrench,
   TrendingUp,
@@ -40,6 +41,7 @@ import {
 } from './ui';
 import AdminFundsView from './admin/AdminFundsView';
 import AdminClientsView from './admin/AdminClientsView';
+import AdminDriverEntriesView from './admin/AdminDriverEntriesView';
 import AdminEmployeesView from './admin/AdminEmployeesView';
 import AdminOverviewView from './admin/AdminOverviewView';
 import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
@@ -75,6 +77,7 @@ export type AdminDashboardView =
   | 'reports'
   | 'clients'
   | 'employees'
+  | 'driver-entries'
   | 'payslips'
   | 'funds'
   | 'trips'
@@ -847,6 +850,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
     }
   };
 
+  const handleDeleteExpense = async (id: string) => {
+    const approved = await confirm({
+      title: 'Delete expense entry?',
+      message: 'This will permanently remove the expense from the ledger.',
+      confirmLabel: 'Delete Entry',
+      confirmVariant: 'danger',
+    });
+    if (!approved) return;
+
+    try {
+      await dataService.deleteExpense(id);
+      await fetchData(true);
+      notifySuccess('Entry deleted successfully.');
+    } catch (error: any) {
+      console.error('[AdminDashboard] handleDeleteExpense error:', error);
+      notifyError(error?.message || 'Failed to delete entry.');
+    }
+  };
+
   const handleDeleteOperatingFund = async (id: string) => {
     const approved = await confirm({
       title: 'Delete transaction?',
@@ -992,15 +1014,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
   }
 
   const adminViewOptions: Array<{
-    id:
-      | 'dashboard'
-      | 'reports'
-      | 'clients'
-      | 'employees'
-      | 'payslips'
-      | 'funds'
-      | 'trips'
-      | 'assets';
+    id: AdminDashboardView;
     label: string;
     icon: React.ReactNode;
   }> = [
@@ -1023,6 +1037,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
       id: 'employees',
       label: 'Employees',
       icon: <User size={16} />,
+    },
+    {
+      id: 'driver-entries',
+      label: 'Driver Entries',
+      icon: <Receipt size={16} />,
     },
     {
       id: 'payslips',
@@ -1242,6 +1261,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
               setShowEmployeeModal(true);
             }}
             onDeleteEmployee={handleDeleteEmployee}
+          />
+        )}
+
+        {activeView === 'driver-entries' && (
+          <AdminDriverEntriesView
+            expenses={expenses}
+            vehicles={vehicles}
+            drivers={drivers}
+            onDeleteExpense={handleDeleteExpense}
           />
         )}
 

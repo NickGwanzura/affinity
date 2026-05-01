@@ -239,6 +239,8 @@ export default function App() {
         return <ErrorBoundary view="admin"><AdminDashboard /></ErrorBoundary>;
       case 'employees':
         return <ErrorBoundary view="admin"><AdminDashboard initialView="employees" /></ErrorBoundary>;
+      case 'driver-entries':
+        return <ErrorBoundary view="admin"><AdminDashboard initialView="driver-entries" /></ErrorBoundary>;
       case 'accountant':
         return <ErrorBoundary view="accountant"><AccountantDashboard /></ErrorBoundary>;
       case 'driver':
