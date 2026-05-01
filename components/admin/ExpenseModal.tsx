@@ -234,7 +234,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               value={formData.vehicle_id}
               onChange={(e) => handleChange('vehicle_id', e.target.value)}
               disabled={isSubmitting}
-              className="w-full px-4 py-3 border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 border focus:ring-2 focus:ring-[#D97706]/30 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
             >
               <option value="">None (General expense)</option>
@@ -269,7 +269,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                   errors.amount
                     ? 'border-red-300 focus:ring-red-500'
-                    : 'focus:ring-green-500'
+                    : 'focus:ring-[#D97706]/30'
                 }`}
                 style={errors.amount ? undefined : { border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
                 aria-invalid={!!errors.amount}
@@ -297,7 +297,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 value={formData.currency}
                 onChange={(e) => handleChange('currency', e.target.value as Currency)}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border focus:ring-2 focus:ring-[#D97706]/30 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
               >
                 {currencyOptions.map(option => (
@@ -322,7 +322,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 value={formData.category}
                 onChange={(e) => handleChange('category', e.target.value as ExpenseCategory)}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border focus:ring-2 focus:ring-[#D97706]/30 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
               >
                 {categoryOptions.map(option => (
@@ -343,7 +343,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 value={formData.location}
                 onChange={(e) => handleChange('location', e.target.value as VehicleStatus)}
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border focus:ring-2 focus:ring-[#D97706]/30 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
               >
                 {locationOptions.map(option => (
@@ -422,7 +422,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed ${
                 errors.description
                   ? 'border-red-300 focus:ring-red-500'
-                  : 'focus:ring-green-500'
+                  : 'focus:ring-[#D97706]/30'
               }`}
               style={errors.description ? undefined : { border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
               aria-invalid={!!errors.description}

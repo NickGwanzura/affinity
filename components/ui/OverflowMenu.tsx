@@ -40,7 +40,7 @@ export const OverflowMenu: React.FC<OverflowMenuProps> = ({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex items-center justify-center ${btnSize} text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500`}
+        className={`inline-flex items-center justify-center ${btnSize} text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#D97706]/30`}
       >
         {RenderIcon ? <RenderIcon size={16} /> : <MoreVertical size={16} />}
       </button>

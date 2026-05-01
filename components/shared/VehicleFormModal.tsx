@@ -124,7 +124,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                 value={form.regBookUrl}
                 onChange={event => onChange({ regBookUrl: event.target.value })}
                 placeholder="https://storage.example.com/reg-book.pdf"
-                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md rounded-r-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md rounded-r-md border border-gray-300 focus:ring-[#D97706]/30 focus:border-[#D97706] sm:text-sm"
               />
             </div>
             {isEditing && !form.regBookUrl && (

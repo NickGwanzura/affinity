@@ -125,7 +125,7 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
               value={batchFilter}
               onChange={e => onBatchFilterChange(e.target.value)}
               placeholder="Enter batch code..."
-              className="w-full h-8 px-3 text-sm border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full h-8 px-3 text-sm border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
             />
           </div>
           {batchFilter && (

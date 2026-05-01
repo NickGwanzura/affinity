@@ -305,7 +305,7 @@ export const AccountantExpensesSection: React.FC<AccountantExpensesSectionProps>
               <td className="px-4 py-3 text-right font-bold">{formatCurrency(expense.amount * expense.exchange_rate_to_usd)}</td>
               <td className="px-4 py-3">{formatDate(expense.created_at)}</td>
               <td className="px-4 py-3 text-center">
-                <button type="button" onClick={() => onEditExpense(expense)} className="rounded px-2 py-1 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-800">
+                <button type="button" onClick={() => onEditExpense(expense)} className="rounded px-2 py-1 text-xs font-semibold text-[#D97706] transition-colors hover:bg-amber-50 hover:text-[#92400E]">
                   Edit
                 </button>
               </td>
@@ -442,15 +442,15 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">From</label>
-          <input type="date" value={erDateFrom} onChange={(event) => onDateFromChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="date" value={erDateFrom} onChange={(event) => onDateFromChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#D97706]/30" />
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">To</label>
-          <input type="date" value={erDateTo} onChange={(event) => onDateToChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="date" value={erDateTo} onChange={(event) => onDateToChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#D97706]/30" />
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">Category</label>
-          <select value={erCategory} onChange={(event) => onCategoryChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+          <select value={erCategory} onChange={(event) => onCategoryChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#D97706]/30">
             <option value="">All Categories</option>
             {['Fuel', 'Tolls', 'Food', 'Repairs', 'Duty', 'Shipping', 'Driver Disbursement', 'Other'].map((category) => (
               <option key={category} value={category}>{category}</option>
@@ -459,7 +459,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">Location</label>
-          <select value={erLocation} onChange={(event) => onLocationChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+          <select value={erLocation} onChange={(event) => onLocationChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#D97706]/30">
             <option value="">All Locations</option>
             {['UK', 'Namibia', 'Zimbabwe', 'Botswana'].map((location) => (
               <option key={location} value={location}>{location}</option>
@@ -468,7 +468,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-zinc-500">Vehicle</label>
-          <select value={erVehicle} onChange={(event) => onVehicleChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+          <select value={erVehicle} onChange={(event) => onVehicleChange(event.target.value)} className="w-full border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#D97706]/30">
             <option value="">All Vehicles</option>
             {vehicles.map((vehicle) => (
               <option key={vehicle.id} value={vehicle.id}>{vehicle.make_model} — {vehicle.vin_number}</option>
@@ -503,8 +503,8 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
       <div className="flex flex-col gap-3 border-b border-zinc-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="font-bold text-zinc-900">Breakdown by Category</h3>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button type="button" onClick={onExportPDF} className=" bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-emerald-700">Export PDF</button>
-          <button type="button" onClick={onExportCSV} className=" bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-blue-700">Export CSV</button>
+          <button type="button" onClick={onExportPDF} className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-2">Export PDF</button>
+          <button type="button" onClick={onExportCSV} className="rounded-md bg-[#D97706] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#B45309] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:ring-offset-2">Export CSV</button>
         </div>
       </div>
       <div className="space-y-3 p-4 lg:hidden">
@@ -522,7 +522,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
               </div>
               <div className="mt-3 flex items-center gap-2">
                 <div className="h-1.5 flex-1 rounded-full bg-zinc-100">
-                  <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${expenseReportTotal > 0 ? (row.totalUsd / expenseReportTotal) * 100 : 0}%` }} />
+                  <div className="h-1.5 rounded-full bg-[#D97706]" style={{ width: `${expenseReportTotal > 0 ? (row.totalUsd / expenseReportTotal) * 100 : 0}%` }} />
                 </div>
                 <span className="w-10 text-right text-xs text-zinc-500">
                   {expenseReportTotal > 0 ? ((row.totalUsd / expenseReportTotal) * 100).toFixed(1) : 0}%
@@ -552,7 +552,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
               <td className="px-6 py-3 text-right">
                 <div className="flex items-center justify-end gap-2">
                   <div className="h-1.5 w-16 rounded-full bg-zinc-100">
-                    <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${expenseReportTotal > 0 ? (row.totalUsd / expenseReportTotal) * 100 : 0}%` }} />
+                    <div className="h-1.5 rounded-full bg-[#D97706]" style={{ width: `${expenseReportTotal > 0 ? (row.totalUsd / expenseReportTotal) * 100 : 0}%` }} />
                   </div>
                   <span className="w-10 text-right text-xs text-zinc-500">{expenseReportTotal > 0 ? ((row.totalUsd / expenseReportTotal) * 100).toFixed(1) : 0}%</span>
                 </div>
@@ -575,7 +575,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
             <div key={expense.id} className=" border border-zinc-200 bg-zinc-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className=" bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{expense.category}</span>
+                  <span className="rounded bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-700">{expense.category}</span>
                   <p className="mt-2 font-medium text-zinc-900">{expense.description}</p>
                 </div>
                 <p className="text-xs text-zinc-500">{formatDate(expense.created_at)}</p>
@@ -621,7 +621,7 @@ export const AccountantExpenseReportsSection: React.FC<AccountantExpenseReportsS
             ) : filteredExpensesForReport.map((expense) => (
               <tr key={expense.id} className="hover:bg-zinc-50">
                 <td className="px-4 py-3 text-xs text-zinc-500">{formatDate(expense.created_at)}</td>
-                <td className="px-4 py-3"><span className=" bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{expense.category}</span></td>
+                <td className="px-4 py-3"><span className="rounded bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-700">{expense.category}</span></td>
                 <td className="max-w-[200px] truncate px-4 py-3 text-zinc-700">{expense.description}</td>
                 <td className="px-4 py-3 text-xs text-zinc-500">{expense.location}</td>
                 <td className="px-4 py-3 text-xs text-zinc-500">{expense.driver_name || '—'}</td>

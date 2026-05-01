@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { LogIn, Mail, X } from 'lucide-react';
-import { Button } from './ui';
+import { LogIn, Mail } from 'lucide-react';
+import { Button, TextInput, PasswordInput, InlineNotification } from './ui';
 import { authService } from '../services/authService';
 import { AuthSession } from '../types';
 import { useToast } from './Toast';
@@ -172,151 +172,49 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             {error && (
               <div className="login-shell__notice">
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.5rem',
-                    padding: '0.75rem',
-                    background: '#fef2f2',
-                    border: '1px solid #fecaca',
-                    color: '#dc2626',
-                    fontSize: '0.875rem',
-                    borderRadius: '6px',
-                  }}
-                >
-                  <span style={{ fontWeight: 600, flexShrink: 0 }}>Error:</span>
-                  <span style={{ flex: 1 }}>{error}</span>
-                  <button
-                    type="button"
-                    onClick={() => setError('')}
-                    style={{
-                      flexShrink: 0,
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: 0,
-                      color: '#dc2626',
-                    }}
-                    aria-label="Dismiss"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
+                <InlineNotification
+                  kind="error"
+                  title="Error:"
+                  subtitle={error}
+                  onClose={() => setError('')}
+                />
               </div>
             )}
             {success && (
               <div className="login-shell__notice">
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.5rem',
-                    padding: '0.75rem',
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    color: '#16a34a',
-                    fontSize: '0.875rem',
-                    borderRadius: '6px',
-                  }}
-                >
-                  <span style={{ fontWeight: 600, flexShrink: 0 }}>Success:</span>
-                  <span style={{ flex: 1 }}>{success}</span>
-                  <button
-                    type="button"
-                    onClick={() => setSuccess('')}
-                    style={{
-                      flexShrink: 0,
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: 0,
-                      color: '#16a34a',
-                    }}
-                    aria-label="Dismiss"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
+                <InlineNotification
+                  kind="success"
+                  title="Success:"
+                  subtitle={success}
+                  onClose={() => setSuccess('')}
+                />
               </div>
             )}
 
             <form onSubmit={onSubmit}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                  <label
-                    htmlFor="login-email"
-                    style={{ fontSize: '0.875rem', fontWeight: 500, color: '#000' }}
-                  >
-                    Work email
-                  </label>
-                  <input
-                    id="login-email"
-                    type="email"
-                    placeholder="email@company.com"
-                    autoComplete="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '0.625rem 0.75rem',
-                      fontSize: '0.9375rem',
-                      background: '#fafafa',
-                      border: '1px solid #e5e5e5',
-                      borderRadius: '6px',
-                      color: '#000',
-                      outline: 'none',
-                      transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = '#000';
-                      e.target.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.05)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = '#e5e5e5';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
+              <div className="flex flex-col gap-5">
+                <TextInput
+                  id="login-email"
+                  type="email"
+                  labelText="Work email"
+                  placeholder="email@company.com"
+                  autoComplete="email"
+                  autoFocus
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
 
                 {mode === 'login' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                    <label
-                      htmlFor="login-password"
-                      style={{ fontSize: '0.875rem', fontWeight: 500, color: '#000' }}
-                    >
-                      Password
-                    </label>
-                    <input
-                      id="login-password"
-                      type="password"
-                      placeholder="Enter password"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '0.625rem 0.75rem',
-                        fontSize: '0.9375rem',
-                        background: '#fafafa',
-                        border: '1px solid #e5e5e5',
-                        borderRadius: '6px',
-                        color: '#000',
-                        outline: 'none',
-                        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-                      }}
-                      onFocus={e => {
-                        e.target.style.borderColor = '#000';
-                        e.target.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.05)';
-                      }}
-                      onBlur={e => {
-                        e.target.style.borderColor = '#e5e5e5';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                    />
-                  </div>
+                  <PasswordInput
+                    id="login-password"
+                    labelText="Password"
+                    placeholder="Enter password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
                 )}
 
                 {mode === 'forgot' && (
@@ -327,7 +225,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                 <Button
                   type="submit"
-                  disabled={loading}
+                  isLoading={loading}
                   renderIcon={mode === 'login' ? LogIn : Mail}
                   size="lg"
                   fullWidth

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { dataService } from '../services/dataService';
 import { UserInvite, AuthSession } from '../types';
 import { useToast } from './Toast';
-import { Button } from './ui';
+import { Button, PasswordInput, InlineNotification } from './ui';
 import affinityLogo from '../assets/affinity-logo.svg';
 
 interface AcceptInviteProps {
@@ -86,7 +86,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                 <div className="login-shell__panel">
                     <div className="login-shell__panel-inner">
                         <div className="flex items-center justify-center py-16">
-                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900" />
+                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-stone-200 border-t-[#D97706]" />
                         </div>
                     </div>
                 </div>
@@ -162,54 +162,47 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
 
                         {error && (
                             <div className="login-shell__notice">
-                                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 text-red-800 text-sm">
-                                    <span className="font-semibold shrink-0">Error:</span>
-                                    <span className="flex-1">{error}</span>
-                                </div>
+                                <InlineNotification
+                                    kind="error"
+                                    title="Error:"
+                                    subtitle={error}
+                                    onClose={() => setError('')}
+                                />
                             </div>
                         )}
 
                         <form onSubmit={handleSubmit}>
                             <div className="flex flex-col gap-5">
-                                <div className="flex flex-col gap-1">
-                                    <label htmlFor="accept-invite-password" className="text-sm font-medium text-gray-900">
-                                        New password
-                                    </label>
-                                    <input
-                                        id="accept-invite-password"
-                                        type="password"
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        required
-                                        placeholder="At least 8 characters"
-                                        autoComplete="new-password"
-                                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400"
-                                    />
-                                </div>
+                                <PasswordInput
+                                    id="accept-invite-password"
+                                    labelText="New password"
+                                    placeholder="At least 8 characters"
+                                    autoComplete="new-password"
+                                    autoFocus
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
 
-                                <div className="flex flex-col gap-1">
-                                    <label htmlFor="accept-invite-confirm" className="text-sm font-medium text-gray-900">
-                                        Confirm password
-                                    </label>
-                                    <input
-                                        id="accept-invite-confirm"
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={e => setConfirmPassword(e.target.value)}
-                                        required
-                                        placeholder="Re-enter password"
-                                        autoComplete="new-password"
-                                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400"
-                                    />
-                                </div>
+                                <PasswordInput
+                                    id="accept-invite-confirm"
+                                    labelText="Confirm password"
+                                    placeholder="Re-enter password"
+                                    autoComplete="new-password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    invalid={Boolean(confirmPassword) && password !== confirmPassword}
+                                    invalidText="Passwords do not match"
+                                />
 
                                 <Button
                                     type="submit"
-                                    disabled={submitting}
+                                    isLoading={submitting}
                                     size="lg"
                                     fullWidth
                                 >
-                                    {submitting ? 'Completing...' : 'Complete registration'}
+                                    {submitting ? 'Completing…' : 'Complete registration'}
                                 </Button>
 
                                 <button

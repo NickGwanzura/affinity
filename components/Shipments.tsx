@@ -155,7 +155,7 @@ export const Shipments: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-200 border-t-[#D97706]" />
       </div>
     );
   }

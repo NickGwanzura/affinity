@@ -259,8 +259,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
               }}
             >
               <span
+                className="font-mono"
                 style={{
-                  fontFamily: 'IBM Plex Mono, monospace',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   color: '#10b981',

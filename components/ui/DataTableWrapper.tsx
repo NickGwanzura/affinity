@@ -156,7 +156,7 @@ export function DataTableWrapper<T extends { id: string }>({
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 h-9 text-sm border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-48"
+                className="pl-9 pr-3 h-9 text-sm border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706] w-48"
               />
             </div>
           )}
@@ -178,7 +178,7 @@ export function DataTableWrapper<T extends { id: string }>({
                 <th className={`${cellPadding} w-10`}>
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-gray-300 text-[#D97706] focus:ring-[#D97706]/30"
                     checked={filteredRows.length > 0 && selectedIds.size === filteredRows.length}
                     onChange={toggleSelectAll}
                   />
@@ -219,7 +219,7 @@ export function DataTableWrapper<T extends { id: string }>({
                     <td className={cellPadding}>
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 rounded border-gray-300 text-[#D97706] focus:ring-[#D97706]/30"
                         checked={selectedIds.has(row.id)}
                         onChange={() => toggleSelectRow(row.id)}
                       />

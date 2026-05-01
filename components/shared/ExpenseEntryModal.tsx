@@ -63,7 +63,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
     return null;
   }
 
-  const focusTone = accent === 'blue' ? 'focus:ring-blue-500' : 'focus:ring-green-500';
+  const focusTone = accent === 'blue' ? 'focus:ring-[#D97706]/30' : 'focus:ring-[#D97706]/30';
   const accentBorder = accent === 'blue' ? 'border-blue-300 bg-blue-50' : 'border-zinc-200 bg-white';
   const showDriverDisbursement = categoryOptions.includes('Driver Disbursement');
   const showDriverSelector = showDriverDisbursement && form.category === 'Driver Disbursement';

@@ -14,9 +14,9 @@ export const AdminClientsView: React.FC<AdminClientsViewProps> = ({
   onDeleteClient,
 }) => (
   <div className="space-y-6">
-    <div className="bg-gradient-to-r from-green-600 to-teal-600 p-4 sm:p-6 md:p-8  text-white">
-      <h3 className="text-xl sm:text-2xl font-black mb-2">Client Management</h3>
-      <p className="text-green-100">Manage all your clients and contacts</p>
+    <div className="rounded-md bg-gradient-to-r from-[#D97706] to-[#92400E] p-4 sm:p-6 md:p-8 text-white shadow-sm">
+      <h3 className="text-xl sm:text-2xl font-bold mb-2">Client Management</h3>
+      <p className="text-amber-100">Manage all your clients and contacts</p>
     </div>
 
     <div className="overflow-hidden shadow-lg" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>

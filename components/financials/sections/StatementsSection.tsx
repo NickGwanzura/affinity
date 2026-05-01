@@ -60,7 +60,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
               id="statement-client"
               value={selectedClient}
               onChange={e => onClientChange(e.target.value)}
-              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
             >
               <option value="">Select a client</option>
               {clientOptions.map(c => (
@@ -80,7 +80,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
               type="date"
               value={statementDateFrom}
               onChange={e => onDateFromChange(e.target.value)}
-              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
             />
           </div>
 
@@ -93,7 +93,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
               type="date"
               value={statementDateTo}
               onChange={e => onDateToChange(e.target.value)}
-              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
             />
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DashboardPageHeader } from './ui';
+import { DashboardPageHeader, Loading } from './ui';
 import { CompanyDetails } from '../types';
 import { dataService } from '../services/dataService';
 import { useSession } from '../contexts/SessionContext';
@@ -55,10 +55,7 @@ export const Settings: React.FC = () => {
   if (loading)
     return (
       <div className="flex items-center justify-center h-64 font-sans">
-        <div
-          className="animate-spin h-8 w-8 border-b-2"
-          style={{ borderColor: 'var(--cds-interactive, #D97706)' }}
-        ></div>
+        <Loading description="Loading settings…" withOverlay={false} />
       </div>
     );
 

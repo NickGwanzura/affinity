@@ -195,13 +195,31 @@ export const ReportsOverviewView: React.FC<ReportsOverviewViewProps> = ({
       </InsightPanel>
     </div>
 
-    <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+    <div className="rounded-md bg-gradient-to-r from-[#D97706] to-[#92400E] p-6 text-white shadow-sm">
       <h3 className="text-lg font-bold mb-2">Export Reports</h3>
-      <p className="text-sm text-blue-100 mb-4">Download comprehensive financial reports for your records</p>
+      <p className="text-sm text-amber-100 mb-4">Download comprehensive financial reports for your records</p>
       <div className="flex gap-3 flex-wrap">
-        <Button variant="secondary" onClick={onExportPDF}>Export Expenses PDF</Button>
-        <Button variant="ghost" onClick={onExportCSV}>Export Expenses CSV</Button>
-        <Button variant="ghost" onClick={onExportDriverFundsReport}>Export Driver Funds PDF</Button>
+        <button
+          type="button"
+          onClick={onExportPDF}
+          className="inline-flex items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#92400E] shadow-sm transition-colors hover:bg-amber-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#D97706]"
+        >
+          Export Expenses PDF
+        </button>
+        <button
+          type="button"
+          onClick={onExportCSV}
+          className="inline-flex items-center justify-center rounded-md border border-white/40 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#D97706]"
+        >
+          Export Expenses CSV
+        </button>
+        <button
+          type="button"
+          onClick={onExportDriverFundsReport}
+          className="inline-flex items-center justify-center rounded-md border border-white/40 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#D97706]"
+        >
+          Export Driver Funds PDF
+        </button>
       </div>
     </div>
   </div>

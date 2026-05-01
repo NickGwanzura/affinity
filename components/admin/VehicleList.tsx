@@ -92,7 +92,7 @@ const VehicleRow: React.FC<VehicleRowProps> = memo(({ vehicle, onEdit, onDelete 
           <div className="flex items-center gap-1">
             <button
               onClick={handleEdit}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-2  hover:bg-blue-50 text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-amber-50 text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:ring-offset-2"
               title="Edit vehicle"
               aria-label={`Edit ${vehicle.make_model}`}
               type="button"

@@ -181,7 +181,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                 errors.vin_number
                   ? 'border-red-300 focus:ring-red-500'
-                  : 'focus:ring-blue-500'
+                  : 'focus:ring-[#D97706]/30'
               }`}
               style={errors.vin_number ? undefined : { border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
               aria-invalid={!!errors.vin_number}
@@ -221,7 +221,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                 errors.make_model
                   ? 'border-red-300 focus:ring-red-500'
-                  : 'focus:ring-blue-500'
+                  : 'focus:ring-[#D97706]/30'
               }`}
               style={errors.make_model ? undefined : { border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
               aria-invalid={!!errors.make_model}
@@ -259,7 +259,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
               className={`w-full px-4 py-3 border focus:ring-2 focus:border-transparent transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                 errors.purchase_price_gbp
                   ? 'border-red-300 focus:ring-red-500'
-                  : 'focus:ring-blue-500'
+                  : 'focus:ring-[#D97706]/30'
               }`}
               style={errors.purchase_price_gbp ? undefined : { border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
               aria-invalid={!!errors.purchase_price_gbp}
@@ -305,11 +305,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = memo(({
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex-1 text-white font-bold py-3  shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
-                isEditing 
-                  ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' 
-                  : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'
-              }`}
+              className="flex-1 text-white font-semibold py-3 rounded-md shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-[#D97706] hover:bg-[#B45309] active:bg-[#92400E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:ring-offset-2"
             >
               {isSubmitting && (
                 <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">

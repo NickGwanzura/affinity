@@ -35,16 +35,69 @@ export const Modal: React.FC<ModalProps> = ({
   preventCloseOnClickOutside = false,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const focusableSelector =
+      'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), ' +
+      'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    const getFocusable = (): HTMLElement[] => {
+      if (!dialogRef.current) return [];
+      const nodeList = dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector);
+      const result: HTMLElement[] = [];
+      nodeList.forEach((el) => {
+        if (!el.hasAttribute('aria-hidden')) result.push(el);
+      });
+      return result;
+    };
+
+    const focusFirst = () => {
+      const items = getFocusable();
+      const target =
+        items.find((el) => el.getAttribute('aria-label') !== 'Close') ?? items[0] ?? dialogRef.current;
+      target?.focus();
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const items = getFocusable();
+      if (items.length === 0) {
+        e.preventDefault();
+        dialogRef.current?.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    const focusTimer = window.setTimeout(focusFirst, 0);
+
     return () => {
+      window.clearTimeout(focusTimer);
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
+      previouslyFocused?.focus?.();
     };
   }, [isOpen, onClose]);
 
@@ -65,7 +118,9 @@ export const Modal: React.FC<ModalProps> = ({
       className="fixed inset-0 z-[9000] flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
     >
       <div
-        className={`flex max-h-[95vh] w-full flex-col bg-white shadow-2xl sm:max-h-[90vh] sm:rounded-lg ${sizeClasses[size]}`}
+        ref={dialogRef}
+        tabIndex={-1}
+        className={`flex max-h-[95vh] w-full flex-col bg-white shadow-2xl outline-none sm:max-h-[90vh] sm:rounded-lg ${sizeClasses[size]}`}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {(title || label) && (

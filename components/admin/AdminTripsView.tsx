@@ -117,7 +117,7 @@ export const AdminTripsView: React.FC<AdminTripsViewProps> = ({ trips, onEditTri
                     <button
                       type="button"
                       onClick={() => onEditTrip(trip)}
-                      className="inline-flex min-h-[44px] items-center justify-center  bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-[#D97706] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#B45309] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:ring-offset-2"
                     >
                       Edit
                     </button>

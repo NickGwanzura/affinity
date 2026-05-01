@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Key, LogOut, X } from 'lucide-react';
-import { Button } from './ui';
+import { Key, LogOut } from 'lucide-react';
+import { Button, PasswordInput, InlineNotification } from './ui';
 import { authService } from '../services/authService';
 import { useToast } from './Toast';
 import affinityLogo from '../assets/affinity-logo.svg';
@@ -96,85 +96,59 @@ export const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({
 
             {error && (
               <div className="login-shell__notice">
-                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 text-red-800 text-sm">
-                  <span className="font-semibold shrink-0">Error:</span>
-                  <span className="flex-1">{error}</span>
-                  <button
-                    type="button"
-                    onClick={() => setError('')}
-                    className="shrink-0 text-red-600 hover:text-red-800"
-                    aria-label="Dismiss"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
+                <InlineNotification
+                  kind="error"
+                  title="Error:"
+                  subtitle={error}
+                  onClose={() => setError('')}
+                />
               </div>
             )}
 
             <form onSubmit={handleSubmit}>
               <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="force-current-password" className="text-sm font-medium text-gray-900">
-                    Current password
-                  </label>
-                  <input
-                    id="force-current-password"
-                    type="password"
-                    placeholder="Enter your temporary password"
-                    autoComplete="current-password"
-                    value={currentPassword}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-[#D97706]"
-                  />
-                </div>
+                <PasswordInput
+                  id="force-current-password"
+                  labelText="Current password"
+                  placeholder="Enter your temporary password"
+                  autoComplete="current-password"
+                  autoFocus
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                />
 
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="force-new-password" className="text-sm font-medium text-gray-900">
-                    New password
-                  </label>
-                  <input
-                    id="force-new-password"
-                    type="password"
-                    placeholder="At least 8 characters"
-                    autoComplete="new-password"
-                    value={newPassword}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-[#D97706]"
-                  />
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Must include uppercase, number, and special character
-                  </p>
-                </div>
+                <PasswordInput
+                  id="force-new-password"
+                  labelText="New password"
+                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
+                  helperText="Must include uppercase, number, and special character"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
 
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="force-confirm-password" className="text-sm font-medium text-gray-900">
-                    Confirm new password
-                  </label>
-                  <input
-                    id="force-confirm-password"
-                    type="password"
-                    placeholder="Re-enter new password"
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-                    required
-                    className={`w-full px-3 py-2 text-sm bg-white border text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:border-[#D97706] ${confirmPassword.length > 0 && newPassword !== confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {confirmPassword.length > 0 && newPassword !== confirmPassword && (
-                    <p className="text-xs text-red-600 mt-0.5">Passwords do not match</p>
-                  )}
-                </div>
+                <PasswordInput
+                  id="force-confirm-password"
+                  labelText="Confirm new password"
+                  placeholder="Re-enter new password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  invalid={confirmPassword.length > 0 && newPassword !== confirmPassword}
+                  invalidText="Passwords do not match"
+                />
 
                 <Button
                   type="submit"
-                  disabled={loading}
+                  isLoading={loading}
                   renderIcon={Key}
                   size="lg"
                   fullWidth
                 >
-                  {loading ? 'Changing password...' : 'Set new password'}
+                  {loading ? 'Changing password…' : 'Set new password'}
                 </Button>
 
                 <button

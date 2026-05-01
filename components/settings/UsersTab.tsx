@@ -998,7 +998,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   value={userForm.name}
                   onChange={e => setUserForm({ ...userForm, name: e.target.value })}
                   placeholder="John Doe"
-                  className="w-full px-4 py-3 outline-none"
+                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
                   style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
@@ -1015,7 +1015,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   value={userForm.email}
                   onChange={e => setUserForm({ ...userForm, email: e.target.value })}
                   placeholder="john@affinity.com"
-                  className="w-full px-4 py-3 outline-none"
+                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
                   style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
@@ -1033,7 +1033,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   onChange={e => setUserForm({ ...userForm, password: e.target.value })}
                   placeholder="Min 8 characters"
                   minLength={8}
-                  className="w-full px-4 py-3 outline-none"
+                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
                   style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
                 <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
@@ -1334,7 +1334,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                   placeholder="Min 8 characters"
                   minLength={8}
-                  className="w-full px-4 py-3 outline-none"
+                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
                   style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
@@ -1354,7 +1354,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   }
                   placeholder="Re-enter password"
                   minLength={8}
-                  className="w-full px-4 py-3 outline-none"
+                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
                   style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
@@ -1437,7 +1437,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   value={editForm.name}
                   onChange={e => setEditForm({ ...editForm, name: e.target.value })}
                   placeholder="John Doe"
-                  className="w-full px-4 py-3 outline-none"
+                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
                   style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
@@ -1454,7 +1454,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   value={editForm.email}
                   onChange={e => setEditForm({ ...editForm, email: e.target.value })}
                   placeholder="john@affinity.com"
-                  className="w-full px-4 py-3 outline-none"
+                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
                   style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 />
               </div>
@@ -1664,7 +1664,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   onChange={e =>
                     setEditForm({ ...editForm, status: e.target.value as 'Active' | 'Inactive' })
                   }
-                  className="w-full px-4 py-3 outline-none"
+                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
                   style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
                 >
                   <option value="Active">Active</option>

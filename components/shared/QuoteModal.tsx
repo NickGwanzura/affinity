@@ -259,8 +259,8 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
               }}
             >
               <span
+                className="font-mono"
                 style={{
-                  fontFamily: 'IBM Plex Mono, monospace',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   color: '#D97706',

@@ -610,7 +610,7 @@ export const DriverPortal: React.FC = () => {
                     id="vehicle-select"
                     value={selectedVehicle}
                     onChange={(event) => setSelectedVehicle(event.target.value)}
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
                   >
                     <option value="">General drawdown</option>
                     {vehicles.map((vehicle) => (
@@ -627,7 +627,7 @@ export const DriverPortal: React.FC = () => {
                     id="category-select"
                     value={category}
                     onChange={(event) => setCategory(event.target.value as Exclude<ExpenseCategory, 'Driver Disbursement'>)}
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
                   >
                     <option value="Fuel">Fuel</option>
                     <option value="Tolls">Tolls</option>
@@ -653,7 +653,7 @@ export const DriverPortal: React.FC = () => {
                     required
                     autoComplete="off"
                     placeholder="0.00"
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
                   />
                   <p className="text-xs text-gray-500 mt-2">
                     Available balance: {availableBalanceDisplay}
@@ -666,7 +666,7 @@ export const DriverPortal: React.FC = () => {
                     id="currency-select"
                     value={currency}
                     onChange={(event) => setCurrency(event.target.value as Currency)}
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
                   >
                     <option value="NAD">Namibian Dollars (NAD)</option>
                     <option value="ZAR">Rands (ZAR)</option>
@@ -684,7 +684,7 @@ export const DriverPortal: React.FC = () => {
                     id="location-select"
                     value={location}
                     onChange={(event) => setLocation(event.target.value as VehicleStatus)}
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
                   >
                     <option value="UK">UK</option>
                     <option value="Namibia">Namibia</option>
@@ -734,7 +734,7 @@ export const DriverPortal: React.FC = () => {
                   onChange={(event) => setTripReference(event.target.value)}
                   placeholder="e.g. Windhoek delivery - April run"
                   autoComplete="off"
-                  className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
                 />
               </div>
 
@@ -746,7 +746,7 @@ export const DriverPortal: React.FC = () => {
                   onChange={(event) => setDescription(event.target.value)}
                   rows={4}
                   placeholder="What is this expense for?"
-                  className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
                 />
               </div>
 

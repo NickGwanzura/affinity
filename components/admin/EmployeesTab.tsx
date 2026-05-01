@@ -93,7 +93,7 @@ export const EmployeesTab: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-stone-200 border-t-[#D97706]"></div>
         <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Loading Employees</p>
       </div>
     );
@@ -113,9 +113,9 @@ export const EmployeesTab: React.FC = () => {
       </div>
 
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-orange-600 to-red-600 p-8  text-white">
-        <h3 className="text-2xl font-black mb-2">Employee Management</h3>
-        <p className="text-orange-100">Manage your team and their details</p>
+      <div className="rounded-md bg-gradient-to-r from-[#D97706] to-[#92400E] p-8 text-white shadow-sm">
+        <h3 className="text-2xl font-bold mb-2">Employee Management</h3>
+        <p className="text-amber-100">Manage your team and their details</p>
       </div>
 
       {/* Table */}

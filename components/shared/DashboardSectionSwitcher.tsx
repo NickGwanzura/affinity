@@ -52,7 +52,7 @@ export const DashboardSectionSwitcher = <T extends string>({
               role="tab"
               aria-selected={isActive}
               onClick={() => onChange(opt.id)}
-              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border-r border-gray-300 last:border-r-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 ${
+              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border-r border-gray-300 last:border-r-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#D97706]/30 ${
                 isActive
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-700 hover:bg-gray-100'

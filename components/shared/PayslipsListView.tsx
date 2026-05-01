@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Payslip } from '../../types';
 import { formatMonthYear } from '../../utils/formatters';
+import { EmptyState, defaultIcons } from '../ui';
 
 interface PayslipsListViewProps {
   payslips: Payslip[];
@@ -21,18 +22,21 @@ export const PayslipsListView: React.FC<PayslipsListViewProps> = ({
 }) => (
   <div className="space-y-6">
     {showIntro && (
-      <div className="bg-gradient-to-r from-pink-600 to-purple-600 p-4 sm:p-6 md:p-8  text-white">
-        <h3 className="text-xl sm:text-2xl font-black mb-2">Payslip Management</h3>
-        <p className="text-pink-100">Generate and manage employee payslips</p>
+      <div className="rounded-md bg-gradient-to-r from-[#D97706] to-[#92400E] p-4 sm:p-6 md:p-8 text-white shadow-sm">
+        <h3 className="text-xl sm:text-2xl font-bold mb-2">Payslip Management</h3>
+        <p className="text-amber-100">Generate and manage employee payslips</p>
       </div>
     )}
 
     <div className="bg-white  shadow-lg border border-zinc-200 overflow-hidden">
       <div className="space-y-3 p-3 sm:hidden">
         {payslips.length === 0 ? (
-          <div className="border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
-            No payslips yet. Click &quot;Generate Payslip&quot; to get started.
-          </div>
+          <EmptyState
+            icon={defaultIcons.document}
+            title="No payslips yet"
+            description="Click &ldquo;Generate Payslip&rdquo; to create your first payslip."
+            className="py-8"
+          />
         ) : (
           payslips.map((payslip) => (
             <div key={payslip.id} className="border border-zinc-100 bg-white p-4 shadow-sm">
@@ -95,8 +99,12 @@ export const PayslipsListView: React.FC<PayslipsListViewProps> = ({
           <tbody className="divide-y divide-zinc-200">
             {payslips.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
-                  No payslips yet. Click &quot;Generate Payslip&quot; to get started.
+                <td colSpan={7} className="p-0">
+                  <EmptyState
+                    icon={defaultIcons.document}
+                    title="No payslips yet"
+                    description="Click &ldquo;Generate Payslip&rdquo; to create your first payslip."
+                  />
                 </td>
               </tr>
             ) : (
