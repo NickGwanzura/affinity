@@ -5,7 +5,7 @@ import { api } from '../../services/apiClient';
 import type { DebtorEntry } from '../../services/pdfService';
 import { useToast } from '../Toast';
 import { Button, DriverFundsSnapshotPanel, DriverFundsSummaryPanel, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
-import { buildDriverFundsReportData } from '../../utils/driverFunds';
+import { buildDriverFundsReportData, buildDriverMonthlySpendReport, buildDriverForensicReport } from '../../utils/driverFunds';
 
 export const ReportsTab: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
@@ -140,6 +140,24 @@ export const ReportsTab: React.FC = () => {
     [filteredExpenses, filteredOperatingFunds, drivers, vehicles],
   );
 
+  const driverMonthlySpend = useMemo(
+    () => buildDriverMonthlySpendReport(filteredExpenses, drivers),
+    [filteredExpenses, drivers],
+  );
+
+  const driverForensic = useMemo(
+    () => buildDriverForensicReport(filteredExpenses, drivers),
+    [filteredExpenses, drivers],
+  );
+
+  const formatMonthLabel = (yyyymm: string) => {
+    const [y, m] = yyyymm.split('-').map((v) => parseInt(v, 10));
+    if (!y || !m) return yyyymm;
+    return new Date(Date.UTC(y, m - 1, 1)).toLocaleString(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  };
+
+  const fmtUsd = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
   const truncateValue = (value: string | null | undefined, length: number) =>
     value ? value.slice(0, length) : '-';
 
@@ -267,6 +285,109 @@ export const ReportsTab: React.FC = () => {
     } catch (err) {
       console.error('[ReportsTab] handleDebtorsReportPDF error:', err);
       notifyError('Failed to generate debtors report PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDriverMonthlySpendCSV = () => {
+    setIsExporting(true);
+    try {
+      const months = driverMonthlySpend.months;
+      const headers = [
+        'Driver',
+        'Total USD',
+        'Months Active',
+        'Avg / Month USD',
+        'Fuel Total USD',
+        'Fuel Months Active',
+        'Avg Fuel / Month USD',
+        'Tx Count',
+        ...months.flatMap((m) => [`${m} Total`, `${m} Fuel`]),
+      ];
+      const rows = driverMonthlySpend.drivers.map((d) => {
+        const monthCols = months.flatMap((m) => {
+          const bucket = d.months.find((b) => b.month === m);
+          return [
+            (bucket?.totalUsd || 0).toFixed(2),
+            (bucket?.byCategory['Fuel'] || 0).toFixed(2),
+          ];
+        });
+        return [
+          `"${d.driverName.replace(/"/g, '""')}"`,
+          d.totalUsd.toFixed(2),
+          String(d.monthsActive),
+          d.avgPerMonthUsd.toFixed(2),
+          d.fuel.totalUsd.toFixed(2),
+          String(d.fuel.monthsActive),
+          d.fuel.avgPerMonthUsd.toFixed(2),
+          String(d.txCount),
+          ...monthCols,
+        ];
+      });
+      const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `affinity-driver-monthly-spend-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      notifySuccess('Driver monthly spend CSV exported!');
+    } catch (err) {
+      console.error('[ReportsTab] handleDriverMonthlySpendCSV error:', err);
+      notifyError('Failed to export driver monthly spend CSV.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleForensicCSV = () => {
+    setIsExporting(true);
+    try {
+      const headers = [
+        'Driver', 'Category', 'Month', 'Amount USD',
+        'Prev Month USD', 'MoM Δ USD', 'MoM Δ %',
+        'Mean USD', 'vs Mean Δ USD', 'vs Mean Δ %',
+        'Flag',
+      ];
+      const rows: string[][] = [];
+      for (const profile of driverForensic.drivers) {
+        for (const series of [profile.fuel, profile.food] as const) {
+          for (const m of series.months) {
+            if (m.amountUsd === 0 && m.prevMonthUsd === 0) continue; // skip dead rows
+            rows.push([
+              `"${profile.driverName.replace(/"/g, '""')}"`,
+              series.category,
+              m.month,
+              m.amountUsd.toFixed(2),
+              m.prevMonthUsd === null ? '' : m.prevMonthUsd.toFixed(2),
+              m.momDeltaUsd === null ? '' : m.momDeltaUsd.toFixed(2),
+              m.momDeltaPct === null ? '' : m.momDeltaPct.toFixed(1),
+              m.meanUsd.toFixed(2),
+              m.vsMeanDeltaUsd.toFixed(2),
+              m.vsMeanDeltaPct === null ? '' : m.vsMeanDeltaPct.toFixed(1),
+              m.flag,
+            ]);
+          }
+        }
+      }
+      const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `affinity-forensic-fuel-food-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      notifySuccess('Forensic CSV exported!');
+    } catch (err) {
+      console.error('[ReportsTab] handleForensicCSV error:', err);
+      notifyError('Failed to export forensic CSV.');
     } finally {
       setIsExporting(false);
     }
@@ -439,6 +560,220 @@ export const ReportsTab: React.FC = () => {
           spentHelper="{count} spend entries"
           balanceHelper="Outstanding drawdown capacity still in the field"
         />
+      </div>
+
+      {/* Driver Monthly Spend (Fuel & Categories) */}
+      <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+        <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+          <div>
+            <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+              <svg className="w-5 h-5 text-[#D97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 14l4-4 4 4 5-5" /></svg>
+              Driver Monthly Spend
+            </h3>
+            <p className="text-sm mt-1" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+              Monthly fuel and operating spend per driver, with averages across active months.
+            </p>
+          </div>
+          <Button size="sm" onClick={handleDriverMonthlySpendCSV} disabled={isExporting || driverMonthlySpend.drivers.length === 0}>
+            Export Monthly Spend CSV
+          </Button>
+        </div>
+
+        {/* Overall metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
+            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Total Spend</p>
+            <p className="text-xl font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(driverMonthlySpend.overall.totalUsd)}</p>
+            <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{driverMonthlySpend.overall.txCount} tx · {driverMonthlySpend.overall.monthsActive} months</p>
+          </div>
+          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
+            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Avg / Month</p>
+            <p className="text-xl font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(driverMonthlySpend.overall.avgPerMonthUsd)}</p>
+            <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>across all drivers</p>
+          </div>
+          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
+            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Fuel Total</p>
+            <p className="text-xl font-bold text-[#D97706]">{fmtUsd(driverMonthlySpend.overall.fuel.totalUsd)}</p>
+            <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{driverMonthlySpend.overall.fuel.txCount} fills</p>
+          </div>
+          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
+            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Avg Fuel / Month</p>
+            <p className="text-xl font-bold text-[#D97706]">{fmtUsd(driverMonthlySpend.overall.fuel.avgPerMonthUsd)}</p>
+            <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>over {driverMonthlySpend.overall.fuel.monthsActive} active months</p>
+          </div>
+        </div>
+
+        {driverMonthlySpend.drivers.length === 0 ? (
+          <p className="text-sm py-6 text-center" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+            No driver-attributed expenses for the current filter.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-zinc-50 border-b border-zinc-200">
+                <tr>
+                  <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Driver</th>
+                  <th className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Total</th>
+                  <th className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Avg / Mo</th>
+                  <th className="px-3 py-2 text-right font-semibold text-[#D97706]">Fuel Total</th>
+                  <th className="px-3 py-2 text-right font-semibold text-[#D97706]">Avg Fuel / Mo</th>
+                  <th className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Months</th>
+                  <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Latest Month Breakdown</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {driverMonthlySpend.drivers.map((d) => {
+                  const latest = d.months[d.months.length - 1];
+                  return (
+                    <tr key={d.driverName} className="hover:bg-zinc-50">
+                      <td className="px-3 py-2 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{d.driverName}</td>
+                      <td className="px-3 py-2 text-right font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(d.totalUsd)}</td>
+                      <td className="px-3 py-2 text-right" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(d.avgPerMonthUsd)}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-[#D97706]">{fmtUsd(d.fuel.totalUsd)}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-[#D97706]">{fmtUsd(d.fuel.avgPerMonthUsd)}</td>
+                      <td className="px-3 py-2 text-right" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{d.monthsActive}</td>
+                      <td className="px-3 py-2 text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                        {latest
+                          ? `${formatMonthLabel(latest.month)} · ${fmtUsd(latest.totalUsd)} (Fuel ${fmtUsd(latest.byCategory['Fuel'] || 0)})`
+                          : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Forensic Variance — Fuel & Food */}
+      <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+        <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+          <div>
+            <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+              <svg className="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              Forensic — Monthly Variance (Fuel &amp; Food)
+            </h3>
+            <p className="text-sm mt-1" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+              Per-driver month-over-month deltas and deviation from each driver&apos;s own baseline.
+              Months above 150% or below 50% of the driver&apos;s mean are flagged for review.
+            </p>
+          </div>
+          <Button size="sm" onClick={handleForensicCSV} disabled={isExporting || driverForensic.drivers.length === 0}>
+            Export Forensic CSV
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
+            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Fuel Total</p>
+            <p className="text-xl font-bold text-[#D97706]">{fmtUsd(driverForensic.totals.fuelUsd)}</p>
+          </div>
+          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
+            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Food Total</p>
+            <p className="text-xl font-bold" style={{ color: 'var(--cds-support-success, #10b981)' }}>{fmtUsd(driverForensic.totals.foodUsd)}</p>
+          </div>
+          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
+            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Flagged Drivers</p>
+            <p className="text-xl font-bold text-rose-600">{driverForensic.totals.flaggedDrivers}</p>
+          </div>
+          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
+            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Anomalies</p>
+            <p className="text-xl font-bold text-rose-600">{driverForensic.totals.totalAnomalies}</p>
+          </div>
+        </div>
+
+        {driverForensic.drivers.length === 0 ? (
+          <p className="text-sm py-6 text-center" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+            No fuel or food spend attributed to drivers in the current filter.
+          </p>
+        ) : (
+          <div className="space-y-6">
+            {driverForensic.drivers.map((profile) => {
+              const renderSeries = (series: typeof profile.fuel, accent: string) => {
+                const visibleMonths = series.months.filter((m) => m.amountUsd > 0 || (m.prevMonthUsd ?? 0) > 0);
+                if (visibleMonths.length === 0) return null;
+                return (
+                  <div key={series.category} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h5 className="text-sm font-bold uppercase tracking-wide" style={{ color: accent }}>{series.category}</h5>
+                      <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                        Mean {fmtUsd(series.meanMonthlyUsd)} · σ {fmtUsd(series.stdDevUsd)} · {series.monthsActive} active mo
+                        {series.maxMonth ? ` · Peak ${formatMonthLabel(series.maxMonth.month)} ${fmtUsd(series.maxMonth.amountUsd)}` : ''}
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-zinc-50 border-b border-zinc-200">
+                          <tr>
+                            <th className="px-2 py-1.5 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Month</th>
+                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Amount</th>
+                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Prev</th>
+                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>MoM Δ</th>
+                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>MoM %</th>
+                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>vs Mean</th>
+                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Flag</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100">
+                          {visibleMonths.map((m) => {
+                            const flagBg =
+                              m.flag === 'high' ? 'bg-rose-50' :
+                              m.flag === 'low'  ? 'bg-amber-50' : '';
+                            const flagText =
+                              m.flag === 'high' ? 'text-rose-700' :
+                              m.flag === 'low'  ? 'text-amber-700' : 'text-zinc-500';
+                            const momText =
+                              m.momDeltaUsd === null ? 'text-zinc-400' :
+                              m.momDeltaUsd > 0 ? 'text-rose-600' :
+                              m.momDeltaUsd < 0 ? 'text-emerald-600' : 'text-zinc-500';
+                            return (
+                              <tr key={`${series.category}-${m.month}`} className={flagBg}>
+                                <td className="px-2 py-1.5 font-mono" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{formatMonthLabel(m.month)}</td>
+                                <td className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(m.amountUsd)}</td>
+                                <td className="px-2 py-1.5 text-right" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{m.prevMonthUsd === null ? '—' : fmtUsd(m.prevMonthUsd)}</td>
+                                <td className={`px-2 py-1.5 text-right font-semibold ${momText}`}>{m.momDeltaUsd === null ? '—' : fmtUsd(m.momDeltaUsd)}</td>
+                                <td className={`px-2 py-1.5 text-right ${momText}`}>{m.momDeltaPct === null ? '—' : `${m.momDeltaPct.toFixed(0)}%`}</td>
+                                <td className="px-2 py-1.5 text-right" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{m.vsMeanDeltaPct === null ? '—' : `${m.vsMeanDeltaPct >= 0 ? '+' : ''}${m.vsMeanDeltaPct.toFixed(0)}%`}</td>
+                                <td className={`px-2 py-1.5 text-right font-bold uppercase ${flagText}`}>{m.flag === 'normal' ? '·' : m.flag}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <div key={profile.driverName} className="border" style={{ borderColor: 'var(--cds-border-subtle, #e7e5e4)' }}>
+                  <div className="flex items-center justify-between px-4 py-3 bg-zinc-50">
+                    <div>
+                      <p className="font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{profile.driverName}</p>
+                      <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                        Fuel {fmtUsd(profile.fuel.totalUsd)} · Food {fmtUsd(profile.food.totalUsd)}
+                      </p>
+                    </div>
+                    {profile.flaggedMonthCount > 0 ? (
+                      <span className="px-2 py-1 text-xs font-bold uppercase bg-rose-100 text-rose-700">
+                        {profile.flaggedMonthCount} flagged
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 text-xs font-semibold uppercase bg-emerald-100 text-emerald-700">
+                        Within baseline
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {renderSeries(profile.fuel, '#D97706')}
+                    {renderSeries(profile.food, '#10b981')}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Detailed Reports */}
