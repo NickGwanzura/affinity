@@ -8,7 +8,6 @@ import {
   Truck,
   Users,
   Settings,
-  LogOut,
   ChevronLeft,
   ChevronRight,
   Package,
@@ -205,10 +204,11 @@ export const Layout: React.FC<LayoutProps> = ({
         })}
       </nav>
 
-      {/* User section */}
+      {/* Sidebar footer — identity card + collapse toggle. Logout has moved
+          to the topbar avatar menu (Linear/Stripe pattern). */}
       <div className="border-t border-[#292524]/80 p-3">
         {!sidebarCollapsed && (
-          <div className="mb-2 flex items-center gap-2.5 rounded-md bg-gradient-to-br from-[#2a2724] to-[#1f1c1a] p-2.5 ring-1 ring-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+          <div className="flex items-center gap-2.5 rounded-md bg-gradient-to-br from-[#2a2724] to-[#1f1c1a] p-2.5 ring-1 ring-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
             <Avatar name={user.name} size="md" tone="sidebar" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-medium text-white">{user.name}</div>
@@ -216,32 +216,15 @@ export const Layout: React.FC<LayoutProps> = ({
             </div>
           </div>
         )}
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          title="Sign out"
-          className={[
-            'flex w-full items-center gap-3 rounded-md bg-transparent text-sm transition-colors duration-150',
-            sidebarCollapsed ? 'justify-center px-3 py-2.5' : 'justify-start px-3 py-2',
-            isLoggingOut
-              ? 'cursor-not-allowed text-[#a1a1aa] opacity-60'
-              : 'cursor-pointer text-[#a1a1aa] hover:bg-white/[0.06] hover:text-white focus-visible:bg-white/[0.06] focus-visible:text-white',
-            'border-0 focus:outline-none',
-          ].join(' ')}
-        >
-          <LogOut size={18} />
-          {!sidebarCollapsed && <span>{isLoggingOut ? 'Signing out…' : 'Sign out'}</span>}
-        </button>
 
-        {/* Collapse toggle (desktop only, repositioned to bottom) */}
+        {/* Collapse toggle (desktop only) */}
         <button
           type="button"
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={[
-            'mt-1 hidden lg:flex w-full items-center gap-3 rounded-md bg-transparent text-xs transition-colors duration-150',
+            'mt-2 hidden lg:flex w-full items-center gap-3 rounded-md bg-transparent text-xs transition-colors duration-150',
             sidebarCollapsed ? 'justify-center px-3 py-1.5' : 'justify-start px-3 py-1.5',
             'border-0 cursor-pointer text-[#71717a] hover:text-white hover:bg-white/[0.04] focus-visible:text-white focus-visible:bg-white/[0.04] focus:outline-none',
           ].join(' ')}
@@ -300,6 +283,7 @@ export const Layout: React.FC<LayoutProps> = ({
           user={{ name: user.name, role: user.role }}
           onMenuClick={() => setMobileOpen(true)}
           onCommandPalette={() => setPaletteOpen(true)}
+          onLogout={handleLogout}
         />
         <main
           id="main-content"
