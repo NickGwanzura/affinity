@@ -260,7 +260,7 @@ export const Layout: React.FC<LayoutProps> = ({
         <div
           aria-hidden="true"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="app-fade-in fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
         />
       )}
 
@@ -302,9 +302,9 @@ export const Layout: React.FC<LayoutProps> = ({
         />
         <main
           id="main-content"
-          className="flex-1 overflow-auto bg-[#F9F9F8] p-6"
+          className="flex-1 overflow-auto bg-[#F9F9F8] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8"
         >
-          <div className="mb-4">
+          <div className="mb-4 sm:mb-5 lg:mb-6">
             <Breadcrumbs items={breadcrumbs} />
           </div>
           {children}

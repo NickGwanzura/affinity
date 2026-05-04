@@ -14,7 +14,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   width,
   height,
 }) => {
-  const baseClasses = 'animate-pulse bg-gray-200';
+  const baseClasses = 'app-shimmer';
   const radius =
     variant === 'circular' ? 'rounded-full' :
     variant === 'rounded'  ? 'rounded' : 'rounded-none';
@@ -64,7 +64,7 @@ export const SkeletonText: React.FC<SkeletonTextProps> = ({
         return (
           <div
             key={i}
-            className="animate-pulse bg-gray-200"
+            className="app-shimmer"
             style={{ width: w, height: barHeight }}
           />
         );
@@ -85,7 +85,7 @@ export const SkeletonPlaceholder: React.FC<SkeletonPlaceholderProps> = ({
   height = '6rem',
 }) => (
   <div
-    className={`animate-pulse bg-gray-200 ${className}`}
+    className={`app-shimmer ${className}`}
     style={{ width, height }}
   />
 );

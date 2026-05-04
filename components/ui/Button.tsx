@@ -26,28 +26,28 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
     'bg-[#D97706] text-white border border-transparent shadow-sm ' +
-    'hover:bg-[#B45309] active:bg-[#92400E]',
+    'hover:bg-[#B45309] hover:shadow-md active:bg-[#92400E]',
   secondary:
     'bg-zinc-800 text-white border border-transparent shadow-sm ' +
-    'hover:bg-zinc-700 active:bg-zinc-900',
+    'hover:bg-zinc-700 hover:shadow-md active:bg-zinc-900',
   tertiary:
     'bg-white text-[#D97706] border border-[#D97706] ' +
     'hover:bg-[#fef3c7] active:bg-[#fde68a]',
   danger:
     'bg-red-600 text-white border border-transparent shadow-sm ' +
-    'hover:bg-red-700 active:bg-red-800',
+    'hover:bg-red-700 hover:shadow-md active:bg-red-800',
   'danger-tertiary':
     'bg-white text-red-600 border border-red-600 ' +
     'hover:bg-red-50 active:bg-red-100',
   success:
     'bg-emerald-600 text-white border border-transparent shadow-sm ' +
-    'hover:bg-emerald-700 active:bg-emerald-800',
+    'hover:bg-emerald-700 hover:shadow-md active:bg-emerald-800',
   ghost:
     'bg-transparent text-[#D97706] border border-transparent ' +
     'hover:bg-stone-100 active:bg-stone-200',
   warning:
     'bg-amber-500 text-white border border-transparent shadow-sm ' +
-    'hover:bg-amber-600 active:bg-amber-700',
+    'hover:bg-amber-600 hover:shadow-md active:bg-amber-700',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

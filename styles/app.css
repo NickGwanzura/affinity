@@ -160,7 +160,9 @@ select:focus,
 select:focus-visible {
   outline: none;
   border-color: #D97706;
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.18);
+  box-shadow:
+    0 0 0 4px rgba(217, 119, 6, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.04);
   background: #ffffff;
 }
 
@@ -227,6 +229,17 @@ button:disabled {
   cursor: not-allowed;
   box-shadow: none !important;
   pointer-events: none;
+}
+
+/* Tactile press feedback — subtle scale on active for non-disabled buttons. */
+button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active {
+    transform: none;
+  }
 }
 
 /* Native checkbox / radio with brand accent */
@@ -592,3 +605,91 @@ input[type='number'] {
 ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
 * { scrollbar-width: thin; scrollbar-color: #d6d3d1 #f5f5f4; }
+
+/* ─── Motion primitives ──────────────────────────────────────────────────────
+   World-class apps animate state changes — modals fade+scale in, toasts
+   slide up, skeletons shimmer, backdrops dissolve. Kept small and respectful
+   of reduced-motion preferences. */
+
+@keyframes app-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes app-modal-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes app-modal-in-mobile {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes app-toast-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes app-toast-in-mobile {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes app-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.app-fade-in {
+  animation: app-fade-in 200ms ease-out;
+}
+
+.app-modal-overlay-enter {
+  animation: app-fade-in 180ms ease-out;
+}
+
+.app-modal-content-enter {
+  animation: app-modal-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.app-toast-enter {
+  animation: app-toast-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom right;
+}
+
+@media (max-width: 640px) {
+  .app-modal-content-enter {
+    animation-name: app-modal-in-mobile;
+    animation-duration: 280ms;
+  }
+  .app-toast-enter {
+    animation-name: app-toast-in-mobile;
+    transform-origin: center bottom;
+  }
+}
+
+/* Shimmer skeleton — replaces flat opacity pulse with a moving gradient
+   for a more premium loading texture. */
+.app-shimmer {
+  background-color: #f1f0ef;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: app-shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-fade-in,
+  .app-modal-overlay-enter,
+  .app-modal-content-enter,
+  .app-toast-enter,
+  .app-shimmer {
+    animation: none;
+  }
+}

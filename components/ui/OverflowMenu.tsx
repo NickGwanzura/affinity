@@ -40,14 +40,14 @@ export const OverflowMenu: React.FC<OverflowMenuProps> = ({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex items-center justify-center ${btnSize} text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#D97706]/30`}
+        className={`inline-flex items-center justify-center rounded-md ${btnSize} text-zinc-700 transition-colors hover:bg-stone-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/40`}
       >
         {RenderIcon ? <RenderIcon size={16} /> : <MoreVertical size={16} />}
       </button>
       {open && (
         <div
           role="menu"
-          className={`absolute z-50 mt-1 min-w-[10rem] border border-gray-200 bg-white py-1 shadow-lg ${
+          className={`app-fade-in absolute z-50 mt-2 min-w-[11rem] overflow-hidden rounded-lg border border-stone-200 bg-white py-1 shadow-xl ring-1 ring-black/5 ${
             flipped ? 'left-0' : 'right-0'
           }`}
           onClick={() => setOpen(false)}
@@ -71,14 +71,14 @@ export const OverflowMenuItem: React.FC<OverflowMenuItemProps> = ({
   itemText, onClick, disabled, hasDivider, isDelete, className = '',
 }) => (
   <>
-    {hasDivider && <div className="my-1 border-t border-gray-200" />}
+    {hasDivider && <div className="my-1 border-t border-stone-200" />}
     <button
       type="button"
       role="menuitem"
       disabled={disabled}
       onClick={onClick}
-      className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed ${
-        isDelete ? 'text-red-600 hover:bg-red-50' : 'text-gray-800'
+      className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-stone-100 focus:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed ${
+        isDelete ? 'text-red-600 hover:bg-red-50 focus:bg-red-50' : 'text-zinc-800'
       } ${className}`}
     >
       {itemText}

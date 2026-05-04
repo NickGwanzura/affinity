@@ -115,14 +115,19 @@ export const Modal: React.FC<ModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={title ?? label}
-      className="fixed inset-0 z-[9000] flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
+      className="app-modal-overlay-enter fixed inset-0 z-[9000] flex items-end justify-center bg-black/50 backdrop-blur-[2px] sm:items-center sm:p-4"
     >
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className={`flex max-h-[95vh] w-full flex-col bg-white shadow-2xl outline-none sm:max-h-[90vh] sm:rounded-lg ${sizeClasses[size]}`}
+        className={`app-modal-content-enter flex max-h-[95vh] w-full flex-col bg-white shadow-2xl outline-none rounded-t-2xl sm:max-h-[90vh] sm:rounded-lg ${sizeClasses[size]}`}
         onMouseDown={(e) => e.stopPropagation()}
       >
+        {/* Mobile drag-handle affordance — purely decorative dismissibility cue. */}
+        <div
+          aria-hidden="true"
+          className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-stone-300 sm:hidden"
+        />
         {(title || label) && (
           <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-8 py-5">
             <div className="min-w-0">

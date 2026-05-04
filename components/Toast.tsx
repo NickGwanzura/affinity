@@ -129,7 +129,7 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose, duration =
 
   return (
     <div
-      className={`pointer-events-auto relative overflow-hidden  border shadow-lg ${styles[type].shell}`}
+      className={`app-toast-enter pointer-events-auto relative overflow-hidden rounded-lg border shadow-lg ring-1 ring-black/[0.02] backdrop-blur-sm ${styles[type].shell}`}
       role="status"
       aria-live="polite"
     >

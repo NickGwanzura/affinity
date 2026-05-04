@@ -58,9 +58,9 @@ const statusAliases: Record<string, string> = {
 };
 
 const sizeClasses = {
-  sm: 'rounded px-2 py-0.5 text-xs',
-  md: 'rounded px-2.5 py-0.5 text-xs',
-  lg: 'rounded-md px-3 py-1 text-sm',
+  sm: 'rounded-full px-2 py-0.5 text-[11px] tracking-wide',
+  md: 'rounded-full px-2.5 py-[3px] text-xs tracking-wide',
+  lg: 'rounded-full px-3 py-1 text-sm',
 };
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({

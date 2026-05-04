@@ -26,11 +26,11 @@ const intentMap: Record<Intent, { bg: string; text: string }> = {
 };
 
 const SkeletonLine = ({ width, className = '' }: { width: string; className?: string }) => (
-  <div className={`h-4 bg-gray-200 animate-pulse ${className}`} style={{ width }} />
+  <div className={`h-4 app-shimmer rounded ${className}`} style={{ width }} />
 );
 
 const SkeletonBox = ({ width, height }: { width: number; height: number }) => (
-  <div className="bg-gray-200 animate-pulse" style={{ width, height }} />
+  <div className="app-shimmer rounded" style={{ width, height }} />
 );
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -59,7 +59,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   }
 
   return (
-    <div className={`relative overflow-hidden bg-white rounded-lg border border-stone-200 p-6 transition-shadow hover:shadow-sm ${className}`}>
+    <div className={`group relative overflow-hidden bg-white rounded-lg border border-stone-200 p-6 transition-[box-shadow,transform,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-stone-300 ${className}`}>
       <div className="absolute top-0 left-0 w-1 h-full" style={{ background: accent.bg }} />
 
       <div className="pl-2">

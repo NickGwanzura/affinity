@@ -46,25 +46,29 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   className = '',
 }) => (
   <div
-    className={`flex flex-col items-center justify-center py-16 px-4 text-center ${className}`}
+    className={`app-fade-in flex flex-col items-center justify-center px-4 py-12 text-center sm:py-16 ${className}`}
   >
-    {/* Icon box */}
-    <div className="w-20 h-20 bg-gray-100 flex items-center justify-center text-gray-500 mb-6">
-      {icon ?? defaultIcons.folder}
+    {/* Soft tinted circular backdrop with subtle ring — feels intentional, not placeholder. */}
+    <div
+      aria-hidden="true"
+      className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-stone-50 to-stone-100 text-zinc-500 ring-1 ring-stone-200/80 shadow-sm"
+    >
+      <span className="absolute inset-0 rounded-full bg-[#D97706]/[0.04]" />
+      <span className="relative">{icon ?? defaultIcons.folder}</span>
     </div>
 
-    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+    <h3 className="mb-1.5 text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">
       {title}
     </h3>
 
     {description && (
-      <p className="text-sm text-gray-500 max-w-sm leading-relaxed mb-6">
+      <p className="mb-6 max-w-sm text-sm leading-relaxed text-zinc-500">
         {description}
       </p>
     )}
 
     {(action || secondaryAction) && (
-      <div className="flex gap-3 flex-wrap justify-center">
+      <div className="flex flex-wrap justify-center gap-3">
         {action && (
           <Button
             variant={action.variant ?? 'primary'}

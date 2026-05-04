@@ -43,10 +43,20 @@ export const DashboardKpiCard: React.FC<DashboardKpiCardProps> = ({
   href,
   onClick,
 }) => {
+  const interactive = Boolean(href || onClick);
   const body = (
-    <div className="bg-white p-6 border border-[#E7E5E4] h-full">
+    <div
+      className={[
+        'bg-white p-6 border border-[#E7E5E4] h-full transition-[box-shadow,transform,border-color] duration-200 ease-out',
+        interactive ? 'group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:border-stone-300' : '',
+      ].join(' ')}
+    >
       <div className="flex items-center justify-between">
-        <div className={`p-2.5 ${TONE_CLASSES[iconTone]}`}>
+        <div
+          className={`p-2.5 transition-transform duration-200 ease-out ${TONE_CLASSES[iconTone]} ${
+            interactive ? 'group-hover:scale-105' : ''
+          }`}
+        >
           <Icon className="h-5 w-5" />
         </div>
         {trendIcon ? (
@@ -54,7 +64,7 @@ export const DashboardKpiCard: React.FC<DashboardKpiCardProps> = ({
         ) : null}
       </div>
       <div className="mt-4">
-        <p className="text-3xl font-bold text-[#1C1917]">{value}</p>
+        <p className="text-3xl font-bold text-[#1C1917] tabular-nums">{value}</p>
         <p className="text-sm text-[#78716C] mt-1">{label}</p>
         {trend && <p className="text-xs text-[#A8A29E] mt-2">{trend}</p>}
       </div>
@@ -65,7 +75,7 @@ export const DashboardKpiCard: React.FC<DashboardKpiCardProps> = ({
     return (
       <a
         href={href}
-        className="block transition-colors focus:outline-none focus:ring-2 focus:ring-[#D97706]/40"
+        className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/40 focus-visible:ring-offset-2"
       >
         {body}
       </a>
@@ -77,7 +87,7 @@ export const DashboardKpiCard: React.FC<DashboardKpiCardProps> = ({
       <button
         type="button"
         onClick={onClick}
-        className="block w-full text-left transition-colors focus:outline-none focus:ring-2 focus:ring-[#D97706]/40"
+        className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/40 focus-visible:ring-offset-2"
       >
         {body}
       </button>
