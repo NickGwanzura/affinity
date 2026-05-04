@@ -4,9 +4,9 @@ import { Eye, EyeOff, Loader2, Check, AlertCircle, ChevronDown, Info, AlertTrian
 /* ──────────────────────────────────────────────────────────────────────────
    Shared tokens
    ──────────────────────────────────────────────────────────────────────── */
-const labelCls = 'block text-xs font-medium text-zinc-700 mb-1.5';
-const helperCls = 'mt-1.5 text-xs text-zinc-500 leading-snug';
-const errorCls = 'mt-1.5 flex items-start gap-1 text-xs text-red-600 leading-snug';
+const labelCls = 'block text-xs font-semibold tracking-wide text-zinc-700 mb-2';
+const helperCls = 'mt-2 text-xs text-zinc-500 leading-snug';
+const errorCls = 'mt-2 flex items-start gap-1 text-xs text-red-600 leading-snug';
 
 // Modern input: white surface, soft 1px stone border, brand-amber focus ring.
 const baseInput =

@@ -14,7 +14,7 @@ export const FormModalShell: React.FC<FormModalShellProps> = ({
   isOpen, title, label, size = 'lg', onClose, children,
 }) => (
   <Modal isOpen={isOpen} title={title} label={label} size={size} onClose={onClose}>
-    <div className="space-y-6">{children}</div>
+    <div className="space-y-7">{children}</div>
   </Modal>
 );
 
