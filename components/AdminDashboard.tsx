@@ -4,6 +4,7 @@ import {
   Car,
   Users,
   User,
+  UserPlus,
   FileText,
   Map,
   Receipt,
@@ -44,7 +45,7 @@ import AdminClientsView from './admin/AdminClientsView';
 import AdminDriverEntriesView from './admin/AdminDriverEntriesView';
 import AdminEmployeesView from './admin/AdminEmployeesView';
 import AdminOverviewView from './admin/AdminOverviewView';
-import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
+import { ClientFormModalWithBalance, useClientCrud } from './client-directory';
 import DashboardSectionSwitcher from './shared/DashboardSectionSwitcher';
 import EmployeeFormModal, {
   createEmptyEmployeeForm,
@@ -119,15 +120,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
 
   // Clients state
   const [clients, setClients] = useState<Client[]>([]);
-  const [showClientModal, setShowClientModal] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [clientForm, setClientForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    company: '',
-    notes: '',
+
+  const crud = useClientCrud({
+    addClient: (c) => setClients(prev => [...prev, c]),
+    patchClient: (id, partial) => setClients(prev => prev.map(c => c.id === id ? { ...c, ...partial } : c)),
+    removeClient: (id) => setClients(prev => prev.filter(c => c.id !== id)),
+    showToast,
+    confirm,
+    onDeleteSelected: () => {},
   });
 
   // Employees state
@@ -213,11 +213,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
   const operatingFundFormValue: OperatingFundFormValue = { ...fundsForm };
   const handleOperatingFundFormChange = (updates: Partial<OperatingFundFormValue>) => {
     setFundsForm(prev => ({ ...prev, ...updates }));
-  };
-
-  const clientFormValue: ClientFormValue = { ...clientForm };
-  const handleClientFormChange = (updates: Partial<ClientFormValue>) => {
-    setClientForm(prev => ({ ...prev, ...updates }));
   };
 
   const handleEmployeeFormChange = (updates: Partial<EmployeeFormValue>) => {
@@ -571,62 +566,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
     } catch (error) {
       console.error('Error adding expense:', error);
       notifyError('Failed to add expense. Please try again.');
-    }
-  };
-
-  // Client CRUD handlers
-  const handleSaveClient = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingClient) {
-        await dataService.updateClient(editingClient.id, clientForm);
-      } else {
-        const newClient = await dataService.createClient(clientForm);
-      }
-      setShowClientModal(false);
-      setEditingClient(null);
-      setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' });
-
-      // FIX: Await fetchData and handle refresh errors
-      try {
-        await fetchData(true);
-        notifySuccess(
-          editingClient ? 'Client updated successfully!' : 'Client created successfully!'
-        );
-      } catch (refreshError) {
-        console.error(
-          '[AdminDashboard] handleSaveClient: Client saved but refresh failed:',
-          refreshError
-        );
-        showToast(
-          'Client saved but failed to refresh list. Please refresh the page.',
-          'warning',
-          6000
-        );
-      }
-    } catch (error: any) {
-      console.error('[AdminDashboard] handleSaveClient: Error saving client:', error);
-      notifyError(error?.message || 'Failed to save client. Please try again.');
-    }
-  };
-
-  const handleDeleteClient = async (id: string) => {
-    const approved = await confirm({
-      title: 'Delete client?',
-      message: 'This will permanently remove the client from the system.',
-      confirmLabel: 'Delete Client',
-      confirmVariant: 'danger',
-    });
-
-    if (!approved) return;
-
-    try {
-      await dataService.deleteClient(id);
-      await fetchData(true);
-      notifySuccess('Client deleted successfully.');
-    } catch (error: any) {
-      console.error('[AdminDashboard] handleDeleteClient: Error deleting client:', error);
-      notifyError(error?.message || 'Failed to delete client.');
     }
   };
 
@@ -1088,22 +1027,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
         );
       case 'clients':
         return (
-          <Button
-            type="button"
-            onClick={() => {
-              setEditingClient(null);
-              setClientForm({
-                name: '',
-                email: '',
-                phone: '',
-                address: '',
-                company: '',
-                notes: '',
-              });
-              setShowClientModal(true);
-            }}
-            leftIcon={<Users size={20} />}
-          >
+          <Button type="button" onClick={crud.openAdd} leftIcon={<UserPlus size={16} />}>
             Add Client
           </Button>
         );
@@ -1236,19 +1160,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
         {activeView === 'clients' && (
           <AdminClientsView
             clients={clients}
-            onEditClient={client => {
-              setEditingClient(client);
-              setClientForm({
-                name: client.name,
-                email: client.email || '',
-                phone: client.phone || '',
-                address: client.address || '',
-                company: client.company || '',
-                notes: client.notes || '',
-              });
-              setShowClientModal(true);
+            onEditClient={crud.openEdit}
+            onDeleteClient={(id) => {
+              const client = clients.find(c => c.id === id);
+              if (client) crud.handleDelete(client);
             }}
-            onDeleteClient={handleDeleteClient}
           />
         )}
 
@@ -1355,13 +1271,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
         accent="green"
       />
 
-      <ClientFormModal
-        isOpen={showClientModal}
-        title={editingClient ? 'Edit Client' : 'Add New Client'}
-        onClose={() => setShowClientModal(false)}
-        onSubmit={handleSaveClient}
-        form={clientFormValue}
-        onChange={handleClientFormChange}
+      <ClientFormModalWithBalance
+        isOpen={crud.isOpen}
+        title={crud.editing ? 'Edit Client' : 'Add New Client'}
+        onClose={crud.close}
+        onSubmit={crud.handleSave}
+        form={crud.form}
+        onChange={crud.setFormField}
+        submitLabel={crud.editing ? 'Save Changes' : 'Create Client'}
+        isSubmitting={crud.isSubmitting}
       />
 
       <EmployeeFormModal

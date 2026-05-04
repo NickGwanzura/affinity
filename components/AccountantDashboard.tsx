@@ -11,7 +11,7 @@ import {
 } from './accountant/AccountantSections';
 import OperatingFundsView from './accountant/OperatingFundsView';
 import ReportsOverviewView from './accountant/ReportsOverviewView';
-import ClientFormModal, { type ClientFormValue } from './shared/ClientFormModal';
+import { ClientFormModalWithBalance, useClientCrud } from './client-directory';
 import DashboardSectionSwitcher from './shared/DashboardSectionSwitcher';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from './shared/ExpenseEntryModal';
 import OperatingFundEntryModal, { type OperatingFundFormValue } from './shared/OperatingFundEntryModal';
@@ -63,12 +63,7 @@ export const AccountantDashboard: React.FC = () => {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [showClientModal, setShowClientModal] = useState(false);
   const [showPayslipModal, setShowPayslipModal] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [clientForm, setClientForm] = useState({
-    name: '', email: '', phone: '', address: '', company: '', notes: ''
-  });
   const [payslipForm, setPayslipForm] = useState<PayslipFormValue>(createEmptyPayslipForm());
   
   // Expense Form State
@@ -94,6 +89,15 @@ export const AccountantDashboard: React.FC = () => {
   const notifySuccess = (message: string) => showToast(message, 'success');
   const notifyError = (message: string) => showToast(message, 'error');
   const notifyWarning = (message: string) => showToast(message, 'warning');
+
+  const crud = useClientCrud({
+    addClient: (c) => setClients(prev => [...prev, c]),
+    patchClient: (id, partial) => setClients(prev => prev.map(c => c.id === id ? { ...c, ...partial } : c)),
+    removeClient: (id) => setClients(prev => prev.filter(c => c.id !== id)),
+    showToast,
+    confirm,
+    onDeleteSelected: () => {},
+  });
 
   const addExpenseFormValue: ExpenseEntryFormValue = {
     vehicleId: expenseVehicle,
@@ -137,11 +141,6 @@ export const AccountantDashboard: React.FC = () => {
   const operatingFundFormValue: OperatingFundFormValue = { ...fundForm };
   const handleOperatingFundFormChange = (updates: Partial<OperatingFundFormValue>) => {
     setFundForm((prev) => ({ ...prev, ...updates }));
-  };
-
-  const clientFormValue: ClientFormValue = { ...clientForm };
-  const handleClientFormChange = (updates: Partial<ClientFormValue>) => {
-    setClientForm((prev) => ({ ...prev, ...updates }));
   };
 
   const handlePayslipFormChange = (updates: Partial<PayslipFormValue>) => {
@@ -554,55 +553,6 @@ export const AccountantDashboard: React.FC = () => {
     }
   };
 
-  // Client CRUD handlers
-  const handleSaveClient = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingClient && !editingClient.id.startsWith('__invoice__')) {
-        await dataService.updateClient(editingClient.id, clientForm);
-      } else {
-        // Virtual (invoice-sourced) clients or new clients → create in DB
-        await dataService.createClient(clientForm);
-      }
-      
-      setShowClientModal(false);
-      setEditingClient(null);
-      setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' });
-      
-      // FIX: Refresh all data and handle errors
-      try {
-        await loadData(true);
-        notifySuccess(editingClient ? 'Client updated successfully!' : 'Client created successfully!');
-      } catch (refreshError) {
-        console.error('[AccountantDashboard] handleSaveClient: Client saved but refresh failed:', refreshError);
-        notifyWarning('Client saved but failed to refresh list. Please refresh the page.');
-      }
-    } catch (error: any) {
-      console.error('[AccountantDashboard] handleSaveClient: Error saving client:', error);
-      notifyError(error?.message || 'Failed to save client. Please try again.');
-    }
-  };
-
-  const handleDeleteClient = async (id: string) => {
-    const approved = await confirm({
-      title: 'Delete client?',
-      message: 'This will permanently remove the client from the accountant workspace.',
-      confirmLabel: 'Delete Client',
-      confirmVariant: 'danger',
-    });
-
-    if (!approved) return;
-
-    try {
-      await dataService.deleteClient(id);
-      await loadData(true);
-      notifySuccess('Client deleted successfully.');
-    } catch (error: any) {
-      console.error('[AccountantDashboard] handleDeleteClient: Error deleting client:', error);
-      notifyError(error?.message || 'Failed to delete client.');
-    }
-  };
-
   // Payslip handlers
   const handleGeneratePayslip = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -901,7 +851,7 @@ export const AccountantDashboard: React.FC = () => {
                   <h3 className="text-lg font-bold" style={{ color: '#18181b' }}>Clients</h3>
                   <p className="text-xs mt-0.5" style={{ color: '#52525b' }}>{mergedClients.length} total — includes all clients from invoices</p>
                 </div>
-                <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => { setEditingClient(null); setClientForm({ name: '', email: '', phone: '', address: '', company: '', notes: '' }); setShowClientModal(true); }}>
+                <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={crud.openAdd}>
                   Add Client
                 </Button>
               </div>
@@ -909,19 +859,11 @@ export const AccountantDashboard: React.FC = () => {
               <AccountantClientsView
                 clients={mergedClients}
                 getClientStats={getClientStats}
-                onEditClient={(client) => {
-                  setEditingClient(client);
-                  setClientForm({
-                    name: client.name,
-                    email: client.email || '',
-                    phone: client.phone || '',
-                    address: client.address || '',
-                    company: client.company || '',
-                    notes: client.notes || '',
-                  });
-                  setShowClientModal(true);
+                onEditClient={crud.openEdit}
+                onDeleteClient={(id) => {
+                  const c = mergedClients.find(x => x.id === id);
+                  if (c) crud.handleDelete(c);
                 }}
-                onDeleteClient={handleDeleteClient}
               />
             </div>
           )}
@@ -1008,13 +950,15 @@ export const AccountantDashboard: React.FC = () => {
         disbursedDescriptionPlaceholder="e.g. Driver trip float"
       />
 
-      <ClientFormModal
-        isOpen={showClientModal}
-        title={editingClient ? 'Edit Client' : 'Add New Client'}
-        onClose={() => setShowClientModal(false)}
-        onSubmit={handleSaveClient}
-        form={clientFormValue}
-        onChange={handleClientFormChange}
+      <ClientFormModalWithBalance
+        isOpen={crud.isOpen}
+        title={crud.editing ? 'Edit Client' : 'Add New Client'}
+        onClose={crud.close}
+        onSubmit={crud.handleSave}
+        form={crud.form}
+        onChange={crud.setFormField}
+        submitLabel={crud.editing ? 'Save Changes' : 'Create Client'}
+        isSubmitting={crud.isSubmitting}
       />
 
       <PayslipFormModal

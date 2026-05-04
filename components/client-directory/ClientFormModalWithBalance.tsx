@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import FormModalShell from '../shared/FormModal';
 import {
   Button,
@@ -52,7 +52,18 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
   submitLabel = 'Save Client',
   isSubmitting = false,
 }) => {
+  const [nameError, setNameError] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    if (!form.name.trim()) {
+      e.preventDefault();
+      setNameError(true);
+      return;
+    }
+    onSubmit(e);
+  };
 
   return (
     <FormModalShell
@@ -62,14 +73,20 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
       size="md"
       onClose={onClose}
     >
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Stack gap={5}>
           <TextInput
             id="client-name"
-            labelText="Name"
+            labelText="Name *"
             value={form.name}
-            onChange={(e) => onChange({ name: e.target.value })}
+            onChange={(e) => {
+              setNameError(false);
+              onChange({ name: e.target.value });
+            }}
             required
+            autoComplete="name"
+            invalid={nameError}
+            invalidText="Name is required"
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextInput
@@ -78,6 +95,8 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
               labelText="Email"
               value={form.email}
               onChange={(e) => onChange({ email: e.target.value })}
+              autoComplete="email"
+              inputMode="email"
             />
             <TextInput
               id="client-phone"
@@ -85,6 +104,8 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
               labelText="Phone"
               value={form.phone}
               onChange={(e) => onChange({ phone: e.target.value })}
+              autoComplete="tel"
+              inputMode="tel"
             />
           </div>
           <TextInput
@@ -92,12 +113,14 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
             labelText="Company"
             value={form.company}
             onChange={(e) => onChange({ company: e.target.value })}
+            autoComplete="organization"
           />
           <TextInput
             id="client-address"
             labelText="Address"
             value={form.address}
             onChange={(e) => onChange({ address: e.target.value })}
+            autoComplete="street-address"
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="sm:col-span-2">
@@ -106,9 +129,10 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
                 type="number"
                 step="0.01"
                 labelText="Opening Balance"
-                helperText="Carried-forward balance at client creation"
+                helperText="Positive = client owes you · Negative = you owe client"
                 value={form.opening_balance}
                 onChange={(e) => onChange({ opening_balance: e.target.value })}
+                inputMode="decimal"
               />
             </div>
             <Select
@@ -135,9 +159,7 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting || !form.name.trim()}>
-            {isSubmitting ? 'Saving...' : submitLabel}
-          </Button>
+          <Button type="submit" isLoading={isSubmitting}>{submitLabel}</Button>
         </div>
       </form>
     </FormModalShell>

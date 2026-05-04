@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import FormModalShell from './FormModal';
 import { Button, Stack, TextArea, TextInput } from '../ui';
 
@@ -19,6 +19,7 @@ interface ClientFormModalProps {
   form: ClientFormValue;
   onChange: (updates: Partial<ClientFormValue>) => void;
   submitLabel?: string;
+  isSubmitting?: boolean;
 }
 
 export const ClientFormModal: React.FC<ClientFormModalProps> = ({
@@ -29,10 +30,22 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   form,
   onChange,
   submitLabel = 'Save Client',
+  isSubmitting = false,
 }) => {
+  const [nameError, setNameError] = useState(false);
+
   if (!isOpen) {
     return null;
   }
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    if (!form.name.trim()) {
+      e.preventDefault();
+      setNameError(true);
+      return;
+    }
+    onSubmit(e);
+  };
 
   return (
     <FormModalShell
@@ -42,14 +55,20 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       size="md"
       onClose={onClose}
     >
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Stack gap={5}>
           <TextInput
             id="client-name"
-            labelText="Name"
+            labelText="Name *"
             value={form.name}
-            onChange={(event) => onChange({ name: event.target.value })}
+            onChange={(event) => {
+              setNameError(false);
+              onChange({ name: event.target.value });
+            }}
             required
+            autoComplete="name"
+            invalid={nameError}
+            invalidText="Name is required"
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextInput
@@ -58,7 +77,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               labelText="Email"
               value={form.email}
               onChange={(event) => onChange({ email: event.target.value })}
-              required
+              autoComplete="email"
+              inputMode="email"
             />
             <TextInput
               id="client-phone"
@@ -66,6 +86,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               labelText="Phone"
               value={form.phone}
               onChange={(event) => onChange({ phone: event.target.value })}
+              autoComplete="tel"
+              inputMode="tel"
             />
           </div>
           <TextInput
@@ -73,17 +95,19 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             labelText="Company"
             value={form.company}
             onChange={(event) => onChange({ company: event.target.value })}
+            autoComplete="organization"
           />
           <TextInput
             id="client-address"
             labelText="Address"
             value={form.address}
             onChange={(event) => onChange({ address: event.target.value })}
+            autoComplete="street-address"
           />
           <TextArea
             id="client-notes"
             labelText="Notes"
-            rows={4}
+            rows={3}
             value={form.notes}
             onChange={(event) => onChange({ notes: event.target.value })}
           />
@@ -92,7 +116,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">{submitLabel}</Button>
+          <Button type="submit" isLoading={isSubmitting}>{submitLabel}</Button>
         </div>
       </form>
     </FormModalShell>
