@@ -129,29 +129,29 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose, duration =
 
   return (
     <div
-      className={`app-toast-enter pointer-events-auto relative overflow-hidden rounded-lg border shadow-lg ring-1 ring-black/[0.02] backdrop-blur-sm ${styles[type].shell}`}
+      className={`app-toast-enter pointer-events-auto relative overflow-hidden rounded-xl border shadow-xl shadow-black/[0.06] ring-1 ring-black/[0.04] backdrop-blur-md ${styles[type].shell}`}
       role="status"
       aria-live="polite"
     >
-      <div className="flex min-h-[56px] items-start gap-3 px-4 py-3">
+      <div className="flex min-h-[56px] items-start gap-3 px-4 py-3 pr-2">
         <span className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center ${styles[type].icon}`}>
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {icons[type]}
           </svg>
         </span>
-        <p className="flex-1 text-sm font-medium leading-5">{message}</p>
+        <p className="flex-1 text-sm font-medium leading-5 pt-0.5">{message}</p>
         <button
           type="button"
           onClick={onClose}
-          className="min-h-[36px] min-w-[36px] rounded-full text-current/60 transition-colors hover:bg-black/5 hover:text-current"
+          className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-md text-current/60 transition-colors hover:bg-black/5 hover:text-current focus:outline-none focus-visible:ring-2 focus-visible:ring-current/30"
           aria-label="Dismiss notification"
         >
-          <svg className="mx-auto h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
-      <div className="h-1 w-full bg-black/5">
+      <div className="h-1 w-full bg-black/[0.06]">
         <div
           className={`h-full ${styles[type].progress}`}
           style={{

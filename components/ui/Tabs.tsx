@@ -68,13 +68,28 @@ export const Tab: React.FC<TabProps> = ({ children, disabled, className = '', in
       aria-selected={isActive}
       disabled={disabled}
       onClick={() => !disabled && ctx.setSelected(index)}
-      className={`px-4 py-3 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#D97706] disabled:opacity-50 ${
+      className={`group relative px-4 py-3 text-sm whitespace-nowrap -mb-px transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#D97706] disabled:opacity-50 ${
         isActive
-          ? 'border-[#D97706] text-[#D97706] font-semibold'
-          : 'border-transparent text-zinc-600 hover:text-zinc-900 hover:border-stone-300'
+          ? 'text-[#D97706] font-semibold'
+          : 'text-zinc-600 hover:text-zinc-900'
       } ${className}`}
     >
-      {children}
+      <span className="relative z-10">{children}</span>
+      {/* Active indicator: amber bar with subtle glow */}
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-center rounded-full bg-[#D97706] transition-transform duration-200 ease-out ${
+          isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'
+        }`}
+        style={{ boxShadow: isActive ? '0 0 12px rgba(217,119,6,0.35)' : undefined }}
+      />
+      {/* Inactive hover hint */}
+      {!isActive && !disabled && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-center scale-x-0 rounded-full bg-stone-300 transition-transform duration-150 ease-out group-hover:scale-x-100"
+        />
+      )}
     </button>
   );
 };

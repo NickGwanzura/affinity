@@ -47,24 +47,30 @@ export const DashboardKpiCard: React.FC<DashboardKpiCardProps> = ({
   const body = (
     <div
       className={[
-        'bg-white p-6 border border-[#E7E5E4] h-full transition-[box-shadow,transform,border-color] duration-200 ease-out',
+        'relative overflow-hidden bg-white p-6 border border-[#E7E5E4] h-full transition-[box-shadow,transform,border-color] duration-200 ease-out',
         interactive ? 'group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:border-stone-300' : '',
       ].join(' ')}
     >
-      <div className="flex items-center justify-between">
+      {interactive && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[#D97706]/5 opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100"
+        />
+      )}
+      <div className="relative flex items-center justify-between">
         <div
-          className={`p-2.5 transition-transform duration-200 ease-out ${TONE_CLASSES[iconTone]} ${
+          className={`inline-flex items-center justify-center p-2.5 transition-transform duration-200 ease-out ${TONE_CLASSES[iconTone]} ${
             interactive ? 'group-hover:scale-105' : ''
           }`}
         >
           <Icon className="h-5 w-5" />
         </div>
         {trendIcon ? (
-          <span className="text-emerald-500">{trendIcon}</span>
+          <span className="text-emerald-600 inline-flex items-center">{trendIcon}</span>
         ) : null}
       </div>
-      <div className="mt-4">
-        <p className="text-3xl font-bold text-[#1C1917] tabular-nums">{value}</p>
+      <div className="relative mt-4">
+        <p className="text-3xl font-bold text-[#1C1917] tabular-nums tracking-tight">{value}</p>
         <p className="text-sm text-[#78716C] mt-1">{label}</p>
         {trend && <p className="text-xs text-[#A8A29E] mt-2">{trend}</p>}
       </div>

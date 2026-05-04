@@ -115,29 +115,30 @@ export const Modal: React.FC<ModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={title ?? label}
-      className="app-modal-overlay-enter fixed inset-0 z-[9000] flex items-end justify-center bg-black/50 backdrop-blur-[2px] sm:items-center sm:p-4"
+      className="app-modal-overlay-enter fixed inset-0 z-[9000] flex items-end justify-center bg-black/55 backdrop-blur-[3px] sm:items-center sm:p-4"
     >
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className={`app-modal-content-enter flex max-h-[95vh] w-full flex-col bg-white shadow-2xl outline-none rounded-t-2xl sm:max-h-[90vh] sm:rounded-lg ${sizeClasses[size]}`}
+        className={`app-modal-content-enter flex max-h-[95dvh] w-full flex-col bg-white shadow-2xl ring-1 ring-black/5 outline-none rounded-t-2xl sm:max-h-[90vh] sm:rounded-xl ${sizeClasses[size]}`}
         onMouseDown={(e) => e.stopPropagation()}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {/* Mobile drag-handle affordance — purely decorative dismissibility cue. */}
         <div
           aria-hidden="true"
-          className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-stone-300 sm:hidden"
+          className="mx-auto mt-2.5 mb-0.5 h-1 w-10 shrink-0 rounded-full bg-stone-300 sm:hidden"
         />
         {(title || label) && (
-          <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-8 py-5">
+          <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-5 py-4 sm:px-8 sm:py-5">
             <div className="min-w-0">
               {label && (
-                <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#D97706]">
                   {label}
                 </p>
               )}
               {title && (
-                <h2 className="mt-0.5 text-lg font-semibold text-zinc-900 truncate">
+                <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-zinc-900 truncate sm:text-xl">
                   {title}
                 </h2>
               )}
@@ -146,17 +147,17 @@ export const Modal: React.FC<ModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="-m-2 shrink-0 rounded-md p-2 text-zinc-500 hover:bg-stone-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]"
+              className="-m-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-stone-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706] sm:h-9 sm:w-9"
             >
               <X size={20} />
             </button>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-8 py-6">{children}</div>
+        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-6">{children}</div>
 
         {footer && (
-          <div className="border-t border-stone-200 px-8 py-4">{footer}</div>
+          <div className="border-t border-stone-200 bg-stone-50/60 px-5 py-3.5 sm:px-8 sm:py-4">{footer}</div>
         )}
       </div>
     </div>

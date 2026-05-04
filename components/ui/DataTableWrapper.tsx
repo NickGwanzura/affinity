@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Pencil, Plus, Search, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Trash2, Pencil, Plus, Search, X, ChevronUp, ChevronDown, Inbox, ChevronsUpDown } from 'lucide-react';
 import { Button, IconButton } from './Button';
 
 export interface DataTableColumn<T = any> {
@@ -115,19 +115,26 @@ export function DataTableWrapper<T extends { id: string }>({
 
   const hasSelection = selectedIds.size > 0;
 
+  const colCount = columns.length + (batchActions ? 1 : 0) + (onEdit || onDelete ? 1 : 0);
+  const isSearching = searchQuery.trim().length > 0;
+
   return (
-    <div className="bg-white border border-gray-200">
+    <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
       {/* Toolbar */}
       {(title || description || search || batchActions || onAdd) && (
-        <div className="px-4 py-3 border-b border-gray-200 flex flex-wrap items-center gap-3">
-          <div className="flex-1 min-w-0">
-            {title && <h3 className="text-base font-semibold text-gray-900">{title}</h3>}
-            {description && <p className="text-sm text-gray-500">{description}</p>}
-          </div>
+        <div className="px-4 py-3 sm:px-5 border-b border-stone-200 flex flex-wrap items-center gap-x-3 gap-y-2.5">
+          {(title || description) && (
+            <div className="flex-1 min-w-0 basis-full sm:basis-auto">
+              {title && <h3 className="text-base font-semibold text-zinc-900 truncate">{title}</h3>}
+              {description && <p className="text-xs text-zinc-500 mt-0.5 truncate">{description}</p>}
+            </div>
+          )}
 
           {batchActions && hasSelection && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">{selectedIds.size} selected</span>
+            <div className="flex items-center gap-2 order-3 sm:order-none w-full sm:w-auto">
+              <span className="text-sm text-zinc-600 tabular-nums">
+                <span className="font-semibold text-zinc-900">{selectedIds.size}</span> selected
+              </span>
               <Button
                 variant="danger"
                 size="sm"
@@ -148,24 +155,36 @@ export function DataTableWrapper<T extends { id: string }>({
             </div>
           )}
 
-          {search && (
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 h-9 text-sm border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706] w-48"
-              />
-            </div>
-          )}
+          <div className="flex items-center gap-2 ml-auto order-2 sm:order-none">
+            {search && (
+              <div className="relative flex-1 sm:flex-initial">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} aria-hidden="true" />
+                <input
+                  type="text"
+                  placeholder="Search…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-8 h-9 text-sm border border-stone-300 rounded-md bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706] w-full sm:w-56 transition-shadow"
+                />
+                {isSearching && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded text-zinc-400 hover:bg-stone-100 hover:text-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/40"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            )}
 
-          {onAdd && (
-            <Button size="sm" leftIcon={<Plus size={14} />} onClick={onAdd}>
-              Add
-            </Button>
-          )}
+            {onAdd && (
+              <Button size="sm" leftIcon={<Plus size={14} />} onClick={onAdd}>
+                Add
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
@@ -173,89 +192,142 @@ export function DataTableWrapper<T extends { id: string }>({
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
+            <tr className="bg-stone-50/80 border-b border-stone-200">
               {batchActions && (
                 <th className={`${cellPadding} w-10`}>
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-[#D97706] focus:ring-[#D97706]/30"
+                    aria-label={selectedIds.size === filteredRows.length && filteredRows.length > 0 ? 'Deselect all rows' : 'Select all rows'}
+                    className="h-4 w-4 rounded border-stone-300 text-[#D97706] focus:ring-[#D97706]/30"
                     checked={filteredRows.length > 0 && selectedIds.size === filteredRows.length}
                     onChange={toggleSelectAll}
                   />
                 </th>
               )}
-              {columns.map((col) => (
+              {columns.map((col) => {
+                const isSortedCol = sortKey === col.key;
+                return (
+                  <th
+                    key={col.key}
+                    scope="col"
+                    aria-sort={
+                      isSortable && isSortedCol
+                        ? sortDir === 'asc' ? 'ascending' : 'descending'
+                        : undefined
+                    }
+                    className={`${cellPadding} font-semibold text-[11px] uppercase tracking-[0.06em] text-zinc-600 transition-colors ${
+                      isSortable ? 'cursor-pointer select-none hover:bg-stone-100/70 hover:text-zinc-900' : ''
+                    }`}
+                    style={{ width: col.width }}
+                    onClick={() => handleSort(col.key)}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="whitespace-nowrap">{col.header}</span>
+                      {isSortable && (
+                        isSortedCol ? (
+                          sortDir === 'asc'
+                            ? <ChevronUp size={14} className="text-[#D97706]" aria-hidden="true" />
+                            : <ChevronDown size={14} className="text-[#D97706]" aria-hidden="true" />
+                        ) : (
+                          <ChevronsUpDown size={14} className="text-zinc-300 group-hover:text-zinc-400" aria-hidden="true" />
+                        )
+                      )}
+                    </div>
+                  </th>
+                );
+              })}
+              {(onEdit || onDelete) && (
                 <th
-                  key={col.key}
-                  className={`${cellPadding} font-semibold text-xs uppercase tracking-wider text-gray-600 ${isSortable ? 'cursor-pointer select-none' : ''}`}
-                  style={{ width: col.width }}
-                  onClick={() => handleSort(col.key)}
+                  scope="col"
+                  className={`${cellPadding} font-semibold text-[11px] uppercase tracking-[0.06em] text-zinc-600 text-right`}
                 >
-                  <div className="flex items-center gap-1">
-                    {col.header}
-                    {isSortable && sortKey === col.key && (
-                      sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
-                    )}
-                  </div>
+                  Actions
                 </th>
-              ))}
-              {(onEdit || onDelete) && <th className={cellPadding}>Actions</th>}
+              )}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-stone-100">
             {filteredRows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (batchActions ? 1 : 0) + (onEdit || onDelete ? 1 : 0)}
-                  className="px-4 py-8 text-center text-gray-500"
+                  colSpan={colCount}
+                  className="px-4 py-12 sm:py-16 text-center"
                 >
-                  {emptyMessage}
+                  <div className="app-fade-in flex flex-col items-center justify-center gap-3 text-zinc-500">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-12 w-12 items-center justify-center rounded-full bg-stone-100 text-zinc-400 ring-1 ring-stone-200/80"
+                    >
+                      {isSearching ? <Search size={20} /> : <Inbox size={20} />}
+                    </span>
+                    <p className="text-sm font-medium text-zinc-700">
+                      {isSearching ? 'No matches found' : emptyMessage}
+                    </p>
+                    {isSearching && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="text-xs font-medium text-[#D97706] hover:text-[#B45309] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/40 rounded px-1"
+                      >
+                        Clear search
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ) : (
-              filteredRows.map((row) => (
-                <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  {batchActions && (
-                    <td className={cellPadding}>
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-[#D97706] focus:ring-[#D97706]/30"
-                        checked={selectedIds.has(row.id)}
-                        onChange={() => toggleSelectRow(row.id)}
-                      />
-                    </td>
-                  )}
-                  {columns.map((col) => (
-                    <td key={col.key} className={cellPadding}>
-                      {col.render?.(row) ?? row[col.key]}
-                    </td>
-                  ))}
-                  {(onEdit || onDelete) && (
-                    <td className={cellPadding}>
-                      <div className="flex gap-2">
-                        {onEdit && (
-                          <IconButton
-                            icon={<Pencil size={14} />}
-                            size="sm"
-                            variant="ghost"
-                            label="Edit"
-                            onClick={() => onEdit(row)}
-                          />
-                        )}
-                        {onDelete && (
-                          <IconButton
-                            icon={<Trash2 size={14} />}
-                            size="sm"
-                            variant="ghost"
-                            label="Delete"
-                            onClick={() => onDelete(row)}
-                          />
-                        )}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))
+              filteredRows.map((row) => {
+                const isSelected = selectedIds.has(row.id);
+                return (
+                  <tr
+                    key={row.id}
+                    className={`group transition-colors duration-100 ${
+                      isSelected ? 'bg-[#D97706]/[0.04] hover:bg-[#D97706]/[0.06]' : 'hover:bg-stone-50'
+                    }`}
+                  >
+                    {batchActions && (
+                      <td className={cellPadding}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Select row ${row.id}`}
+                          className="h-4 w-4 rounded border-stone-300 text-[#D97706] focus:ring-[#D97706]/30"
+                          checked={isSelected}
+                          onChange={() => toggleSelectRow(row.id)}
+                        />
+                      </td>
+                    )}
+                    {columns.map((col) => (
+                      <td key={col.key} className={`${cellPadding} text-zinc-800`}>
+                        {col.render?.(row) ?? row[col.key]}
+                      </td>
+                    ))}
+                    {(onEdit || onDelete) && (
+                      <td className={cellPadding}>
+                        <div className="flex justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                          {onEdit && (
+                            <IconButton
+                              icon={<Pencil size={14} />}
+                              size="sm"
+                              variant="ghost"
+                              label="Edit"
+                              onClick={() => onEdit(row)}
+                            />
+                          )}
+                          {onDelete && (
+                            <IconButton
+                              icon={<Trash2 size={14} />}
+                              size="sm"
+                              variant="ghost"
+                              label="Delete"
+                              onClick={() => onDelete(row)}
+                            />
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

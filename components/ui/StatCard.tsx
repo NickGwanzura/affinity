@@ -1,4 +1,5 @@
 import React from 'react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export type Intent = 'primary' | 'success' | 'danger' | 'warning' | 'info' | 'neutral';
 
@@ -61,15 +62,21 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div className={`group relative overflow-hidden bg-white rounded-lg border border-stone-200 p-6 transition-[box-shadow,transform,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-stone-300 ${className}`}>
       <div className="absolute top-0 left-0 w-1 h-full" style={{ background: accent.bg }} />
+      {/* Subtle accent glow that warms on hover */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-30"
+        style={{ background: accent.bg }}
+      />
 
-      <div className="pl-2">
-        <div className="flex justify-between items-start mb-3">
-          <p className="text-xs font-semibold text-zinc-500 tracking-wider uppercase">
+      <div className="relative pl-2">
+        <div className="flex justify-between items-start mb-3 gap-3">
+          <p className="text-[11px] font-semibold text-zinc-500 tracking-[0.08em] uppercase">
             {title}
           </p>
           {icon && (
             <div
-              className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
+              className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 shadow-sm transition-transform duration-200 ease-out group-hover:scale-105"
               style={{ background: accent.bg, color: accent.text }}
             >
               {icon}
@@ -77,16 +84,22 @@ export const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
 
-        <p className="text-3xl font-semibold text-zinc-900 tabular-nums leading-tight mb-2">
+        <p className="text-3xl font-semibold text-zinc-900 tabular-nums tracking-tight leading-tight mb-2">
           {value}
         </p>
 
         {(trend || subtitle) && (
           <div className="flex items-center gap-2 flex-wrap">
             {trend && (
-              <span className={`inline-flex items-center gap-1 text-xs font-semibold ${trend.isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                {trend.isPositive ? '↑' : '↓'}
-                {Math.abs(trend.value)}%
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
+                  trend.isPositive
+                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70'
+                    : 'bg-red-50 text-red-700 ring-1 ring-red-200/70'
+                }`}
+              >
+                {trend.isPositive ? <TrendingUp size={11} aria-hidden="true" /> : <TrendingDown size={11} aria-hidden="true" />}
+                <span className="tabular-nums">{Math.abs(trend.value)}%</span>
               </span>
             )}
             {subtitle && (

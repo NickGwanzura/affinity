@@ -93,21 +93,21 @@ export const SkeletonPlaceholder: React.FC<SkeletonPlaceholderProps> = ({
 // ── Pre-built layouts ─────────────────────────────────────────────────────────
 
 export const SkeletonCard: React.FC = () => (
-  <div className="p-6 bg-white border border-gray-200">
+  <div className="p-6 bg-white border border-stone-200 rounded-lg">
     <div className="flex justify-between items-start mb-4">
-      <Skeleton width="55%" />
-      <Skeleton variant="rectangular" width={40} height={40} />
+      <Skeleton variant="rounded" width="55%" />
+      <Skeleton variant="rounded" width={40} height={40} />
     </div>
-    <Skeleton width="40%" className="mb-2" />
-    <Skeleton width="25%" />
+    <Skeleton variant="rounded" width="40%" height="1.75rem" className="mb-2" />
+    <Skeleton variant="rounded" width="25%" />
   </div>
 );
 
 export const SkeletonTableRow: React.FC<{ cols?: number }> = ({ cols = 4 }) => (
-  <div className="flex gap-4 py-3">
+  <div className="flex gap-4 px-4 py-3 border-b border-stone-100 last:border-b-0">
     {Array.from({ length: cols }).map((_, i) => (
       <div key={i} style={{ flex: i === 0 ? '0 0 40%' : 1 }}>
-        <Skeleton />
+        <Skeleton variant="rounded" />
       </div>
     ))}
   </div>
@@ -117,11 +117,11 @@ export const SkeletonTable: React.FC<{ rows?: number; cols?: number }> = ({
   rows = 5,
   cols = 4,
 }) => (
-  <div>
-    <div className="flex gap-4 py-3 border-b border-gray-200">
+  <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+    <div className="flex gap-4 px-4 py-3 bg-stone-50/80 border-b border-stone-200">
       {Array.from({ length: cols }).map((_, i) => (
         <div key={i} style={{ flex: 1 }}>
-          <Skeleton />
+          <Skeleton variant="rounded" height="0.75rem" width="60%" />
         </div>
       ))}
     </div>
@@ -140,8 +140,8 @@ export const SkeletonStatCards: React.FC<{ count?: number }> = ({ count = 4 }) =
 );
 
 export const SkeletonChart: React.FC = () => (
-  <div className="p-6 bg-white border border-gray-200">
-    <Skeleton width="40%" className="mb-6" />
-    <Skeleton variant="rectangular" width="100%" height="16rem" />
+  <div className="p-6 bg-white border border-stone-200 rounded-lg">
+    <Skeleton variant="rounded" width="40%" className="mb-6" />
+    <Skeleton variant="rounded" width="100%" height="16rem" />
   </div>
 );

@@ -147,12 +147,12 @@ export const Layout: React.FC<LayoutProps> = ({
     <>
       {/* Logo area */}
       <div
-        className="flex items-center justify-center border-b border-[#292524]"
-        style={{ padding: sidebarCollapsed ? '1rem 0.5rem' : '1rem' }}
+        className="flex items-center justify-center border-b border-[#292524]/80"
+        style={{ padding: sidebarCollapsed ? '0.875rem 0.5rem' : '1rem' }}
       >
         {sidebarCollapsed ? (
           <div
-            className="flex h-8 w-8 items-center justify-center bg-white text-sm font-bold text-black"
+            className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-sm font-bold text-black shadow-sm ring-1 ring-white/10"
             aria-label="Affinity Logistics"
           >
             A
@@ -161,7 +161,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <img
             src={affinityLogo}
             alt="Affinity Logistics"
-            className="block h-auto w-full bg-white"
+            className="block h-auto w-full rounded-md bg-white shadow-sm ring-1 ring-white/5"
             style={{ maxWidth: '180px', padding: '0.5rem 0.75rem' }}
           />
         )}
@@ -182,33 +182,33 @@ export const Layout: React.FC<LayoutProps> = ({
               title={sidebarCollapsed ? label : undefined}
               aria-current={isActive ? 'page' : undefined}
               className={[
-                'group relative flex w-full items-center gap-3 transition-colors duration-150',
+                'group relative flex w-full items-center gap-3 rounded-md transition-[background-color,color] duration-150',
                 'border-0 cursor-pointer mb-0.5',
-                sidebarCollapsed ? 'justify-center px-3 py-3' : 'justify-start px-3 py-2.5',
+                sidebarCollapsed ? 'justify-center px-3 py-2.5' : 'justify-start px-3 py-2',
                 isActive
-                  ? 'bg-white/[0.08] text-white font-semibold'
-                  : 'bg-transparent text-[#a1a1aa] font-normal hover:bg-white/[0.04] hover:text-white focus-visible:bg-white/[0.04] focus-visible:text-white',
+                  ? 'bg-white/[0.08] text-white font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
+                  : 'bg-transparent text-[#a1a1aa] font-normal hover:bg-white/[0.05] hover:text-white focus-visible:bg-white/[0.05] focus-visible:text-white',
                 'text-sm focus:outline-none focus-visible:outline-none',
               ].join(' ')}
             >
-              {/* Strong left accent bar on active */}
+              {/* Strong left accent bar on active — anchored slightly inset for refined feel */}
               {isActive && (
                 <span
                   aria-hidden="true"
-                  className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#D97706]"
+                  className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-[#D97706] shadow-[0_0_12px_rgba(217,119,6,0.45)]"
                 />
               )}
               <Icon size={18} color={isActive ? '#D97706' : undefined} />
-              {!sidebarCollapsed && <span>{label}</span>}
+              {!sidebarCollapsed && <span className="truncate">{label}</span>}
             </button>
           );
         })}
       </nav>
 
       {/* User section */}
-      <div className="border-t border-[#292524] p-3">
+      <div className="border-t border-[#292524]/80 p-3">
         {!sidebarCollapsed && (
-          <div className="mb-2 flex items-center gap-2.5 bg-[#292524] p-3">
+          <div className="mb-2 flex items-center gap-2.5 rounded-md bg-gradient-to-br from-[#2a2724] to-[#1f1c1a] p-2.5 ring-1 ring-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
             <Avatar name={user.name} size="md" tone="sidebar" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-medium text-white">{user.name}</div>
@@ -222,8 +222,8 @@ export const Layout: React.FC<LayoutProps> = ({
           disabled={isLoggingOut}
           title="Sign out"
           className={[
-            'flex w-full items-center gap-3 bg-transparent text-sm transition-colors',
-            sidebarCollapsed ? 'justify-center px-3 py-3' : 'justify-start px-3 py-2.5',
+            'flex w-full items-center gap-3 rounded-md bg-transparent text-sm transition-colors duration-150',
+            sidebarCollapsed ? 'justify-center px-3 py-2.5' : 'justify-start px-3 py-2',
             isLoggingOut
               ? 'cursor-not-allowed text-[#a1a1aa] opacity-60'
               : 'cursor-pointer text-[#a1a1aa] hover:bg-white/[0.06] hover:text-white focus-visible:bg-white/[0.06] focus-visible:text-white',
@@ -231,7 +231,7 @@ export const Layout: React.FC<LayoutProps> = ({
           ].join(' ')}
         >
           <LogOut size={18} />
-          {!sidebarCollapsed && <span>{isLoggingOut ? 'Signing out...' : 'Sign out'}</span>}
+          {!sidebarCollapsed && <span>{isLoggingOut ? 'Signing out…' : 'Sign out'}</span>}
         </button>
 
         {/* Collapse toggle (desktop only, repositioned to bottom) */}
@@ -241,13 +241,13 @@ export const Layout: React.FC<LayoutProps> = ({
           title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={[
-            'mt-2 hidden lg:flex w-full items-center gap-3 bg-transparent text-sm transition-colors',
-            sidebarCollapsed ? 'justify-center px-3 py-2' : 'justify-start px-3 py-2',
-            'border-0 cursor-pointer text-[#666] hover:text-white focus-visible:text-white focus:outline-none',
+            'mt-1 hidden lg:flex w-full items-center gap-3 rounded-md bg-transparent text-xs transition-colors duration-150',
+            sidebarCollapsed ? 'justify-center px-3 py-1.5' : 'justify-start px-3 py-1.5',
+            'border-0 cursor-pointer text-[#71717a] hover:text-white hover:bg-white/[0.04] focus-visible:text-white focus-visible:bg-white/[0.04] focus:outline-none',
           ].join(' ')}
         >
           {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-          {!sidebarCollapsed && <span className="text-xs">Collapse</span>}
+          {!sidebarCollapsed && <span>Collapse</span>}
         </button>
       </div>
     </>
@@ -269,10 +269,11 @@ export const Layout: React.FC<LayoutProps> = ({
         ref={sidebarRef}
         aria-label="Sidebar"
         className={[
-          'fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden text-white transition-transform duration-200 ease-out',
+          'fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden text-white shadow-2xl shadow-black/30 lg:shadow-none',
           'bg-[#1C1917]',
+          'transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
           // Desktop: always visible, width transitions
-          'lg:translate-x-0 lg:transition-[transform,width]',
+          'lg:translate-x-0 lg:transition-[transform,width] lg:duration-200 lg:ease-out',
           // Mobile: slide in/out
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         ].join(' ')}
@@ -283,7 +284,7 @@ export const Layout: React.FC<LayoutProps> = ({
           type="button"
           onClick={() => setMobileOpen(false)}
           aria-label="Close sidebar"
-          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center text-[#a1a1aa] hover:text-white focus-visible:text-white focus:outline-none lg:hidden"
+          className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-md text-[#a1a1aa] hover:bg-white/[0.06] hover:text-white focus-visible:bg-white/[0.06] focus-visible:text-white focus:outline-none lg:hidden"
         >
           <X size={18} />
         </button>
