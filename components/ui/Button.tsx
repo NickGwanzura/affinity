@@ -57,10 +57,10 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 const baseButton = [
-  'relative inline-flex items-center justify-center gap-2 select-none',
+  'relative inline-flex items-center justify-center gap-2 select-none overflow-hidden',
   'font-medium whitespace-nowrap',
   'rounded-md',
-  'transition-[background-color,border-color,color,box-shadow,opacity] duration-150 ease-out',
+  'transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 ease-out',
   'focus:outline-none focus-visible:outline-none',
   'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#D97706] focus-visible:ring-offset-white',
   'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:pointer-events-none',

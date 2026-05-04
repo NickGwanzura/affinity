@@ -287,17 +287,30 @@ input[type='number'] {
   flex-direction: column;
   justify-content: center;
   padding: 4rem;
-  background: #000;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 90%, rgba(217, 119, 6, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(180, 83, 9, 0.10) 0%, transparent 55%),
+    #000;
   overflow: hidden;
+}
+
+.login-shell__brand::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .login-shell__brand-grid {
   position: absolute;
   inset: 0;
-  opacity: 0.03;
+  opacity: 0.04;
   background-image:
     linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px);
   background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 0%, transparent 75%);
 }
 
 .login-shell__brand-content {
@@ -332,7 +345,7 @@ input[type='number'] {
 
 .login-shell__headline strong {
   font-weight: 600;
-  background: linear-gradient(135deg, #fff 0%, #888 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 45%, #D97706 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -354,9 +367,21 @@ input[type='number'] {
 }
 
 .login-shell__stat {
-  padding: 0;
+  position: relative;
+  padding: 0 0 0 0.875rem;
   border: 0;
   background: none;
+}
+
+.login-shell__stat::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(217, 119, 6, 0.8) 0%, rgba(217, 119, 6, 0.15) 100%);
+  border-radius: 1px;
 }
 
 .login-shell__stat-value {
@@ -364,13 +389,14 @@ input[type='number'] {
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .login-shell__stat-label {
-  margin-top: 0.25rem;
-  color: #666;
+  margin-top: 0.375rem;
+  color: #888;
   font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -434,31 +460,49 @@ input[type='number'] {
 .login-shell__tabs {
   display: flex;
   margin-bottom: 2rem;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e7e5e4;
+  position: relative;
 }
 
 .login-shell__tab {
   flex: 1;
+  position: relative;
   margin-bottom: -1px;
   padding: 0.75rem 0;
   border: 0;
-  border-bottom: 2px solid transparent;
   background: none;
-  color: #666;
+  color: #71717a;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: color 0.15s ease;
 }
 
+.login-shell__tab::after {
+  content: '';
+  position: absolute;
+  inset-inline: 12%;
+  bottom: 0;
+  height: 2px;
+  background: #D97706;
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 12px rgba(217, 119, 6, 0.4);
+}
+
 .login-shell__tab:hover {
-  color: #D97706;
+  color: #1c1917;
 }
 
 .login-shell__tab.is-active {
-  border-bottom-color: #D97706;
   color: #D97706;
   font-weight: 600;
+}
+
+.login-shell__tab.is-active::after {
+  transform: scaleX(1);
 }
 
 .login-shell__intro {

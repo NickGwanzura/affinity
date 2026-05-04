@@ -19,24 +19,24 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
   children,
   className,
 }) => {
-  const classes = ['bg-white border border-[#E7E5E4] p-6', className]
+  const classes = ['bg-white border border-stone-200 rounded-lg p-5 sm:p-6', className]
     .filter(Boolean)
     .join(' ');
 
   return (
     <section className={classes}>
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-[#1C1917]">{title}</h2>
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold tracking-tight text-zinc-900">{title}</h2>
           {subtitle && (
-            <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+            <p className="text-sm text-zinc-500 mt-1 leading-relaxed">{subtitle}</p>
           )}
         </div>
         {actions && (
-          <div className="flex flex-wrap items-center gap-3">{actions}</div>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">{actions}</div>
         )}
       </div>
-      <div className="mt-6">{children}</div>
+      <div className="mt-5 sm:mt-6">{children}</div>
     </section>
   );
 };

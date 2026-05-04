@@ -20,19 +20,19 @@ export const DashboardPageHeader: React.FC<DashboardPageHeaderProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-[#1C1917]">{title}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">{title}</h1>
           {subtitle && (
-            <p className="text-sm text-[#78716C] mt-0.5">{subtitle}</p>
+            <p className="text-sm text-zinc-500 mt-1 leading-relaxed">{subtitle}</p>
           )}
         </div>
         {actions && (
-          <div className="flex flex-wrap items-center gap-3">{actions}</div>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">{actions}</div>
         )}
       </div>
       {banner && (
-        <div className="border border-[#D97706]/30 bg-[#D97706]/5 px-4 py-3">
+        <div className="rounded-lg border border-[#D97706]/30 bg-[#D97706]/[0.06] px-4 py-3 shadow-[inset_0_1px_0_rgba(217,119,6,0.08)]">
           {banner}
         </div>
       )}

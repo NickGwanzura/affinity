@@ -1,5 +1,4 @@
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
 
 export interface BreadcrumbItem {
   label: string;
@@ -15,7 +14,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' 
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className={`flex items-center gap-1 text-xs ${className}`}>
+    <nav aria-label="Breadcrumb" className={`flex items-center gap-1.5 text-xs ${className}`}>
       {items.map((item, idx) => {
         const isLast = idx === items.length - 1;
         return (
@@ -24,20 +23,22 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' 
               <button
                 type="button"
                 onClick={item.onClick}
-                className="text-[#78716C] hover:text-[#1C1917] hover:underline focus:outline-none focus-visible:underline border-0 bg-transparent p-0 cursor-pointer"
+                className="rounded px-1 py-0.5 -mx-1 text-zinc-500 transition-colors hover:bg-stone-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/40 border-0 bg-transparent cursor-pointer"
               >
                 {item.label}
               </button>
             ) : (
               <span
-                className={isLast ? 'text-[#1C1917] font-medium' : 'text-[#78716C]'}
+                className={isLast ? 'text-zinc-900 font-semibold' : 'text-zinc-500'}
                 aria-current={isLast ? 'page' : undefined}
               >
                 {item.label}
               </span>
             )}
             {!isLast && (
-              <ChevronRight size={12} className="text-[#A8A29E]" aria-hidden="true" />
+              <span aria-hidden="true" className="select-none text-stone-300 font-light">
+                /
+              </span>
             )}
           </React.Fragment>
         );

@@ -8,6 +8,8 @@ interface AvatarProps {
   size?: AvatarSize;
   tone?: AvatarTone;
   className?: string;
+  /** When true, shows an inset ring that brightens on group-hover for interactive contexts. */
+  interactive?: boolean;
 }
 
 const sizeClasses: Record<AvatarSize, string> = {
@@ -17,8 +19,8 @@ const sizeClasses: Record<AvatarSize, string> = {
 };
 
 const toneClasses: Record<AvatarTone, string> = {
-  brand: 'bg-[#D97706] text-white',
-  sidebar: 'bg-[#44403C] text-white',
+  brand: 'bg-gradient-to-br from-[#E8881A] to-[#B45309] text-white shadow-sm ring-1 ring-black/[0.04]',
+  sidebar: 'bg-gradient-to-br from-[#52504D] to-[#3a3936] text-white shadow-sm ring-1 ring-white/[0.06]',
 };
 
 const initialsOf = (name: string) =>
@@ -35,10 +37,11 @@ export const Avatar: React.FC<AvatarProps> = ({
   size = 'md',
   tone = 'brand',
   className = '',
+  interactive = false,
 }) => (
   <div
     aria-hidden="true"
-    className={`flex items-center justify-center rounded-full font-semibold shrink-0 ${sizeClasses[size]} ${toneClasses[tone]} ${className}`}
+    className={`flex items-center justify-center rounded-full font-semibold shrink-0 transition-shadow duration-150 ${sizeClasses[size]} ${toneClasses[tone]} ${interactive ? 'group-hover:shadow-md group-hover:ring-[#D97706]/40' : ''} ${className}`}
   >
     {initialsOf(name)}
   </div>

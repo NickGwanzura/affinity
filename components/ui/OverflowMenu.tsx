@@ -47,7 +47,7 @@ export const OverflowMenu: React.FC<OverflowMenuProps> = ({
       {open && (
         <div
           role="menu"
-          className={`app-fade-in absolute z-50 mt-2 min-w-[11rem] overflow-hidden rounded-lg border border-stone-200 bg-white py-1 shadow-xl ring-1 ring-black/5 ${
+          className={`app-modal-content-enter absolute z-50 mt-2 min-w-[12rem] overflow-hidden rounded-lg border border-stone-200 bg-white p-1 shadow-xl ring-1 ring-black/5 ${
             flipped ? 'left-0' : 'right-0'
           }`}
           onClick={() => setOpen(false)}
@@ -71,14 +71,16 @@ export const OverflowMenuItem: React.FC<OverflowMenuItemProps> = ({
   itemText, onClick, disabled, hasDivider, isDelete, className = '',
 }) => (
   <>
-    {hasDivider && <div className="my-1 border-t border-stone-200" />}
+    {hasDivider && <div className="my-1 -mx-1 border-t border-stone-200" />}
     <button
       type="button"
       role="menuitem"
       disabled={disabled}
       onClick={onClick}
-      className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-stone-100 focus:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed ${
-        isDelete ? 'text-red-600 hover:bg-red-50 focus:bg-red-50' : 'text-zinc-800'
+      className={`w-full px-2.5 py-1.5 rounded-md text-left text-sm transition-colors duration-100 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+        isDelete
+          ? 'text-red-600 hover:bg-red-50 focus-visible:bg-red-50'
+          : 'text-zinc-800 hover:bg-stone-100 focus-visible:bg-stone-100'
       } ${className}`}
     >
       {itemText}

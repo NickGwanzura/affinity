@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, EyeOff, Loader2, Check, AlertCircle, ChevronDown } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Check, AlertCircle, ChevronDown, Info, AlertTriangle, X } from 'lucide-react';
 
 /* ──────────────────────────────────────────────────────────────────────────
    Shared tokens
@@ -128,7 +128,7 @@ export const PasswordInput: React.FC<TextInputProps> = (props) => {
           onClick={() => setShow((s) => !s)}
           aria-label={show ? 'Hide password' : 'Show password'}
           aria-pressed={show}
-          className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center text-gray-500 transition-colors duration-150 hover:text-gray-900 hover:bg-gray-200/60 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D97706]"
+          className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded text-zinc-500 transition-colors duration-150 hover:bg-stone-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706]/40"
           tabIndex={-1}
         >
           {show ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -279,7 +279,7 @@ export const Select: React.FC<SelectProps> = ({
       <ChevronDown
         size={16}
         aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-600"
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500"
       />
     </div>
   </Field>
@@ -328,11 +328,11 @@ export const Checkbox: React.FC<CheckboxProps> = ({
     <div className="min-w-0">
       <label
         htmlFor={id}
-        className={`text-sm text-gray-800 select-none ${disabled ? '' : 'cursor-pointer'}`}
+        className={`text-sm text-zinc-800 select-none ${disabled ? '' : 'cursor-pointer'}`}
       >
         {labelText}
       </label>
-      {helperText && <p className="mt-0.5 text-xs text-gray-500 leading-snug">{helperText}</p>}
+      {helperText && <p className="mt-0.5 text-xs text-zinc-500 leading-snug">{helperText}</p>}
     </div>
   </div>
 );
@@ -349,7 +349,7 @@ export const InlineLoading: React.FC<InlineLoadingProps> = ({
   className = '',
 }) => (
   <div
-    className={`inline-flex items-center gap-2 text-sm text-gray-600 ${className}`}
+    className={`inline-flex items-center gap-2 text-sm text-zinc-600 ${className}`}
     role="status"
     aria-live="polite"
   >
@@ -371,15 +371,15 @@ export const Loading: React.FC<LoadingProps> = ({
   <div
     className={
       withOverlay
-        ? 'fixed inset-0 z-[9500] flex items-center justify-center bg-black/30 backdrop-blur-sm'
+        ? 'fixed inset-0 z-[9500] flex items-center justify-center bg-black/40 backdrop-blur-sm'
         : 'flex items-center justify-center p-8'
     }
     role="status"
     aria-live="polite"
   >
-    <div className="flex flex-col items-center gap-3">
-      <Loader2 className="animate-spin text-[#D97706]" size={32} />
-      <span className="text-sm text-gray-700">{description}</span>
+    <div className="flex flex-col items-center gap-3 rounded-xl bg-white/95 px-6 py-5 shadow-xl ring-1 ring-black/5">
+      <Loader2 className="animate-spin text-[#D97706]" size={28} />
+      <span className="text-sm font-medium text-zinc-700">{description}</span>
     </div>
   </div>
 );
@@ -393,11 +393,11 @@ interface InlineNotificationProps {
   hideCloseButton?: boolean;
   className?: string;
 }
-const kindStyles: Record<InlineNotificationProps['kind'], string> = {
-  error:   'bg-red-50 border-l-[3px] border-red-600 text-red-900',
-  success: 'bg-emerald-50 border-l-[3px] border-emerald-600 text-emerald-900',
-  info:    'bg-blue-50 border-l-[3px] border-blue-600 text-blue-900',
-  warning: 'bg-amber-50 border-l-[3px] border-amber-500 text-amber-900',
+const kindStyles: Record<InlineNotificationProps['kind'], { shell: string; icon: string; Icon: React.ComponentType<{ size?: number; 'aria-hidden'?: boolean | 'true' | 'false' }> }> = {
+  error:   { shell: 'bg-red-50/80 border-red-200 text-red-900',           icon: 'text-red-600',     Icon: AlertCircle },
+  success: { shell: 'bg-emerald-50/80 border-emerald-200 text-emerald-900', icon: 'text-emerald-600', Icon: Check },
+  info:    { shell: 'bg-blue-50/80 border-blue-200 text-blue-900',         icon: 'text-blue-600',    Icon: Info },
+  warning: { shell: 'bg-amber-50/80 border-amber-200 text-amber-900',      icon: 'text-amber-600',   Icon: AlertTriangle },
 };
 export const InlineNotification: React.FC<InlineNotificationProps> = ({
   kind,
@@ -406,25 +406,33 @@ export const InlineNotification: React.FC<InlineNotificationProps> = ({
   onClose,
   hideCloseButton = false,
   className = '',
-}) => (
-  <div
-    className={`flex items-start gap-2 border border-transparent p-3 text-sm ${kindStyles[kind]} ${className}`}
-    role={kind === 'error' || kind === 'warning' ? 'alert' : 'status'}
-  >
-    <span className="font-semibold shrink-0">{title}</span>
-    {subtitle && <span className="flex-1 leading-snug">{subtitle}</span>}
-    {onClose && !hideCloseButton && (
-      <button
-        type="button"
-        onClick={onClose}
-        className="shrink-0 inline-flex h-6 w-6 items-center justify-center opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D97706]"
-        aria-label="Dismiss"
-      >
-        ×
-      </button>
-    )}
-  </div>
-);
+}) => {
+  const { shell, icon, Icon } = kindStyles[kind];
+  return (
+    <div
+      className={`flex items-start gap-3 rounded-lg border px-3.5 py-3 text-sm ${shell} ${className}`}
+      role={kind === 'error' || kind === 'warning' ? 'alert' : 'status'}
+    >
+      <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center ${icon}`} aria-hidden="true">
+        <Icon size={18} />
+      </span>
+      <div className="min-w-0 flex-1 leading-snug">
+        <span className="font-semibold">{title}</span>
+        {subtitle && <span className="ml-1 font-normal">{subtitle}</span>}
+      </div>
+      {onClose && !hideCloseButton && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 -m-1 inline-flex h-6 w-6 items-center justify-center rounded text-current/60 transition-colors hover:bg-current/10 hover:text-current focus:outline-none focus-visible:ring-2 focus-visible:ring-current/30"
+          aria-label="Dismiss"
+        >
+          <X size={14} aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  );
+};
 
 /* ── Stack / Tile / Tag ────────────────────────────────────────────────── */
 interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
