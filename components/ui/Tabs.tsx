@@ -39,7 +39,7 @@ export const TabList: React.FC<TabListProps> = ({ children, className = '', ...r
   return (
     <div
       role="tablist"
-      className={`relative overflow-x-auto border-b border-stone-200 [scrollbar-width:thin] ${className}`}
+      className={`relative overflow-x-auto border-b border-stone-300 [scrollbar-width:thin] ${className}`}
       {...rest}
     >
       <div className="flex min-w-max">
@@ -77,19 +77,19 @@ export const Tab: React.FC<TabProps> = ({ children, disabled, className = '', in
       } ${className}`}
     >
       <span className="relative z-10">{children}</span>
-      {/* Active indicator: amber bar with subtle glow */}
+      {/* Active indicator: amber bar overlaid on the rail line. */}
       <span
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-center rounded-full bg-[#D97706] transition-transform duration-200 ease-out ${
+        className={`pointer-events-none absolute inset-x-3 -bottom-px h-[2px] origin-center rounded-full bg-[#D97706] transition-transform duration-200 ease-out ${
           isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'
         }`}
         style={{ boxShadow: isActive ? '0 0 12px rgba(217,119,6,0.35)' : undefined }}
       />
-      {/* Inactive hover hint */}
+      {/* Inactive hover hint (stone-400 for contrast against rail). */}
       {!isActive && !disabled && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-center scale-x-0 rounded-full bg-stone-300 transition-transform duration-150 ease-out group-hover:scale-x-100"
+          className="pointer-events-none absolute inset-x-3 -bottom-px h-[2px] origin-center scale-x-0 rounded-full bg-stone-400 transition-transform duration-150 ease-out group-hover:scale-x-100"
         />
       )}
     </button>

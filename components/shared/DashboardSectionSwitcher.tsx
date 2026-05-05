@@ -43,7 +43,7 @@ export const DashboardSectionSwitcher = <T extends string>({
       <div
         role="tablist"
         aria-label={label}
-        className="hidden md:block relative overflow-x-auto border-b border-stone-200 [scrollbar-width:thin]"
+        className="hidden md:block relative overflow-x-auto border-b border-stone-300 [scrollbar-width:thin]"
       >
         <div className="flex min-w-max">
           {options.map((opt) => {
@@ -73,20 +73,20 @@ export const DashboardSectionSwitcher = <T extends string>({
                 )}
                 <span className="relative z-10">{opt.label}</span>
 
-                {/* Active indicator: amber bar with subtle glow. */}
+                {/* Active indicator: amber bar overlaid on the rail line. */}
                 <span
                   aria-hidden="true"
-                  className={`pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-center rounded-full bg-[#D97706] transition-transform duration-200 ease-out ${
+                  className={`pointer-events-none absolute inset-x-3 -bottom-px h-[2px] origin-center rounded-full bg-[#D97706] transition-transform duration-200 ease-out ${
                     isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'
                   }`}
                   style={{ boxShadow: isActive ? '0 0 12px rgba(217,119,6,0.35)' : undefined }}
                 />
 
-                {/* Inactive hover preview underline. */}
+                {/* Inactive hover preview underline (stone-400 for contrast against rail). */}
                 {!isActive && (
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-center scale-x-0 rounded-full bg-stone-300 transition-transform duration-150 ease-out group-hover:scale-x-100"
+                    className="pointer-events-none absolute inset-x-3 -bottom-px h-[2px] origin-center scale-x-0 rounded-full bg-stone-400 transition-transform duration-150 ease-out group-hover:scale-x-100"
                   />
                 )}
               </button>
