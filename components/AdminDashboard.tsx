@@ -1099,17 +1099,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
             ? `Welcome back, ${userName}`
             : 'Fleet, clients, employees & payroll management'
         }
-        actions={
-          <>
-            <DashboardSectionSwitcher
-              value={activeView}
-              onChange={setActiveView}
-              label="Section"
-              options={adminViewOptions}
-            />
-            {activeViewActions}
-          </>
-        }
+        actions={activeViewActions}
       />
 
       {/* Top-line KPI grid — rendered for every view so the shell stays consistent */}
@@ -1144,6 +1134,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
           trend={dashboardKpis.utilizationTrend}
         />
       </div>
+
+      {/* Section navigation — full-width tab rail, scrolls horizontally
+          when there are too many sections to fit. */}
+      <DashboardSectionSwitcher
+        value={activeView}
+        onChange={setActiveView}
+        label="Section"
+        options={adminViewOptions}
+      />
 
       <DashboardSection title={activeViewLabel}>
         {activeView === 'dashboard' && (

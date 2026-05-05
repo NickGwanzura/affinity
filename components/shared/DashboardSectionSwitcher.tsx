@@ -22,7 +22,7 @@ export const DashboardSectionSwitcher = <T extends string>({
 
   return (
     <div className="w-full">
-      {/* Mobile: native select */}
+      {/* Mobile: native select keeps things compact + accessible. */}
       <div className="md:hidden">
         <Select
           id={`section-switcher-select-${slug}`}
@@ -37,32 +37,62 @@ export const DashboardSectionSwitcher = <T extends string>({
         </Select>
       </div>
 
-      {/* Desktop: segmented control */}
+      {/* Desktop: scrollable tab-rail with animated underline indicator.
+          Matches the shared Tabs primitive so cross-page navigation feels
+          identical. Handles 9–10+ tabs without breaking the page grid. */}
       <div
         role="tablist"
         aria-label={label}
-        className="hidden md:inline-flex border border-gray-300 bg-white"
+        className="hidden md:block relative overflow-x-auto border-b border-stone-200 [scrollbar-width:thin]"
       >
-        {options.map((opt) => {
-          const isActive = opt.id === value;
-          return (
-            <button
-              key={String(opt.id)}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => onChange(opt.id)}
-              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border-r border-gray-300 last:border-r-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#D97706]/30 ${
-                isActive
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {opt.icon}
-              {opt.label}
-            </button>
-          );
-        })}
+        <div className="flex min-w-max">
+          {options.map((opt) => {
+            const isActive = opt.id === value;
+            return (
+              <button
+                key={String(opt.id)}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => onChange(opt.id)}
+                className={`group relative inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-3.5 py-2.5 text-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#D97706]/40 ${
+                  isActive
+                    ? 'text-[#D97706] font-semibold'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                {opt.icon && (
+                  <span
+                    className={`inline-flex items-center transition-colors duration-150 ${
+                      isActive ? 'text-[#D97706]' : 'text-zinc-500 group-hover:text-zinc-700'
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {opt.icon}
+                  </span>
+                )}
+                <span className="relative z-10">{opt.label}</span>
+
+                {/* Active indicator: amber bar with subtle glow. */}
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-center rounded-full bg-[#D97706] transition-transform duration-200 ease-out ${
+                    isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'
+                  }`}
+                  style={{ boxShadow: isActive ? '0 0 12px rgba(217,119,6,0.35)' : undefined }}
+                />
+
+                {/* Inactive hover preview underline. */}
+                {!isActive && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-3 bottom-0 h-[2px] origin-center scale-x-0 rounded-full bg-stone-300 transition-transform duration-150 ease-out group-hover:scale-x-100"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

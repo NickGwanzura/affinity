@@ -39,14 +39,16 @@ export const TabList: React.FC<TabListProps> = ({ children, className = '', ...r
   return (
     <div
       role="tablist"
-      className={`flex border-b border-stone-200 overflow-x-auto ${className}`}
+      className={`relative overflow-x-auto border-b border-stone-200 [scrollbar-width:thin] ${className}`}
       {...rest}
     >
-      {arr.map((child, i) =>
-        React.isValidElement(child)
-          ? React.cloneElement(child as React.ReactElement<{ index?: number }>, { index: i })
-          : child
-      )}
+      <div className="flex min-w-max">
+        {arr.map((child, i) =>
+          React.isValidElement(child)
+            ? React.cloneElement(child as React.ReactElement<{ index?: number }>, { index: i })
+            : child
+        )}
+      </div>
     </div>
   );
 };
@@ -68,7 +70,7 @@ export const Tab: React.FC<TabProps> = ({ children, disabled, className = '', in
       aria-selected={isActive}
       disabled={disabled}
       onClick={() => !disabled && ctx.setSelected(index)}
-      className={`group relative px-4 py-3 text-sm whitespace-nowrap -mb-px transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#D97706] disabled:opacity-50 ${
+      className={`group relative inline-flex shrink-0 items-center px-3.5 py-2.5 text-sm whitespace-nowrap transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#D97706]/40 disabled:opacity-50 disabled:cursor-not-allowed ${
         isActive
           ? 'text-[#D97706] font-semibold'
           : 'text-zinc-600 hover:text-zinc-900'

@@ -768,17 +768,16 @@ export const AccountantDashboard: React.FC = () => {
         />
       </div>
 
-      <DashboardSection
-        title={activeTabLabel}
-        actions={
-          <DashboardSectionSwitcher
-            value={activeTab}
-            onChange={setActiveTab}
-            label="Section"
-            options={accountantTabOptions}
-          />
-        }
-      >
+      {/* Section navigation — full-width tab rail, scrolls horizontally
+          when there are too many sections to fit. */}
+      <DashboardSectionSwitcher
+        value={activeTab}
+        onChange={setActiveTab}
+        label="Section"
+        options={accountantTabOptions}
+      />
+
+      <DashboardSection title={activeTabLabel}>
         <div className="space-y-6">
           {activeTab === 'overview' && (
             <AccountantOverviewSection
