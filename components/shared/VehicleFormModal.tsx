@@ -1,7 +1,14 @@
-import React from 'react';
-import FormModalShell from './FormModal';
-import { Button, Stack, TextInput, Select, SelectItem } from '../ui';
-import { Upload, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertCircle } from 'lucide-react';
+import {
+  Modal,
+  Button,
+  TextInput,
+  Select,
+  SelectItem,
+  Checkbox,
+  InlineNotification,
+} from '../ui';
 
 export interface VehicleFormValue {
   vin: string;
@@ -11,6 +18,7 @@ export interface VehicleFormValue {
   purpose: 'Resale' | 'Client';
   cbcaApplied: boolean;
   regBookUrl: string;
+  currency?: 'GBP' | 'USD';
 }
 
 interface VehicleFormModalProps {
@@ -20,6 +28,8 @@ interface VehicleFormModalProps {
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   form: VehicleFormValue;
   onChange: (updates: Partial<VehicleFormValue>) => void;
+  isSubmitting?: boolean;
+  hidePurpose?: boolean;
 }
 
 export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
@@ -29,125 +39,197 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
   onSubmit,
   form,
   onChange,
+  isSubmitting = false,
+  hidePurpose = false,
 }) => {
-  if (!isOpen) {
-    return null;
-  }
+  const [errors, setErrors] = useState<Partial<Record<'vin' | 'model' | 'price', string>>>({});
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const validationErrors: Partial<Record<'vin' | 'model' | 'price', string>> = {};
+
+    const vinTrimmed = form.vin.trim();
+    if (!vinTrimmed) {
+      validationErrors.vin = 'VIN number is required';
+    } else if (vinTrimmed.length > 17) {
+      validationErrors.vin = 'VIN number must be 17 characters or fewer';
+    }
+
+    if (!form.model.trim()) {
+      validationErrors.model = 'Make and Model is required';
+    }
+
+    const parsedPrice = parseFloat(form.price);
+    if (!form.price) {
+      validationErrors.price = 'Purchase price is required';
+    } else if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      validationErrors.price = 'Purchase price must be greater than 0';
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setErrors({});
+    onSubmit(e);
+  };
 
   return (
-    <FormModalShell
+    <Modal
       isOpen={isOpen}
+      onClose={onClose}
       title={isEditing ? 'Edit Vehicle' : 'Add Vehicle'}
       label="Fleet record"
-      size="lg"
-      onClose={onClose}
+      size="md"
+      footer={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            variant="ghost"
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="vehicle-form"
+            isLoading={isSubmitting}
+          >
+            {isEditing ? 'Save Changes' : 'Add Vehicle'}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={onSubmit} className="space-y-6">
-        <Stack gap={5}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TextInput
-              id="vehicle-vin"
-              labelText="VIN Number"
-              helperText="Unique vehicle identification number"
-              value={form.vin}
-              onChange={event => onChange({ vin: event.target.value })}
-              placeholder="Enter VIN number"
-              required
-            />
-            <TextInput
-              id="vehicle-reg"
-              labelText="Registration Number"
-              helperText="Vehicle registration/license plate"
-              value={form.reg}
-              onChange={event => onChange({ reg: event.target.value })}
-              placeholder="e.g. N 12345 AB"
-            />
-          </div>
+      <form id="vehicle-form" onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {/* Row 1: Make and Model — full width, autoFocus */}
+        <TextInput
+          id="vehicle-model"
+          labelText="Make and Model *"
+          placeholder="e.g. Toyota Land Cruiser V8"
+          autoFocus
+          value={form.model}
+          onChange={(e) => {
+            if (errors.model) setErrors((prev) => ({ ...prev, model: undefined }));
+            onChange({ model: e.target.value });
+          }}
+          invalid={!!errors.model}
+          invalidText={errors.model}
+        />
+
+        {/* Row 2: VIN | Reg — 2-col grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextInput
-            id="vehicle-model"
-            labelText="Make and Model"
-            value={form.model}
-            onChange={event => onChange({ model: event.target.value })}
-            placeholder="e.g. Toyota Land Cruiser V8"
-            required
+            id="vehicle-vin"
+            labelText="VIN Number *"
+            helperText="Unique vehicle identification number"
+            placeholder="Enter VIN number"
+            autoComplete="off"
+            value={form.vin}
+            onChange={(e) => {
+              if (errors.vin) setErrors((prev) => ({ ...prev, vin: undefined }));
+              onChange({ vin: e.target.value.toUpperCase() });
+            }}
+            invalid={!!errors.vin}
+            invalidText={errors.vin}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TextInput
+            id="vehicle-reg"
+            labelText="Registration Number"
+            helperText="Leave blank if not yet registered."
+            placeholder="e.g. N 12345 AB"
+            value={form.reg}
+            onChange={(e) => onChange({ reg: e.target.value })}
+          />
+        </div>
+
+        {/* Row 3: Price | Currency — 3-col grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="sm:col-span-2">
             <TextInput
               id="vehicle-price"
               type="number"
-              labelText="Purchase Price (GBP)"
-              helperText="Purchase price in British Pounds"
-              value={form.price}
-              onChange={event => onChange({ price: event.target.value })}
-              placeholder="0.00"
-              min="0"
+              inputMode="decimal"
               step="0.01"
-              required
+              min="0"
+              labelText="Purchase Price *"
+              placeholder="0.00"
+              value={form.price}
+              onChange={(e) => {
+                if (errors.price) setErrors((prev) => ({ ...prev, price: undefined }));
+                onChange({ price: e.target.value });
+              }}
+              invalid={!!errors.price}
+              invalidText={errors.price}
             />
-            <Select
-              id="vehicle-purpose"
-              labelText="Purpose"
-              value={form.purpose}
-              onChange={event => onChange({ purpose: event.target.value as 'Resale' | 'Client' })}
-            >
-              <SelectItem value="Resale" text="Resale" />
-              <SelectItem value="Client" text="Client" />
-            </Select>
           </div>
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="vehicle-cbca"
-              checked={form.cbcaApplied}
-              onChange={event => onChange({ cbcaApplied: event.target.checked })}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-            />
-            <label htmlFor="vehicle-cbca" style={{ fontSize: '0.875rem', cursor: 'pointer' }}>
-              CBCA Applied For
-            </label>
-          </div>
-          <div>
-            <label
-              htmlFor="vehicle-reg-book"
-              className="text-sm font-medium"
-              style={{ color: 'var(--cds-text-primary, #18181b)' }}
-            >
-              Registration Book URL
-            </label>
-            <div className="mt-1 flex rounded-md shadow-sm">
-              <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-                <Upload size={16} />
-              </span>
-              <input
-                type="url"
-                id="vehicle-reg-book"
-                value={form.regBookUrl}
-                onChange={event => onChange({ regBookUrl: event.target.value })}
-                placeholder="https://storage.example.com/reg-book.pdf"
-                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md rounded-r-md border border-gray-300 focus:ring-[#D97706]/30 focus:border-[#D97706] sm:text-sm"
-              />
-            </div>
-            {isEditing && !form.regBookUrl && (
-              <div className="mt-2 flex items-center gap-2 text-amber-600 text-sm">
-                <AlertCircle size={16} />
-                <span>Registration book is missing. Please upload or add URL.</span>
-              </div>
-            )}
-          </div>
-          {!isEditing ? (
-            <div className="border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-              New vehicles are set to "UK" status by default. You can update the status later.
-            </div>
-          ) : null}
-        </Stack>
-        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit">{isEditing ? 'Save Changes' : 'Add Vehicle'}</Button>
+          <Select
+            id="vehicle-currency"
+            labelText="Currency"
+            value={form.currency ?? 'GBP'}
+            onChange={(e) => onChange({ currency: e.target.value as 'GBP' | 'USD' })}
+          >
+            <SelectItem value="GBP" text="GBP" />
+            <SelectItem value="USD" text="USD" />
+          </Select>
         </div>
+
+        {/* Row 4: Purpose Select — only when !hidePurpose */}
+        {!hidePurpose && (
+          <Select
+            id="vehicle-purpose"
+            labelText="Purpose"
+            value={form.purpose}
+            onChange={(e) => onChange({ purpose: e.target.value as 'Resale' | 'Client' })}
+          >
+            <SelectItem value="Resale" text="Resale" />
+            <SelectItem value="Client" text="Client" />
+          </Select>
+        )}
+
+        {/* Row 5: CBCA Checkbox */}
+        <Checkbox
+          id="vehicle-cbca"
+          labelText="CBCA Applied For"
+          helperText="Cross-border cargo authorisation lodged with customs"
+          checked={form.cbcaApplied}
+          onChange={(e) => onChange({ cbcaApplied: e.target.checked })}
+        />
+
+        {/* Row 6: Reg book URL */}
+        <div>
+          <TextInput
+            id="vehicle-reg-book"
+            type="url"
+            labelText="Reg book URL"
+            helperText="Paste a link to a hosted PDF of the registration book"
+            autoComplete="url"
+            value={form.regBookUrl}
+            onChange={(e) => onChange({ regBookUrl: e.target.value })}
+          />
+          {isEditing && !form.regBookUrl && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-amber-600">
+              <AlertCircle size={12} aria-hidden="true" />
+              Reg book missing — paste a link above.
+            </p>
+          )}
+        </div>
+
+        {/* Row 7: UK status notice — only when adding */}
+        {!isEditing && (
+          <InlineNotification
+            kind="info"
+            title="Note:"
+            subtitle="New vehicles are set to &quot;UK&quot; status by default. You can update the status later."
+            hideCloseButton
+          />
+        )}
       </form>
-    </FormModalShell>
+    </Modal>
   );
 };
 

@@ -25,6 +25,7 @@ const emptyVehicleForm: VehicleFormValue = {
   purpose: 'Client',
   cbcaApplied: false,
   regBookUrl: '',
+  currency: 'GBP',
 };
 
 export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
@@ -40,6 +41,7 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
 }) => {
   void _removeVehicle;
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [form, setForm] = useState<VehicleFormValue>(emptyVehicleForm);
   const [linkSelection, setLinkSelection] = useState<string>('');
@@ -71,6 +73,7 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
       purpose: (vehicle.purpose as 'Resale' | 'Client') || 'Client',
       cbcaApplied: Boolean(vehicle.cbca_applied),
       regBookUrl: vehicle.reg_book_url || '',
+      currency: 'GBP',
     });
     setIsFormOpen(true);
   };
@@ -81,12 +84,13 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       const payload = {
         vin_number: form.vin,
         reg_number: form.reg,
         make_model: form.model,
-        purchase_price_gbp: parseFloat(form.price) || 0,
+        purchase_price_gbp: parseFloat(form.price),
         purpose: form.purpose,
         cbca_applied: form.cbcaApplied,
         reg_book_url: form.regBookUrl || undefined,
@@ -107,6 +111,8 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
       setIsFormOpen(false);
     } catch (err: any) {
       showToast(err?.message || 'Failed to save vehicle', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -258,10 +264,16 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
       <VehicleFormModal
         isOpen={isFormOpen}
         isEditing={Boolean(editingVehicle)}
-        onClose={() => setIsFormOpen(false)}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingVehicle(null);
+          setForm(emptyVehicleForm);
+        }}
         onSubmit={handleSubmit}
         form={form}
         onChange={handleFormChange}
+        isSubmitting={isSubmitting}
+        hidePurpose={true}
       />
       <ConfirmDialog />
     </div>

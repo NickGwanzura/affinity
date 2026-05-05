@@ -2,8 +2,6 @@
 // Admin Components - Barrel Export
 // ============================================
 
-export { VehicleModal } from './VehicleModal';
-
 export { ExpenseModal } from './ExpenseModal';
 
 export { VehicleList } from './VehicleList';

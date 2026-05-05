@@ -11,6 +11,7 @@ import {
   Truck,
   Wrench,
   TrendingUp,
+  Plus,
 } from 'lucide-react';
 import {
   LandedCostSummary,
@@ -160,14 +161,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
   });
 
   // Vehicle Form State
-  const [newVin, setNewVin] = useState('');
-  const [newReg, setNewReg] = useState('');
-  const [newModel, setNewModel] = useState('');
-  const [newPrice, setNewPrice] = useState('');
-  const [newPurpose, setNewPurpose] = useState<'Resale' | 'Client'>('Resale');
-  const [newCbcaApplied, setNewCbcaApplied] = useState(false);
-  const [newRegBookUrl, setNewRegBookUrl] = useState('');
+  const emptyVehicleForm: VehicleFormValue = {
+    vin: '',
+    reg: '',
+    model: '',
+    price: '',
+    purpose: 'Resale',
+    cbcaApplied: false,
+    regBookUrl: '',
+    currency: 'GBP',
+  };
+  const [vehicleForm, setVehicleForm] = useState<VehicleFormValue>(emptyVehicleForm);
   const [editingVehicle, setEditingVehicle] = useState<VehicleEditorRecord | null>(null);
+  const [isSubmittingVehicle, setIsSubmittingVehicle] = useState(false);
 
   // Expense Form State
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -223,23 +229,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
     setPayslipForm(prev => ({ ...prev, ...updates }));
   };
 
-  const vehicleFormValue: VehicleFormValue = {
-    vin: newVin,
-    reg: newReg,
-    model: newModel,
-    price: newPrice,
-    purpose: newPurpose,
-    cbcaApplied: newCbcaApplied,
-    regBookUrl: newRegBookUrl,
-  };
   const handleVehicleFormChange = (updates: Partial<VehicleFormValue>) => {
-    if (updates.vin !== undefined) setNewVin(updates.vin);
-    if (updates.reg !== undefined) setNewReg(updates.reg);
-    if (updates.model !== undefined) setNewModel(updates.model);
-    if (updates.price !== undefined) setNewPrice(updates.price);
-    if (updates.purpose !== undefined) setNewPurpose(updates.purpose);
-    if (updates.cbcaApplied !== undefined) setNewCbcaApplied(updates.cbcaApplied);
-    if (updates.regBookUrl !== undefined) setNewRegBookUrl(updates.regBookUrl);
+    setVehicleForm(prev => ({ ...prev, ...updates }));
   };
 
   const handleTripFormChange = (updates: Partial<TripFormValue>) => {
@@ -310,69 +301,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
 
   const handleSaveVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmittingVehicle(true);
     try {
-      const vehicleData = {
-        vin_number: newVin,
-        reg_number: newReg,
-        make_model: newModel,
-        purchase_price_gbp: parseFloat(newPrice),
+      const payload = {
+        vin_number: vehicleForm.vin,
+        reg_number: vehicleForm.reg,
+        make_model: vehicleForm.model,
+        purchase_price_gbp: parseFloat(vehicleForm.price),
         status: editingVehicle ? editingVehicle.status : 'UK',
-        purpose: newPurpose,
-        cbca_applied: newCbcaApplied,
-        reg_book_url: newRegBookUrl || null,
+        purpose: vehicleForm.purpose,
+        cbca_applied: vehicleForm.cbcaApplied,
+        reg_book_url: vehicleForm.regBookUrl || null,
       };
 
       if (editingVehicle) {
-        await dataService.updateVehicle(editingVehicle.id, vehicleData);
+        await dataService.updateVehicle(editingVehicle.id, payload);
       } else {
-        await dataService.addVehicle(vehicleData);
+        await dataService.addVehicle(payload);
       }
 
-      // Reset form state
-      setNewVin('');
-      setNewReg('');
-      setNewModel('');
-      setNewPrice('');
-      setNewPurpose('Resale');
-      setNewCbcaApplied(false);
-      setNewRegBookUrl('');
+      notifySuccess(editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
+      setVehicleForm(emptyVehicleForm);
       setEditingVehicle(null);
       setShowAddModal(false);
 
-      // FIX: Refresh data with throwOnError=true to catch any refresh failures
-      // This ensures user is notified if vehicle was saved but list refresh failed
-      try {
-        await fetchData(true);
-        notifySuccess(
-          editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!'
-        );
-      } catch (refreshError: any) {
-        // Vehicle was saved but refresh failed - notify user to manually refresh
-        console.error(
-          '[AdminDashboard] handleSaveVehicle: Vehicle saved but refresh failed:',
-          refreshError
-        );
-        showToast(
-          'Vehicle saved but failed to refresh list. Please refresh the page.',
-          'warning',
-          6000
-        );
-      }
+      // Background refresh — don't block UI on it
+      fetchData(true).catch((refreshError) => {
+        console.error('[AdminDashboard] handleSaveVehicle: refresh failed:', refreshError);
+        showToast('Vehicle saved but failed to refresh list. Please refresh the page.', 'warning', 6000);
+      });
     } catch (error: any) {
       console.error('[AdminDashboard] handleSaveVehicle: Error saving vehicle:', error);
-      notifyError(error.message || 'Failed to save vehicle. Please try again.');
+      notifyError(error?.message || 'Failed to save vehicle. Please try again.');
+    } finally {
+      setIsSubmittingVehicle(false);
     }
   };
 
   const openAddVehicleModal = () => {
     setEditingVehicle(null);
-    setNewVin('');
-    setNewReg('');
-    setNewModel('');
-    setNewPrice('');
-    setNewPurpose('Resale');
-    setNewCbcaApplied(false);
-    setNewRegBookUrl('');
+    setVehicleForm(emptyVehicleForm);
     setShowAddModal(true);
   };
 
@@ -486,13 +454,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
   const openEditVehicleModal = (vehicle: LandedCostSummary) => {
     const vehicleRecord = toVehicleEditorRecord(vehicle);
     setEditingVehicle(vehicleRecord);
-    setNewVin(vehicleRecord.vin_number);
-    setNewReg(vehicleRecord.reg_number || '');
-    setNewModel(vehicleRecord.make_model);
-    setNewPrice(vehicleRecord.purchase_price_gbp.toString());
-    setNewPurpose(vehicleRecord.purpose || 'Resale');
-    setNewCbcaApplied(vehicleRecord.cbca_applied || false);
-    setNewRegBookUrl(vehicleRecord.reg_book_url || '');
+    setVehicleForm({
+      vin: vehicleRecord.vin_number,
+      reg: vehicleRecord.reg_number || '',
+      model: vehicleRecord.make_model,
+      price: vehicleRecord.purchase_price_gbp.toString(),
+      purpose: vehicleRecord.purpose || 'Resale',
+      cbcaApplied: vehicleRecord.cbca_applied || false,
+      regBookUrl: vehicleRecord.reg_book_url || '',
+      currency: 'GBP',
+    });
     setShowAddModal(true);
   };
 
@@ -1020,7 +991,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
             >
               Add Expense
             </Button>
-            <Button type="button" onClick={openAddVehicleModal} leftIcon={<Car size={20} />}>
+            <Button type="button" onClick={openAddVehicleModal} leftIcon={<Plus size={16} />}>
               Add Vehicle
             </Button>
           </>
@@ -1251,10 +1222,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
         onClose={() => {
           setShowAddModal(false);
           setEditingVehicle(null);
+          setVehicleForm(emptyVehicleForm);
         }}
         onSubmit={handleSaveVehicle}
-        form={vehicleFormValue}
+        form={vehicleForm}
         onChange={handleVehicleFormChange}
+        isSubmitting={isSubmittingVehicle}
       />
 
       <ExpenseEntryModal

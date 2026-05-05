@@ -198,6 +198,10 @@ textarea {
 }
 
 /* ─── Buttons: rounded, brand-amber focus ring ────────────────────────────── */
+/* Tailwind's preflight isn't imported in this project, so we explicitly
+   neutralise the user-agent button chrome (gray fill, beveled border,
+   OS-native rendering) here. Without these resets, any <button> that
+   doesn't itself set background/border falls back to native styling. */
 button {
   font-family: inherit;
   letter-spacing: 0;
@@ -208,6 +212,11 @@ button {
   justify-content: center;
   gap: 0.5rem;
   border-radius: 6px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
   cursor: pointer;
   transition:
     background-color 150ms ease,

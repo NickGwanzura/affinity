@@ -14,7 +14,7 @@ import { Button, InsightPanel, MetricBarList, RankedMetricList, DashboardCard } 
 import { toVehicleEditorRecord, type VehicleEditorRecord } from '../../utils/dashboardViewModels';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from '../shared/ExpenseEntryModal';
 import VehicleFormModal, { type VehicleFormValue } from '../shared/VehicleFormModal';
-import { DollarSign, Car, ArrowUp, Trash2, Pencil } from 'lucide-react';
+import { DollarSign, Car, ArrowUp, Trash2, Pencil, Plus } from 'lucide-react';
 
 export const VehiclesTab: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
@@ -26,15 +26,20 @@ export const VehiclesTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Vehicle modal state
+  const emptyVehicleForm: VehicleFormValue = {
+    vin: '',
+    reg: '',
+    model: '',
+    price: '',
+    purpose: 'Resale',
+    cbcaApplied: false,
+    regBookUrl: '',
+    currency: 'GBP',
+  };
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<VehicleEditorRecord | null>(null);
-  const [newVin, setNewVin] = useState('');
-  const [newReg, setNewReg] = useState('');
-  const [newModel, setNewModel] = useState('');
-  const [newPrice, setNewPrice] = useState('');
-  const [newPurpose, setNewPurpose] = useState<'Resale' | 'Client'>('Resale');
-  const [newCbcaApplied, setNewCbcaApplied] = useState(false);
-  const [newRegBookUrl, setNewRegBookUrl] = useState('');
+  const [vehicleForm, setVehicleForm] = useState<VehicleFormValue>(emptyVehicleForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Delete dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -78,24 +83,8 @@ export const VehiclesTab: React.FC = () => {
     if (updates.driverName !== undefined) setExpenseDriver(updates.driverName);
   };
 
-  const vehicleFormValue: VehicleFormValue = {
-    vin: newVin,
-    reg: newReg,
-    model: newModel,
-    price: newPrice,
-    purpose: newPurpose,
-    cbcaApplied: newCbcaApplied,
-    regBookUrl: newRegBookUrl,
-  };
-
   const handleVehicleFormChange = (updates: Partial<VehicleFormValue>) => {
-    if (updates.vin !== undefined) setNewVin(updates.vin);
-    if (updates.reg !== undefined) setNewReg(updates.reg);
-    if (updates.model !== undefined) setNewModel(updates.model);
-    if (updates.price !== undefined) setNewPrice(updates.price);
-    if (updates.purpose !== undefined) setNewPurpose(updates.purpose);
-    if (updates.cbcaApplied !== undefined) setNewCbcaApplied(updates.cbcaApplied);
-    if (updates.regBookUrl !== undefined) setNewRegBookUrl(updates.regBookUrl);
+    setVehicleForm(prev => ({ ...prev, ...updates }));
   };
 
   const fetchData = async () => {
@@ -125,26 +114,23 @@ export const VehiclesTab: React.FC = () => {
 
   const openAddVehicleModal = () => {
     setEditingVehicle(null);
-    setNewVin('');
-    setNewReg('');
-    setNewModel('');
-    setNewPrice('');
-    setNewPurpose('Resale');
-    setNewCbcaApplied(false);
-    setNewRegBookUrl('');
+    setVehicleForm(emptyVehicleForm);
     setShowAddModal(true);
   };
 
   const openEditVehicleModal = (vehicle: LandedCostSummary) => {
     const vehicleRecord = toVehicleEditorRecord(vehicle);
     setEditingVehicle(vehicleRecord);
-    setNewVin(vehicleRecord.vin_number);
-    setNewReg(vehicleRecord.reg_number || '');
-    setNewModel(vehicleRecord.make_model);
-    setNewPrice(vehicleRecord.purchase_price_gbp.toString());
-    setNewPurpose(vehicleRecord.purpose || 'Resale');
-    setNewCbcaApplied(vehicleRecord.cbca_applied || false);
-    setNewRegBookUrl(vehicleRecord.reg_book_url || '');
+    setVehicleForm({
+      vin: vehicleRecord.vin_number,
+      reg: vehicleRecord.reg_number || '',
+      model: vehicleRecord.make_model,
+      price: vehicleRecord.purchase_price_gbp.toString(),
+      purpose: vehicleRecord.purpose || 'Resale',
+      cbcaApplied: vehicleRecord.cbca_applied || false,
+      regBookUrl: vehicleRecord.reg_book_url || '',
+      currency: 'GBP',
+    });
     setShowAddModal(true);
   };
 
@@ -159,42 +145,38 @@ export const VehiclesTab: React.FC = () => {
 
   const handleSaveVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       const payload = {
-        vin_number: newVin,
-        reg_number: newReg,
-        make_model: newModel,
-        purchase_price_gbp: parseFloat(newPrice),
+        vin_number: vehicleForm.vin,
+        reg_number: vehicleForm.reg,
+        make_model: vehicleForm.model,
+        purchase_price_gbp: parseFloat(vehicleForm.price),
         status: editingVehicle ? editingVehicle.status : 'UK',
-        purpose: newPurpose,
-        cbca_applied: newCbcaApplied,
-        reg_book_url: newRegBookUrl || null,
+        purpose: vehicleForm.purpose,
+        cbca_applied: vehicleForm.cbcaApplied,
+        reg_book_url: vehicleForm.regBookUrl || null,
       };
       if (editingVehicle) {
         await dataService.updateVehicle(editingVehicle.id, payload);
       } else {
         await dataService.addVehicle(payload);
       }
-      setNewVin('');
-      setNewReg('');
-      setNewModel('');
-      setNewPrice('');
-      setNewPurpose('Resale');
-      setNewCbcaApplied(false);
-      setNewRegBookUrl('');
+      notifySuccess(editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!');
+      setVehicleForm(emptyVehicleForm);
       setEditingVehicle(null);
       setShowAddModal(false);
-      try {
-        await fetchData();
-        notifySuccess(
-          editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle added successfully!'
-        );
-      } catch {
+
+      // Background refresh — fire-and-forget, surface a softer warning if it fails
+      fetchData().catch((refreshError) => {
+        console.error('[VehiclesTab] refresh failed:', refreshError);
         notifyWarning('Vehicle saved but failed to refresh list. Please refresh the page.');
-      }
+      });
     } catch (err: any) {
       console.error('[VehiclesTab] handleSaveVehicle error:', err);
-      notifyError(err.message || 'Failed to save vehicle. Please try again.');
+      notifyError(err?.message || 'Failed to save vehicle. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -300,7 +282,7 @@ export const VehiclesTab: React.FC = () => {
         >
           Add Expense
         </Button>
-        <Button type="button" onClick={openAddVehicleModal} leftIcon={<Car size={20} />}>
+        <Button type="button" onClick={openAddVehicleModal} leftIcon={<Plus size={16} />}>
           Add Vehicle
         </Button>
       </div>
@@ -521,10 +503,12 @@ export const VehiclesTab: React.FC = () => {
         onClose={() => {
           setShowAddModal(false);
           setEditingVehicle(null);
+          setVehicleForm(emptyVehicleForm);
         }}
         onSubmit={handleSaveVehicle}
-        form={vehicleFormValue}
+        form={vehicleForm}
         onChange={handleVehicleFormChange}
+        isSubmitting={isSubmitting}
       />
 
       <ExpenseEntryModal
