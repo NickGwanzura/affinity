@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ZodError } from 'zod';
-import { Button, Tag, InlineNotification } from '../ui';
+import { Button, Tag, InlineNotification, Modal, TextInput, Select, SelectItem } from '../ui';
 import { Mail, RefreshCw, Trash2, Copy } from 'lucide-react';
 import { UserInvite, UserRole } from '../../types';
 import { dataService } from '../../services/dataService';
@@ -309,149 +309,60 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
       </div>
 
       {/* Invite Modal */}
-      {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 backdrop-blur-sm cursor-pointer"
-            style={{ background: 'rgba(22, 22, 22, 0.4)' }}
-            onClick={() => setShowInviteModal(false)}
-          ></div>
-          <div
-            className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
-            style={{
-              background: 'var(--cds-layer-01, #ffffff)',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-            }}
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div
-                className="w-12 h-12 flex items-center justify-center"
-                style={{
-                  borderRadius: '50%',
-                  background: 'var(--cds-tag-background-green, #d1fae5)',
-                }}
-              >
-                <svg
-                  className="w-6 h-6"
-                  style={{ color: 'var(--cds-support-success, #10b981)' }}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3
-                  className="text-2xl font-black"
-                  style={{ color: 'var(--cds-text-primary, #18181b)' }}
-                >
-                  Send Invitation
-                </h3>
-                <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
-                  Invite a new team member via email
-                </p>
-              </div>
-            </div>
-            <form onSubmit={handleSendInvite} className="space-y-4">
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Full Name
-                </label>
-                <input
-                  required
-                  type="text"
-                  value={inviteForm.name}
-                  onChange={e => setInviteForm({ ...inviteForm, name: e.target.value })}
-                  placeholder="John Doe"
-                  className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Email Address
-                </label>
-                <input
-                  required
-                  type="email"
-                  value={inviteForm.email}
-                  onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })}
-                  placeholder="john@company.com"
-                  className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Role
-                </label>
-                <select
-                  required
-                  value={inviteForm.role}
-                  onChange={e => setInviteForm({ ...inviteForm, role: e.target.value as UserRole })}
-                  className="w-full px-4 py-3 outline-none"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                >
-                  <option value="Driver">Driver</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Accountant">Accountant</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </div>
-              <div
-                className="p-4"
-                style={{
-                  background: 'var(--cds-layer-selected-01, #e5f6ff)',
-                  border: '1px solid var(--cds-border-subtle, #d6d3d1)',
-                }}
-              >
-                <p
-                  className="text-xs font-medium"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  📧 An email invitation will be sent with a secure signup link. The invitation
-                  expires in 7 days.
-                </p>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowInviteModal(false)}
-                  className="flex-1 px-4 py-3 font-bold text-sm"
-                  style={{
-                    color: 'var(--cds-text-secondary, #52525b)',
-                    border: '1px solid var(--cds-border-subtle, #d6d3d1)',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 font-bold text-sm text-white"
-                  style={{ background: 'var(--cds-support-success, #10b981)' }}
-                >
-                  Send Invite
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        title="Send Invitation"
+        label="Team member"
+        size="sm"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" type="button" onClick={() => setShowInviteModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" form="invite-form" leftIcon={<Mail size={14} />}>
+              Send Invite
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="invite-form" onSubmit={handleSendInvite} className="flex flex-col gap-5">
+          <TextInput
+            id="invite-name"
+            labelText="Full Name"
+            placeholder="John Doe"
+            autoFocus
+            value={inviteForm.name}
+            onChange={e => setInviteForm({ ...inviteForm, name: e.target.value })}
+          />
+          <TextInput
+            id="invite-email"
+            type="email"
+            labelText="Email Address"
+            placeholder="john@company.com"
+            autoComplete="email"
+            value={inviteForm.email}
+            onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })}
+          />
+          <Select
+            id="invite-role"
+            labelText="Role"
+            value={inviteForm.role}
+            onChange={e => setInviteForm({ ...inviteForm, role: e.target.value as UserRole })}
+          >
+            <SelectItem value="Driver" text="Driver" />
+            <SelectItem value="Manager" text="Manager" />
+            <SelectItem value="Accountant" text="Accountant" />
+            <SelectItem value="Admin" text="Admin" />
+          </Select>
+          <InlineNotification
+            kind="info"
+            title="Note:"
+            subtitle="An invitation will be created with a secure signup link that expires in 7 days."
+            hideCloseButton
+          />
+        </form>
+      </Modal>
     </div>
   );
 };

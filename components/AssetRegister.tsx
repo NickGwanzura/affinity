@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Asset, AssetRequest, AssetStatus, AssetRequestStatus } from '../types';
-import { Button, StatCard, EmptyState, StatusBadge, SkeletonTable, defaultIcons, DashboardPageHeader, DashboardSection } from './ui';
+import { Button, Modal, StatCard, EmptyState, StatusBadge, SkeletonTable, defaultIcons, DashboardPageHeader, DashboardSection } from './ui';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 import { api } from '../services/apiClient';
@@ -620,236 +620,236 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       )}
 
       {/* Asset Modal */}
-      {showAssetModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2">
-          <div className="bg-white  p-4 sm:p-6 w-full max-w-md max-h-[95vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-4">
-              {editingAsset ? 'Edit Asset' : 'Add Asset'}
-            </h3>
-            <form onSubmit={handleAssetSubmit} className="space-y-3 sm:space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">Name *</label>
-                <input
-                  type="text"
-                  value={assetForm.name}
-                  onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">Category *</label>
-                <select
-                  value={assetForm.category}
-                  onChange={(e) => setAssetForm({ ...assetForm, category: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                  required
-                >
-                  <option value="">Select…</option>
-                  <option value="Electronics">Electronics</option>
-                  <option value="Equipment">Equipment</option>
-                  <option value="Tools">Tools</option>
-                  <option value="Office Equipment">Office Equipment</option>
-                  <option value="Furniture">Furniture</option>
-                  <option value="Vehicles">Vehicles</option>
-                  <option value="Safety">Safety</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">Description</label>
-                <textarea
-                  value={assetForm.description}
-                  onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                  rows={2}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">Serial #</label>
-                <input
-                  type="text"
-                  value={assetForm.serial_number}
-                  onChange={(e) => setAssetForm({ ...assetForm, serial_number: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700">Status</label>
-                  <select
-                    value={assetForm.status}
-                    onChange={(e) => setAssetForm({ ...assetForm, status: e.target.value as AssetStatus })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                  >
-                    <option value="Available">Available</option>
-                    <option value="Borrowed">Borrowed</option>
-                    <option value="Under Maintenance">Maintenance</option>
-                    <option value="Retired">Retired</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700">Condition</label>
-                  <select
-                    value={assetForm.condition}
-                    onChange={(e) => setAssetForm({ ...assetForm, condition: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                  >
-                    <option value="Excellent">Excellent</option>
-                    <option value="Good">Good</option>
-                    <option value="Fair">Fair</option>
-                    <option value="Poor">Poor</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">Location</label>
-                <input
-                  type="text"
-                  value={assetForm.location}
-                  onChange={(e) => setAssetForm({ ...assetForm, location: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Purchase Date</label>
-                  <input
-                    type="date"
-                    value={assetForm.purchase_date}
-                    onChange={(e) => setAssetForm({ ...assetForm, purchase_date: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Value (USD)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={assetForm.purchase_value}
-                    onChange={(e) => setAssetForm({ ...assetForm, purchase_value: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 sticky bottom-0 bg-white pt-4 border-t">
-                <Button type="button" variant="secondary" onClick={() => { setShowAssetModal(false); setEditingAsset(null); }} className="w-full sm:w-auto py-3">
-                  Cancel
-                </Button>
-                <Button type="submit" className="w-full sm:w-auto py-3">
-                  {editingAsset ? 'Save' : 'Create'}
-                </Button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showAssetModal}
+        onClose={() => { setShowAssetModal(false); setEditingAsset(null); }}
+        title={editingAsset ? 'Edit Asset' : 'Add Asset'}
+        size="sm"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="secondary" onClick={() => { setShowAssetModal(false); setEditingAsset(null); }}>
+              Cancel
+            </Button>
+            <Button type="submit" form="asset-form">
+              {editingAsset ? 'Save' : 'Create'}
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="asset-form" onSubmit={handleAssetSubmit} className="space-y-3 sm:space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700">Name *</label>
+            <input
+              type="text"
+              value={assetForm.name}
+              onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700">Category *</label>
+            <select
+              value={assetForm.category}
+              onChange={(e) => setAssetForm({ ...assetForm, category: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+              required
+            >
+              <option value="">Select…</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Equipment">Equipment</option>
+              <option value="Tools">Tools</option>
+              <option value="Office Equipment">Office Equipment</option>
+              <option value="Furniture">Furniture</option>
+              <option value="Vehicles">Vehicles</option>
+              <option value="Safety">Safety</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700">Description</label>
+            <textarea
+              value={assetForm.description}
+              onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+              rows={2}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700">Serial #</label>
+            <input
+              type="text"
+              value={assetForm.serial_number}
+              onChange={(e) => setAssetForm({ ...assetForm, serial_number: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700">Status</label>
+              <select
+                value={assetForm.status}
+                onChange={(e) => setAssetForm({ ...assetForm, status: e.target.value as AssetStatus })}
+                className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+              >
+                <option value="Available">Available</option>
+                <option value="Borrowed">Borrowed</option>
+                <option value="Under Maintenance">Maintenance</option>
+                <option value="Retired">Retired</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700">Condition</label>
+              <select
+                value={assetForm.condition}
+                onChange={(e) => setAssetForm({ ...assetForm, condition: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+              >
+                <option value="Excellent">Excellent</option>
+                <option value="Good">Good</option>
+                <option value="Fair">Fair</option>
+                <option value="Poor">Poor</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700">Location</label>
+            <input
+              type="text"
+              value={assetForm.location}
+              onChange={(e) => setAssetForm({ ...assetForm, location: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Purchase Date</label>
+              <input
+                type="date"
+                value={assetForm.purchase_date}
+                onChange={(e) => setAssetForm({ ...assetForm, purchase_date: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Value (USD)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={assetForm.purchase_value}
+                onChange={(e) => setAssetForm({ ...assetForm, purchase_value: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
+              />
+            </div>
+          </div>
+        </form>
+      </Modal>
 
       {/* Request Modal */}
-      {showRequestModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2">
-          <div className="bg-white  p-4 sm:p-6 w-full max-w-md max-h-[95vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-4">
-              {editingRequest ? 'Edit Request' : 'New Request'}
-            </h3>
-            <form onSubmit={handleRequestSubmit} className="space-y-3 sm:space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">Asset *</label>
-                <select
-                  value={requestForm.asset_id}
-                  onChange={(e) => setRequestForm({ ...requestForm, asset_id: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                  required
-                  disabled={!!editingRequest}
-                >
-                  <option value="">Select asset</option>
-                  {assets.map((asset) => (
-                    <option key={asset.id} value={asset.id} disabled={asset.status !== 'Available'}>
-                      {asset.name} ({asset.status})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">Requested By *</label>
-                <input
-                  type="text"
-                  value={requestForm.requested_by}
-                  onChange={(e) => setRequestForm({ ...requestForm, requested_by: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    value={requestForm.requester_email}
-                    onChange={(e) => setRequestForm({ ...requestForm, requester_email: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Department</label>
-                  <input
-                    type="text"
-                    value={requestForm.requester_department}
-                    onChange={(e) => setRequestForm({ ...requestForm, requester_department: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Requested Take Date</label>
-                  <input
-                    type="date"
-                    value={requestForm.requested_take_date}
-                    onChange={(e) => setRequestForm({ ...requestForm, requested_take_date: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Expected Return Date</label>
-                  <input
-                    type="date"
-                    value={requestForm.expected_return_date}
-                    onChange={(e) => setRequestForm({ ...requestForm, expected_return_date: e.target.value })}
-                    className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Purpose</label>
-                <textarea
-                  value={requestForm.purpose}
-                  onChange={(e) => setRequestForm({ ...requestForm, purpose: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-                  rows={2}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Notes</label>
-                <textarea
-                  value={requestForm.notes}
-                  onChange={(e) => setRequestForm({ ...requestForm, notes: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-                  rows={2}
-                />
-              </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <Button type="button" variant="secondary" onClick={() => { setShowRequestModal(false); setEditingRequest(null); }}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {editingRequest ? 'Update' : 'Create'} Request
-                </Button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showRequestModal}
+        onClose={() => { setShowRequestModal(false); setEditingRequest(null); }}
+        title={editingRequest ? 'Edit Request' : 'New Request'}
+        size="sm"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="secondary" onClick={() => { setShowRequestModal(false); setEditingRequest(null); }}>
+              Cancel
+            </Button>
+            <Button type="submit" form="request-form">
+              {editingRequest ? 'Update' : 'Create'} Request
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="request-form" onSubmit={handleRequestSubmit} className="space-y-3 sm:space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700">Asset *</label>
+            <select
+              value={requestForm.asset_id}
+              onChange={(e) => setRequestForm({ ...requestForm, asset_id: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+              required
+              disabled={!!editingRequest}
+            >
+              <option value="">Select asset</option>
+              {assets.map((asset) => (
+                <option key={asset.id} value={asset.id} disabled={asset.status !== 'Available'}>
+                  {asset.name} ({asset.status})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700">Requested By *</label>
+            <input
+              type="text"
+              value={requestForm.requested_by}
+              onChange={(e) => setRequestForm({ ...requestForm, requested_by: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700">Email</label>
+              <input
+                type="email"
+                value={requestForm.requester_email}
+                onChange={(e) => setRequestForm({ ...requestForm, requester_email: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Department</label>
+              <input
+                type="text"
+                value={requestForm.requester_department}
+                onChange={(e) => setRequestForm({ ...requestForm, requester_department: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Requested Take Date</label>
+              <input
+                type="date"
+                value={requestForm.requested_take_date}
+                onChange={(e) => setRequestForm({ ...requestForm, requested_take_date: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Expected Return Date</label>
+              <input
+                type="date"
+                value={requestForm.expected_return_date}
+                onChange={(e) => setRequestForm({ ...requestForm, expected_return_date: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Purpose</label>
+            <textarea
+              value={requestForm.purpose}
+              onChange={(e) => setRequestForm({ ...requestForm, purpose: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
+              rows={2}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Notes</label>
+            <textarea
+              value={requestForm.notes}
+              onChange={(e) => setRequestForm({ ...requestForm, notes: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
+              rows={2}
+            />
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

@@ -10,6 +10,7 @@ import {
 } from '../../types';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../Toast';
+import { useConfirm } from '../shared/ConfirmModal';
 import { Button, InsightPanel, MetricBarList, RankedMetricList, DashboardCard } from '../ui';
 import { toVehicleEditorRecord, type VehicleEditorRecord } from '../../utils/dashboardViewModels';
 import ExpenseEntryModal, { type ExpenseEntryFormValue } from '../shared/ExpenseEntryModal';
@@ -18,6 +19,7 @@ import { DollarSign, Car, ArrowUp, Trash2, Pencil, Plus } from 'lucide-react';
 
 export const VehiclesTab: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [summaries, setSummaries] = useState<LandedCostSummary[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -40,14 +42,6 @@ export const VehiclesTab: React.FC = () => {
   const [editingVehicle, setEditingVehicle] = useState<VehicleEditorRecord | null>(null);
   const [vehicleForm, setVehicleForm] = useState<VehicleFormValue>(emptyVehicleForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Delete dialog state
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [vehicleToDelete, setVehicleToDelete] = useState<{
-    id: string;
-    make_model: string;
-    vin_number: string;
-  } | null>(null);
 
   // Expense modal state
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -134,13 +128,26 @@ export const VehiclesTab: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const openDeleteDialog = (vehicle: LandedCostSummary) => {
-    setVehicleToDelete({
-      id: vehicle.vehicle_id,
-      make_model: vehicle.make_model,
-      vin_number: vehicle.vin_number,
+  const openDeleteDialog = async (vehicle: LandedCostSummary) => {
+    const ok = await confirm({
+      title: 'Delete Vehicle?',
+      message: `This will permanently delete "${vehicle.make_model}" (VIN: ${vehicle.vin_number}). All associated expenses will also be deleted.`,
+      confirmLabel: 'Delete Vehicle',
+      confirmVariant: 'danger',
     });
-    setShowDeleteDialog(true);
+    if (!ok) return;
+    try {
+      await dataService.deleteVehicle(vehicle.vehicle_id);
+      await fetchData();
+      notifySuccess('Vehicle deleted successfully.');
+    } catch (err: any) {
+      console.error('[VehiclesTab] handleDeleteVehicle error:', err);
+      if (err.name === 'ValidationError') {
+        notifyWarning(err.message);
+      } else {
+        notifyError('Failed to delete vehicle. Please try again.');
+      }
+    }
   };
 
   const handleSaveVehicle = async (e: React.FormEvent) => {
@@ -177,26 +184,6 @@ export const VehiclesTab: React.FC = () => {
       notifyError(err?.message || 'Failed to save vehicle. Please try again.');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleDeleteVehicle = async () => {
-    if (!vehicleToDelete) return;
-    try {
-      await dataService.deleteVehicle(vehicleToDelete.id);
-      setShowDeleteDialog(false);
-      setVehicleToDelete(null);
-      await fetchData();
-      notifySuccess('Vehicle deleted successfully.');
-    } catch (err: any) {
-      console.error('[VehiclesTab] handleDeleteVehicle error:', err);
-      if (err.name === 'ValidationError') {
-        notifyWarning(err.message);
-      } else {
-        notifyError('Failed to delete vehicle. Please try again.');
-      }
-      setShowDeleteDialog(false);
-      setVehicleToDelete(null);
     }
   };
 
@@ -524,52 +511,8 @@ export const VehiclesTab: React.FC = () => {
         accent="green"
       />
 
-      {/* Delete Vehicle Confirmation - Custom Modal */}
-      {showDeleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white w-full max-w-lg mx-4 shadow-lg">
-            <div className="px-6 py-4 border-b border-[#e7e5e4]">
-              <h3 className="text-lg font-semibold text-[#18181b]">Delete Vehicle?</h3>
-            </div>
-            <div className="px-6 py-6 flex flex-col gap-4">
-              {vehicleToDelete && (
-                <>
-                  <p className="text-[#18181b]">
-                    Are you sure you want to delete <strong>{vehicleToDelete.make_model}</strong>?
-                  </p>
-                  <p className="font-mono text-sm text-[#52525b]">
-                    VIN: {vehicleToDelete.vin_number}
-                  </p>
-                  <div className="p-4" style={{ background: '#f59e0b' }}>
-                    <p className="m-0 text-sm font-semibold text-[#18181b]">
-                      Warning: This action cannot be undone. All associated expenses will also be
-                      deleted.
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="px-6 py-4 flex justify-end gap-2 bg-[#ffffff]">
-              <button
-                type="button"
-                onClick={() => setShowDeleteDialog(false)}
-                className="px-4 py-2 text-sm font-semibold text-[#18181b] bg-transparent border border-[#d6d3d1] hover:bg-[#f5f5f4] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteVehicle}
-                className="px-4 py-2 text-sm font-semibold text-white bg-[#dc2626] hover:bg-red-700 transition-colors"
-              >
-                Delete Vehicle
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <ToastContainer />
+      <ConfirmDialog />
     </div>
   );
 };

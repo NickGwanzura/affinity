@@ -177,8 +177,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             variant="primary"
             onClick={() => onSubmit()}
             disabled={!canSubmit}
+            isLoading={isSubmitting}
           >
-            {isSubmitting ? 'Saving…' : editingPayment ? 'Save Changes' : 'Record Payment'}
+            {editingPayment ? 'Save Changes' : 'Record Payment'}
           </Button>
         </div>
       }
@@ -186,7 +187,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       <Stack gap={7}>
         {/* ── Client ──────────────────────────────────────────────── */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+          <h2 className="text-base font-semibold text-gray-900 mb-3">
             Client
           </h2>
           <Select
@@ -212,71 +213,43 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* ── Client Balance ──────────────────────────────────────── */}
         {clientBalance && formData.client_name && (
-          <div
-            style={{
-              padding: '1rem',
-              backgroundColor: '#ffffff',
-              border: '1px solid #e7e5e4',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '0.5rem',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  color: '#52525b',
-                }}
-              >
+          <div className="bg-white border border-stone-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.05em] text-zinc-600">
                 Client Balance Summary
               </span>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  color: '#52525b',
-                }}
-              >
+              <span className="text-xs text-zinc-600">
                 Opening + Invoiced - Paid
               </span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+            <div className="grid grid-cols-4 gap-2 text-center">
               <div>
-                <div style={{ fontSize: '0.75rem', color: '#52525b' }}>Opening</div>
-                <div style={{ fontWeight: 700 }}>{formatMoney(clientBalance.openingBalance, clientBalance.currency)}</div>
+                <div className="text-xs text-zinc-600">Opening</div>
+                <div className="font-bold">{formatMoney(clientBalance.openingBalance, clientBalance.currency)}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: '#52525b' }}>Invoiced</div>
-                <div style={{ fontWeight: 700 }}>{formatMoney(clientBalance.totalInvoiced, clientBalance.currency)}</div>
+                <div className="text-xs text-zinc-600">Invoiced</div>
+                <div className="font-bold">{formatMoney(clientBalance.totalInvoiced, clientBalance.currency)}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: '#52525b' }}>Paid</div>
-                <div style={{ fontWeight: 700, color: '#10b981' }}>
+                <div className="text-xs text-zinc-600">Paid</div>
+                <div className="font-bold text-emerald-500">
                   {formatMoney(clientBalance.totalPaid, clientBalance.currency)}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: '#52525b' }}>
+                <div className="text-xs text-zinc-600">
                   {clientBalance.balance > 0 ? 'Due' : clientBalance.credit > 0 ? 'Credit' : 'Balance'}
                 </div>
                 <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: '1.125rem',
-                    color:
-                      clientBalance.balance > 0
-                        ? '#dc2626'
-                        : clientBalance.credit > 0
-                          ? '#10b981'
-                          : '#18181b',
-                  }}
+                  className={[
+                    'text-lg font-bold',
+                    clientBalance.balance > 0
+                      ? 'text-red-600'
+                      : clientBalance.credit > 0
+                        ? 'text-emerald-500'
+                        : 'text-zinc-900',
+                  ].join(' ')}
                 >
                   {clientBalance.balance > 0
                     ? formatMoney(clientBalance.balance, clientBalance.currency)
@@ -287,17 +260,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
             </div>
             {clientBalance.balance <= 0 && clientBalance.credit === 0 && (
-              <div
-                style={{
-                  marginTop: '0.5rem',
-                  padding: '0.5rem',
-                  backgroundColor: '#fef3c7',
-                  fontSize: '0.75rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                }}
-              >
+              <div className="mt-2 p-2 bg-amber-100 text-xs flex items-center gap-2">
                 <AlertTriangle size={14} />
                 Client has no outstanding balance. Payment will be recorded as credit.
               </div>
@@ -307,7 +270,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* ── Payment Details ─────────────────────────────────────── */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+          <h2 className="text-base font-semibold text-gray-900 mb-3">
             Payment Details
           </h2>
 
@@ -365,15 +328,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* ── Allocation Summary ──────────────────────────────────── */}
         {paymentAmount > 0 && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '1px',
-              background: '#e7e5e4',
-              border: '1px solid #e7e5e4',
-            }}
-          >
+          <div className="grid grid-cols-3 gap-px bg-stone-200 border border-stone-200">
             <SummaryCell label="Payment Total" value={formatMoney(paymentAmount, formData.currency)} emphasis />
             <SummaryCell label="Allocated" value={formatMoney(totalAllocated, formData.currency)} />
             <SummaryCell
@@ -397,19 +352,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         )}
 
         {isOverAllocated && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              background: '#fee2e2',
-              borderLeft: '3px solid #dc2626',
-              color: '#dc2626',
-            }}
-          >
+          <div className="flex items-center gap-2 py-3 px-4 bg-red-100 border-l-[3px] border-red-600 text-red-600">
             <AlertTriangle size={16} />
-            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+            <span className="text-sm font-semibold">
               Allocated amount exceeds payment total
             </span>
           </div>
@@ -418,23 +363,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* ── Allocations ─────────────────────────────────────────── */}
         {formData.client_name && (
           <section>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '0.75rem',
-              }}
-            >
+            <div className="flex justify-between items-center mb-3">
               <h2 className="text-base font-semibold text-gray-900">
                 Allocations{' '}
-                <span
-                  style={{
-                    fontWeight: 400,
-                    fontSize: '0.75rem',
-                    color: '#52525b',
-                  }}
-                >
+                <span className="font-normal text-xs text-zinc-600">
                   (Optional)
                 </span>
               </h2>
@@ -449,13 +381,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </Button>
             </div>
 
-            <p
-              style={{
-                fontSize: '0.75rem',
-                color: '#52525b',
-                marginBottom: '0.75rem',
-              }}
-            >
+            <p className="text-xs text-zinc-600 mb-3">
               Split this payment across open invoices.
             </p>
 
@@ -471,11 +397,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 return (
                   <div
                     key={`${allocation.invoice_id || 'new'}-${index}`}
-                    style={{
-                      padding: '0.75rem',
-                      backgroundColor: '#ffffff',
-                      borderLeft: '3px solid #d6d3d1',
-                    }}
+                    className="p-3 bg-white border-l-[3px] border-stone-300"
                   >
                     <Grid narrow>
                       <Column sm={4} md={5} lg={8}>
@@ -509,25 +431,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                           min={0}
                         />
                         {selectedInvoice && (
-                          <p
-                            style={{
-                              fontSize: '0.75rem',
-                              color: '#52525b',
-                              marginTop: '0.25rem',
-                            }}
-                          >
+                          <p className="text-xs text-zinc-600 mt-1">
                             Outstanding: {formatMoney(selectedInvoice.outstandingAmount, selectedInvoice.invoice.currency)}
                           </p>
                         )}
                       </Column>
-                      <Column sm={1} md={1} lg={2} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <Column sm={1} md={1} lg={2} className="flex items-end">
                         <IconButton
                           variant="ghost"
                           size="sm"
                           icon={<Trash2 size={14} />}
                           label="Remove allocation"
                           onClick={() => removeAllocation(index)}
-                          style={{ color: '#dc2626' }}
+                          className="text-red-600"
                         />
                       </Column>
                     </Grid>
@@ -537,56 +453,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </Stack>
 
             {/* Allocated Total */}
-            <div
-              style={{
-                marginTop: '0.75rem',
-                padding: '0.75rem 1rem',
-                backgroundColor: '#18181b',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span
-                style={{
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  color: '#52525b',
-                }}
-              >
+            <div className="mt-3 py-3 px-4 bg-zinc-900 flex justify-between items-center">
+              <span className="font-semibold text-sm text-zinc-600">
                 Allocated Total
               </span>
-              <span style={{ fontWeight: 700, color: '#ffffff' }}>
+              <span className="font-bold text-white">
                 {formatMoney(totalAllocated, formData.currency)}
               </span>
             </div>
 
             {/* No invoices available notice */}
             {allocationCandidates.length === 0 && (
-              <div
-                style={{
-                  marginTop: '0.75rem',
-                  padding: '0.75rem',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #d6d3d1',
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: '0.875rem',
-                    color: '#52525b',
-                  }}
-                >
+              <div className="mt-3 p-3 bg-white border border-stone-300">
+                <p className="text-sm text-zinc-600">
                   No pending invoices found for this client in {formData.currency}.
                 </p>
-                <p
-                  style={{
-                    marginTop: '0.25rem',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: '#f59e0b',
-                  }}
-                >
+                <p className="mt-1 text-sm font-semibold text-amber-500">
                   This payment will be recorded as UNALLOCATED (client credit).
                 </p>
               </div>
@@ -614,10 +496,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
 // ── Summary cell helper ─────────────────────────────────────────────────────
 
-const accentColor = {
-  error: '#dc2626',
-  success: '#10b981',
-  warning: '#8e4e00',
+const accentClasses = {
+  error: 'text-red-600',
+  success: 'text-emerald-500',
+  warning: 'text-amber-700',
 };
 
 const SummaryCell: React.FC<{
@@ -626,31 +508,16 @@ const SummaryCell: React.FC<{
   emphasis?: boolean;
   accent?: 'error' | 'success' | 'warning';
 }> = ({ label, value, emphasis, accent }) => (
-  <div
-    style={{
-      background: '#ffffff',
-      padding: '0.875rem 1rem',
-      textAlign: 'center',
-    }}
-  >
-    <div
-      style={{
-        fontSize: '0.6875rem',
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        color: '#52525b',
-        marginBottom: '0.25rem',
-      }}
-    >
+  <div className="bg-white px-4 py-3.5 text-center">
+    <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-zinc-600 mb-1">
       {label}
     </div>
     <div
-      style={{
-        fontSize: emphasis ? '1.125rem' : '0.9375rem',
-        fontWeight: 700,
-        color: accent ? accentColor[accent] : '#18181b',
-      }}
+      className={[
+        'font-bold',
+        emphasis ? 'text-lg' : 'text-[0.9375rem]',
+        accent ? accentClasses[accent] : 'text-zinc-900',
+      ].join(' ')}
     >
       {value}
     </div>

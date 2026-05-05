@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { api } from '../services/apiClient';
 import { useToast } from './Toast';
-import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection } from './ui';
+import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection, Modal } from './ui';
 import { Send, FileText, Plus, Edit, Trash2, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface EmailTemplate {
@@ -380,174 +380,167 @@ export const UpdateCenter: React.FC = () => {
       )}
       </DashboardSection>
 
-      {showTemplateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">
-              {editingTemplate ? 'Edit Template' : 'New Template'}
-            </h2>
-            <form onSubmit={handleSaveTemplate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Template Name</label>
-                <input
-                  type="text"
-                  value={templateForm.name}
-                  onChange={e => setTemplateForm({ ...templateForm, name: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border"
-                  placeholder="e.g. Monthly Statement"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <select
-                  value={templateForm.type}
-                  onChange={e => setTemplateForm({ ...templateForm, type: e.target.value })}
-                  className="w-full px-3 py-2 border"
-                >
-                  {templateTypes.map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Subject</label>
-                <input
-                  type="text"
-                  value={templateForm.subject}
-                  onChange={e => setTemplateForm({ ...templateForm, subject: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border"
-                  placeholder="e.g. Your Monthly Statement from Affinity Logistics"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Body (HTML)</label>
-                <textarea
-                  value={templateForm.body}
-                  onChange={e => setTemplateForm({ ...templateForm, body: e.target.value })}
-                  required
-                  rows={10}
-                  className="w-full px-3 py-2 border font-mono text-sm"
-                  placeholder="<html>...</html>"
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowTemplateModal(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="flex-1">
-                  {editingTemplate ? 'Save Changes' : 'Create Template'}
-                </Button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        title={editingTemplate ? 'Edit Template' : 'New Template'}
+        label="Email template"
+        size="md"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" type="button" onClick={() => setShowTemplateModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" form="template-form">
+              {editingTemplate ? 'Save Changes' : 'Create Template'}
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="template-form" onSubmit={handleSaveTemplate} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Template Name</label>
+            <input
+              type="text"
+              value={templateForm.name}
+              onChange={e => setTemplateForm({ ...templateForm, name: e.target.value })}
+              required
+              className="w-full px-3 py-2 border"
+              placeholder="e.g. Monthly Statement"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Type</label>
+            <select
+              value={templateForm.type}
+              onChange={e => setTemplateForm({ ...templateForm, type: e.target.value })}
+              className="w-full px-3 py-2 border"
+            >
+              {templateTypes.map(t => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Subject</label>
+            <input
+              type="text"
+              value={templateForm.subject}
+              onChange={e => setTemplateForm({ ...templateForm, subject: e.target.value })}
+              required
+              className="w-full px-3 py-2 border"
+              placeholder="e.g. Your Monthly Statement from Affinity Logistics"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Body (HTML)</label>
+            <textarea
+              value={templateForm.body}
+              onChange={e => setTemplateForm({ ...templateForm, body: e.target.value })}
+              required
+              rows={10}
+              className="w-full px-3 py-2 border font-mono text-sm"
+              placeholder="<html>...</html>"
+            />
+          </div>
+        </form>
+      </Modal>
 
-      {showSendModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Send Email</h2>
-            <form onSubmit={handleSendEmail} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Load Template (optional)</label>
-                <select
-                  value={sendForm.template_id}
-                  onChange={e => loadTemplate(e.target.value)}
-                  className="w-full px-3 py-2 border"
-                >
-                  <option value="">No template</option>
-                  {templates
-                    .filter(t => t.is_active)
-                    .map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} - {t.subject}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Or Select Client</label>
-                <select
-                  value=""
-                  onChange={e => selectClient(e.target.value)}
-                  className="w-full px-3 py-2 border"
-                >
-                  <option value="">Select client</option>
-                  {clients.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">To Email</label>
-                <input
-                  type="email"
-                  value={sendForm.to_email}
-                  onChange={e => setSendForm({ ...sendForm, to_email: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border"
-                  placeholder="client@example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">To Name</label>
-                <input
-                  type="text"
-                  value={sendForm.to_name}
-                  onChange={e => setSendForm({ ...sendForm, to_name: e.target.value })}
-                  className="w-full px-3 py-2 border"
-                  placeholder="Client Name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Subject</label>
-                <input
-                  type="text"
-                  value={sendForm.subject}
-                  onChange={e => setSendForm({ ...sendForm, subject: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Body (HTML)</label>
-                <textarea
-                  value={sendForm.body}
-                  onChange={e => setSendForm({ ...sendForm, body: e.target.value })}
-                  required
-                  rows={8}
-                  className="w-full px-3 py-2 border font-mono text-sm"
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowSendModal(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="flex-1">
-                  <Send size={16} />
-                  Send Email
-                </Button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showSendModal}
+        onClose={() => setShowSendModal(false)}
+        title="Send Email"
+        label="Compose message"
+        size="md"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" type="button" onClick={() => setShowSendModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" form="send-email-form" leftIcon={<Send size={16} />}>
+              Send Email
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="send-email-form" onSubmit={handleSendEmail} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Load Template (optional)</label>
+            <select
+              value={sendForm.template_id}
+              onChange={e => loadTemplate(e.target.value)}
+              className="w-full px-3 py-2 border"
+            >
+              <option value="">No template</option>
+              {templates
+                .filter(t => t.is_active)
+                .map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} - {t.subject}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Or Select Client</label>
+            <select
+              value=""
+              onChange={e => selectClient(e.target.value)}
+              className="w-full px-3 py-2 border"
+            >
+              <option value="">Select client</option>
+              {clients.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({c.email})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">To Email</label>
+            <input
+              type="email"
+              value={sendForm.to_email}
+              onChange={e => setSendForm({ ...sendForm, to_email: e.target.value })}
+              required
+              className="w-full px-3 py-2 border"
+              placeholder="client@example.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">To Name</label>
+            <input
+              type="text"
+              value={sendForm.to_name}
+              onChange={e => setSendForm({ ...sendForm, to_name: e.target.value })}
+              className="w-full px-3 py-2 border"
+              placeholder="Client Name"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Subject</label>
+            <input
+              type="text"
+              value={sendForm.subject}
+              onChange={e => setSendForm({ ...sendForm, subject: e.target.value })}
+              required
+              className="w-full px-3 py-2 border"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Body (HTML)</label>
+            <textarea
+              value={sendForm.body}
+              onChange={e => setSendForm({ ...sendForm, body: e.target.value })}
+              required
+              rows={8}
+              className="w-full px-3 py-2 border font-mono text-sm"
+            />
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

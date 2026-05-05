@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ZodError } from 'zod';
-import { Button, Tag, Tile, InlineNotification } from '../ui';
+import { Button, Tag, Tile, InlineNotification, Modal, TextInput, PasswordInput, Select, SelectItem } from '../ui';
 import { RefreshCw, Plus, KeyRound, Pencil, Trash2, Minus } from 'lucide-react';
 import { AppUser, UserRole } from '../../types';
 import { dataService } from '../../services/dataService';
 import { authService } from '../../services/authService';
 import { useToast } from '../Toast';
+import { useConfirm } from '../shared/ConfirmModal';
 import {
   setPasswordFormSchema,
   userCreateFormSchema,
@@ -19,18 +20,20 @@ interface UsersTabProps {
 
 export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
   const { showToast } = useToast();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>('');
 
   // User management state
   const [showUserModal, setShowUserModal] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSetPasswordModal, setShowSetPasswordModal] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<AppUser | null>(null);
   const [userToEdit, setUserToEdit] = useState<AppUser | null>(null);
   const [userToSetPassword, setUserToSetPassword] = useState<AppUser | null>(null);
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  const [isSubmittingUser, setIsSubmittingUser] = useState(false);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
@@ -85,6 +88,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmittingUser(true);
     try {
       userCreateFormSchema.parse(userForm);
       const newUser = await authService.createUser({
@@ -104,6 +108,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           ? getFirstValidationMessage(error)
           : error.message || 'Failed to create user. Please try again.';
       showToast(message, 'error');
+    } finally {
+      setIsSubmittingUser(false);
     }
   };
 
@@ -116,6 +122,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userToSetPassword) return;
+    setIsSubmittingPassword(true);
     try {
       setPasswordFormSchema.parse(passwordForm);
       await authService.adminSetUserPassword(userToSetPassword.id, passwordForm.newPassword);
@@ -130,16 +137,22 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           ? getFirstValidationMessage(error)
           : error.message || 'Failed to set password. Please try again.';
       showToast(message, 'error');
+    } finally {
+      setIsSubmittingPassword(false);
     }
   };
 
-  const handleDeleteUser = async () => {
-    if (!userToDelete) return;
+  const openDeleteDialog = async (user: AppUser) => {
+    const ok = await confirm({
+      title: 'Delete User?',
+      message: `Are you sure you want to delete "${user.name}" (${user.email})? This action cannot be undone.`,
+      confirmLabel: 'Delete User',
+      confirmVariant: 'danger',
+    });
+    if (!ok) return;
     try {
-      await dataService.deleteUser(userToDelete.id);
-      setUsers(users.filter(u => u.id !== userToDelete.id));
-      setShowDeleteDialog(false);
-      setUserToDelete(null);
+      await dataService.deleteUser(user.id);
+      setUsers(prev => prev.filter(u => u.id !== user.id));
       setStatusMessage('User deleted successfully.');
     } catch (error: any) {
       console.error('Error deleting user:', error);
@@ -148,14 +161,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
       } else {
         showToast('Failed to delete user. Please try again.', 'error');
       }
-      setShowDeleteDialog(false);
-      setUserToDelete(null);
     }
-  };
-
-  const openDeleteDialog = (user: AppUser) => {
-    setUserToDelete(user);
-    setShowDeleteDialog(true);
   };
 
   const openEditModal = (user: AppUser) => {
@@ -172,6 +178,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
   const handleEditUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userToEdit) return;
+    setIsSubmittingEdit(true);
     try {
       userEditFormSchema.parse(editForm);
       const updatedUser = await dataService.updateUser(userToEdit.id, editForm);
@@ -193,6 +200,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
       } else {
         showToast(error.message || 'Failed to update user. Please try again.', 'error');
       }
+    } finally {
+      setIsSubmittingEdit(false);
     }
   };
 
@@ -964,89 +973,63 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
       </div>
 
       {/* User Creation Modal */}
-      {showUserModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 backdrop-blur-sm cursor-pointer"
-            style={{ background: 'rgba(22, 22, 22, 0.4)' }}
-            onClick={() => setShowUserModal(false)}
-          ></div>
-          <div
-            className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
-            style={{
-              background: 'var(--cds-layer-01, #ffffff)',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-            }}
-          >
-            <h3
-              className="text-2xl font-black mb-6"
-              style={{ color: 'var(--cds-text-primary, #18181b)' }}
+      <Modal
+        isOpen={showUserModal}
+        onClose={() => {
+          setShowUserModal(false);
+          setUserForm({ name: '', email: '', password: '', role: 'Driver', status: 'Active' });
+        }}
+        title="Add New User"
+        label="User management"
+        size="lg"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              type="button"
+              disabled={isSubmittingUser}
+              onClick={() => {
+                setShowUserModal(false);
+                setUserForm({ name: '', email: '', password: '', role: 'Driver', status: 'Active' });
+              }}
             >
-              Add New User
-            </h3>
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Full Name
-                </label>
-                <input
-                  required
-                  type="text"
-                  value={userForm.name}
-                  onChange={e => setUserForm({ ...userForm, name: e.target.value })}
-                  placeholder="John Doe"
-                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Email Address
-                </label>
-                <input
-                  required
-                  type="email"
-                  value={userForm.email}
-                  onChange={e => setUserForm({ ...userForm, email: e.target.value })}
-                  placeholder="john@affinity.com"
-                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Password
-                </label>
-                <input
-                  required
-                  type="password"
-                  value={userForm.password}
-                  onChange={e => setUserForm({ ...userForm, password: e.target.value })}
-                  placeholder="Min 8 characters"
-                  minLength={8}
-                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                />
-                <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
-                  Must be at least 8 characters
-                </p>
-              </div>
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Role
-                </label>
+              Cancel
+            </Button>
+            <Button type="submit" form="create-user-form" isLoading={isSubmittingUser}>
+              Create User
+            </Button>
+          </div>
+        }
+      >
+            <form id="create-user-form" onSubmit={handleCreateUser} className="flex flex-col gap-5">
+              <TextInput
+                id="create-user-name"
+                labelText="Full Name"
+                placeholder="John Doe"
+                autoFocus
+                value={userForm.name}
+                onChange={e => setUserForm({ ...userForm, name: e.target.value })}
+              />
+              <TextInput
+                id="create-user-email"
+                type="email"
+                labelText="Email Address"
+                placeholder="john@affinity.com"
+                autoComplete="email"
+                value={userForm.email}
+                onChange={e => setUserForm({ ...userForm, email: e.target.value })}
+              />
+              <PasswordInput
+                id="create-user-password"
+                labelText="Password"
+                helperText="Must be at least 8 characters"
+                placeholder="Min 8 characters"
+                autoComplete="new-password"
+                value={userForm.password}
+                onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+              />
+              <div className="space-y-2">
+                <p className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Role</p>
                 <div className="space-y-2">
                   <div
                     onClick={() => setUserForm({ ...userForm, role: 'Admin' })}
@@ -1245,226 +1228,113 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-3 pt-4">
-                <Button
-                  variant="secondary"
-                  type="button"
-                  style={{ flex: 1 }}
-                  onClick={() => {
-                    setShowUserModal(false);
-                    setUserForm({
-                      name: '',
-                      email: '',
-                      password: '',
-                      role: 'Driver',
-                      status: 'Active',
-                    });
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button variant="primary" type="submit" style={{ flex: 1 }}>
-                  Create User
-                </Button>
-              </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Set Password Modal */}
-      {showSetPasswordModal && userToSetPassword && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 backdrop-blur-sm cursor-pointer"
-            style={{ background: 'rgba(22, 22, 22, 0.4)' }}
-            onClick={() => setShowSetPasswordModal(false)}
-          ></div>
-          <div
-            className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
-            style={{
-              background: 'var(--cds-layer-01, #ffffff)',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-            }}
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div
-                className="w-12 h-12 flex items-center justify-center"
-                style={{ borderRadius: '50%', background: 'var(--cds-layer-selected-01, #e5f6ff)' }}
-              >
-                <svg
-                  className="w-6 h-6"
-                  style={{ color: 'var(--cds-interactive, #D97706)' }}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3
-                  className="text-2xl font-black"
-                  style={{ color: 'var(--cds-text-primary, #18181b)' }}
-                >
-                  Set Password
-                </h3>
-                <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
-                  Set a new password for {userToSetPassword.name}
-                </p>
-              </div>
-            </div>
-            <form onSubmit={handleSetPassword} className="space-y-4">
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  New Password
-                </label>
-                <input
-                  required
-                  type="password"
-                  value={passwordForm.newPassword}
-                  onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  placeholder="Min 8 characters"
-                  minLength={8}
-                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Confirm Password
-                </label>
-                <input
-                  required
-                  type="password"
-                  value={passwordForm.confirmPassword}
-                  onChange={e =>
-                    setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
-                  }
-                  placeholder="Re-enter password"
-                  minLength={8}
-                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                />
-              </div>
-              <div
-                className="p-4"
-                style={{
-                  background: 'var(--cds-tag-background-warm-gray, #f7f3f2)',
-                  border: '1px solid var(--cds-tag-border-warm-gray, #e5e0df)',
-                }}
-              >
-                <p
-                  className="text-xs font-medium"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  ⚠️ This will immediately change the user's password. They will need to use the new
-                  password on their next login.
-                </p>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSetPasswordModal(false);
-                    setUserToSetPassword(null);
-                    setPasswordForm({ newPassword: '', confirmPassword: '' });
-                  }}
-                  className="flex-1 px-4 py-3 font-bold text-sm"
-                  style={{
-                    color: 'var(--cds-text-secondary, #52525b)',
-                    border: '1px solid var(--cds-border-subtle, #d6d3d1)',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 font-bold text-sm text-white"
-                  style={{ background: 'var(--cds-interactive, #D97706)' }}
-                >
-                  Set Password
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showSetPasswordModal && !!userToSetPassword}
+        onClose={() => {
+          setShowSetPasswordModal(false);
+          setUserToSetPassword(null);
+          setPasswordForm({ newPassword: '', confirmPassword: '' });
+        }}
+        title={userToSetPassword ? `Set Password — ${userToSetPassword.name}` : 'Set Password'}
+        label="User management"
+        size="sm"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              type="button"
+              disabled={isSubmittingPassword}
+              onClick={() => {
+                setShowSetPasswordModal(false);
+                setUserToSetPassword(null);
+                setPasswordForm({ newPassword: '', confirmPassword: '' });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" form="set-password-form" isLoading={isSubmittingPassword}>
+              Set Password
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="set-password-form" onSubmit={handleSetPassword} className="flex flex-col gap-5">
+          <PasswordInput
+            id="set-password-new"
+            labelText="New Password"
+            helperText="Must be at least 8 characters"
+            placeholder="Min 8 characters"
+            autoComplete="new-password"
+            autoFocus
+            value={passwordForm.newPassword}
+            onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+          />
+          <PasswordInput
+            id="set-password-confirm"
+            labelText="Confirm Password"
+            placeholder="Re-enter password"
+            autoComplete="new-password"
+            value={passwordForm.confirmPassword}
+            onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+          />
+          <InlineNotification
+            kind="warning"
+            title="Note:"
+            subtitle="This will immediately change the user's password. They will need to use the new password on their next login."
+            hideCloseButton
+          />
+        </form>
+      </Modal>
 
       {/* Edit User Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 backdrop-blur-sm cursor-pointer"
-            style={{ background: 'rgba(22, 22, 22, 0.4)' }}
-            onClick={() => setShowEditModal(false)}
-          ></div>
-          <div
-            className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
-            style={{
-              background: 'var(--cds-layer-01, #ffffff)',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-            }}
-          >
-            <h3
-              className="text-2xl font-black mb-6"
-              style={{ color: 'var(--cds-text-primary, #18181b)' }}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit User"
+        label="User management"
+        size="lg"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              type="button"
+              disabled={isSubmittingEdit}
+              onClick={() => setShowEditModal(false)}
             >
-              Edit User
-            </h3>
-            <form onSubmit={handleEditUser} className="space-y-4">
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Full Name
-                </label>
-                <input
-                  required
-                  type="text"
-                  value={editForm.name}
-                  onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                  placeholder="John Doe"
-                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Email Address
-                </label>
-                <input
-                  required
-                  type="email"
-                  value={editForm.email}
-                  onChange={e => setEditForm({ ...editForm, email: e.target.value })}
-                  placeholder="john@affinity.com"
-                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Role
-                </label>
+              Cancel
+            </Button>
+            <Button type="submit" form="edit-user-form" isLoading={isSubmittingEdit}>
+              Update User
+            </Button>
+          </div>
+        }
+      >
+        <form id="edit-user-form" onSubmit={handleEditUser} className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <TextInput
+              id="edit-user-name"
+              labelText="Full Name"
+              placeholder="John Doe"
+              autoFocus
+              value={editForm.name}
+              onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+            />
+            <TextInput
+              id="edit-user-email"
+              type="email"
+              labelText="Email Address"
+              placeholder="john@affinity.com"
+              autoComplete="email"
+              value={editForm.email}
+              onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Role</p>
                 <div className="space-y-2">
                   <div
                     onClick={() => setEditForm({ ...editForm, role: 'Admin' })}
@@ -1650,136 +1520,22 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="space-y-1">
-                <label
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Status
-                </label>
-                <select
-                  required
-                  value={editForm.status}
-                  onChange={e =>
-                    setEditForm({ ...editForm, status: e.target.value as 'Active' | 'Inactive' })
-                  }
-                  className="w-full px-4 py-3 outline-none transition-colors focus:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 focus-visible:border-[#D97706]"
-                  style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-3 font-bold text-sm"
-                  style={{
-                    color: 'var(--cds-text-secondary, #52525b)',
-                    border: '1px solid var(--cds-border-subtle, #d6d3d1)',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 font-bold text-sm text-white"
-                  style={{ background: 'var(--cds-interactive, #D97706)' }}
-                >
-                  Update User
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      {showDeleteDialog && userToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 backdrop-blur-sm cursor-pointer"
-            style={{ background: 'rgba(22, 22, 22, 0.4)' }}
-            onClick={() => setShowDeleteDialog(false)}
-          ></div>
-          <div
-            className="relative p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
-            style={{
-              background: 'var(--cds-layer-01, #ffffff)',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-            }}
+          <Select
+            id="edit-user-status"
+            labelText="Status"
+            value={editForm.status}
+            onChange={e =>
+              setEditForm({ ...editForm, status: e.target.value as 'Active' | 'Inactive' })
+            }
           >
-            <div className="flex items-center gap-4 mb-4">
-              <div
-                className="w-12 h-12 flex items-center justify-center"
-                style={{
-                  borderRadius: '50%',
-                  background: 'var(--cds-tag-background-red, #fff0f0)',
-                }}
-              >
-                <svg
-                  className="w-6 h-6"
-                  style={{ color: 'var(--cds-support-error, #dc2626)' }}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3
-                  className="text-xl font-black"
-                  style={{ color: 'var(--cds-text-primary, #18181b)' }}
-                >
-                  Delete User
-                </h3>
-                <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
-                  This action cannot be undone
-                </p>
-              </div>
-            </div>
-            <div className="p-4 mb-6" style={{ background: 'var(--cds-layer-02, #ffffff)' }}>
-              <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
-                Are you sure you want to delete{' '}
-                <span className="font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
-                  {userToDelete.name}
-                </span>
-                ?
-              </p>
-              <p className="text-xs mt-2" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
-                {userToDelete.email}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteDialog(false)}
-                className="flex-1 px-4 py-3 font-bold text-sm"
-                style={{
-                  color: 'var(--cds-text-secondary, #52525b)',
-                  border: '1px solid var(--cds-border-subtle, #d6d3d1)',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteUser}
-                className="flex-1 px-4 py-3 font-bold text-sm text-white"
-                style={{ background: 'var(--cds-support-error, #dc2626)' }}
-              >
-                Delete User
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <SelectItem value="Active" text="Active" />
+            <SelectItem value="Inactive" text="Inactive" />
+          </Select>
+        </form>
+      </Modal>
+
+      <ConfirmDialog />
     </div>
   );
 };

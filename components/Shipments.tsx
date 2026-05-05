@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
-import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection } from './ui';
+import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection, Modal } from './ui';
 import { Plus, Truck, CheckCircle, Clock, Package, XCircle } from 'lucide-react';
 
 interface Shipment {
@@ -261,129 +261,124 @@ export const Shipments: React.FC = () => {
       </div>
       </DashboardSection>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">
-              {editingShipment ? 'Edit Shipment' : 'New Shipment'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Client</label>
-                <select
-                  value={form.client_id}
-                  onChange={e => setForm({ ...form, client_id: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border"
-                >
-                  <option value="">Select client</option>
-                  {clients.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Vehicle (optional)</label>
-                <select
-                  value={form.vehicle_id}
-                  onChange={e => setForm({ ...form, vehicle_id: e.target.value })}
-                  className="w-full px-3 py-2 border"
-                >
-                  <option value="">No vehicle</option>
-                  {vehicles.map(v => (
-                    <option key={v.id} value={v.id}>
-                      {v.make_model} ({v.vin_number})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <input
-                  type="text"
-                  value={form.description}
-                  onChange={e => setForm({ ...form, description: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border"
-                  placeholder="e.g. Toyota Land Cruiser V8"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Origin</label>
-                  <input
-                    type="text"
-                    value={form.origin}
-                    onChange={e => setForm({ ...form, origin: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border"
-                    placeholder="e.g. UK"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Destination</label>
-                  <input
-                    type="text"
-                    value={form.destination}
-                    onChange={e => setForm({ ...form, destination: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border"
-                    placeholder="e.g. Namibia"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <select
-                  value={form.status}
-                  onChange={e => setForm({ ...form, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border"
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="In Transit">In Transit</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Shipping Date</label>
-                  <input
-                    type="date"
-                    value={form.shipping_date}
-                    onChange={e => setForm({ ...form, shipping_date: e.target.value })}
-                    className="w-full px-3 py-2 border"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Delivery Date</label>
-                  <input
-                    type="date"
-                    value={form.delivery_date}
-                    onChange={e => setForm({ ...form, delivery_date: e.target.value })}
-                    className="w-full px-3 py-2 border"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="flex-1">
-                  {editingShipment ? 'Save Changes' : 'Create Shipment'}
-                </Button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingShipment ? 'Edit Shipment' : 'New Shipment'}
+        size="lg"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" form="shipment-form" variant="primary">
+              {editingShipment ? 'Save Changes' : 'Create Shipment'}
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="shipment-form" onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Client</label>
+            <select
+              value={form.client_id}
+              onChange={e => setForm({ ...form, client_id: e.target.value })}
+              required
+              className="w-full px-3 py-2 border"
+            >
+              <option value="">Select client</option>
+              {clients.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Vehicle (optional)</label>
+            <select
+              value={form.vehicle_id}
+              onChange={e => setForm({ ...form, vehicle_id: e.target.value })}
+              className="w-full px-3 py-2 border"
+            >
+              <option value="">No vehicle</option>
+              {vehicles.map(v => (
+                <option key={v.id} value={v.id}>
+                  {v.make_model} ({v.vin_number})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Description</label>
+            <input
+              type="text"
+              value={form.description}
+              onChange={e => setForm({ ...form, description: e.target.value })}
+              required
+              className="w-full px-3 py-2 border"
+              placeholder="e.g. Toyota Land Cruiser V8"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Origin</label>
+              <input
+                type="text"
+                value={form.origin}
+                onChange={e => setForm({ ...form, origin: e.target.value })}
+                required
+                className="w-full px-3 py-2 border"
+                placeholder="e.g. UK"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Destination</label>
+              <input
+                type="text"
+                value={form.destination}
+                onChange={e => setForm({ ...form, destination: e.target.value })}
+                required
+                className="w-full px-3 py-2 border"
+                placeholder="e.g. Namibia"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Status</label>
+            <select
+              value={form.status}
+              onChange={e => setForm({ ...form, status: e.target.value as any })}
+              className="w-full px-3 py-2 border"
+            >
+              <option value="Pending">Pending</option>
+              <option value="In Transit">In Transit</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Shipping Date</label>
+              <input
+                type="date"
+                value={form.shipping_date}
+                onChange={e => setForm({ ...form, shipping_date: e.target.value })}
+                className="w-full px-3 py-2 border"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Delivery Date</label>
+              <input
+                type="date"
+                value={form.delivery_date}
+                onChange={e => setForm({ ...form, delivery_date: e.target.value })}
+                className="w-full px-3 py-2 border"
+              />
+            </div>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

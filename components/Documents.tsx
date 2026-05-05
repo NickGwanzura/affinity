@@ -5,7 +5,8 @@ import { dataService } from '../services/dataService';
 import { useSession } from '../contexts/SessionContext';
 import { useToast } from '../components/Toast';
 import { getDriverIdentityAliases } from '../utils/driverIdentity';
-import { DashboardPageHeader, DashboardSection } from './ui';
+import { DashboardPageHeader, DashboardSection, Button } from './ui';
+import { Modal } from './ui/Modal';
 
 export const Documents: React.FC = () => {
   const session = useSession();
@@ -295,116 +296,98 @@ export const Documents: React.FC = () => {
       <ToastContainer />
 
       {/* Receipt Details Modal */}
-      {selectedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="receipt-modal-title">
-          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={closeReceiptModal}></div>
-          <div className="relative bg-white p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 id="receipt-modal-title" className="text-2xl font-black text-zinc-900">Receipt Details</h3>
-                <p className="text-sm text-zinc-500 mt-1">Expense ID: {selectedReceipt.id}</p>
-              </div>
-              <button 
-                onClick={closeReceiptModal} 
-                aria-label="Close receipt details"
-                className="text-zinc-400 hover:text-zinc-900"
+      <Modal
+        isOpen={!!selectedReceipt}
+        onClose={closeReceiptModal}
+        title="Receipt Details"
+        size="lg"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" onClick={closeReceiptModal}>Close</Button>
+            {selectedReceipt?.receipt_url && (
+              <a
+                href={selectedReceipt.receipt_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-4 py-2 font-bold text-sm bg-[#D97706] text-white hover:bg-[#B45309] rounded"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Category</label>
-                  <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.category}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Location</label>
-                  <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.location}</p>
-                </div>
-              </div>
-              
+                Open Receipt
+              </a>
+            )}
+          </div>
+        }
+      >
+        {selectedReceipt && (
+          <div className="space-y-4">
+            <p className="text-sm text-zinc-500">Expense ID: {selectedReceipt.id}</p>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Description</label>
-                <p className="text-base text-zinc-900 mt-1">{selectedReceipt.description}</p>
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Category</label>
+                <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.category}</p>
               </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Amount</label>
-                  <p className="text-xl font-black text-zinc-900 mt-1">{selectedReceipt.currency} {selectedReceipt.amount.toLocaleString()}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">USD Equivalent</label>
-                  <p className="text-xl font-black text-[#D97706] mt-1">${(selectedReceipt.amount * selectedReceipt.exchange_rate_to_usd).toLocaleString(undefined, {maximumFractionDigits: 2})}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Date</label>
-                  <p className="text-base font-bold text-zinc-900 mt-1">{new Date(selectedReceipt.created_at).toLocaleDateString()}</p>
-                </div>
-              </div>
-              
               <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Exchange Rate</label>
-                <p className="text-sm text-zinc-900 mt-1">1 {selectedReceipt.currency} = ${selectedReceipt.exchange_rate_to_usd} USD</p>
-              </div>
-              
-              {selectedReceipt.receipt_url && (
-                <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 block">Receipt Image</label>
-                  <div className="bg-zinc-50 p-4">
-                    {modalImageError ? (
-                      <div className="text-center text-zinc-400 py-8">
-                        <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p>Image not available</p>
-                      </div>
-                    ) : (
-                      <img 
-                        src={selectedReceipt.receipt_url} 
-                        alt={`Receipt for ${selectedReceipt.description}`} 
-                        className="w-full" 
-                        onError={handleModalImageError}
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              <div className="bg-amber-50 border border-amber-200 p-4 mt-6">
-                <p className="text-xs font-semibold text-amber-900 mb-2">✓ Audit Trail</p>
-                <p className="text-sm text-amber-800">Created: {new Date(selectedReceipt.created_at).toLocaleString()}</p>
-                <p className="text-sm text-amber-800">Vehicle ID: {selectedReceipt.vehicle_id}</p>
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Location</label>
+                <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.location}</p>
               </div>
             </div>
-            
-            <div className="flex gap-3 pt-6">
-              <button 
-                onClick={closeReceiptModal} 
-                aria-label="Close receipt details"
-                className="flex-1 px-4 py-3 font-bold text-sm text-zinc-500 border border-zinc-200 hover:bg-zinc-50"
-              >
-                Close
-              </button>
-              {selectedReceipt.receipt_url && (
-                <a 
-                  href={selectedReceipt.receipt_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  aria-label="Open receipt in new tab"
-                  className="flex-1 px-4 py-3 font-bold text-sm bg-[#D97706] text-white hover:bg-[#B45309] text-center"
-                >
-                  Open Receipt
-                </a>
-              )}
+
+            <div>
+              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Description</label>
+              <p className="text-base text-zinc-900 mt-1">{selectedReceipt.description}</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Amount</label>
+                <p className="text-xl font-black text-zinc-900 mt-1">{selectedReceipt.currency} {selectedReceipt.amount.toLocaleString()}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">USD Equivalent</label>
+                <p className="text-xl font-black text-[#D97706] mt-1">${(selectedReceipt.amount * selectedReceipt.exchange_rate_to_usd).toLocaleString(undefined, {maximumFractionDigits: 2})}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Date</label>
+                <p className="text-base font-bold text-zinc-900 mt-1">{new Date(selectedReceipt.created_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Exchange Rate</label>
+              <p className="text-sm text-zinc-900 mt-1">1 {selectedReceipt.currency} = ${selectedReceipt.exchange_rate_to_usd} USD</p>
+            </div>
+
+            {selectedReceipt.receipt_url && (
+              <div>
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 block">Receipt Image</label>
+                <div className="bg-zinc-50 p-4">
+                  {modalImageError ? (
+                    <div className="text-center text-zinc-400 py-8">
+                      <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p>Image not available</p>
+                    </div>
+                  ) : (
+                    <img
+                      src={selectedReceipt.receipt_url}
+                      alt={`Receipt for ${selectedReceipt.description}`}
+                      className="w-full"
+                      onError={handleModalImageError}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="bg-amber-50 border border-amber-200 p-4 mt-6">
+              <p className="text-xs font-semibold text-amber-900 mb-2">✓ Audit Trail</p>
+              <p className="text-sm text-amber-800">Created: {new Date(selectedReceipt.created_at).toLocaleString()}</p>
+              <p className="text-sm text-amber-800">Vehicle ID: {selectedReceipt.vehicle_id}</p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 };

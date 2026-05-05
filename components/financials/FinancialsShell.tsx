@@ -13,7 +13,7 @@ import type {
 } from '../../types';
 import { dataService } from '../../services/dataService';
 import type { StatementData } from '../../services/pdfService';
-import { Button, DashboardPageHeader } from '../ui';
+import { Button, DashboardPageHeader, Modal } from '../ui';
 import { useConfirm } from '../ConfirmModal';
 import { useToast } from '../Toast';
 import { ClientFormModal, type ClientFormValue } from '../shared/ClientFormModal';
@@ -1511,10 +1511,10 @@ export const Financials: React.FC = () => {
   }
 
   const surface: React.CSSProperties = {
-    backgroundColor: 'var(--cds-layer-01, #ffffff)',
+    backgroundColor: '#ffffff',
     borderWidth: '1px',
     borderStyle: 'solid',
-    borderColor: 'var(--cds-border-subtle, #d6d3d1)',
+    borderColor: '#d6d3d1',
   };
 
   return (
@@ -1664,66 +1664,40 @@ export const Financials: React.FC = () => {
         submitLabel="Create Client"
       />
 
-      {/* PDF Preview overlay */}
-      {previewUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 backdrop-blur-sm"
-            onClick={closePreview}
-            style={{ backgroundColor: 'rgba(22, 22, 22, 0.6)' }}
-          />
-          <div className="relative h-[88vh] w-full max-w-6xl overflow-hidden" style={surface}>
-            <div
-              className="flex items-center justify-between gap-4 px-6 py-4"
-              style={{
-                borderBottomWidth: '1px',
-                borderBottomStyle: 'solid',
-                borderBottomColor: 'var(--cds-border-subtle, #d6d3d1)',
-                backgroundColor: 'var(--cds-layer-02, #ffffff)',
-              }}
+      {/* PDF Preview modal */}
+      <Modal
+        isOpen={Boolean(previewUrl)}
+        onClose={closePreview}
+        title={`${previewTitle} Preview`}
+        label="PDF preview"
+        size="2xl"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" onClick={closePreview}>Close</Button>
+            <Button
+              variant="ghost"
+              onClick={() => window.open(previewUrl!, '_blank', 'noopener,noreferrer')}
             >
-              <div>
-                <h3
-                  className="text-lg font-black"
-                  style={{ color: 'var(--cds-text-primary, #18181b)' }}
-                >
-                  {previewTitle} Preview
-                </h3>
-                <p
-                  className="text-sm"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
-                >
-                  Review the PDF before downloading or sharing it.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
-                >
-                  Open in New Tab
-                </Button>
-                <a
-                  href={previewUrl}
-                  download={`${previewTitle.replace(/\s+/g, '_')}.pdf`}
-                  className="inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-                >
-                  Download PDF
-                </a>
-                <Button variant="secondary" onClick={closePreview}>
-                  Close
-                </Button>
-              </div>
-            </div>
-            <iframe
-              src={previewUrl}
-              title={previewTitle}
-              className="h-[calc(88vh-73px)] w-full"
-              style={{ backgroundColor: 'var(--cds-layer-02, #ffffff)' }}
-            />
+              Open in New Tab
+            </Button>
+            <a
+              href={previewUrl ?? undefined}
+              download={`${previewTitle.replace(/\s+/g, '_')}.pdf`}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-emerald-600 px-4 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706] focus-visible:ring-offset-2"
+            >
+              Download PDF
+            </a>
           </div>
+        }
+      >
+        <div className="h-[75vh] w-full">
+          <iframe
+            src={previewUrl ?? undefined}
+            title={`${previewTitle} preview`}
+            className="h-full w-full border-0 bg-white"
+          />
         </div>
-      )}
+      </Modal>
 
       {/* Tabs + active section */}
       <div className="overflow-hidden" style={surface}>
