@@ -241,6 +241,16 @@ export default function App() {
         return <ErrorBoundary view="admin"><AdminDashboard initialView="employees" /></ErrorBoundary>;
       case 'driver-entries':
         return <ErrorBoundary view="admin"><AdminDashboard initialView="driver-entries" /></ErrorBoundary>;
+      case 'reports':
+        return <ErrorBoundary view="admin"><AdminDashboard initialView="reports" /></ErrorBoundary>;
+      case 'payslips':
+        return <ErrorBoundary view="admin"><AdminDashboard initialView="payslips" /></ErrorBoundary>;
+      case 'funds':
+        return <ErrorBoundary view="admin"><AdminDashboard initialView="funds" /></ErrorBoundary>;
+      case 'trips':
+        return <ErrorBoundary view="admin"><AdminDashboard initialView="trips" /></ErrorBoundary>;
+      case 'assets':
+        return <ErrorBoundary view="admin"><AdminDashboard initialView="assets" /></ErrorBoundary>;
       case 'accountant':
         return <ErrorBoundary view="accountant"><AccountantDashboard /></ErrorBoundary>;
       case 'driver':

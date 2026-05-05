@@ -14,6 +14,11 @@ import {
   Mail,
   Receipt,
   X,
+  LineChart,
+  Banknote,
+  Wallet,
+  Map,
+  Boxes,
 } from 'lucide-react';
 import { AppUser, UserRole } from '../types';
 import affinityLogo from '../assets/affinity-logo.svg';
@@ -33,7 +38,12 @@ export type AppView =
   | 'employees'
   | 'driver-entries'
   | 'shipments'
-  | 'updates';
+  | 'updates'
+  | 'reports'
+  | 'payslips'
+  | 'funds'
+  | 'trips'
+  | 'assets';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -57,12 +67,17 @@ const navItems: {
     roles: ['Admin', 'Manager', 'Accountant'],
     Icon: DollarSign,
   },
+  { id: 'reports', label: 'Reports', roles: ['Admin', 'Manager', 'Accountant'], Icon: LineChart },
   { id: 'documents', label: 'Documents', roles: ['Admin', 'Manager', 'Driver'], Icon: FileText },
   { id: 'driver', label: 'Driver Portal', roles: ['Admin', 'Driver'], Icon: Truck },
   { id: 'clients', label: 'Clients', roles: ['Admin', 'Accountant'], Icon: Users },
   { id: 'employees', label: 'Employees', roles: ['Admin', 'Manager'], Icon: Briefcase },
+  { id: 'payslips', label: 'Payslips', roles: ['Admin', 'Manager'], Icon: Banknote },
   { id: 'driver-entries', label: 'Driver Entries', roles: ['Admin', 'Manager'], Icon: Receipt },
+  { id: 'funds', label: 'Operating Funds', roles: ['Admin', 'Accountant'], Icon: Wallet },
   { id: 'shipments', label: 'Shipments', roles: ['Admin', 'Manager', 'Accountant'], Icon: Package },
+  { id: 'trips', label: 'Trip Planner', roles: ['Admin', 'Manager'], Icon: Map },
+  { id: 'assets', label: 'Asset Register', roles: ['Admin', 'Manager'], Icon: Boxes },
   { id: 'updates', label: 'Updates', roles: ['Admin'], Icon: Mail },
   { id: 'settings', label: 'Settings', roles: ['Admin'], Icon: Settings },
 ];

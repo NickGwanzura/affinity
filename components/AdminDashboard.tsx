@@ -47,7 +47,6 @@ import AdminDriverEntriesView from './admin/AdminDriverEntriesView';
 import AdminEmployeesView from './admin/AdminEmployeesView';
 import AdminOverviewView from './admin/AdminOverviewView';
 import { ClientFormModalWithBalance, useClientCrud } from './client-directory';
-import DashboardSectionSwitcher from './shared/DashboardSectionSwitcher';
 import EmployeeFormModal, {
   createEmptyEmployeeForm,
   toEmployeeFormValue,
@@ -1105,15 +1104,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
           trend={dashboardKpis.utilizationTrend}
         />
       </div>
-
-      {/* Section navigation — full-width tab rail, scrolls horizontally
-          when there are too many sections to fit. */}
-      <DashboardSectionSwitcher
-        value={activeView}
-        onChange={setActiveView}
-        label="Section"
-        options={adminViewOptions}
-      />
 
       <DashboardSection title={activeViewLabel}>
         {activeView === 'dashboard' && (
