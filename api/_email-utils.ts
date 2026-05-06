@@ -16,7 +16,6 @@ export function isResendConfigured(): boolean {
 export function getAppBaseUrl(): string {
   const explicitBaseUrl = process.env.APP_BASE_URL || process.env.PUBLIC_APP_URL;
   if (explicitBaseUrl) return explicitBaseUrl.replace(/\/+$/, '');
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return 'http://localhost:5173';
 }
 

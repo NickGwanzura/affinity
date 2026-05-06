@@ -1,4 +1,4 @@
-import type { VercelRequest } from '@vercel/node';
+import type { ApiRequest } from './_types.js';
 import { sql } from './_db.js';
 import { logger } from './_logger.js';
 import { captureException } from './_sentry.js';
@@ -12,7 +12,7 @@ type JsonValue =
   | { [key: string]: JsonValue };
 
 type AuditPayload = {
-  req?: VercelRequest;
+  req?: ApiRequest;
   userId?: string | null;
   action: string;
   tableName?: string | null;
@@ -58,7 +58,7 @@ const toJsonValue = (value: unknown, depth = 0): JsonValue => {
   return String(value);
 };
 
-const getClientIp = (req?: VercelRequest) => {
+const getClientIp = (req?: ApiRequest) => {
   const forwarded = req?.headers['x-forwarded-for'];
   if (Array.isArray(forwarded)) {
     return forwarded[0]?.split(',')[0]?.trim() || null;

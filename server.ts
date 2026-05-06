@@ -3,7 +3,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { config } from 'dotenv';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './api/_types.js';
 
 config();
 
@@ -23,13 +23,11 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Adapt Express req/res to the Vercel handler signature.
-// Vercel handlers commonly `return apiError(...)` which yields a VercelResponse,
-// so the return type must permit both void and VercelResponse.
-type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void | VercelResponse>;
+// API handlers commonly `return apiError(...)` which yields ApiResponse,
+// so the return type must permit both void and ApiResponse.
+type Handler = (req: ApiRequest, res: ApiResponse) => Promise<void | ApiResponse>;
 function mount(handler: Handler) {
-  return (req: express.Request, res: express.Response) =>
-    handler(req as unknown as VercelRequest, res as unknown as VercelResponse);
+  return (req: express.Request, res: express.Response) => handler(req, res);
 }
 
 // --- API routes ---

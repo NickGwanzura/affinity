@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import type { PoolClient } from '@neondatabase/serverless';
 import { ZodError } from 'zod';
 import {
@@ -149,7 +149,7 @@ const getInvoiceInputErrorMessage = (
   };
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -188,7 +188,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listInvoices(req: AuthenticatedRequest, res: VercelResponse) {
+async function listInvoices(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -228,7 +228,7 @@ async function listInvoices(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function getInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+async function getInvoice(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   const rows = await sql`
@@ -311,7 +311,7 @@ async function insertInvoiceItems(
   }
 }
 
-async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+async function createInvoice(req: AuthenticatedRequest, res: ApiResponse) {
   const user = req.user;
   try {
     const data = InvoiceSchema.parse(req.body);
@@ -390,7 +390,7 @@ async function createInvoice(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateInvoice(req: AuthenticatedRequest, res: ApiResponse) {
   const user = req.user;
   const { id } = req.query;
 
@@ -486,7 +486,7 @@ async function updateInvoice(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteInvoice(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteInvoice(req: AuthenticatedRequest, res: ApiResponse) {
   const user = req.user;
   const { id } = req.query;
 

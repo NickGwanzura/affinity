@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -12,7 +12,7 @@ import { sql } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { OperatingFundSchema, OperatingFundUpdateSchema } from './_schemas.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listFunds(req: VercelRequest, res: VercelResponse) {
+async function listFunds(req: ApiRequest, res: ApiResponse) {
   const recipient = typeof req.query.recipient === 'string' ? req.query.recipient.trim() : '';
   const rows = recipient
     ? await sql`
@@ -59,7 +59,7 @@ async function listFunds(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json(rows);
 }
 
-async function createFund(req: AuthenticatedRequest, res: VercelResponse) {
+async function createFund(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = OperatingFundSchema.parse(req.body);
     const rows = await sql`
@@ -92,7 +92,7 @@ async function createFund(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateFund(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateFund(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = OperatingFundUpdateSchema.parse(req.body);
     const id = req.query.id;
@@ -136,7 +136,7 @@ async function updateFund(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteFund(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteFund(req: AuthenticatedRequest, res: ApiResponse) {
   const id = req.query.id;
   const existing = await sql`SELECT * FROM operating_funds WHERE id = ${id}::uuid`;
   if (existing.length === 0) {

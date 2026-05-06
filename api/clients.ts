@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   verifyToken,
@@ -12,7 +12,7 @@ import { sql } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { ClientSchema, ClientUpdateSchema, PaginationSchema } from './_schemas.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listClients(req: AuthenticatedRequest, res: VercelResponse) {
+async function listClients(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -103,7 +103,7 @@ async function listClients(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function getClient(req: AuthenticatedRequest, res: VercelResponse) {
+async function getClient(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   const rows = await sql`
@@ -121,7 +121,7 @@ async function getClient(req: AuthenticatedRequest, res: VercelResponse) {
   res.status(200).json(rows[0]);
 }
 
-async function createClient(req: AuthenticatedRequest, res: VercelResponse) {
+async function createClient(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = ClientSchema.parse(req.body);
 
@@ -163,7 +163,7 @@ async function createClient(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateClient(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateClient(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   try {
@@ -221,7 +221,7 @@ async function updateClient(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteClient(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteClient(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   // Soft delete: preserves FK integrity for invoices/quotes/payments.

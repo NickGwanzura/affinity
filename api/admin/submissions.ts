@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from '../_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -213,7 +213,7 @@ function sortBySubmittedDateDesc<T extends { submitted_at: string | null }>(reco
   });
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 

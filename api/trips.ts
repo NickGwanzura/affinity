@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -153,7 +153,7 @@ const getTripById = async (tripId: string, user?: AuthenticatedRequest['user']) 
   return rows[0];
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -186,7 +186,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listTrips(req: AuthenticatedRequest, res: VercelResponse) {
+async function listTrips(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -268,7 +268,7 @@ async function listTrips(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function getTrip(req: AuthenticatedRequest, res: VercelResponse) {
+async function getTrip(req: AuthenticatedRequest, res: ApiResponse) {
   const trip = await getTripById(String(req.query.id), req.user);
   if (!trip) return apiError(res, 404, 'Trip not found');
   return res.status(200).json({
@@ -277,7 +277,7 @@ async function getTrip(req: AuthenticatedRequest, res: VercelResponse) {
   });
 }
 
-async function createTrip(req: AuthenticatedRequest, res: VercelResponse) {
+async function createTrip(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = TripSchema.parse(req.body);
     await validateDriverAssignment(data.assigned_driver_id || null);
@@ -339,7 +339,7 @@ async function createTrip(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateTrip(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateTrip(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const tripId = String(req.query.id);
     const data = TripUpdateSchema.parse(req.body);
@@ -389,7 +389,7 @@ async function updateTrip(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteTrip(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteTrip(req: AuthenticatedRequest, res: ApiResponse) {
   const tripId = String(req.query.id);
   const existing = await getTripById(tripId, req.user);
   if (!existing) return apiError(res, 404, 'Trip not found');

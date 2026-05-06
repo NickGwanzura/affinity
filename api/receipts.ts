@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -56,7 +56,7 @@ function normalizeReceiptItems(items: Array<Record<string, unknown>> = []) {
   });
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -87,7 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listReceipts(res: VercelResponse) {
+async function listReceipts(res: ApiResponse) {
   try {
     const rows = await sql`
       SELECT *
@@ -103,7 +103,7 @@ async function listReceipts(res: VercelResponse) {
   }
 }
 
-async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
+async function createReceipt(req: AuthenticatedRequest, res: ApiResponse) {
   const user = req.user;
   try {
     const data = ReceiptSchema.parse(req.body);
@@ -197,7 +197,7 @@ async function createReceipt(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteReceipt(req: AuthenticatedRequest, res: ApiResponse) {
   const user = req.user;
   try {
     const { id } = req.query;
@@ -230,7 +230,7 @@ async function deleteReceipt(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateReceipt(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateReceipt(req: AuthenticatedRequest, res: ApiResponse) {
   const user = req.user;
   try {
     const data = ReceiptUpdateSchema.parse(req.body);

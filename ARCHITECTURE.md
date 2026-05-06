@@ -7,7 +7,7 @@ Affinity Logistics CRM — cross-border vehicle logistics for the SADC region. S
 | Layer | Tech |
 |---|---|
 | Frontend | React 19, TypeScript, Vite, Tailwind v4 (`@theme` tokens in `styles/app.css`), lucide-react icons, Geist Sans |
-| API | Vercel-style serverless functions in `api/*.ts`, hosted on Railway via Express bootstrap (`server.ts`) |
+| API | Express route handlers in `api/*.ts`, mounted by `server.ts` and hosted on Railway |
 | Database | Neon PostgreSQL via `@neondatabase/serverless` — raw SQL, no ORM |
 | Auth | Custom JWT (no OAuth), bcrypt cost factor 12, legacy SHA-256 auto-upgrade |
 | Email | Resend + `@react-email/components` templates in `api/emails/*.tsx` |

@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import type { PoolClient } from '@neondatabase/serverless';
 import { ZodError } from 'zod';
 import {
@@ -133,7 +133,7 @@ const getQuoteInputErrorMessage = (
   };
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -170,7 +170,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listQuotes(req: AuthenticatedRequest, res: VercelResponse) {
+async function listQuotes(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -210,7 +210,7 @@ async function listQuotes(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function getQuote(req: AuthenticatedRequest, res: VercelResponse) {
+async function getQuote(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   const rows = await sql`
@@ -289,7 +289,7 @@ async function insertQuoteItems(client: PoolClient, quoteId: string, items: Quot
   }
 }
 
-async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
+async function createQuote(req: AuthenticatedRequest, res: ApiResponse) {
   const user = req.user;
   try {
     const data = QuoteSchema.parse(req.body);
@@ -361,7 +361,7 @@ async function createQuote(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateQuote(req: AuthenticatedRequest, res: ApiResponse) {
   const user = req.user;
   const { id } = req.query;
 
@@ -452,7 +452,7 @@ async function updateQuote(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteQuote(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteQuote(req: AuthenticatedRequest, res: ApiResponse) {
   const user = req.user;
   const { id } = req.query;
 

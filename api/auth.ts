@@ -1,6 +1,6 @@
 /* global process */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   verifyToken,
@@ -39,7 +39,7 @@ const normaliseAccessRole = (raw: unknown, role: string): 'super_admin' | 'admin
   return role === 'Admin' ? 'admin' : 'user';
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -78,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function login(req: VercelRequest, res: VercelResponse) {
+async function login(req: ApiRequest, res: ApiResponse) {
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   try {
     const { email, password } = LoginSchema.parse(req.body);
@@ -140,13 +140,13 @@ async function login(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function register(req: VercelRequest, res: VercelResponse) {
+async function register(req: ApiRequest, res: ApiResponse) {
   // Registration is intentionally blocked in production hardening mode.
   RegisterSchema.safeParse(req.body);
   return apiError(res, 403, 'Registration disabled');
 }
 
-async function changePasswordHandler(req: VercelRequest, res: VercelResponse) {
+async function changePasswordHandler(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
 
@@ -206,7 +206,7 @@ async function changePasswordHandler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function forgotPassword(req: VercelRequest, res: VercelResponse) {
+async function forgotPassword(req: ApiRequest, res: ApiResponse) {
   try {
     const { email } = ForgotPasswordSchema.parse(req.body);
 
@@ -259,7 +259,7 @@ async function forgotPassword(req: VercelRequest, res: VercelResponse) {
 
 const MAX_RESET_ATTEMPTS_PER_TOKEN = 5;
 
-async function resetPasswordHandler(req: VercelRequest, res: VercelResponse) {
+async function resetPasswordHandler(req: ApiRequest, res: ApiResponse) {
   try {
     const { token, newPassword } = ResetPasswordSchema.parse(req.body);
 
@@ -300,7 +300,7 @@ async function resetPasswordHandler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function me(req: VercelRequest, res: VercelResponse) {
+async function me(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
 

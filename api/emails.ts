@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   verifyToken,
@@ -35,7 +35,7 @@ const TemplateSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listEmailTemplates(req: AuthenticatedRequest, res: VercelResponse) {
+async function listEmailTemplates(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const { page, limit } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -116,7 +116,7 @@ async function listEmailTemplates(req: AuthenticatedRequest, res: VercelResponse
   }
 }
 
-async function createEmailTemplate(req: AuthenticatedRequest, res: VercelResponse) {
+async function createEmailTemplate(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = TemplateSchema.parse(req.body);
 
@@ -132,7 +132,7 @@ async function createEmailTemplate(req: AuthenticatedRequest, res: VercelRespons
   }
 }
 
-async function updateEmailTemplate(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateEmailTemplate(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   try {
@@ -160,7 +160,7 @@ async function updateEmailTemplate(req: AuthenticatedRequest, res: VercelRespons
   }
 }
 
-async function deleteEmailTemplate(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteEmailTemplate(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   await sql`DELETE FROM email_templates WHERE id = ${id}::uuid`;
@@ -168,7 +168,7 @@ async function deleteEmailTemplate(req: AuthenticatedRequest, res: VercelRespons
   res.status(204).end();
 }
 
-async function listEmailQueue(req: AuthenticatedRequest, res: VercelResponse) {
+async function listEmailQueue(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const { page, limit, status, type } = EmailQueueFilterSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -201,7 +201,7 @@ async function listEmailQueue(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function sendEmail(req: AuthenticatedRequest, res: VercelResponse) {
+async function sendEmail(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const payload = SendEmailSchema.parse(req.body);
 

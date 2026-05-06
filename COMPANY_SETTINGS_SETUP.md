@@ -9,7 +9,6 @@ Current sources of truth:
 
 Current runtime summary:
 - React + Vite frontend
-- Vercel API routes
 - Neon PostgreSQL
 - Server-side JWT auth
 - SMTP-based password reset delivery

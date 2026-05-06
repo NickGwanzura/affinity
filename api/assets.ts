@@ -1,5 +1,5 @@
 /**
- * /api/assets — Vercel Serverless Function
+ * /api/assets
  *
  * GET    /api/assets              → list all assets
  * POST   /api/assets              → create asset
@@ -14,7 +14,7 @@
  * Table DDL lives in migrations/ASSETS_TABLE_MIGRATION.sql — run it once per env.
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import { sql } from './_db.js';
 import {
   AuthenticatedRequest,
@@ -33,11 +33,11 @@ import {
   AssetRequestUpdateSchema,
 } from './_schemas.js';
 
-function json(res: VercelResponse, status: number, body: unknown) {
+function json(res: ApiResponse, status: number, body: unknown) {
   res.status(status).json(body);
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -91,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function createAsset(req: AuthenticatedRequest, res: VercelResponse) {
+async function createAsset(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = AssetSchema.parse(req.body);
     const [row] = (await sql`
@@ -131,7 +131,7 @@ async function createAsset(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateAsset(req: AuthenticatedRequest, res: VercelResponse, id: string) {
+async function updateAsset(req: AuthenticatedRequest, res: ApiResponse, id: string) {
   try {
     const data = AssetUpdateSchema.parse(req.body);
 
@@ -180,7 +180,7 @@ async function updateAsset(req: AuthenticatedRequest, res: VercelResponse, id: s
   }
 }
 
-async function deleteAsset(req: AuthenticatedRequest, res: VercelResponse, id: string) {
+async function deleteAsset(req: AuthenticatedRequest, res: ApiResponse, id: string) {
   const existing = (await sql`
     SELECT id, name, description, category, serial_number, status, location,
            purchase_date, purchase_value, condition, created_at, updated_at
@@ -209,7 +209,7 @@ async function deleteAsset(req: AuthenticatedRequest, res: VercelResponse, id: s
 
 async function handleAssetRequests(
   req: AuthenticatedRequest,
-  res: VercelResponse,
+  res: ApiResponse,
   method: string | undefined,
   id?: string
 ) {

@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -29,7 +29,7 @@ const isMissingColumnError = (error: unknown, columnName: string): boolean =>
 const isMissingTableError = (error: unknown, tableName: string): boolean =>
   error instanceof Error && error.message.includes(`relation "${tableName}" does not exist`);
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -52,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function getCompany(res: VercelResponse) {
+async function getCompany(res: ApiResponse) {
   try {
     const rows = await sql`
       SELECT id, name, registration_no, tax_id, contact_email, address, phone, website, logo_url, created_at, updated_at
@@ -83,7 +83,7 @@ async function getCompany(res: VercelResponse) {
   }
 }
 
-async function updateCompany(req: VercelRequest, res: VercelResponse) {
+async function updateCompany(req: ApiRequest, res: ApiResponse) {
   try {
     const authReq = req as AuthenticatedRequest;
     const data = CompanySchema.parse(req.body);

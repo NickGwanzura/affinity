@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from '../_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -15,7 +15,7 @@ function isMissingTableError(error: unknown, tableName: string): boolean {
   return error instanceof Error && error.message.includes(`relation "${tableName}" does not exist`);
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listApprovals(res: VercelResponse) {
+async function listApprovals(res: ApiResponse) {
   const users = await sql`
     SELECT
       u.id,
@@ -77,7 +77,7 @@ async function listApprovals(res: VercelResponse) {
   });
 }
 
-async function reviewUser(authReq: AuthenticatedRequest, req: VercelRequest, res: VercelResponse) {
+async function reviewUser(authReq: AuthenticatedRequest, req: ApiRequest, res: ApiResponse) {
   const userId = typeof req.query.id === 'string' ? req.query.id : '';
   const action = typeof req.query.action === 'string' ? req.query.action : '';
   if (!userId) return apiError(res, 400, 'Missing user id');

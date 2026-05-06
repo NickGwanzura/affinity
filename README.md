@@ -5,7 +5,7 @@ Affinity is an internal logistics and finance operations app for vehicle movemen
 ## Current Stack
 
 - React 19 + TypeScript + Vite
-- Vercel serverless API routes
+- Express API routes (`api/*.ts`) hosted on Railway via `server.ts`
 - Neon PostgreSQL for operational data
 - JWT authentication handled server-side
 - Browser-side PDF generation with `jspdf`

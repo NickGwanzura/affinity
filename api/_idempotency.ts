@@ -9,7 +9,7 @@
  * Storage: public.idempotency_keys (see migrations/0035).
  */
 
-import type { VercelResponse } from '@vercel/node';
+import type { ApiResponse } from './_types.js';
 import type { AuthenticatedRequest } from './_middleware.js';
 import { sql } from './_db.js';
 import { logger } from './_logger.js';
@@ -105,7 +105,7 @@ async function storeCached(
  */
 export async function withIdempotency(
   req: AuthenticatedRequest,
-  res: VercelResponse,
+  res: ApiResponse,
   endpoint: string,
   handler: () => Promise<unknown> | unknown
 ): Promise<void> {

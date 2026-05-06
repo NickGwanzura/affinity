@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import { GoogleGenAI } from '@google/genai';
 import type { LandedCostSummary } from '../types';
 import {
@@ -28,7 +28,7 @@ type AiResponse = {
   generatedAt: string;
 };
 
-function json(res: VercelResponse, status: number, body: unknown) {
+function json(res: ApiResponse, status: number, body: unknown) {
   res.status(status).json(body);
 }
 
@@ -196,7 +196,7 @@ async function generateGeminiSummary(data: SanitizedSummary[], question: string 
   return text || null;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 

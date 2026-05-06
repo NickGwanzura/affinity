@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -13,7 +13,7 @@ import { logAuditEvent } from './_audit.js';
 import { hashPassword } from './_auth.js';
 import { AdminSetPasswordSchema, UserSchema, UserUpdateSchema } from './_schemas.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -54,7 +54,7 @@ async function countAdmins(): Promise<number> {
   return parseInt(String(rows[0]?.count || '0'), 10);
 }
 
-async function listUsers(_req: AuthenticatedRequest, res: VercelResponse) {
+async function listUsers(_req: AuthenticatedRequest, res: ApiResponse) {
   const rows = await sql`
     SELECT id, name, email, role, access_role, status, created_at
     FROM user_profiles
@@ -63,7 +63,7 @@ async function listUsers(_req: AuthenticatedRequest, res: VercelResponse) {
   return res.status(200).json(rows);
 }
 
-async function createUser(req: AuthenticatedRequest, res: VercelResponse) {
+async function createUser(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = UserSchema.parse(req.body);
     const existing = await sql`
@@ -104,7 +104,7 @@ async function createUser(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateUser(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateUser(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = UserUpdateSchema.parse(req.body);
     const userRows = await sql`
@@ -150,7 +150,7 @@ async function updateUser(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteUser(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteUser(req: AuthenticatedRequest, res: ApiResponse) {
   const userRows = await sql`
     SELECT id, role
     FROM user_profiles
@@ -173,7 +173,7 @@ async function deleteUser(req: AuthenticatedRequest, res: VercelResponse) {
   return res.status(204).end();
 }
 
-async function adminSetPassword(req: VercelRequest, res: VercelResponse) {
+async function adminSetPassword(req: ApiRequest, res: ApiResponse) {
   try {
     const authReq = req as AuthenticatedRequest;
     const data = AdminSetPasswordSchema.parse(req.body);

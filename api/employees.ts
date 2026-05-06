@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -12,7 +12,7 @@ import { sql, withTransaction } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { EmployeeSchema, EmployeeUpdateSchema } from './_schemas.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listEmployees(res: VercelResponse) {
+async function listEmployees(res: ApiResponse) {
   const rows = await sql`
     SELECT *
     FROM employees
@@ -50,7 +50,7 @@ async function listEmployees(res: VercelResponse) {
   return res.status(200).json(rows);
 }
 
-async function createEmployee(req: AuthenticatedRequest, res: VercelResponse) {
+async function createEmployee(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = EmployeeSchema.parse(req.body);
 
@@ -105,7 +105,7 @@ async function createEmployee(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateEmployee(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateEmployee(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = EmployeeUpdateSchema.parse(req.body);
     const id = req.query.id;
@@ -153,7 +153,7 @@ async function updateEmployee(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteEmployee(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteEmployee(req: AuthenticatedRequest, res: ApiResponse) {
   const id = req.query.id;
   const existing = await sql`SELECT * FROM employees WHERE id = ${id}::uuid`;
   if (existing.length === 0) return apiError(res, 404, 'Employee not found');

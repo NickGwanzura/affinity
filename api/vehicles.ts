@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   verifyToken,
@@ -18,7 +18,7 @@ import {
   ShipmentUpdateSchema,
 } from './_schemas.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -75,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 // ============ VEHICLE FUNCTIONS ============
 
-async function listVehicles(req: AuthenticatedRequest, res: VercelResponse) {
+async function listVehicles(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -111,7 +111,7 @@ async function listVehicles(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function getVehicle(req: AuthenticatedRequest, res: VercelResponse) {
+async function getVehicle(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   const rows = await sql`
@@ -127,7 +127,7 @@ async function getVehicle(req: AuthenticatedRequest, res: VercelResponse) {
   res.status(200).json(rows[0]);
 }
 
-async function createVehicle(req: AuthenticatedRequest, res: VercelResponse) {
+async function createVehicle(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = VehicleSchema.parse(req.body);
 
@@ -155,7 +155,7 @@ async function createVehicle(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateVehicle(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateVehicle(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   try {
@@ -207,7 +207,7 @@ async function updateVehicle(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteVehicle(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteVehicle(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   const existing = await sql`
@@ -232,7 +232,7 @@ async function deleteVehicle(req: AuthenticatedRequest, res: VercelResponse) {
 
 // ============ SHIPMENT FUNCTIONS ============
 
-async function listShipments(req: AuthenticatedRequest, res: VercelResponse) {
+async function listShipments(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -271,7 +271,7 @@ async function listShipments(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function getShipment(req: AuthenticatedRequest, res: VercelResponse) {
+async function getShipment(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   const rows = await sql`
@@ -290,7 +290,7 @@ async function getShipment(req: AuthenticatedRequest, res: VercelResponse) {
   res.status(200).json(rows[0]);
 }
 
-async function createShipment(req: AuthenticatedRequest, res: VercelResponse) {
+async function createShipment(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = ShipmentSchema.parse(req.body);
 
@@ -315,7 +315,7 @@ async function createShipment(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updateShipment(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateShipment(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   try {
@@ -366,7 +366,7 @@ async function updateShipment(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function deleteShipment(req: AuthenticatedRequest, res: VercelResponse) {
+async function deleteShipment(req: AuthenticatedRequest, res: ApiResponse) {
   const { id } = req.query;
 
   const existing = await sql`

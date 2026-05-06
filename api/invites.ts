@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import { z } from 'zod';
 import {
   AuthenticatedRequest,
@@ -94,7 +94,7 @@ async function findInviteByToken(token: string) {
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -131,12 +131,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listInvitesHandler(res: VercelResponse) {
+async function listInvitesHandler(res: ApiResponse) {
   const rows = await listInviteRows();
   return res.status(200).json(rows.map(row => toInvite(row as InviteRecord)));
 }
 
-async function createInviteHandler(req: VercelRequest, res: VercelResponse) {
+async function createInviteHandler(req: ApiRequest, res: ApiResponse) {
   try {
     const authReq = req as AuthenticatedRequest;
     const data = InviteCreateSchema.parse(req.body);
@@ -212,7 +212,7 @@ async function createInviteHandler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function resendInvite(req: VercelRequest, res: VercelResponse) {
+async function resendInvite(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   const inviteId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!inviteId) return apiError(res, 400, 'Missing invite id');
@@ -274,7 +274,7 @@ async function resendInvite(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function deleteInvite(req: VercelRequest, res: VercelResponse) {
+async function deleteInvite(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   const existing = await sql`
     SELECT id, email, role, status
@@ -294,14 +294,14 @@ async function deleteInvite(req: VercelRequest, res: VercelResponse) {
   return res.status(204).end();
 }
 
-async function verifyInvite(token: string, res: VercelResponse) {
+async function verifyInvite(token: string, res: ApiResponse) {
   if (!token) return apiError(res, 400, 'Missing invite token');
   const invite = await findInviteByToken(token);
   if (!invite) return res.status(200).json(null);
   return res.status(200).json(toInvite(invite));
 }
 
-async function acceptInvite(req: VercelRequest, res: VercelResponse) {
+async function acceptInvite(req: ApiRequest, res: ApiResponse) {
   try {
     const data = InviteAcceptSchema.parse(req.body);
     const invite = await findInviteByToken(data.token);

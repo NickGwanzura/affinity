@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from '../_types.js';
 import { z } from 'zod';
 import {
   AuthenticatedRequest,
@@ -26,7 +26,7 @@ const SetAccessRoleSchema = z.object({
   accessRole: AccessRoleSchema,
 });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -55,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function setAccessRole(req: AuthenticatedRequest, res: VercelResponse) {
+async function setAccessRole(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const { userId, accessRole } = SetAccessRoleSchema.parse(req.body);
 
@@ -102,7 +102,7 @@ async function setAccessRole(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function listUsers(req: VercelRequest, res: VercelResponse) {
+async function listUsers(req: ApiRequest, res: ApiResponse) {
   const status = typeof req.query.status === 'string' ? req.query.status : '';
 
   const clauses: string[] = [];
@@ -132,7 +132,7 @@ async function listUsers(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json(result.rows ?? result);
 }
 
-async function updateUser(req: AuthenticatedRequest, res: VercelResponse) {
+async function updateUser(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const userId = typeof req.query.id === 'string' ? req.query.id : '';
     if (!userId) return apiError(res, 400, 'Missing user id');

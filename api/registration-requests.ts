@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -174,7 +174,7 @@ async function createInviteForRequest(request: RegistrationRequestRecord, review
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -207,7 +207,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listRegistrationRequests(res: VercelResponse) {
+async function listRegistrationRequests(res: ApiResponse) {
   const rows = await sql`
     SELECT id, name, email, role, status, requested_at, reviewed_at, reviewed_by
     FROM registration_requests
@@ -216,7 +216,7 @@ async function listRegistrationRequests(res: VercelResponse) {
   return res.status(200).json((rows as RegistrationRequestRecord[]).map(toRegistrationRequest));
 }
 
-async function createRegistrationRequestHandler(req: VercelRequest, res: VercelResponse) {
+async function createRegistrationRequestHandler(req: ApiRequest, res: ApiResponse) {
   try {
     const data = RegistrationRequestSchema.parse(req.body);
 
@@ -263,7 +263,7 @@ async function createRegistrationRequestHandler(req: VercelRequest, res: VercelR
   }
 }
 
-async function approveRegistrationRequest(req: AuthenticatedRequest, res: VercelResponse) {
+async function approveRegistrationRequest(req: AuthenticatedRequest, res: ApiResponse) {
   if (!req.user) return apiError(res, 401, 'Unauthorized');
 
   const requestId = typeof req.query.id === 'string' ? req.query.id : '';
@@ -326,7 +326,7 @@ async function approveRegistrationRequest(req: AuthenticatedRequest, res: Vercel
   });
 }
 
-async function rejectRegistrationRequest(req: AuthenticatedRequest, res: VercelResponse) {
+async function rejectRegistrationRequest(req: AuthenticatedRequest, res: ApiResponse) {
   if (!req.user) return apiError(res, 401, 'Unauthorized');
 
   const requestId = typeof req.query.id === 'string' ? req.query.id : '';

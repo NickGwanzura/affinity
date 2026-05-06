@@ -3,19 +3,17 @@
 /**
  * API Middleware - Authentication & Security
  *
- * Server-side JWT validation and security headers
- * This runs on Vercel's edge/serverless environment
+ * Server-side JWT validation and security headers.
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import jwt from 'jsonwebtoken';
 import { sql } from './_db.js';
 import { logger } from './_logger.js';
 import { captureException, initSentry } from './_sentry.js';
 
-// Vercel-style serverless cold starts skip server.ts, so init at module
-// load to ensure Sentry is armed for the first request. No-op when
-// SENTRY_DSN is unset.
+// Init at module load so Sentry is armed for the first request.
+// No-op when SENTRY_DSN is unset.
 initSentry();
 
 export type AccessRole = 'super_admin' | 'admin' | 'user';
@@ -50,7 +48,7 @@ function getTokenFromCookieHeader(cookieHeader: string | string[] | undefined): 
   return null;
 }
 
-export interface AuthenticatedRequest extends VercelRequest {
+export interface AuthenticatedRequest extends ApiRequest {
   user?: {
     id: string;
     role: string;
@@ -67,7 +65,7 @@ type UserContextRow = {
   force_password_change?: boolean | null;
 };
 
-function parsePathname(req: VercelRequest): string {
+function parsePathname(req: ApiRequest): string {
   const raw = req.url || '/';
   try {
     return new URL(raw, 'http://localhost').pathname;
@@ -107,7 +105,7 @@ async function getUserContext(userId: string): Promise<UserContextRow | null> {
 /**
  * Verify JWT token from Authorization header
  */
-export async function verifyToken(req: AuthenticatedRequest, res: VercelResponse): Promise<boolean> {
+export async function verifyToken(req: AuthenticatedRequest, res: ApiResponse): Promise<boolean> {
   const authHeader = req.headers.authorization;
   const secret = getJwtSecret();
 
@@ -194,7 +192,7 @@ export async function verifyToken(req: AuthenticatedRequest, res: VercelResponse
   }
 }
 
-export function requireAccessRole(req: AuthenticatedRequest, res: VercelResponse, roles: AccessRole[]): boolean {
+export function requireAccessRole(req: AuthenticatedRequest, res: ApiResponse, roles: AccessRole[]): boolean {
   if (!req.user) {
     res.status(401).json({ error: 'Authentication required' });
     return false;
@@ -216,7 +214,7 @@ export function requireAccessRole(req: AuthenticatedRequest, res: VercelResponse
  * Returns true when the request is allowed to proceed; false when a
  * 403 has already been sent.
  */
-export function requirePasswordCurrent(req: AuthenticatedRequest, res: VercelResponse): boolean {
+export function requirePasswordCurrent(req: AuthenticatedRequest, res: ApiResponse): boolean {
   if (!req.user) {
     res.status(401).json({ error: 'Authentication required' });
     return false;
@@ -233,7 +231,7 @@ export function requirePasswordCurrent(req: AuthenticatedRequest, res: VercelRes
 /**
  * Set security headers
  */
-export function setSecurityHeaders(res: VercelResponse): void {
+export function setSecurityHeaders(res: ApiResponse): void {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -251,7 +249,7 @@ export function setSecurityHeaders(res: VercelResponse): void {
 /**
  * Handle CORS preflight
  */
-export function handleCors(req: VercelRequest, res: VercelResponse): boolean {
+export function handleCors(req: ApiRequest, res: ApiResponse): boolean {
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'];
   const origin = req.headers.origin;
 
@@ -273,7 +271,7 @@ export function handleCors(req: VercelRequest, res: VercelResponse): boolean {
 /**
  * API Error wrapper
  */
-export function apiError(res: VercelResponse, status: number, message: string, details?: any): void {
+export function apiError(res: ApiResponse, status: number, message: string, details?: any): void {
   logger.error({ err: details, status, message }, 'API error response');
   if (details instanceof Error || (status >= 500 && details !== undefined)) {
     captureException(details ?? new Error(message), { status, message });

@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import type { PoolClient } from '@neondatabase/serverless';
 import { z } from 'zod';
 import {
@@ -214,7 +214,7 @@ async function replaceAllocationsForPayment(
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -251,7 +251,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listPayments(res: VercelResponse) {
+async function listPayments(res: ApiResponse) {
   try {
     const rows = await sql`
       SELECT id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
@@ -264,7 +264,7 @@ async function listPayments(res: VercelResponse) {
   }
 }
 
-async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
+async function createPayment(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = PaymentSchema.parse(req.body);
     const allocations = parseAllocationsFromBody(req.body);
@@ -355,7 +355,7 @@ async function createPayment(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
+async function updatePayment(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = PaymentUpdateSchema.parse(req.body);
     const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
@@ -462,7 +462,7 @@ async function updatePayment(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function replaceAllocations(req: VercelRequest, res: VercelResponse) {
+async function replaceAllocations(req: ApiRequest, res: ApiResponse) {
   const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!paymentId) return apiError(res, 400, 'Missing payment id');
 
@@ -505,7 +505,7 @@ async function replaceAllocations(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function deletePayment(req: AuthenticatedRequest, res: VercelResponse) {
+async function deletePayment(req: AuthenticatedRequest, res: ApiResponse) {
   const paymentId = typeof req.query.id === 'string' ? req.query.id : '';
   if (!paymentId) return apiError(res, 400, 'Missing payment id');
 

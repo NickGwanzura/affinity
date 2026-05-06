@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -14,7 +14,7 @@ import { PayslipSchema } from './_schemas.js';
 
 type PayslipStatus = 'Generated' | 'Approved' | 'Paid' | 'Cancelled';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listPayslips(req: VercelRequest, res: VercelResponse) {
+async function listPayslips(req: ApiRequest, res: ApiResponse) {
   const employeeId = typeof req.query.employeeId === 'string' ? req.query.employeeId : '';
   const year = typeof req.query.year === 'string' ? parseInt(req.query.year, 10) : undefined;
   const month = typeof req.query.month === 'string' ? parseInt(req.query.month, 10) : undefined;
@@ -70,7 +70,7 @@ async function listPayslips(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json(rows);
 }
 
-async function createPayslip(req: AuthenticatedRequest, res: VercelResponse) {
+async function createPayslip(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = PayslipSchema.parse(req.body);
     const employeeRows = await sql`SELECT * FROM employees WHERE id = ${data.employee_id}::uuid`;
@@ -154,7 +154,7 @@ async function createPayslip(req: AuthenticatedRequest, res: VercelResponse) {
   }
 }
 
-async function updatePayslipStatus(req: VercelRequest, res: VercelResponse) {
+async function updatePayslipStatus(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   const newStatus = req.body?.status as PayslipStatus | undefined;
   if (!newStatus || !['Generated', 'Approved', 'Paid', 'Cancelled'].includes(newStatus)) {
@@ -208,7 +208,7 @@ async function updatePayslipStatus(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json(fullRows[0]);
 }
 
-async function deletePayslip(req: VercelRequest, res: VercelResponse) {
+async function deletePayslip(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   const existing = await sql`SELECT * FROM payslips WHERE id = ${req.query.id}::uuid`;
   if (existing.length === 0) {

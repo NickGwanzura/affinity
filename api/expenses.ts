@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
@@ -21,7 +21,7 @@ const EXCHANGE_RATES: Record<string, number> = {
   ZAR: 0.055,
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
 
@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function listExpenses(req: VercelRequest, res: VercelResponse) {
+async function listExpenses(req: ApiRequest, res: ApiResponse) {
   try {
     const { page, limit, sortBy, sortOrder } = PaginationSchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -102,13 +102,13 @@ async function listExpenses(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function getExpense(req: VercelRequest, res: VercelResponse) {
+async function getExpense(req: ApiRequest, res: ApiResponse) {
   const rows = await sql`SELECT * FROM expenses WHERE id = ${req.query.id}::uuid`;
   if (rows.length === 0) return apiError(res, 404, 'Expense not found');
   return res.status(200).json(rows[0]);
 }
 
-async function createExpense(req: VercelRequest, res: VercelResponse) {
+async function createExpense(req: ApiRequest, res: ApiResponse) {
   try {
     const authReq = req as AuthenticatedRequest;
     const data = ExpenseSchema.parse(req.body);
@@ -173,7 +173,7 @@ async function createExpense(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function updateExpense(req: VercelRequest, res: VercelResponse) {
+async function updateExpense(req: ApiRequest, res: ApiResponse) {
   try {
     const authReq = req as AuthenticatedRequest;
     const { id } = req.query;
@@ -231,7 +231,7 @@ async function updateExpense(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function deleteExpense(req: VercelRequest, res: VercelResponse) {
+async function deleteExpense(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   const existing = await sql`SELECT * FROM expenses WHERE id = ${req.query.id}::uuid`;
   if (existing.length === 0) return apiError(res, 404, 'Expense not found');
