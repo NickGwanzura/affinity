@@ -105,7 +105,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         </div>
       }
     >
-      <form id="vehicle-form" onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form id="vehicle-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Row 1: Make and Model — full width, autoFocus */}
         <TextInput
           id="vehicle-model"
@@ -122,7 +122,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         />
 
         {/* Row 2: VIN | Reg — 2-col grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <TextInput
             id="vehicle-vin"
             labelText="VIN Number *"
@@ -148,7 +148,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         </div>
 
         {/* Row 3: Price | Currency — 3-col grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <TextInput
               id="vehicle-price"

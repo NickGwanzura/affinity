@@ -7,14 +7,15 @@ interface FormModalShellProps {
   label?:   string;
   size?:    ModalSize;
   onClose:  () => void;
+  footer?:  React.ReactNode;
   children: React.ReactNode;
 }
 
 export const FormModalShell: React.FC<FormModalShellProps> = ({
-  isOpen, title, label, size = 'lg', onClose, children,
+  isOpen, title, label, size = 'lg', onClose, footer, children,
 }) => (
-  <Modal isOpen={isOpen} title={title} label={label} size={size} onClose={onClose}>
-    <div className="space-y-7">{children}</div>
+  <Modal isOpen={isOpen} title={title} label={label} size={size} onClose={onClose} footer={footer}>
+    {children}
   </Modal>
 );
 

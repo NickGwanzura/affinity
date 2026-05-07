@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import type { Employee } from '../../types';
 import { getMonthName } from '../../utils/formatters';
 import FormModalShell from './FormModal';
-import { Button, Select, SelectItem, TextArea, TextInput } from '../ui';
+import { Button, NumberInput, Select, SelectItem, TextArea, TextInput } from '../ui';
 
 export interface PayslipFormValue {
   employee_id: string;
@@ -98,8 +98,18 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
       label="Payroll"
       size="2xl"
       onClose={onClose}
+      footer={
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form="payslip-form">
+            {submitLabel}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={onSubmit} className="space-y-8">
+      <form id="payslip-form" onSubmit={onSubmit} className="space-y-8">
         <section className="space-y-5">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Pay period
@@ -141,11 +151,13 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
                 <SelectItem key={month} value={month} text={getMonthName(month)} />
               ))}
             </Select>
-            <TextInput
+            <NumberInput
               id="payslip-year"
-              type="number"
               labelText="Year"
-              value={String(form.year)}
+              min={2000}
+              max={2100}
+              step={1}
+              value={form.year}
               onChange={(event) =>
                 onChange({ year: parseInt(event.target.value, 10) || new Date().getFullYear() })
               }
@@ -154,56 +166,57 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
           </div>
         </section>
 
-        <section className="space-y-5 rounded-lg border border-emerald-200 bg-emerald-50/40 p-5">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-800">
+        <section className="space-y-5 rounded-md border border-stone-200 bg-stone-50/60 p-5">
+          <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-800">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             Earnings
           </h4>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            <TextInput
+            <NumberInput
               id="payslip-base-pay"
-              type="number"
-              step="0.01"
-              labelText="Base Pay"
+              step={0.01}
+              min={0}
+              labelText="Base pay"
               value={form.base_pay}
               onChange={(event) => onChange({ base_pay: event.target.value })}
               required
             />
-            <TextInput
+            <NumberInput
               id="payslip-ot-hours"
-              type="number"
-              step="0.01"
-              labelText="OT Hours"
+              step={0.01}
+              min={0}
+              labelText="OT hours"
               value={form.overtime_hours}
               onChange={(event) => onChange({ overtime_hours: event.target.value })}
             />
-            <TextInput
+            <NumberInput
               id="payslip-ot-rate"
-              type="number"
-              step="0.01"
-              labelText="OT Rate"
+              step={0.01}
+              min={0}
+              labelText="OT rate"
               value={form.overtime_rate}
               onChange={(event) => onChange({ overtime_rate: event.target.value })}
             />
-            <TextInput
+            <NumberInput
               id="payslip-bonus"
-              type="number"
-              step="0.01"
+              step={0.01}
+              min={0}
               labelText="Bonus"
               value={form.bonus}
               onChange={(event) => onChange({ bonus: event.target.value })}
             />
-            <TextInput
+            <NumberInput
               id="payslip-allowances"
-              type="number"
-              step="0.01"
+              step={0.01}
+              min={0}
               labelText="Allowances"
               value={form.allowances}
               onChange={(event) => onChange({ allowances: event.target.value })}
             />
-            <TextInput
+            <NumberInput
               id="payslip-commission"
-              type="number"
-              step="0.01"
+              step={0.01}
+              min={0}
               labelText="Commission"
               value={form.commission}
               onChange={(event) => onChange({ commission: event.target.value })}
@@ -211,39 +224,40 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
           </div>
         </section>
 
-        <section className="space-y-5 rounded-lg border border-red-200 bg-red-50/40 p-5">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-red-800">
+        <section className="space-y-5 rounded-md border border-stone-200 bg-stone-50/60 p-5">
+          <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-red-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
             Deductions
           </h4>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
-            <TextInput
+            <NumberInput
               id="payslip-tax"
-              type="number"
-              step="0.01"
+              step={0.01}
+              min={0}
               labelText="Tax"
               value={form.tax_deduction}
               onChange={(event) => onChange({ tax_deduction: event.target.value })}
             />
-            <TextInput
+            <NumberInput
               id="payslip-pension"
-              type="number"
-              step="0.01"
+              step={0.01}
+              min={0}
               labelText="Pension"
               value={form.pension_deduction}
               onChange={(event) => onChange({ pension_deduction: event.target.value })}
             />
-            <TextInput
+            <NumberInput
               id="payslip-health"
-              type="number"
-              step="0.01"
-              labelText="Health Insurance"
+              step={0.01}
+              min={0}
+              labelText="Health insurance"
               value={form.health_insurance}
               onChange={(event) => onChange({ health_insurance: event.target.value })}
             />
-            <TextInput
+            <NumberInput
               id="payslip-other-deductions"
-              type="number"
-              step="0.01"
+              step={0.01}
+              min={0}
               labelText="Other"
               value={form.other_deductions}
               onChange={(event) => onChange({ other_deductions: event.target.value })}
@@ -313,12 +327,6 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
           />
         </section>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-stone-200 pt-5 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit">{submitLabel}</Button>
-        </div>
       </form>
     </FormModalShell>
   );

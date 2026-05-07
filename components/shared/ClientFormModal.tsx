@@ -54,8 +54,16 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       label="Client details"
       size="md"
       onClose={onClose}
+      footer={
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form="client-form" isLoading={isSubmitting}>{submitLabel}</Button>
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="client-form" onSubmit={handleSubmit}>
         <Stack gap={5}>
           <TextInput
             id="client-name"
@@ -70,7 +78,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             invalid={nameError}
             invalidText="Name is required"
           />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <TextInput
               id="client-email"
               type="email"
@@ -112,12 +120,6 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             onChange={(event) => onChange({ notes: event.target.value })}
           />
         </Stack>
-        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={isSubmitting}>{submitLabel}</Button>
-        </div>
       </form>
     </FormModalShell>
   );

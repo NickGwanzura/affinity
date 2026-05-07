@@ -521,7 +521,7 @@ export const Grid: React.FC<
   React.HTMLAttributes<HTMLDivElement> & { condensed?: boolean; fullWidth?: boolean }
 > = ({ className = '', condensed, fullWidth, children, ...props }) => (
   <div
-    className={`grid grid-cols-12 ${condensed ? 'gap-0' : 'gap-4'} ${fullWidth ? 'w-full' : ''} ${className}`}
+    className={`grid grid-cols-12 ${condensed ? 'gap-0' : 'gap-5'} ${fullWidth ? 'w-full' : ''} ${className}`}
     {...props}
   >
     {children}

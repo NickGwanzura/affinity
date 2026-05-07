@@ -76,8 +76,18 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
       label="Expense entry"
       size="md"
       onClose={onClose}
+      footer={
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button type="submit" form="expense-entry-form" isLoading={isSubmitting}>
+            {submitLabel}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-5">
+      <form id="expense-entry-form" onSubmit={onSubmit} className="flex flex-col gap-6">
         {/* Vehicle selector */}
         <Select
           id="expense-vehicle"
@@ -93,7 +103,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
         </Select>
 
         {/* Amount + Currency row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <NumberInput
             id="expense-amount"
             labelText="Amount *"
@@ -116,7 +126,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
         </div>
 
         {/* Category + Location row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <Select
             id="expense-category"
             labelText="Category"
@@ -190,16 +200,6 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
           value={form.description}
           onChange={(e) => onChange({ description: e.target.value })}
         />
-
-        {/* Footer buttons */}
-        <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={isSubmitting}>
-            {submitLabel}
-          </Button>
-        </div>
       </form>
     </FormModalShell>
   );

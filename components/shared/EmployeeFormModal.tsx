@@ -1,7 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import type { Employee } from '../../types';
 import FormModalShell from './FormModal';
-import { Button, Select, SelectItem, TextInput } from '../ui';
+import { Button, NumberInput, Select, SelectItem, TextInput } from '../ui';
 
 export interface EmployeeFormValue {
   name: string;
@@ -67,11 +67,6 @@ export const toEmployeeFormValue = (employee: Employee): EmployeeFormValue => ({
   tax_number: employee.tax_number || '',
 });
 
-/** Asterisk to mark required fields */
-const Req: React.FC = () => (
-  <span className="text-rose-600 ml-0.5" aria-hidden="true">*</span>
-);
-
 export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   isOpen,
   title,
@@ -83,12 +78,13 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   isNewEmployee = false,
   existingEmployees = [],
 }) => {
-  const nameRef = useRef<HTMLInputElement>(null);
-
   // Auto-focus Full Name only when opening for a new employee
   useEffect(() => {
     if (isOpen && isNewEmployee) {
-      const timer = setTimeout(() => nameRef.current?.focus(), 50);
+      const timer = setTimeout(
+        () => document.getElementById('employee-name')?.focus(),
+        50,
+      );
       return () => clearTimeout(timer);
     }
   }, [isOpen, isNewEmployee]);
@@ -114,67 +110,58 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       label="Employee record"
       size="2xl"
       onClose={onClose}
+      footer={
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form="employee-form">
+            {submitLabel}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={onSubmit} className="space-y-8">
+      <form id="employee-form" onSubmit={onSubmit} className="space-y-8">
         {/* Personal & contact */}
         <section className="space-y-5">
           <h4 className={sectionHeader}>Personal &amp; contact</h4>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <TextInput
+              id="employee-name"
+              name="name"
+              labelText="Full Name *"
+              autoComplete="name"
+              required
+              value={form.name}
+              onChange={(e) => onChange({ name: e.target.value })}
+            />
+            <TextInput
+              id="employee-email"
+              type="email"
+              name="email"
+              labelText="Email *"
+              autoComplete="email"
+              required
+              value={form.email}
+              onChange={(e) => onChange({ email: e.target.value })}
+            />
+            <TextInput
+              id="employee-phone"
+              type="tel"
+              name="tel"
+              labelText="Phone"
+              autoComplete="tel"
+              value={form.phone}
+              onChange={(e) => onChange({ phone: e.target.value })}
+            />
             <div>
-              <label htmlFor="employee-name" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Full Name <Req />
-              </label>
-              <input
-                ref={nameRef}
-                id="employee-name"
-                name="name"
-                autoComplete="name"
-                required
-                value={form.name}
-                onChange={(e) => onChange({ name: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
-              />
-            </div>
-            <div>
-              <label htmlFor="employee-email" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Email <Req />
-              </label>
-              <input
-                id="employee-email"
-                type="email"
-                name="email"
-                autoComplete="email"
-                required
-                value={form.email}
-                onChange={(e) => onChange({ email: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
-              />
-            </div>
-            <div>
-              <label htmlFor="employee-phone" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Phone
-              </label>
-              <input
-                id="employee-phone"
-                type="tel"
-                name="tel"
-                autoComplete="tel"
-                value={form.phone}
-                onChange={(e) => onChange({ phone: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
-              />
-            </div>
-            <div>
-              <label htmlFor="employee-department" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Department
-              </label>
-              <input
+              <TextInput
                 id="employee-department"
+                labelText="Department"
                 list="department-list"
                 autoComplete="off"
                 value={form.department}
                 onChange={(e) => onChange({ department: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
               />
               <datalist id="department-list">
                 {departmentOptions.map((d) => (
@@ -190,17 +177,14 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           <h4 className={sectionHeader}>Role &amp; compensation</h4>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             <div>
-              <label htmlFor="employee-position" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Position <Req />
-              </label>
-              <input
+              <TextInput
                 id="employee-position"
+                labelText="Position *"
                 list="position-list"
                 autoComplete="off"
                 required
                 value={form.position}
                 onChange={(e) => onChange({ position: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
               />
               <datalist id="position-list">
                 {positionOptions.map((p) => (
@@ -208,22 +192,16 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                 ))}
               </datalist>
             </div>
-            <div>
-              <label htmlFor="employee-base-pay" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Base Pay <Req />
-              </label>
-              <input
-                id="employee-base-pay"
-                type="number"
-                step="0.01"
-                min="0"
-                autoComplete="off"
-                required
-                value={form.base_pay_usd}
-                onChange={(e) => onChange({ base_pay_usd: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
-              />
-            </div>
+            <NumberInput
+              id="employee-base-pay"
+              labelText="Base pay *"
+              step={0.01}
+              min={0}
+              autoComplete="off"
+              required
+              value={form.base_pay_usd}
+              onChange={(event) => onChange({ base_pay_usd: event.target.value })}
+            />
             <Select
               id="employee-currency"
               labelText="Currency"
@@ -249,20 +227,15 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               <SelectItem value="Contract" text="Contract" />
               <SelectItem value="Intern" text="Intern" />
             </Select>
-            <div>
-              <label htmlFor="employee-date-hired" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Date Hired <Req />
-              </label>
-              <input
-                id="employee-date-hired"
-                type="date"
-                autoComplete="off"
-                required
-                value={form.date_hired}
-                onChange={(e) => onChange({ date_hired: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
-              />
-            </div>
+            <TextInput
+              id="employee-date-hired"
+              type="date"
+              labelText="Date Hired *"
+              autoComplete="off"
+              required
+              value={form.date_hired}
+              onChange={(e) => onChange({ date_hired: e.target.value })}
+            />
             <Select
               id="employee-status"
               labelText="Status"
@@ -283,63 +256,36 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
             <p className="mt-1 text-xs text-zinc-500">Optional — used on payslip PDFs.</p>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <div>
-              <label htmlFor="employee-national-id" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                National ID
-              </label>
-              <input
-                id="employee-national-id"
-                autoComplete="off"
-                value={form.national_id}
-                onChange={(e) => onChange({ national_id: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
-              />
-            </div>
-            <div>
-              <label htmlFor="employee-tax-number" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Tax Number
-              </label>
-              <input
-                id="employee-tax-number"
-                autoComplete="off"
-                value={form.tax_number}
-                onChange={(e) => onChange({ tax_number: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
-              />
-            </div>
-            <div>
-              <label htmlFor="employee-bank-name" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Bank Name
-              </label>
-              <input
-                id="employee-bank-name"
-                autoComplete="off"
-                value={form.bank_name}
-                onChange={(e) => onChange({ bank_name: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
-              />
-            </div>
-            <div>
-              <label htmlFor="employee-bank-account" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Bank Account
-              </label>
-              <input
-                id="employee-bank-account"
-                autoComplete="off"
-                value={form.bank_account}
-                onChange={(e) => onChange({ bank_account: e.target.value })}
-                className="block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 border border-stone-300 rounded-md px-3 py-2 min-h-[2.5rem] shadow-sm transition-[border-color,box-shadow] duration-150 hover:border-stone-400 focus:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30"
-              />
-            </div>
+            <TextInput
+              id="employee-national-id"
+              labelText="National ID"
+              autoComplete="off"
+              value={form.national_id}
+              onChange={(e) => onChange({ national_id: e.target.value })}
+            />
+            <TextInput
+              id="employee-tax-number"
+              labelText="Tax Number"
+              autoComplete="off"
+              value={form.tax_number}
+              onChange={(e) => onChange({ tax_number: e.target.value })}
+            />
+            <TextInput
+              id="employee-bank-name"
+              labelText="Bank Name"
+              autoComplete="off"
+              value={form.bank_name}
+              onChange={(e) => onChange({ bank_name: e.target.value })}
+            />
+            <TextInput
+              id="employee-bank-account"
+              labelText="Bank Account"
+              autoComplete="off"
+              value={form.bank_account}
+              onChange={(e) => onChange({ bank_account: e.target.value })}
+            />
           </div>
         </section>
-
-        <div className="flex flex-col-reverse gap-3 border-t border-stone-200 pt-5 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit">{submitLabel}</Button>
-        </div>
       </form>
     </FormModalShell>
   );

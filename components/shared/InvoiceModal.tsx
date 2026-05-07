@@ -251,24 +251,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         {/* Invoice Number (when editing) */}
         {editingInvoice && (
           <section>
-            <div
-              style={{
-                padding: '0.75rem 1rem',
-                backgroundColor: '#ffffff',
-                borderLeft: '3px solid #10b981',
-              }}
-            >
-              <span
-                className="font-mono"
-                style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: '#10b981',
-                }}
-              >
+            <div className="p-5 bg-white border-l-[3px] border-[#10b981] flex items-center gap-3">
+              <span className="font-mono text-sm font-semibold text-[#10b981]">
                 {editingInvoice.invoice_number}
               </span>
-              <Tag type="blue" size="sm" style={{ marginLeft: '0.5rem' }}>
+              <Tag type="blue" size="sm">
                 {formData.invoice_kind}
               </Tag>
             </div>
@@ -277,7 +264,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Client Section */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
             Client Information
           </h2>
 
@@ -298,7 +285,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
               ))}
             </Select>
 
-            <Grid narrow>
+            <Grid>
               <Column sm={4} md={8} lg={8}>
                 <TextInput
                   id="invoice-client-name"
@@ -331,11 +318,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Invoice Details */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
             Invoice Details
           </h2>
 
-          <Grid narrow>
+          <Grid>
             <Column sm={4} md={4} lg={8}>
               <Select
                 id="invoice-kind"
@@ -431,14 +418,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Line Items */}
         <section>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '0.75rem',
-            }}
-          >
+          <div className="flex justify-between items-center mb-4">
             <h2 className="text-base font-semibold text-gray-900">
               Line Items
             </h2>
@@ -456,13 +436,9 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
             {lineItems.map((item, index) => (
               <div
                 key={item.id || index}
-                style={{
-                  padding: '0.75rem',
-                  backgroundColor: '#ffffff',
-                  borderLeft: '3px solid #d6d3d1',
-                }}
+                className="p-5 bg-white border-l-[3px] border-stone-300"
               >
-                <Grid narrow>
+                <Grid>
                   <Column sm={4} md={6} lg={8}>
                     <TextInput
                       id={`line-desc-${index}`}
@@ -561,17 +537,13 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
           {/* Summary Strip */}
           <div
+            className="mt-5 grid gap-3"
             style={{
-              marginTop: '1rem',
-              display: 'grid',
               gridTemplateColumns: totals.discount > 0 && totals.tax > 0
                 ? 'repeat(4, 1fr)'
                 : totals.discount > 0 || totals.tax > 0
                   ? 'repeat(3, 1fr)'
                   : 'repeat(2, 1fr)',
-              gap: '1px',
-              background: '#e7e5e4',
-              border: '1px solid #e7e5e4',
             }}
           >
             <InvoiceSummaryCell label="Subtotal" value={formatMoney(totals.subtotal, formData.currency)} />
@@ -585,26 +557,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           </div>
 
           {/* Dark Total Bar */}
-          <div
-            style={{
-              marginTop: '0.75rem',
-              padding: '0.75rem 1rem',
-              backgroundColor: '#18181b',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <span
-              style={{
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                color: '#52525b',
-              }}
-            >
+          <div className="mt-4 py-4 px-5 bg-zinc-900 flex justify-between items-center">
+            <span className="font-semibold text-sm text-zinc-600">
               Invoice Total
             </span>
-            <span style={{ fontWeight: 700, fontSize: '1.125rem', color: '#ffffff' }}>
+            <span className="font-bold text-lg text-white">
               {formatMoney(totals.total, formData.currency)}
             </span>
           </div>
@@ -612,7 +569,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Notes & Terms */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900" style={{ marginBottom: '0.75rem' }}>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
             Notes & Terms
           </h2>
 
@@ -655,23 +612,8 @@ const InvoiceSummaryCell: React.FC<{
   emphasis?: boolean;
   accent?: 'error' | 'success' | 'warning';
 }> = ({ label, value, emphasis, accent }) => (
-  <div
-    style={{
-      background: '#ffffff',
-      padding: '0.875rem 1rem',
-      textAlign: 'center',
-    }}
-  >
-    <div
-      style={{
-        fontSize: '0.6875rem',
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        color: '#52525b',
-        marginBottom: '0.25rem',
-      }}
-    >
+  <div className="bg-white border border-stone-200 rounded-md px-4 py-4 text-center">
+    <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-zinc-600 mb-1">
       {label}
     </div>
     <div

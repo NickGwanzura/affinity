@@ -82,13 +82,23 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       label="Trip planner"
       size="lg"
       onClose={onClose}
+      footer={
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" form="trip-planner-form" isLoading={isSubmitting} disabled={isSubmitting}>
+            {mode === 'create' ? 'Create Trip' : 'Update Trip'}
+          </Button>
+        </div>
+      }
     >
       <p className="text-sm text-zinc-500">
         Assign routes, drivers, vehicles, statuses, and ETAs from one place.
       </p>
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form id="trip-planner-form" onSubmit={onSubmit} className="mt-5">
         <Stack gap={5}>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2">
             <TextInput
               id="trip-title"
               labelText="Trip Title"
@@ -110,7 +120,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             </Select>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2">
             <Select
               id="trip-driver"
               labelText="Assigned Driver"
@@ -142,7 +152,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             </Select>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2">
             <TextInput
               id="trip-origin"
               labelText="Origin"
@@ -168,7 +178,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             helperText="Comma-separated optional route stops."
           />
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2">
             <TextInput
               id="trip-departure"
               type="datetime-local"
@@ -185,7 +195,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2">
             <TextInput
               id="trip-actual-departure"
               type="datetime-local"
@@ -211,15 +221,6 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             placeholder="Border notes, cargo context, or operational instructions..."
           />
         </Stack>
-
-        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting}>
-            {mode === 'create' ? 'Create Trip' : 'Update Trip'}
-          </Button>
-        </div>
       </form>
     </FormModalShell>
   );
