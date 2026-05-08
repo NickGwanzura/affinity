@@ -98,7 +98,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       </p>
       <form id="trip-planner-form" onSubmit={onSubmit} className="mt-5">
         <Stack gap={5}>
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <TextInput
               id="trip-title"
               labelText="Trip Title"
@@ -120,7 +120,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             </Select>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <Select
               id="trip-driver"
               labelText="Assigned Driver"
@@ -152,7 +152,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             </Select>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <TextInput
               id="trip-origin"
               labelText="Origin"
@@ -178,7 +178,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             helperText="Comma-separated optional route stops."
           />
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <TextInput
               id="trip-departure"
               type="datetime-local"
@@ -195,7 +195,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             />
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <TextInput
               id="trip-actual-departure"
               type="datetime-local"

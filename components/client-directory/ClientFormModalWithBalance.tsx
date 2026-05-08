@@ -96,7 +96,7 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
             invalid={nameError}
             invalidText="Name is required"
           />
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextInput
               id="client-email"
               type="email"
@@ -130,7 +130,7 @@ export const ClientFormModalWithBalance: React.FC<Props> = ({
             onChange={(e) => onChange({ address: e.target.value })}
             autoComplete="street-address"
           />
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="sm:col-span-2">
               <TextInput
                 id="client-opening-balance"

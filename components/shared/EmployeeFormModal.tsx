@@ -125,7 +125,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
         {/* Personal & contact */}
         <section className="space-y-5">
           <h4 className={sectionHeader}>Personal &amp; contact</h4>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <TextInput
               id="employee-name"
               name="name"
@@ -175,7 +175,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
         {/* Role & compensation */}
         <section className="space-y-5">
           <h4 className={sectionHeader}>Role &amp; compensation</h4>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <TextInput
                 id="employee-position"
@@ -215,7 +215,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               <SelectItem value="ZAR" text="ZAR" />
             </Select>
           </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Select
               id="employee-employment-type"
               labelText="Employment Type"
@@ -255,7 +255,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
             <h4 className={sectionHeader}>Banking &amp; tax</h4>
             <p className="mt-1 text-xs text-zinc-500">Optional — used on payslip PDFs.</p>
           </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <TextInput
               id="employee-national-id"
               labelText="National ID"
