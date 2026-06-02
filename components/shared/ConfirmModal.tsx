@@ -35,19 +35,19 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </div>
       }
     >
-      <div className="flex gap-3">
+      <div className="flex gap-4">
         <div
-          className={`flex h-12 w-12 shrink-0 items-center justify-center ${
-            isDanger ? 'bg-red-600' : 'bg-blue-600'
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+            isDanger ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
           }`}
         >
           {isDanger ? (
-            <AlertTriangle size={24} className="text-white" />
+            <AlertTriangle size={22} />
           ) : (
-            <Info size={24} className="text-white" />
+            <Info size={22} />
           )}
         </div>
-        <p className="text-sm leading-relaxed text-gray-700 m-0">{message}</p>
+        <p className="pt-1.5 text-sm leading-relaxed text-gray-700">{message}</p>
       </div>
     </Modal>
   );

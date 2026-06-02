@@ -163,11 +163,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       isOpen={open}
       onClose={onClose}
       title={editingPayment ? 'Edit Payment' : 'Record Payment'}
-      label={
-        editingPayment
-          ? 'Update payment details and invoice allocations'
-          : 'Record an inbound payment and immediately create a receipt'
-      }
+      label="Payment record"
       size="lg"
       preventCloseOnClickOutside
       footer={
@@ -187,7 +183,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       <Stack gap={7}>
         {/* ── Client ──────────────────────────────────────────────── */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Client
           </h2>
           <Select
@@ -222,7 +218,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 Opening + Invoiced - Paid
               </span>
             </div>
-            <div className="grid grid-cols-4 gap-4 text-center">
+            <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
               <div>
                 <div className="text-xs text-zinc-600">Opening</div>
                 <div className="font-bold">{formatMoney(clientBalance.openingBalance, clientBalance.currency)}</div>
@@ -270,7 +266,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* ── Payment Details ─────────────────────────────────────── */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Payment Details
           </h2>
 
@@ -454,7 +450,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
             {/* Allocated Total */}
             <div className="mt-4 py-4 px-5 bg-zinc-900 flex justify-between items-center">
-              <span className="font-semibold text-sm text-zinc-600">
+              <span className="font-semibold text-sm text-zinc-400">
                 Allocated Total
               </span>
               <span className="font-bold text-white">

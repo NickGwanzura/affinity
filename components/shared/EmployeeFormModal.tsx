@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import type { Employee } from '../../types';
 import FormModalShell from './FormModal';
 import { Button, NumberInput, Select, SelectItem, TextInput } from '../ui';
@@ -30,7 +30,6 @@ interface EmployeeFormModalProps {
   submitLabel?: string;
   isNewEmployee?: boolean;
   existingEmployees?: Employee[];
-  isDirty?: boolean;
 }
 
 export const createEmptyEmployeeForm = (): EmployeeFormValue => ({
@@ -75,20 +74,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   form,
   onChange,
   submitLabel = 'Save Employee',
-  isNewEmployee = false,
+  isNewEmployee: _isNewEmployee = false,
   existingEmployees = [],
 }) => {
-  // Auto-focus Full Name only when opening for a new employee
-  useEffect(() => {
-    if (isOpen && isNewEmployee) {
-      const timer = setTimeout(
-        () => document.getElementById('employee-name')?.focus(),
-        50,
-      );
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, isNewEmployee]);
-
   if (!isOpen) {
     return null;
   }
@@ -125,7 +113,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
         {/* Personal & contact */}
         <section className="space-y-5">
           <h4 className={sectionHeader}>Personal &amp; contact</h4>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextInput
               id="employee-name"
               name="name"
@@ -175,7 +163,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
         {/* Role & compensation */}
         <section className="space-y-5">
           <h4 className={sectionHeader}>Role &amp; compensation</h4>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <TextInput
                 id="employee-position"
@@ -215,7 +203,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               <SelectItem value="ZAR" text="ZAR" />
             </Select>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Select
               id="employee-employment-type"
               labelText="Employment Type"
@@ -255,7 +243,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
             <h4 className={sectionHeader}>Banking &amp; tax</h4>
             <p className="mt-1 text-xs text-zinc-500">Optional — used on payslip PDFs.</p>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextInput
               id="employee-national-id"
               labelText="National ID"

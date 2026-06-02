@@ -98,7 +98,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
       </p>
       <form id="trip-planner-form" onSubmit={onSubmit} className="mt-5">
         <Stack gap={5}>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <TextInput
               id="trip-title"
               labelText="Trip Title"
@@ -113,14 +113,12 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
               onChange={(event) => onChange({ status: event.target.value as TripStatus })}
             >
               {tripStatuses.map((status) => (
-                <React.Fragment key={status}>
-                  <SelectItem value={status} text={status} />
-                </React.Fragment>
+                <SelectItem key={status} value={status} text={status} />
               ))}
             </Select>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Select
               id="trip-driver"
               labelText="Assigned Driver"
@@ -129,9 +127,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             >
               <SelectItem value="" text="Unassigned" />
               {drivers.map((driver) => (
-                <React.Fragment key={driver.id}>
-                  <SelectItem value={driver.id} text={driver.name} />
-                </React.Fragment>
+                <SelectItem key={driver.id} value={driver.id} text={driver.name} />
               ))}
             </Select>
             <Select
@@ -142,17 +138,16 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             >
               <SelectItem value="" text="Unassigned" />
               {vehicles.map((vehicle) => (
-                <React.Fragment key={vehicle.id}>
-                  <SelectItem
-                    value={vehicle.id}
-                    text={`${vehicle.make_model} (${vehicle.vin_number})`}
-                  />
-                </React.Fragment>
+                <SelectItem
+                  key={vehicle.id}
+                  value={vehicle.id}
+                  text={`${vehicle.make_model} (${vehicle.vin_number})`}
+                />
               ))}
             </Select>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <TextInput
               id="trip-origin"
               labelText="Origin"
@@ -178,7 +173,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             helperText="Comma-separated optional route stops."
           />
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <TextInput
               id="trip-departure"
               type="datetime-local"
@@ -195,7 +190,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <TextInput
               id="trip-actual-departure"
               type="datetime-local"

@@ -13,7 +13,7 @@ import {
   NumberInput,
   Tag,
 } from '../ui';
-import { Plus, Trash2, DollarSign } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import type { Invoice, Client, Vehicle } from '../../types';
 
 interface LineItemDraft {
@@ -228,10 +228,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
       isOpen={open}
       onClose={onClose}
       title={editingInvoice ? `Edit Invoice ${editingInvoice.invoice_number}` : 'Create Invoice'}
-      label={editingInvoice
-        ? 'Update invoice details, line items, and status'
-        : 'Create a new invoice with itemized charges and payment terms'
-      }
+      label="Invoice"
       size="lg"
       preventCloseOnClickOutside
       footer={
@@ -264,7 +261,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Client Section */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Client Information
           </h2>
 
@@ -318,7 +315,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Invoice Details */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Invoice Details
           </h2>
 
@@ -490,23 +487,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                     />
                   </Column>
                   <Column sm={3} md={4} lg={4}>
-                    <div
-                      style={{
-                        padding: '0.75rem',
-                        backgroundColor: '#ffffff',
-                        fontWeight: 600,
-                        textAlign: 'right',
-                      }}
-                    >
-                      <div style={{ fontSize: '0.75rem', color: '#52525b' }}>
-                        Amount
-                      </div>
-                      <div style={{ color: '#18181b' }}>
+                    <div className="bg-white px-3 py-3 text-right font-semibold">
+                      <div className="text-xs text-zinc-500">Amount</div>
+                      <div className="text-zinc-900">
                         {formatMoney(calculateLineAmount(item), formData.currency)}
                       </div>
                     </div>
                   </Column>
-                  <Column sm={1} md={1} lg={1} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <Column sm={1} md={1} lg={1} className="flex items-end">
                     {lineItems.length > 1 && (
                       <IconButton
                         variant="ghost"
@@ -514,20 +502,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                         icon={<Trash2 size={14} />}
                         label="Remove line item"
                         onClick={() => removeLineItem(index)}
-                        style={{ color: '#dc2626' }}
+                        className="text-red-600"
                       />
                     )}
                   </Column>
                 </Grid>
 
                 {item.discount_percentage > 0 && (
-                  <p
-                    style={{
-                      fontSize: '0.75rem',
-                      color: '#52525b',
-                      marginTop: '0.25rem',
-                    }}
-                  >
+                  <p className="mt-1 text-xs text-zinc-500">
                     Discount: {formatMoney((item.quantity * item.unit_price * item.discount_percentage) / 100, formData.currency)}
                   </p>
                 )}
@@ -536,16 +518,13 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           </Stack>
 
           {/* Summary Strip */}
-          <div
-            className="mt-5 grid gap-3"
-            style={{
-              gridTemplateColumns: totals.discount > 0 && totals.tax > 0
-                ? 'repeat(4, 1fr)'
-                : totals.discount > 0 || totals.tax > 0
-                  ? 'repeat(3, 1fr)'
-                  : 'repeat(2, 1fr)',
-            }}
-          >
+          <div className={`mt-5 grid gap-3 grid-cols-2 ${
+            totals.discount > 0 && totals.tax > 0
+              ? 'sm:grid-cols-4'
+              : totals.discount > 0 || totals.tax > 0
+                ? 'sm:grid-cols-3'
+                : ''
+          }`}>
             <InvoiceSummaryCell label="Subtotal" value={formatMoney(totals.subtotal, formData.currency)} />
             {totals.discount > 0 && (
               <InvoiceSummaryCell label="Discounts" value={`-${formatMoney(totals.discount, formData.currency)}`} accent="success" />
@@ -558,7 +537,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
           {/* Dark Total Bar */}
           <div className="mt-4 py-4 px-5 bg-zinc-900 flex justify-between items-center">
-            <span className="font-semibold text-sm text-zinc-600">
+            <span className="font-semibold text-sm text-zinc-400">
               Invoice Total
             </span>
             <span className="font-bold text-lg text-white">
@@ -569,7 +548,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Notes & Terms */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Notes & Terms
           </h2>
 
@@ -598,12 +577,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
   );
 };
 
-// ── Summary cell helper (matches PaymentModal style) ─────────────────
+// ── Summary cell helper ──────────────────────────────────────────────
 
-const invoiceAccentColor = {
-  error: '#dc2626',
-  success: '#10b981',
-  warning: '#8e4e00',
+const invoiceCellAccent: Record<string, string> = {
+  error: 'text-red-600',
+  success: 'text-emerald-500',
+  warning: 'text-amber-700',
 };
 
 const InvoiceSummaryCell: React.FC<{
@@ -612,17 +591,11 @@ const InvoiceSummaryCell: React.FC<{
   emphasis?: boolean;
   accent?: 'error' | 'success' | 'warning';
 }> = ({ label, value, emphasis, accent }) => (
-  <div className="bg-white border border-stone-200 rounded-md px-4 py-4 text-center">
-    <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-zinc-600 mb-1">
+  <div className="rounded-md border border-stone-200 bg-white px-4 py-4 text-center">
+    <div className="mb-1 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-zinc-600">
       {label}
     </div>
-    <div
-      style={{
-        fontSize: emphasis ? '1.125rem' : '0.9375rem',
-        fontWeight: 700,
-        color: accent ? invoiceAccentColor[accent] : '#18181b',
-      }}
-    >
+    <div className={`font-bold ${emphasis ? 'text-lg' : 'text-[0.9375rem]'} ${accent ? invoiceCellAccent[accent] : 'text-zinc-900'}`}>
       {value}
     </div>
   </div>

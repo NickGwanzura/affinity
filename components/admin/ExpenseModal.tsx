@@ -134,6 +134,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
       isOpen={isOpen}
       onClose={onClose}
       title="Add Expense"
+      label="Expense record"
       size="md"
       footer={
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -233,10 +234,16 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
         </div>
 
         {isDriverDisbursement && (
-          <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+          <>
+            <InlineNotification
+              kind="warning"
+              title="Driver disbursement"
+              subtitle="Money will be recorded as disbursed to the selected driver for trip expenses."
+              hideCloseButton
+            />
             <Select
               id="expense-driver"
-              labelText="Select driver *"
+              labelText="Driver *"
               helperText="Money disbursed to this driver for trip expenses"
               value={formData.driver_name}
               onChange={(e) => handleChange('driver_name', e.target.value)}
@@ -250,7 +257,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
                 <SelectItem key={d} value={d} text={d} />
               ))}
             </Select>
-          </div>
+          </>
         )}
 
         <TextArea

@@ -100,15 +100,16 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           {typeSelectorVariant === 'cards' ? (
             <div>
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Transaction Type *</label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   type="button"
+                  aria-pressed={form.type === 'Received'}
                   onClick={() => onChange({ type: 'Received' })}
-                  className={`p-5 border-2 transition-all ${
+                  className={`rounded-xl p-5 border-2 transition-all ${
                     form.type === 'Received' ? receivedActiveClasses : `${baseBorder} hover:border-zinc-300`
                   }`}
                 >
-                  <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg aria-hidden="true" className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
                   <span className="font-bold">Received</span>
@@ -116,12 +117,13 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 </button>
                 <button
                   type="button"
+                  aria-pressed={form.type === 'Disbursed'}
                   onClick={() => onChange({ type: 'Disbursed' })}
-                  className={`p-5 border-2 transition-all ${
+                  className={`rounded-xl p-5 border-2 transition-all ${
                     form.type === 'Disbursed' ? disbursedActiveClasses : `${baseBorder} hover:border-zinc-300`
                   }`}
                 >
-                  <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg aria-hidden="true" className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                   </svg>
                   <span className="font-bold">Disbursed</span>
@@ -130,7 +132,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
                 id="opfund-type"
                 labelText="Type *"
@@ -154,7 +156,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'cards' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <NumberInput
                 id="opfund-amount-cards"
                 labelText="Amount *"
@@ -179,7 +181,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'select' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <NumberInput
                 id="opfund-amount"
                 labelText="Amount *"
@@ -258,7 +260,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'select' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <TextInput
                 id="opfund-reference"
                 labelText="Reference"

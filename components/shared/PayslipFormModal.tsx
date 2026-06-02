@@ -171,7 +171,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             Earnings
           </h4>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <NumberInput
               id="payslip-base-pay"
               step={0.01}
@@ -229,7 +229,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
             <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
             Deductions
           </h4>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <NumberInput
               id="payslip-tax"
               step={0.01}
@@ -275,7 +275,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
                 ${formatMoney(totals.grossPay)}
               </p>
             </div>
-            <div className="sm:border-l sm:border-stone-200 sm:pl-5">
+            <div className="border-t border-stone-200 pt-4 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                 Deductions
               </p>
@@ -283,7 +283,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
                 −${formatMoney(totals.totalDeductions)}
               </p>
             </div>
-            <div className="sm:border-l sm:border-stone-200 sm:pl-5">
+            <div className="border-t border-stone-200 pt-4 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                 Net Pay
               </p>
