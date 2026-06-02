@@ -1226,6 +1226,38 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                       Driver portal, document uploads, and trip logs
                     </p>
                   </div>
+
+                  <div
+                    onClick={() => setUserForm({ ...userForm, role: 'Sales' })}
+                    className="p-4 cursor-pointer transition-all"
+                    style={{
+                      border: `2px solid ${userForm.role === 'Sales' ? '#f59e0b' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                      background: userForm.role === 'Sales' ? '#fffbeb' : 'transparent',
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+                        Sales
+                      </span>
+                      <div
+                        className="w-5 h-5 flex items-center justify-center"
+                        style={{
+                          borderRadius: '50%',
+                          border: `2px solid ${userForm.role === 'Sales' ? '#f59e0b' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                          background: userForm.role === 'Sales' ? '#f59e0b' : 'transparent',
+                        }}
+                      >
+                        {userForm.role === 'Sales' && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                      Freezit Sales and WiFi Token Sales only
+                    </p>
+                  </div>
                 </div>
               </div>
             </form>

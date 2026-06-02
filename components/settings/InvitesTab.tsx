@@ -353,6 +353,7 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
             <SelectItem value="Driver" text="Driver" />
             <SelectItem value="Manager" text="Manager" />
             <SelectItem value="Accountant" text="Accountant" />
+            <SelectItem value="Sales" text="Sales" />
             <SelectItem value="Admin" text="Admin" />
           </Select>
           <InlineNotification

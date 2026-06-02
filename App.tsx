@@ -42,6 +42,12 @@ const Shipments = lazy(() =>
 const UpdateCenter = lazy(() =>
   import('./components/UpdateCenter').then(module => ({ default: module.UpdateCenter }))
 );
+const FreezitSales = lazy(() =>
+  import('./components/FreezitSales').then(module => ({ default: module.FreezitSales }))
+);
+const WiFiTokenSales = lazy(() =>
+  import('./components/WiFiTokenSales').then(module => ({ default: module.WiFiTokenSales }))
+);
 
 /**
  * Layout-preserving skeleton used while lazy views load.
@@ -124,6 +130,7 @@ export default function App() {
   const resolveDefaultView = (role: string) => {
     if (role === 'Driver') return 'driver' as const;
     if (role === 'Accountant') return 'accountant' as const;
+    if (role === 'Sales') return 'freezit' as const;
     return 'admin' as const;
   };
 
@@ -267,6 +274,10 @@ export default function App() {
         return <ErrorBoundary view="shipments"><Shipments /></ErrorBoundary>;
       case 'updates':
         return <ErrorBoundary view="updates"><UpdateCenter /></ErrorBoundary>;
+      case 'freezit':
+        return <ErrorBoundary view="freezit"><FreezitSales /></ErrorBoundary>;
+      case 'wifi-tokens':
+        return <ErrorBoundary view="wifi-tokens"><WiFiTokenSales /></ErrorBoundary>;
       default:
         return <ErrorBoundary view="admin"><AdminDashboard /></ErrorBoundary>;
     }

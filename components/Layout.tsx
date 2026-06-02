@@ -19,6 +19,8 @@ import {
   Wallet,
   Map,
   Boxes,
+  Snowflake,
+  Wifi,
 } from 'lucide-react';
 import { AppUser, UserRole } from '../types';
 import affinityLogo from '../assets/affinity-logo.svg';
@@ -43,7 +45,9 @@ export type AppView =
   | 'payslips'
   | 'funds'
   | 'trips'
-  | 'assets';
+  | 'assets'
+  | 'freezit'
+  | 'wifi-tokens';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -80,6 +84,8 @@ const navItems: {
   { id: 'assets', label: 'Asset Register', roles: ['Admin', 'Manager'], Icon: Boxes },
   { id: 'updates', label: 'Updates', roles: ['Admin'], Icon: Mail },
   { id: 'settings', label: 'Settings', roles: ['Admin'], Icon: Settings },
+  { id: 'freezit',      label: 'Freezit Sales',     roles: ['Admin', 'Sales'], Icon: Snowflake },
+  { id: 'wifi-tokens',  label: 'WiFi Token Sales',  roles: ['Admin', 'Sales'], Icon: Wifi },
 ];
 
 const SIDEBAR_OPEN_WIDTH = 240;

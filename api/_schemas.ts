@@ -253,13 +253,13 @@ export const RegisterSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']).default('Driver'),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver', 'Sales']).default('Driver'),
 });
 
 export const RegistrationRequestSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  role: z.enum(['Driver', 'Accountant', 'Manager']).default('Driver'),
+  role: z.enum(['Driver', 'Accountant', 'Manager', 'Sales']).default('Driver'),
 });
 
 // Employee schemas
@@ -297,14 +297,14 @@ export const UserSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver', 'Sales']),
   status: z.enum(['Active', 'Inactive', 'Pending']).default('Active'),
 });
 
 export const UserUpdateSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().optional(),
-  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']).optional(),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver', 'Sales']).optional(),
   status: z.enum(['Active', 'Inactive', 'Pending']).optional(),
 });
 
@@ -613,7 +613,7 @@ export const RegistrationRequestResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
-  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver', 'Sales']),
   status: z.enum(['Pending', 'Approved', 'Rejected']),
   requested_at: z.string(),
   reviewed_at: z.string().nullable().optional(),
@@ -623,7 +623,7 @@ export const RegistrationRequestResponseSchema = z.object({
 export const InviteResponseSchema = z.object({
   id: z.string(),
   email: z.string(),
-  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver', 'Sales']),
   name: z.string(),
   status: z.enum(['Pending', 'Accepted', 'Expired']),
   invitedBy: z.string(),
