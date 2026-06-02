@@ -675,7 +675,7 @@ export const api = {
           is_active: boolean;
           created_at: string;
         }>;
-      }>(`/client-financials?action=all-balances${toQueryString(params)}`),
+      }>(`/client-financials?action=all-balances${params ? `&${new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v != null && v !== '').map(([k,v]) => [k, String(v)]))).toString()}` : ''}`),
 
     recalculateBalance: (clientId: string) =>
       apiRequest<{

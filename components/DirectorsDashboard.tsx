@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowDownLeft, ArrowUpRight, RefreshCw, TrendingUp, Wallet, BarChart2, List } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, RefreshCw, TrendingUp, BarChart2, List } from 'lucide-react';
 import { Modal, Button, TextInput, Select, SelectItem, TextArea } from './ui';
 import { formatCurrency } from '../utils/formatters';
 import { useToast } from './Toast';
@@ -52,8 +52,8 @@ const PAYMENT_METHODS = ['Cash', 'Bank Transfer', 'EcoCash', 'Card', 'Other'];
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export const DirectorsDashboard: React.FC = () => {
-  const { addToast } = useToast();
-  const { session } = useSession();
+  const { showToast } = useToast();
+  const session = useSession();
 
   const [tab, setTab]           = useState<Tab>('overview');
   const [loading, setLoading]   = useState(true);
@@ -76,17 +76,17 @@ export const DirectorsDashboard: React.FC = () => {
       setTxs(await txRes.json());
       setSales(await salesRes.json());
     } catch {
-      addToast({ kind: 'error', title: 'Failed to load Director data' });
+      showToast('Failed to load Director data', 'error');
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+  }, [showToast]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleDelete = async (id: string) => {
     await fetch(`${API}?resource=transactions&id=${id}`, { method: 'DELETE' });
-    addToast({ kind: 'success', title: 'Transaction deleted' });
+    showToast('Transaction deleted', 'success');
     fetchAll();
   };
 
@@ -387,7 +387,7 @@ const TransactionModal: React.FC<{
   onClose: () => void;
   onSaved: () => void;
 }> = ({ isOpen, type, userName, editingTx, onClose, onSaved }) => {
-  const { addToast } = useToast();
+  const { showToast } = useToast();
   const isEdit = !!editingTx;
 
   const [amount, setAmount]       = useState(editingTx ? String(editingTx.amount) : '');

@@ -74,7 +74,7 @@ const PAYMENT_METHODS = ['Cash', 'EcoCash', 'Bank Transfer', 'Card', 'Other'];
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export const FreezitSales: React.FC = () => {
-  const { addToast } = useToast();
+  const { showToast } = useToast();
   const [tab, setTab]               = useState<Tab>('overview');
   const [loading, setLoading]       = useState(true);
   const [stats, setStats]           = useState<Stats | null>(null);
@@ -104,11 +104,11 @@ export const FreezitSales: React.FC = () => {
       setRestocks(await restocksRes.json());
       setBreakages(await breakagesRes.json());
     } catch {
-      addToast({ kind: 'error', title: 'Failed to load Freezit data' });
+      showToast('Failed to load Freezit data', 'error');
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+  }, [showToast]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -321,7 +321,7 @@ const SummaryCell: React.FC<{ label: string; value: string; accent?: 'green' | '
 // ── Record Sale Modal ─────────────────────────────────────────────────────────
 
 const RecordSaleModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; onClose: () => void; onSaved: () => void }> = ({ isOpen, stock, onClose, onSaved }) => {
-  const { addToast } = useToast();
+  const { showToast } = useToast();
   const [stockId, setStockId]   = useState('');
   const [qty, setQty]           = useState('1');
   const [price, setPrice]       = useState('');
@@ -344,7 +344,7 @@ const RecordSaleModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; onClos
         body: JSON.stringify({ stock_id: stockId, qty_sold: Number(qty), unit_selling_price: Number(price), payment_method: method, sale_date: date, notes }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Failed'); }
-      addToast({ kind: 'success', title: 'Sale recorded' });
+      showToast('Sale recorded', 'success');
       onSaved();
     } catch (err: any) {
       addToast({ kind: 'error', title: err.message });
@@ -379,7 +379,7 @@ const RecordSaleModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; onClos
 // ── Add Stock Modal ───────────────────────────────────────────────────────────
 
 const AddStockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: () => void }> = ({ isOpen, onClose, onSaved }) => {
-  const { addToast } = useToast();
+  const { showToast } = useToast();
   const [name, setName]         = useState('');
   const [cost, setCost]         = useState('');
   const [price, setPrice]       = useState('');
@@ -398,7 +398,7 @@ const AddStockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: (
         body: JSON.stringify({ product_name: name, unit_cost: Number(cost), unit_selling_price: Number(price), opening_qty: Number(openingQty), received_qty: 0, supplier_name: supplier, batch_date: batchDate }),
       });
       if (!res.ok) throw new Error('Failed to add stock');
-      addToast({ kind: 'success', title: 'Stock item added' });
+      showToast('Stock item added', 'success');
       onSaved();
     } catch (err: any) {
       addToast({ kind: 'error', title: err.message });
@@ -428,7 +428,7 @@ const AddStockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: (
 // ── Restock Modal ─────────────────────────────────────────────────────────────
 
 const RestockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: () => void }> = ({ isOpen, onClose, onSaved }) => {
-  const { addToast } = useToast();
+  const { showToast } = useToast();
   const [qty, setQty]           = useState('');
   const [cost, setCost]         = useState('');
   const [supplier, setSupplier] = useState('');
@@ -446,7 +446,7 @@ const RestockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: ()
         body: JSON.stringify({ qty_received: Number(qty), unit_cost: Number(cost), supplier_name: supplier, restock_date: date, notes }),
       });
       if (!res.ok) throw new Error('Failed to record restock');
-      addToast({ kind: 'success', title: 'Restock recorded' });
+      showToast('Restock recorded', 'success');
       onSaved();
     } catch (err: any) {
       addToast({ kind: 'error', title: err.message });
@@ -475,7 +475,7 @@ const RestockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: ()
 // ── Record Breakage Modal ─────────────────────────────────────────────────────
 
 const RecordBreakageModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; onClose: () => void; onSaved: () => void }> = ({ isOpen, stock, onClose, onSaved }) => {
-  const { addToast } = useToast();
+  const { showToast } = useToast();
   const [stockId, setStockId]   = useState('');
   const [qty, setQty]           = useState('');
   const [reason, setReason]     = useState('');
@@ -497,7 +497,7 @@ const RecordBreakageModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; on
         body: JSON.stringify({ stock_id: stockId, quantity: Number(qty), reason, breakage_date: date, notes }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Failed'); }
-      addToast({ kind: 'success', title: 'Breakage recorded' });
+      showToast('Breakage recorded', 'success');
       onSaved();
     } catch (err: any) {
       addToast({ kind: 'error', title: err.message });

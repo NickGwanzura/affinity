@@ -37,7 +37,7 @@ const PACKAGE_TYPES = ['Standard', 'Daily', 'Weekly', 'Monthly', 'Custom'];
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export const WiFiTokenSales: React.FC = () => {
-  const { addToast } = useToast();
+  const { showToast } = useToast();
   const [tab, setTab]         = useState<Tab>('analytics');
   const [loading, setLoading] = useState(true);
   const [stats, setStats]     = useState<Stats | null>(null);
@@ -54,11 +54,11 @@ export const WiFiTokenSales: React.FC = () => {
       setStats(await statsRes.json());
       setSales(await salesRes.json());
     } catch {
-      addToast({ kind: 'error', title: 'Failed to load WiFi Token data' });
+      showToast('Failed to load WiFi Token data', 'error');
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+  }, [showToast]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -249,7 +249,7 @@ const StatCell: React.FC<{ label: string; value: string; accent?: 'green' | 'red
 // ── Record WiFi Sale Modal ────────────────────────────────────────────────────
 
 const RecordWiFiSaleModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: () => void }> = ({ isOpen, onClose, onSaved }) => {
-  const { addToast } = useToast();
+  const { showToast } = useToast();
   const [tokens, setTokens]     = useState('1');
   const [packageType, setPackageType] = useState('Standard');
   const [price, setPrice]       = useState('');
@@ -270,7 +270,7 @@ const RecordWiFiSaleModal: React.FC<{ isOpen: boolean; onClose: () => void; onSa
         body: JSON.stringify({ tokens_sold: Number(tokens), package_type: packageType, selling_price: Number(price), payment_method: method, sale_date: date, notes }),
       });
       if (!res.ok) throw new Error('Failed to record sale');
-      addToast({ kind: 'success', title: 'WiFi sale recorded' });
+      showToast('WiFi sale recorded', 'success');
       onSaved();
     } catch (err: any) {
       addToast({ kind: 'error', title: err.message });
