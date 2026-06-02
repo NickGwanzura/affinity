@@ -1,29 +1,29 @@
 /**
  * /api/freezit
  *
- * Items
- * GET    /api/freezit?resource=items          → list items
- * POST   /api/freezit?resource=items          → create item
- * PUT    /api/freezit?resource=items&id=<id>  → update item
- * DELETE /api/freezit?resource=items&id=<id>  → delete item
+ * Stock (freezit_stock)
+ * GET    /api/freezit?resource=stock          → list stock items
+ * POST   /api/freezit?resource=stock          → add stock item
+ * PUT    /api/freezit?resource=stock&id=<id>  → update stock item
+ * DELETE /api/freezit?resource=stock&id=<id>  → delete stock item
  *
- * Sales
+ * Sales (freezit_sales)
  * GET    /api/freezit?resource=sales          → list sales
- * POST   /api/freezit?resource=sales          → record sale (decrements stock)
- * DELETE /api/freezit?resource=sales&id=<id>  → delete sale (restores stock)
+ * POST   /api/freezit?resource=sales          → record sale
+ * DELETE /api/freezit?resource=sales&id=<id>  → delete sale
  *
- * Restocks
- * GET    /api/freezit?resource=restocks        → list restocks
- * POST   /api/freezit?resource=restocks        → add restock (increments stock)
- * DELETE /api/freezit?resource=restocks&id=<id>→ delete restock (decrements stock)
+ * Restocks (freezit_restock)
+ * GET    /api/freezit?resource=restocks       → list restocks
+ * POST   /api/freezit?resource=restocks       → record restock
+ * DELETE /api/freezit?resource=restocks&id=<id>→ delete restock
  *
- * Breakages
- * GET    /api/freezit?resource=breakages       → list breakages
- * POST   /api/freezit?resource=breakages       → record breakage (decrements stock)
- * DELETE /api/freezit?resource=breakages&id=<id>→ delete breakage (restores stock)
+ * Breakages (freezit_breakages)
+ * GET    /api/freezit?resource=breakages      → list breakages
+ * POST   /api/freezit?resource=breakages      → record breakage
+ * DELETE /api/freezit?resource=breakages&id=<id>→ delete breakage
  *
  * Stats
- * GET    /api/freezit?resource=stats           → KPI summary
+ * GET    /api/freezit?resource=stats          → KPI summary
  */
 
 import type { ApiRequest, ApiResponse } from './_types.js';
@@ -43,38 +43,40 @@ const json = (res: ApiResponse, status: number, body: unknown) =>
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
-const ItemSchema = z.object({
-  name: z.string().min(1).max(200),
-  unit_cost: z.number().min(0),
-  unit_price: z.number().min(0),
-  stock_qty: z.number().int().min(0).default(0),
-  currency: z.enum(['USD', 'GBP', 'NAD', 'ZAR', 'BWP']).default('USD'),
+const StockSchema = z.object({
+  product_name:      z.string().min(1).max(200),
+  batch_date:        z.string().optional(),
+  opening_qty:       z.number().min(0).default(0),
+  received_qty:      z.number().min(0).default(0),
+  unit_cost:         z.number().min(0).default(0),
+  unit_selling_price: z.number().min(0),
+  supplier_name:     z.string().optional(),
+  notes:             z.string().optional(),
 });
 
 const SaleSchema = z.object({
-  item_id: z.string().uuid(),
-  quantity: z.number().int().positive(),
-  unit_price: z.number().min(0),
-  currency: z.enum(['USD', 'GBP', 'NAD', 'ZAR', 'BWP']).default('USD'),
-  sale_date: z.string().optional(),
-  notes: z.string().optional(),
+  stock_id:          z.string().uuid(),
+  qty_sold:          z.number().positive(),
+  unit_selling_price: z.number().min(0),
+  payment_method:    z.string().default('Cash'),
+  sale_date:         z.string().optional(),
+  notes:             z.string().optional(),
 });
 
 const RestockSchema = z.object({
-  item_id: z.string().uuid(),
-  quantity: z.number().int().positive(),
-  unit_cost: z.number().min(0).default(0),
-  currency: z.enum(['USD', 'GBP', 'NAD', 'ZAR', 'BWP']).default('USD'),
-  restock_date: z.string().optional(),
-  notes: z.string().optional(),
+  supplier_name: z.string().optional(),
+  qty_received:  z.number().positive(),
+  unit_cost:     z.number().min(0).default(0),
+  restock_date:  z.string().optional(),
+  notes:         z.string().optional(),
 });
 
 const BreakageSchema = z.object({
-  item_id: z.string().uuid(),
-  quantity: z.number().int().positive(),
-  reason: z.string().optional(),
+  stock_id:      z.string().uuid(),
+  quantity:      z.number().positive(),
+  reason:        z.string().optional(),
   breakage_date: z.string().optional(),
-  notes: z.string().optional(),
+  notes:         z.string().optional(),
 });
 
 // ── Handler ──────────────────────────────────────────────────────────────────
@@ -93,7 +95,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   try {
     switch (resource) {
-      case 'items':     return await handleItems(authReq, res, method, id);
+      case 'stock':     return await handleStock(authReq, res, method, id);
       case 'sales':     return await handleSales(authReq, res, method, id);
       case 'restocks':  return await handleRestocks(authReq, res, method, id);
       case 'breakages': return await handleBreakages(authReq, res, method, id);
@@ -106,9 +108,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 }
 
-// ── Items ────────────────────────────────────────────────────────────────────
+// ── Stock ────────────────────────────────────────────────────────────────────
 
-async function handleItems(
+async function handleStock(
   req: AuthenticatedRequest,
   res: ApiResponse,
   method: string | undefined,
@@ -116,20 +118,26 @@ async function handleItems(
 ) {
   if (method === 'GET') {
     const rows = await sql`
-      SELECT id, name, unit_cost, unit_price, stock_qty, currency, created_at, updated_at
-      FROM freezit_items
-      ORDER BY name ASC
+      SELECT id, product_name, batch_date, opening_qty, received_qty,
+             unit_cost, unit_selling_price, damaged_qty, wastage_qty,
+             missing_qty, supplier_name, notes, created_at, updated_at,
+             (opening_qty + received_qty - COALESCE(damaged_qty,0) - COALESCE(wastage_qty,0) - COALESCE(missing_qty,0)) AS available_qty
+      FROM freezit_stock
+      ORDER BY created_at DESC
     `;
     return json(res, 200, rows);
   }
 
   if (method === 'POST') {
-    const parsed = ItemSchema.safeParse(req.body);
+    const parsed = StockSchema.safeParse(req.body);
     if (!parsed.success) return json(res, 400, { error: 'Invalid data', details: parsed.error.issues });
     const d = parsed.data;
+    const batchDate = d.batch_date || new Date().toISOString().slice(0, 10);
     const [row] = await sql`
-      INSERT INTO freezit_items (name, unit_cost, unit_price, stock_qty, currency)
-      VALUES (${d.name}, ${d.unit_cost}, ${d.unit_price}, ${d.stock_qty}, ${d.currency})
+      INSERT INTO freezit_stock
+        (product_name, batch_date, opening_qty, received_qty, unit_cost, unit_selling_price, supplier_name, notes)
+      VALUES
+        (${d.product_name}, ${batchDate}, ${d.opening_qty}, ${d.received_qty}, ${d.unit_cost}, ${d.unit_selling_price}, ${d.supplier_name ?? null}, ${d.notes ?? null})
       RETURNING *
     `;
     return json(res, 201, row);
@@ -137,28 +145,27 @@ async function handleItems(
 
   if (method === 'PUT') {
     if (!id) return json(res, 400, { error: 'id required' });
-    const parsed = ItemSchema.partial().safeParse(req.body);
+    const parsed = StockSchema.partial().safeParse(req.body);
     if (!parsed.success) return json(res, 400, { error: 'Invalid data', details: parsed.error.issues });
     const d = parsed.data;
     const [row] = await sql`
-      UPDATE freezit_items
-      SET
-        name       = COALESCE(${d.name ?? null}, name),
-        unit_cost  = COALESCE(${d.unit_cost ?? null}, unit_cost),
-        unit_price = COALESCE(${d.unit_price ?? null}, unit_price),
-        stock_qty  = COALESCE(${d.stock_qty ?? null}, stock_qty),
-        currency   = COALESCE(${d.currency ?? null}, currency),
-        updated_at = NOW()
+      UPDATE freezit_stock SET
+        product_name       = COALESCE(${d.product_name ?? null}, product_name),
+        unit_cost          = COALESCE(${d.unit_cost ?? null}, unit_cost),
+        unit_selling_price = COALESCE(${d.unit_selling_price ?? null}, unit_selling_price),
+        supplier_name      = COALESCE(${d.supplier_name ?? null}, supplier_name),
+        notes              = COALESCE(${d.notes ?? null}, notes),
+        updated_at         = NOW()
       WHERE id = ${id}
       RETURNING *
     `;
-    if (!row) return json(res, 404, { error: 'Item not found' });
+    if (!row) return json(res, 404, { error: 'Stock item not found' });
     return json(res, 200, row);
   }
 
   if (method === 'DELETE') {
     if (!id) return json(res, 400, { error: 'id required' });
-    await sql`DELETE FROM freezit_items WHERE id = ${id}`;
+    await sql`DELETE FROM freezit_stock WHERE id = ${id}`;
     return json(res, 200, { success: true });
   }
 
@@ -175,9 +182,11 @@ async function handleSales(
 ) {
   if (method === 'GET') {
     const rows = await sql`
-      SELECT s.id, s.item_id, s.item_name, s.quantity, s.unit_price, s.unit_cost,
-             s.total_amount, s.currency, s.sale_date, s.notes, s.created_at
+      SELECT s.id, s.sale_date, s.qty_sold, s.unit_selling_price,
+             s.total_sales_value, s.payment_method, s.notes, s.created_at,
+             st.product_name
       FROM freezit_sales s
+      LEFT JOIN freezit_stock st ON st.id = s.stock_id
       ORDER BY s.sale_date DESC, s.created_at DESC
     `;
     return json(res, 200, rows);
@@ -187,41 +196,19 @@ async function handleSales(
     const parsed = SaleSchema.safeParse(req.body);
     if (!parsed.success) return json(res, 400, { error: 'Invalid data', details: parsed.error.issues });
     const d = parsed.data;
-
-    const [item] = await sql`SELECT * FROM freezit_items WHERE id = ${d.item_id}`;
-    if (!item) return json(res, 404, { error: 'Item not found' });
-    if (item.stock_qty < d.quantity) {
-      return json(res, 400, { error: `Insufficient stock. Available: ${item.stock_qty}` });
-    }
-
-    const total = d.quantity * d.unit_price;
     const saleDate = d.sale_date || new Date().toISOString().slice(0, 10);
+    const total = d.qty_sold * d.unit_selling_price;
 
     const [sale] = await sql`
-      INSERT INTO freezit_sales (item_id, item_name, quantity, unit_price, unit_cost, total_amount, currency, sale_date, notes)
-      VALUES (${d.item_id}, ${item.name}, ${d.quantity}, ${d.unit_price}, ${item.unit_cost}, ${total}, ${d.currency}, ${saleDate}, ${d.notes ?? null})
+      INSERT INTO freezit_sales (stock_id, sale_date, qty_sold, unit_selling_price, total_sales_value, payment_method, notes)
+      VALUES (${d.stock_id}, ${saleDate}, ${d.qty_sold}, ${d.unit_selling_price}, ${total}, ${d.payment_method}, ${d.notes ?? null})
       RETURNING *
     `;
-
-    await sql`
-      UPDATE freezit_items SET stock_qty = stock_qty - ${d.quantity}, updated_at = NOW()
-      WHERE id = ${d.item_id}
-    `;
-
     return json(res, 201, sale);
   }
 
   if (method === 'DELETE') {
     if (!id) return json(res, 400, { error: 'id required' });
-    const [sale] = await sql`SELECT * FROM freezit_sales WHERE id = ${id}`;
-    if (!sale) return json(res, 404, { error: 'Sale not found' });
-
-    if (sale.item_id) {
-      await sql`
-        UPDATE freezit_items SET stock_qty = stock_qty + ${sale.quantity}, updated_at = NOW()
-        WHERE id = ${sale.item_id}
-      `;
-    }
     await sql`DELETE FROM freezit_sales WHERE id = ${id}`;
     return json(res, 200, { success: true });
   }
@@ -239,7 +226,9 @@ async function handleRestocks(
 ) {
   if (method === 'GET') {
     const rows = await sql`
-      SELECT * FROM freezit_restocks ORDER BY restock_date DESC, created_at DESC
+      SELECT id, restock_date, supplier_name, qty_received, unit_cost, total_cost, notes, created_at
+      FROM freezit_restock
+      ORDER BY restock_date DESC, created_at DESC
     `;
     return json(res, 200, rows);
   }
@@ -248,40 +237,20 @@ async function handleRestocks(
     const parsed = RestockSchema.safeParse(req.body);
     if (!parsed.success) return json(res, 400, { error: 'Invalid data', details: parsed.error.issues });
     const d = parsed.data;
-
-    const [item] = await sql`SELECT * FROM freezit_items WHERE id = ${d.item_id}`;
-    if (!item) return json(res, 404, { error: 'Item not found' });
-
-    const total = d.quantity * d.unit_cost;
     const restockDate = d.restock_date || new Date().toISOString().slice(0, 10);
+    const total = d.qty_received * d.unit_cost;
 
-    const [restock] = await sql`
-      INSERT INTO freezit_restocks (item_id, item_name, quantity, unit_cost, total_cost, currency, restock_date, notes)
-      VALUES (${d.item_id}, ${item.name}, ${d.quantity}, ${d.unit_cost}, ${total}, ${d.currency}, ${restockDate}, ${d.notes ?? null})
+    const [row] = await sql`
+      INSERT INTO freezit_restock (restock_date, supplier_name, qty_received, unit_cost, total_cost, notes)
+      VALUES (${restockDate}, ${d.supplier_name ?? null}, ${d.qty_received}, ${d.unit_cost}, ${total}, ${d.notes ?? null})
       RETURNING *
     `;
-
-    await sql`
-      UPDATE freezit_items
-      SET stock_qty = stock_qty + ${d.quantity}, unit_cost = ${d.unit_cost}, updated_at = NOW()
-      WHERE id = ${d.item_id}
-    `;
-
-    return json(res, 201, restock);
+    return json(res, 201, row);
   }
 
   if (method === 'DELETE') {
     if (!id) return json(res, 400, { error: 'id required' });
-    const [restock] = await sql`SELECT * FROM freezit_restocks WHERE id = ${id}`;
-    if (!restock) return json(res, 404, { error: 'Restock not found' });
-
-    if (restock.item_id) {
-      await sql`
-        UPDATE freezit_items SET stock_qty = GREATEST(0, stock_qty - ${restock.quantity}), updated_at = NOW()
-        WHERE id = ${restock.item_id}
-      `;
-    }
-    await sql`DELETE FROM freezit_restocks WHERE id = ${id}`;
+    await sql`DELETE FROM freezit_restock WHERE id = ${id}`;
     return json(res, 200, { success: true });
   }
 
@@ -298,7 +267,10 @@ async function handleBreakages(
 ) {
   if (method === 'GET') {
     const rows = await sql`
-      SELECT * FROM freezit_breakages ORDER BY breakage_date DESC, created_at DESC
+      SELECT b.id, b.product_name, b.quantity, b.unit_cost, b.estimated_loss,
+             b.reason, b.breakage_date, b.notes, b.created_at
+      FROM freezit_breakages b
+      ORDER BY b.breakage_date DESC, b.created_at DESC
     `;
     return json(res, 200, rows);
   }
@@ -308,40 +280,22 @@ async function handleBreakages(
     if (!parsed.success) return json(res, 400, { error: 'Invalid data', details: parsed.error.issues });
     const d = parsed.data;
 
-    const [item] = await sql`SELECT * FROM freezit_items WHERE id = ${d.item_id}`;
-    if (!item) return json(res, 404, { error: 'Item not found' });
-    if (item.stock_qty < d.quantity) {
-      return json(res, 400, { error: `Insufficient stock. Available: ${item.stock_qty}` });
-    }
+    const [stock] = await sql`SELECT * FROM freezit_stock WHERE id = ${d.stock_id}`;
+    if (!stock) return json(res, 404, { error: 'Stock item not found' });
 
-    const loss = d.quantity * Number(item.unit_cost);
+    const loss = d.quantity * Number(stock.unit_cost);
     const breakageDate = d.breakage_date || new Date().toISOString().slice(0, 10);
 
-    const [breakage] = await sql`
-      INSERT INTO freezit_breakages (item_id, item_name, quantity, unit_cost, estimated_loss, reason, breakage_date, notes)
-      VALUES (${d.item_id}, ${item.name}, ${d.quantity}, ${item.unit_cost}, ${loss}, ${d.reason ?? null}, ${breakageDate}, ${d.notes ?? null})
+    const [row] = await sql`
+      INSERT INTO freezit_breakages (stock_id, product_name, quantity, unit_cost, estimated_loss, reason, breakage_date, notes)
+      VALUES (${d.stock_id}, ${stock.product_name}, ${d.quantity}, ${stock.unit_cost}, ${loss}, ${d.reason ?? null}, ${breakageDate}, ${d.notes ?? null})
       RETURNING *
     `;
-
-    await sql`
-      UPDATE freezit_items SET stock_qty = stock_qty - ${d.quantity}, updated_at = NOW()
-      WHERE id = ${d.item_id}
-    `;
-
-    return json(res, 201, breakage);
+    return json(res, 201, row);
   }
 
   if (method === 'DELETE') {
     if (!id) return json(res, 400, { error: 'id required' });
-    const [breakage] = await sql`SELECT * FROM freezit_breakages WHERE id = ${id}`;
-    if (!breakage) return json(res, 404, { error: 'Breakage not found' });
-
-    if (breakage.item_id) {
-      await sql`
-        UPDATE freezit_items SET stock_qty = stock_qty + ${breakage.quantity}, updated_at = NOW()
-        WHERE id = ${breakage.item_id}
-      `;
-    }
     await sql`DELETE FROM freezit_breakages WHERE id = ${id}`;
     return json(res, 200, { success: true });
   }
@@ -356,21 +310,25 @@ async function handleStats(res: ApiResponse) {
   const monthStart = today.slice(0, 7) + '-01';
 
   const [todayRev] = await sql`
-    SELECT COALESCE(SUM(total_amount), 0) AS value
+    SELECT COALESCE(SUM(total_sales_value), 0) AS value
     FROM freezit_sales WHERE sale_date = ${today}
   `;
   const [monthRev] = await sql`
-    SELECT COALESCE(SUM(total_amount), 0) AS value
+    SELECT COALESCE(SUM(total_sales_value), 0) AS value
     FROM freezit_sales WHERE sale_date >= ${monthStart}
   `;
-  const [grossProfit] = await sql`
-    SELECT COALESCE(SUM((unit_price - unit_cost) * quantity), 0) AS value
-    FROM freezit_sales WHERE sale_date >= ${monthStart}
+  const [cogs] = await sql`
+    SELECT COALESCE(SUM(s.qty_sold * st.unit_cost), 0) AS value
+    FROM freezit_sales s
+    LEFT JOIN freezit_stock st ON st.id = s.stock_id
+    WHERE s.sale_date >= ${monthStart}
   `;
-  const [stockRemaining] = await sql`
-    SELECT COALESCE(SUM(stock_qty), 0) AS value FROM freezit_items
+  const [stockTotal] = await sql`
+    SELECT COALESCE(SUM(opening_qty + received_qty
+      - COALESCE(damaged_qty,0) - COALESCE(wastage_qty,0) - COALESCE(missing_qty,0)), 0) AS value
+    FROM freezit_stock
   `;
-  const [totalBreakageLoss] = await sql`
+  const [breakageLoss] = await sql`
     SELECT COALESCE(SUM(estimated_loss), 0) AS value
     FROM freezit_breakages WHERE breakage_date >= ${monthStart}
   `;
@@ -378,8 +336,8 @@ async function handleStats(res: ApiResponse) {
   return res.status(200).json({
     today_revenue:   Number(todayRev.value),
     month_revenue:   Number(monthRev.value),
-    gross_profit:    Number(grossProfit.value),
-    stock_remaining: Number(stockRemaining.value),
-    breakage_loss:   Number(totalBreakageLoss.value),
+    gross_profit:    Number(monthRev.value) - Number(cogs.value),
+    stock_remaining: Number(stockTotal.value),
+    breakage_loss:   Number(breakageLoss.value),
   });
 }

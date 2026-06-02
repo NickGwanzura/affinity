@@ -8,10 +8,12 @@ import { useToast } from './Toast';
 
 interface WiFiSale {
   id: string;
-  token_code?: string;
-  amount: number;
-  currency: string;
   sale_date: string;
+  tokens_sold: number;
+  package_type: string;
+  selling_price: number;
+  total_sales: number;
+  payment_method: string;
   notes?: string;
   created_at: string;
 }
@@ -28,7 +30,9 @@ interface Stats {
 type Tab = 'analytics' | 'recent';
 
 const API = '/api/wifi-tokens';
-const fmt = (n: number, currency = 'USD') => formatCurrency(n, currency as any);
+const fmt = (n: number) => formatCurrency(n, 'USD');
+const PAYMENT_METHODS = ['Cash', 'EcoCash', 'Bank Transfer', 'Card', 'Other'];
+const PACKAGE_TYPES = ['Standard', 'Daily', 'Weekly', 'Monthly', 'Custom'];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -76,12 +80,8 @@ export const WiFiTokenSales: React.FC = () => {
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">WiFi Token Sales</h1>
           <p className="mt-0.5 text-sm text-zinc-500">Sales, revenue &amp; break-even tracking</p>
         </div>
-        <button
-          onClick={fetchAll}
-          className="flex items-center gap-1.5 text-sm font-medium text-[#D97706] hover:text-amber-700"
-        >
-          <RefreshCw size={14} />
-          Refresh
+        <button onClick={fetchAll} className="flex items-center gap-1.5 text-sm font-medium text-[#D97706] hover:text-amber-700">
+          <RefreshCw size={14} />Refresh
         </button>
       </div>
 
@@ -90,12 +90,7 @@ export const WiFiTokenSales: React.FC = () => {
         <KpiCard label="Today"      value={fmt(stats?.today ?? 0)}      Icon={Wifi} />
         <KpiCard label="This Week"  value={fmt(stats?.this_week ?? 0)}  Icon={TrendingUp} />
         <KpiCard label="This Month" value={fmt(stats?.this_month ?? 0)} Icon={DollarSign} />
-        <KpiCard
-          label="Net Profit"
-          value={fmt(stats?.net_profit ?? 0)}
-          Icon={Target}
-          danger={(stats?.net_profit ?? 0) < 0}
-        />
+        <KpiCard label="Net Profit" value={fmt(stats?.net_profit ?? 0)} Icon={Target} danger={(stats?.net_profit ?? 0) < 0} />
       </div>
 
       {/* Break-even Progress */}
@@ -103,31 +98,22 @@ export const WiFiTokenSales: React.FC = () => {
 
       {/* Action */}
       <div>
-        <Button renderIcon={Plus} onClick={() => setSaleOpen(true)}>
-          Record WiFi Sale
-        </Button>
+        <Button renderIcon={Plus} onClick={() => setSaleOpen(true)}>Record WiFi Sale</Button>
       </div>
 
       {/* Tab Rail */}
       <div className="border-b border-stone-200">
-        <div className="flex gap-0">
+        <div className="flex">
           {tabs.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
+            <button key={t.id} onClick={() => setTab(t.id)}
               className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                tab === t.id
-                  ? 'border-[#D97706] text-[#D97706]'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
+                tab === t.id ? 'border-[#D97706] text-[#D97706]' : 'border-transparent text-zinc-500 hover:text-zinc-800'
               }`}
-            >
-              {t.label}
-            </button>
+            >{t.label}</button>
           ))}
         </div>
       </div>
 
-      {/* Tab Content */}
       {loading ? (
         <div className="py-12 text-center text-sm text-zinc-400">Loading...</div>
       ) : (
@@ -137,12 +123,7 @@ export const WiFiTokenSales: React.FC = () => {
         </>
       )}
 
-      {/* Record Sale Modal */}
-      <RecordWiFiSaleModal
-        isOpen={saleOpen}
-        onClose={() => setSaleOpen(false)}
-        onSaved={() => { setSaleOpen(false); fetchAll(); }}
-      />
+      <RecordWiFiSaleModal isOpen={saleOpen} onClose={() => setSaleOpen(false)} onSaved={() => { setSaleOpen(false); fetchAll(); }} />
     </div>
   );
 };
@@ -157,18 +138,12 @@ const BreakEvenCard: React.FC<{ stats: Stats | null }> = ({ stats }) => {
   return (
     <div className="rounded-xl border border-stone-200 bg-white p-5">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-          Break-even Progress
-        </p>
-        <p className="text-xs text-zinc-500">
-          {fmt(rev)} / {fmt(cost)}
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Break-even Progress</p>
+        <p className="text-xs text-zinc-500">{fmt(rev)} / {fmt(cost)}</p>
       </div>
       <div className="h-2.5 w-full rounded-full bg-stone-100 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${
-            pct >= 100 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400'
-          }`}
+          className={`h-full rounded-full transition-all duration-500 ${pct >= 100 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
           style={{ width: `${Math.min(100, pct)}%` }}
         />
       </div>
@@ -183,12 +158,7 @@ const BreakEvenCard: React.FC<{ stats: Stats | null }> = ({ stats }) => {
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 
-const KpiCard: React.FC<{
-  label: string;
-  value: string;
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
-  danger?: boolean;
-}> = ({ label, value, Icon, danger }) => (
+const KpiCard: React.FC<{ label: string; value: string; Icon: React.ComponentType<{ size?: number; className?: string }>; danger?: boolean }> = ({ label, value, Icon, danger }) => (
   <div className="rounded-xl border border-stone-200 bg-white p-4">
     <div className="flex items-center gap-2">
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
@@ -196,18 +166,16 @@ const KpiCard: React.FC<{
       </div>
       <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">{label}</p>
     </div>
-    <p className={`mt-3 text-2xl font-bold tabular-nums ${danger ? 'text-red-600' : 'text-zinc-900'}`}>
-      {value}
-    </p>
+    <p className={`mt-3 text-2xl font-bold tabular-nums ${danger ? 'text-red-600' : 'text-zinc-900'}`}>{value}</p>
   </div>
 );
 
 // ── Analytics Tab ─────────────────────────────────────────────────────────────
 
 const AnalyticsTab: React.FC<{ stats: Stats | null; sales: WiFiSale[] }> = ({ stats, sales }) => {
-  const totalSales = sales.length;
-  const avgSale = totalSales > 0
-    ? sales.reduce((sum, s) => sum + Number(s.amount), 0) / totalSales
+  const totalTokens = sales.reduce((sum, s) => sum + Number(s.tokens_sold), 0);
+  const avgSale = sales.length > 0
+    ? sales.reduce((sum, s) => sum + Number(s.total_sales), 0) / sales.length
     : 0;
 
   return (
@@ -215,21 +183,17 @@ const AnalyticsTab: React.FC<{ stats: Stats | null; sales: WiFiSale[] }> = ({ st
       <div className="rounded-xl border border-stone-200 bg-white p-5">
         <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">This Month Summary</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCell label="Total Revenue"   value={fmt(stats?.this_month ?? 0)} />
-          <StatCell label="Monthly Cost"    value={fmt(stats?.monthly_cost ?? 110)} accent="neutral" note="Internet Package ($110/mo)" />
-          <StatCell
-            label="Net Profit"
-            value={fmt(stats?.net_profit ?? 0)}
-            accent={(stats?.net_profit ?? 0) >= 0 ? 'green' : 'red'}
-          />
+          <StatCell label="Total Revenue"  value={fmt(stats?.this_month ?? 0)} />
+          <StatCell label="Monthly Cost"   value={fmt(stats?.monthly_cost ?? 110)} note="Internet Package ($110/mo)" />
+          <StatCell label="Net Profit"     value={fmt(stats?.net_profit ?? 0)} accent={(stats?.net_profit ?? 0) >= 0 ? 'green' : 'red'} />
         </div>
       </div>
       <div className="rounded-xl border border-stone-200 bg-white p-5">
         <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Sales Activity</h3>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <StatCell label="Total Sales" value={String(totalSales)} />
+          <StatCell label="Total Sales"     value={String(sales.length)} />
+          <StatCell label="Tokens Sold"     value={String(totalTokens)} />
           <StatCell label="Avg. Sale Value" value={fmt(avgSale)} />
-          <StatCell label="This Week" value={fmt(stats?.this_week ?? 0)} />
         </div>
       </div>
     </div>
@@ -246,10 +210,8 @@ const RecentSalesTab: React.FC<{ sales: WiFiSale[]; onDelete: (id: string) => vo
       <table className="w-full text-sm">
         <thead className="border-b border-stone-200 bg-stone-50">
           <tr>
-            {['Date', 'Token Code', 'Amount', 'Notes'].map(col => (
-              <th key={col} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-                {col}
-              </th>
+            {['Date', 'Package', 'Tokens', 'Price', 'Total', 'Method'].map(col => (
+              <th key={col} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{col}</th>
             ))}
             <th className="px-4 py-3" />
           </tr>
@@ -258,13 +220,13 @@ const RecentSalesTab: React.FC<{ sales: WiFiSale[]; onDelete: (id: string) => vo
           {sales.map(sale => (
             <tr key={sale.id} className="hover:bg-stone-50">
               <td className="px-4 py-3 text-zinc-700">{sale.sale_date}</td>
-              <td className="px-4 py-3 font-mono text-zinc-700">{sale.token_code || '—'}</td>
-              <td className="px-4 py-3 font-medium text-zinc-900">{fmt(Number(sale.amount), sale.currency)}</td>
-              <td className="px-4 py-3 text-zinc-500">{sale.notes || '—'}</td>
+              <td className="px-4 py-3 text-zinc-700">{sale.package_type}</td>
+              <td className="px-4 py-3 text-zinc-700">{sale.tokens_sold}</td>
+              <td className="px-4 py-3 text-zinc-700">{fmt(Number(sale.selling_price))}</td>
+              <td className="px-4 py-3 font-medium text-zinc-900">{fmt(Number(sale.total_sales))}</td>
+              <td className="px-4 py-3 text-zinc-500">{sale.payment_method}</td>
               <td className="px-4 py-3 text-right">
-                <button onClick={() => onDelete(sale.id)} className="text-xs text-red-500 hover:text-red-700">
-                  Delete
-                </button>
+                <button onClick={() => onDelete(sale.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
               </td>
             </tr>
           ))}
@@ -276,35 +238,27 @@ const RecentSalesTab: React.FC<{ sales: WiFiSale[]; onDelete: (id: string) => vo
 
 // ── Stat Cell ─────────────────────────────────────────────────────────────────
 
-const StatCell: React.FC<{
-  label: string;
-  value: string;
-  accent?: 'green' | 'red' | 'neutral';
-  note?: string;
-}> = ({ label, value, accent, note }) => (
+const StatCell: React.FC<{ label: string; value: string; accent?: 'green' | 'red'; note?: string }> = ({ label, value, accent, note }) => (
   <div>
     <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{label}</p>
-    <p className={`mt-1 text-xl font-bold tabular-nums ${
-      accent === 'green' ? 'text-emerald-600' : accent === 'red' ? 'text-red-600' : 'text-zinc-900'
-    }`}>{value}</p>
+    <p className={`mt-1 text-xl font-bold tabular-nums ${accent === 'green' ? 'text-emerald-600' : accent === 'red' ? 'text-red-600' : 'text-zinc-900'}`}>{value}</p>
     {note && <p className="mt-0.5 text-[10px] text-zinc-400">{note}</p>}
   </div>
 );
 
 // ── Record WiFi Sale Modal ────────────────────────────────────────────────────
 
-const RecordWiFiSaleModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onSaved: () => void;
-}> = ({ isOpen, onClose, onSaved }) => {
+const RecordWiFiSaleModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: () => void }> = ({ isOpen, onClose, onSaved }) => {
   const { addToast } = useToast();
-  const [amount, setAmount]     = useState('');
-  const [tokenCode, setTokenCode] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [tokens, setTokens]     = useState('1');
+  const [packageType, setPackageType] = useState('Standard');
+  const [price, setPrice]       = useState('');
+  const [method, setMethod]     = useState('Cash');
   const [date, setDate]         = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes]       = useState('');
   const [loading, setLoading]   = useState(false);
+
+  const total = Number(tokens || 0) * Number(price || 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,54 +267,38 @@ const RecordWiFiSaleModal: React.FC<{
       const res = await fetch(`${API}?resource=sales`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: Number(amount), token_code: tokenCode || undefined, currency, sale_date: date, notes }),
+        body: JSON.stringify({ tokens_sold: Number(tokens), package_type: packageType, selling_price: Number(price), payment_method: method, sale_date: date, notes }),
       });
       if (!res.ok) throw new Error('Failed to record sale');
       addToast({ kind: 'success', title: 'WiFi sale recorded' });
       onSaved();
     } catch (err: any) {
       addToast({ kind: 'error', title: err.message });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Record WiFi Sale" label="WiFi Token Sales" size="sm"
-      footer={
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit" form="wifi-sale-form" isLoading={loading}>Record Sale</Button>
-        </div>
-      }
+      footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" form="wifi-sale-form" isLoading={loading}>Record Sale</Button></div>}
     >
       <form id="wifi-sale-form" onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <TextInput
-            id="ws-amount"
-            type="number"
-            step="0.01"
-            min="0.01"
-            labelText="Amount *"
-            placeholder="0.00"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            required
-          />
-          <Select id="ws-currency" labelText="Currency" value={currency} onChange={e => setCurrency(e.target.value)}>
-            <SelectItem value="USD" text="USD" />
-            <SelectItem value="NAD" text="NAD" />
-            <SelectItem value="ZAR" text="ZAR" />
-            <SelectItem value="GBP" text="GBP" />
+          <Select id="ws-pkg" labelText="Package Type" value={packageType} onChange={e => setPackageType(e.target.value)}>
+            {PACKAGE_TYPES.map(p => <SelectItem key={p} value={p} text={p} />)}
+          </Select>
+          <TextInput id="ws-tokens" type="number" min="1" labelText="Tokens Sold *" value={tokens} onChange={e => setTokens(e.target.value)} required />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <TextInput id="ws-price" type="number" step="0.01" min="0.01" labelText="Price per Token *" value={price} onChange={e => setPrice(e.target.value)} required />
+          <Select id="ws-method" labelText="Payment Method" value={method} onChange={e => setMethod(e.target.value)}>
+            {PAYMENT_METHODS.map(m => <SelectItem key={m} value={m} text={m} />)}
           </Select>
         </div>
-        <TextInput
-          id="ws-token"
-          labelText="Token Code"
-          placeholder="Optional"
-          value={tokenCode}
-          onChange={e => setTokenCode(e.target.value)}
-        />
+        {total > 0 && (
+          <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
+            <p className="text-xs text-blue-700">Total: <span className="font-bold">{formatCurrency(total, 'USD')}</span></p>
+          </div>
+        )}
         <TextInput id="ws-date" type="date" labelText="Sale Date" value={date} onChange={e => setDate(e.target.value)} />
         <TextArea id="ws-notes" labelText="Notes" rows={2} value={notes} onChange={e => setNotes(e.target.value)} />
       </form>
