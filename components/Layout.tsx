@@ -21,6 +21,7 @@ import {
   Boxes,
   Snowflake,
   Wifi,
+  ShieldCheck,
 } from 'lucide-react';
 import { AppUser, UserRole } from '../types';
 import affinityLogo from '../assets/affinity-logo.svg';
@@ -47,7 +48,8 @@ export type AppView =
   | 'trips'
   | 'assets'
   | 'freezit'
-  | 'wifi-tokens';
+  | 'wifi-tokens'
+  | 'director';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -63,29 +65,25 @@ const navItems: {
   roles: UserRole[];
   Icon: React.ComponentType<{ size?: number }>;
 }[] = [
-  { id: 'admin', label: 'Dashboard', roles: ['Admin', 'Manager'], Icon: BarChart3 },
-  { id: 'accountant', label: 'Accountant', roles: ['Admin', 'Accountant'], Icon: Calculator },
-  {
-    id: 'financials',
-    label: 'Financials',
-    roles: ['Admin', 'Manager', 'Accountant'],
-    Icon: DollarSign,
-  },
-  { id: 'reports', label: 'Reports', roles: ['Admin', 'Manager', 'Accountant'], Icon: LineChart },
-  { id: 'documents', label: 'Documents', roles: ['Admin', 'Manager', 'Driver'], Icon: FileText },
-  { id: 'driver', label: 'Driver Portal', roles: ['Admin', 'Driver'], Icon: Truck },
-  { id: 'clients', label: 'Clients', roles: ['Admin', 'Accountant'], Icon: Users },
-  { id: 'employees', label: 'Employees', roles: ['Admin', 'Manager'], Icon: Briefcase },
-  { id: 'payslips', label: 'Payslips', roles: ['Admin', 'Manager'], Icon: Banknote },
-  { id: 'driver-entries', label: 'Driver Entries', roles: ['Admin', 'Manager'], Icon: Receipt },
-  { id: 'funds', label: 'Operating Funds', roles: ['Admin', 'Accountant'], Icon: Wallet },
-  { id: 'shipments', label: 'Shipments', roles: ['Admin', 'Manager', 'Accountant'], Icon: Package },
-  { id: 'trips', label: 'Trip Planner', roles: ['Admin', 'Manager'], Icon: Map },
-  { id: 'assets', label: 'Asset Register', roles: ['Admin', 'Manager'], Icon: Boxes },
-  { id: 'updates', label: 'Updates', roles: ['Admin'], Icon: Mail },
-  { id: 'settings', label: 'Settings', roles: ['Admin'], Icon: Settings },
-  { id: 'freezit',      label: 'Freezit Sales',     roles: ['Admin', 'Sales'], Icon: Snowflake },
-  { id: 'wifi-tokens',  label: 'WiFi Token Sales',  roles: ['Admin', 'Sales'], Icon: Wifi },
+  { id: 'admin',          label: 'Dashboard',        roles: ['Admin', 'Manager'],                    Icon: BarChart3  },
+  { id: 'director',       label: 'Director',         roles: ['Admin', 'Director'],                   Icon: ShieldCheck },
+  { id: 'freezit',        label: 'Freezit Sales',    roles: ['Admin', 'Director', 'Sales'],          Icon: Snowflake  },
+  { id: 'wifi-tokens',    label: 'WiFi Token Sales', roles: ['Admin', 'Director', 'Sales'],          Icon: Wifi       },
+  { id: 'accountant',     label: 'Accountant',       roles: ['Admin', 'Accountant'],                 Icon: Calculator },
+  { id: 'financials',     label: 'Financials',       roles: ['Admin', 'Manager', 'Accountant'],      Icon: DollarSign },
+  { id: 'reports',        label: 'Reports',          roles: ['Admin', 'Manager', 'Accountant'],      Icon: LineChart  },
+  { id: 'clients',        label: 'Clients',          roles: ['Admin', 'Accountant'],                 Icon: Users      },
+  { id: 'shipments',      label: 'Shipments',        roles: ['Admin', 'Manager', 'Accountant'],      Icon: Package    },
+  { id: 'trips',          label: 'Trip Planner',     roles: ['Admin', 'Manager'],                    Icon: Map        },
+  { id: 'driver',         label: 'Driver Portal',    roles: ['Admin', 'Driver'],                     Icon: Truck      },
+  { id: 'driver-entries', label: 'Driver Entries',   roles: ['Admin', 'Manager'],                    Icon: Receipt    },
+  { id: 'documents',      label: 'Documents',        roles: ['Admin', 'Manager', 'Driver'],          Icon: FileText   },
+  { id: 'employees',      label: 'Employees',        roles: ['Admin', 'Manager'],                    Icon: Briefcase  },
+  { id: 'payslips',       label: 'Payslips',         roles: ['Admin', 'Manager'],                    Icon: Banknote   },
+  { id: 'funds',          label: 'Operating Funds',  roles: ['Admin', 'Accountant'],                 Icon: Wallet     },
+  { id: 'assets',         label: 'Asset Register',   roles: ['Admin', 'Manager'],                    Icon: Boxes      },
+  { id: 'updates',        label: 'Updates',          roles: ['Admin'],                               Icon: Mail       },
+  { id: 'settings',       label: 'Settings',         roles: ['Admin'],                               Icon: Settings   },
 ];
 
 const SIDEBAR_OPEN_WIDTH = 240;

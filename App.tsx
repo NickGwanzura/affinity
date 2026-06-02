@@ -45,6 +45,9 @@ const UpdateCenter = lazy(() =>
 const FreezitSales = lazy(() =>
   import('./components/FreezitSales').then(module => ({ default: module.FreezitSales }))
 );
+const DirectorsDashboard = lazy(() =>
+  import('./components/DirectorsDashboard').then(module => ({ default: module.DirectorsDashboard }))
+);
 const WiFiTokenSales = lazy(() =>
   import('./components/WiFiTokenSales').then(module => ({ default: module.WiFiTokenSales }))
 );
@@ -131,6 +134,7 @@ export default function App() {
     if (role === 'Driver') return 'driver' as const;
     if (role === 'Accountant') return 'accountant' as const;
     if (role === 'Sales') return 'freezit' as const;
+    if (role === 'Director') return 'director' as const;
     return 'admin' as const;
   };
 
@@ -274,6 +278,8 @@ export default function App() {
         return <ErrorBoundary view="shipments"><Shipments /></ErrorBoundary>;
       case 'updates':
         return <ErrorBoundary view="updates"><UpdateCenter /></ErrorBoundary>;
+      case 'director':
+        return <ErrorBoundary view="director"><DirectorsDashboard /></ErrorBoundary>;
       case 'freezit':
         return <ErrorBoundary view="freezit"><FreezitSales /></ErrorBoundary>;
       case 'wifi-tokens':

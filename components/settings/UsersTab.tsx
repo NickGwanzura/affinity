@@ -1258,6 +1258,33 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                       Freezit Sales and WiFi Token Sales only
                     </p>
                   </div>
+
+                  <div
+                    onClick={() => setUserForm({ ...userForm, role: 'Director' })}
+                    className="p-4 cursor-pointer transition-all"
+                    style={{
+                      border: `2px solid ${userForm.role === 'Director' ? '#7c3aed' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                      background: userForm.role === 'Director' ? '#f5f3ff' : 'transparent',
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>Director</span>
+                      <div className="w-5 h-5 flex items-center justify-center" style={{
+                        borderRadius: '50%',
+                        border: `2px solid ${userForm.role === 'Director' ? '#7c3aed' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                        background: userForm.role === 'Director' ? '#7c3aed' : 'transparent',
+                      }}>
+                        {userForm.role === 'Director' && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                      Director dashboard, sales oversight, fund disbursements
+                    </p>
+                  </div>
                 </div>
               </div>
             </form>
