@@ -14,10 +14,11 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.svg">
     <link rel="mask-icon" href="/favicon.svg" color="#000000">
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+    <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
     <title>Affinity Logistics</title>
 <style>
-      /* Prefer Carbon’s IBM Plex if available via package; otherwise fall back to system sans/mono */
-      body { font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif; }
+      body { font-family: 'General Sans', system-ui, -apple-system, sans-serif; }
 
       /* Accessibility: respect reduced-motion preference */
       @media (prefers-reduced-motion: reduce) {
@@ -27,11 +28,6 @@
           transition-duration: 0.01ms !important;
           scroll-behavior: auto !important;
         }
-      }
-
-      /* Carbon overrides for Tailwind compatibility */
-      .cds--header ~ .cds--content {
-        margin-top: 3rem;
       }
 
       /* Hide scrollbar for mobile tabs - cross-browser */

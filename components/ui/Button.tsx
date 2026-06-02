@@ -61,15 +61,15 @@ const variantClasses: Record<ButtonVariant, string> = {
 // in app.css so `sm` actually renders at 32px. Without this, every sm
 // button gets silently bumped to 40px tall.
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-8 min-h-0 px-3 text-[13px] leading-none',
-  md: 'h-10 min-h-0 px-4 text-sm leading-none',
+  sm: 'h-9 min-h-0 px-3.5 text-sm leading-none',
+  md: 'h-11 min-h-0 px-5 text-sm leading-none',
   lg: 'h-12 min-h-0 px-6 text-base leading-none',
 };
 
 const baseButton = [
   'relative inline-flex items-center justify-center gap-2 select-none overflow-hidden',
   'font-medium whitespace-nowrap',
-  'rounded-md',
+  'rounded-lg',
   'transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 ease-out',
   'focus:outline-none focus-visible:outline-none',
   'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#D97706] focus-visible:ring-offset-white',
@@ -149,8 +149,8 @@ export const IconButton: React.FC<IconButtonProps> = ({
   ...props
 }) => {
   const sizeMap: Record<'sm' | 'md' | 'lg', string> = {
-    sm: 'h-8 w-8 min-h-0',
-    md: 'h-10 w-10 min-h-0',
+    sm: 'h-9 w-9 min-h-0',
+    md: 'h-11 w-11 min-h-0',
     lg: 'h-12 w-12 min-h-0',
   };
   const iconSize = size === 'sm' ? 14 : size === 'lg' ? 18 : 16;

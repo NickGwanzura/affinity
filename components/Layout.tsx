@@ -170,7 +170,7 @@ export const Layout: React.FC<LayoutProps> = ({
       >
         {sidebarCollapsed ? (
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-sm font-bold text-black shadow-sm ring-1 ring-white/10"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#D97706] text-sm font-bold text-white shadow-sm"
             aria-label="Affinity Logistics"
           >
             A
@@ -179,8 +179,8 @@ export const Layout: React.FC<LayoutProps> = ({
           <img
             src={affinityLogo}
             alt="Affinity Logistics"
-            className="block h-auto w-full rounded-md bg-white shadow-sm ring-1 ring-white/5"
-            style={{ maxWidth: '180px', padding: '0.5rem 0.75rem' }}
+            className="block h-auto w-full"
+            style={{ maxWidth: '160px', filter: 'brightness(0) invert(1)' }}
           />
         )}
       </div>

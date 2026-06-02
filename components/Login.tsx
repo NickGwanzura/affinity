@@ -138,10 +138,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="login-shell__panel-inner">
           <div className="login-shell__mobile-brand">
             <div className="login-shell__mobile-brand-row">
-              <div className="login-shell__mobile-copy">
-                <h2 className="login-shell__mobile-title">Fleet access for every trip.</h2>
-              </div>
-              <span style={{ color: '#fff', fontWeight: 600, fontSize: '0.75rem' }}>AL</span>
+              <img
+                src={affinityLogo}
+                alt="Affinity Logistics"
+                style={{ height: '36px', width: 'auto', filter: 'brightness(0) invert(1)' }}
+              />
+              <span className="login-shell__mobile-eyebrow" style={{ color: '#888' }}>Internal Platform</span>
             </div>
           </div>
 

@@ -4,15 +4,15 @@ import { Eye, EyeOff, Loader2, Check, AlertCircle, ChevronDown, Info, AlertTrian
 /* ──────────────────────────────────────────────────────────────────────────
    Shared tokens
    ──────────────────────────────────────────────────────────────────────── */
-const labelCls = 'block text-xs font-semibold tracking-wide text-zinc-700 mb-2';
-const helperCls = 'mt-2 text-xs text-zinc-500 leading-snug';
-const errorCls = 'mt-2 flex items-start gap-1 text-xs text-red-600 leading-snug';
+const labelCls = 'block text-sm font-medium text-zinc-700 mb-1.5';
+const helperCls = 'mt-1.5 text-xs text-zinc-500 leading-snug';
+const errorCls = 'mt-1.5 flex items-start gap-1 text-xs text-red-600 leading-snug';
 
-// Modern input: white surface, soft 1px stone border, brand-amber focus ring.
+// 44px min-height (touch target), text-base (prevents iOS zoom), rounded-lg.
 const baseInput =
-  'block w-full bg-white text-zinc-900 text-sm placeholder-zinc-400 ' +
-  'border border-stone-300 rounded-md ' +
-  'px-3 py-2 min-h-[2.5rem] shadow-sm appearance-none ' +
+  'block w-full bg-white text-zinc-900 text-base placeholder-zinc-400 ' +
+  'border border-stone-300 rounded-lg ' +
+  'px-3.5 py-2.5 min-h-[2.75rem] shadow-sm appearance-none ' +
   'transition-[border-color,box-shadow,background-color] duration-150 ease-out ' +
   'hover:border-stone-400 ' +
   'focus:outline-none focus-visible:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 ' +
@@ -170,7 +170,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
       id={id}
       rows={rows}
       aria-invalid={invalid || undefined}
-      className={`${baseInput} min-h-[6rem] resize-y leading-relaxed ${invalid ? invalidCls : ''} ${className}`}
+      className={`${baseInput} min-h-[6rem] resize-y leading-relaxed text-base ${invalid ? invalidCls : ''} ${className}`}
       {...props}
     />
   </Field>
