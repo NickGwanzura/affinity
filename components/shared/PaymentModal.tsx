@@ -185,7 +185,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <section>
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Client
-          </h2>
+          </h3>
           <Select
             id="payment-client"
             labelText="Client *"
@@ -268,7 +268,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <section>
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Payment Details
-          </h2>
+          </h3>
 
           <Grid>
             <Column sm={4} md={4} lg={8}>
@@ -360,12 +360,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {formData.client_name && (
           <section>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-base font-semibold text-gray-900">
+              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Allocations{' '}
-                <span className="font-normal text-xs text-zinc-600">
+                <span className="font-normal normal-case tracking-normal text-zinc-400">
                   (Optional)
                 </span>
-              </h2>
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"

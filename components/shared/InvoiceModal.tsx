@@ -263,7 +263,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         <section>
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Client Information
-          </h2>
+          </h3>
 
           <Stack gap={5}>
             <Select
@@ -317,7 +317,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         <section>
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Invoice Details
-          </h2>
+          </h3>
 
           <Grid>
             <Column sm={4} md={4} lg={8}>
@@ -416,9 +416,9 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         {/* Line Items */}
         <section>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-base font-semibold text-gray-900">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
               Line Items
-            </h2>
+            </h3>
             <Button
               variant="ghost"
               size="sm"
@@ -550,7 +550,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         <section>
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Notes & Terms
-          </h2>
+          </h3>
 
           <Stack gap={5}>
             <TextArea
