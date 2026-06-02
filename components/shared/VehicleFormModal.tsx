@@ -105,7 +105,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         </div>
       }
     >
-      <form id="vehicle-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form id="vehicle-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Row 1: Make and Model — full width, autoFocus */}
         <TextInput
           id="vehicle-model"

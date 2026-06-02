@@ -77,7 +77,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     return (
       <span
         className={`inline-flex items-center font-medium ${sizeClasses[size]} ${className}`}
-        style={{ backgroundColor: customColors.bg, color: customColors.text, cursor: 'default' }}
+        className={`inline-flex cursor-default items-center font-medium ${sizeClasses[size]} ${className}`}
+        style={{ backgroundColor: customColors.bg, color: customColors.text }}
       >
         {config.label}
       </span>
@@ -85,7 +86,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   }
 
   return (
-    <span className={`inline-flex items-center font-medium ${sizeClasses[size]} ${palette[config.palette]} ${className}`} style={{ cursor: 'default' }}>
+    <span className={`inline-flex cursor-default items-center font-medium ${sizeClasses[size]} ${palette[config.palette]} ${className}`}>
       {config.label}
     </span>
   );

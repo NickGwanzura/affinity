@@ -157,7 +157,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
         </div>
       }
     >
-      <form id="expense-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form id="expense-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Select
           id="expense-vehicle"
           labelText="Vehicle"

@@ -355,7 +355,7 @@ const RecordSaleModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; onClos
     <Modal isOpen={isOpen} onClose={onClose} title="Record Sale" label="Freezit Sales" size="sm"
       footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" form="fz-sale-form" isLoading={loading}>Record Sale</Button></div>}
     >
-      <form id="fz-sale-form" onSubmit={handleSubmit} className="space-y-4">
+      <form id="fz-sale-form" onSubmit={handleSubmit} className="space-y-3">
         <Select id="fzs-item" labelText="Stock Item *" value={stockId} onChange={e => setStockId(e.target.value)} required>
           <SelectItem value="" text="Select item" />
           {stock.map(s => <SelectItem key={s.id} value={s.id} text={`${s.product_name} (${Math.round(Number(s.available_qty))} available)`} />)}
@@ -409,7 +409,7 @@ const AddStockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: (
     <Modal isOpen={isOpen} onClose={onClose} title="Add Stock Item" label="Freezit Sales" size="sm"
       footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" form="fz-stock-form" isLoading={loading}>Add Item</Button></div>}
     >
-      <form id="fz-stock-form" onSubmit={handleSubmit} className="space-y-4">
+      <form id="fz-stock-form" onSubmit={handleSubmit} className="space-y-3">
         <TextInput id="fzst-name" labelText="Product Name *" value={name} onChange={e => setName(e.target.value)} required />
         <div className="grid grid-cols-2 gap-4">
           <TextInput id="fzst-cost" type="number" step="0.01" min="0" labelText="Unit Cost" value={cost} onChange={e => setCost(e.target.value)} />
@@ -457,7 +457,7 @@ const RestockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: ()
     <Modal isOpen={isOpen} onClose={onClose} title="Record Restock" label="Freezit Sales" size="sm"
       footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" form="fz-restock-form" isLoading={loading}>Save Restock</Button></div>}
     >
-      <form id="fz-restock-form" onSubmit={handleSubmit} className="space-y-4">
+      <form id="fz-restock-form" onSubmit={handleSubmit} className="space-y-3">
         <div className="grid grid-cols-2 gap-4">
           <TextInput id="fzr-qty" type="number" min="1" labelText="Qty Received *" value={qty} onChange={e => setQty(e.target.value)} required />
           <TextInput id="fzr-cost" type="number" step="0.01" min="0" labelText="Unit Cost" value={cost} onChange={e => setCost(e.target.value)} />
@@ -508,7 +508,7 @@ const RecordBreakageModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; on
     <Modal isOpen={isOpen} onClose={onClose} title="Record Breakage" label="Freezit Sales" size="sm"
       footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="danger" type="submit" form="fz-breakage-form" isLoading={loading}>Record Breakage</Button></div>}
     >
-      <form id="fz-breakage-form" onSubmit={handleSubmit} className="space-y-4">
+      <form id="fz-breakage-form" onSubmit={handleSubmit} className="space-y-3">
         <Select id="fzb-item" labelText="Stock Item *" value={stockId} onChange={e => setStockId(e.target.value)} required>
           <SelectItem value="" text="Select item" />
           {stock.map(s => <SelectItem key={s.id} value={s.id} text={`${s.product_name} (${Math.round(Number(s.available_qty))} available)`} />)}

@@ -281,7 +281,7 @@ const RecordWiFiSaleModal: React.FC<{ isOpen: boolean; onClose: () => void; onSa
     <Modal isOpen={isOpen} onClose={onClose} title="Record WiFi Sale" label="WiFi Token Sales" size="sm"
       footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" form="wifi-sale-form" isLoading={loading}>Record Sale</Button></div>}
     >
-      <form id="wifi-sale-form" onSubmit={handleSubmit} className="space-y-4">
+      <form id="wifi-sale-form" onSubmit={handleSubmit} className="space-y-3">
         <div className="grid grid-cols-2 gap-4">
           <Select id="ws-pkg" labelText="Package Type" value={packageType} onChange={e => setPackageType(e.target.value)}>
             {PACKAGE_TYPES.map(p => <SelectItem key={p} value={p} text={p} />)}

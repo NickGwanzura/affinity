@@ -47,7 +47,7 @@ export const DashboardKpiCard: React.FC<DashboardKpiCardProps> = ({
   const body = (
     <div
       className={[
-        'relative overflow-hidden bg-white p-6 border border-[#E7E5E4] h-full transition-[box-shadow,transform,border-color] duration-200 ease-out',
+        'relative overflow-hidden rounded-xl bg-white p-5 border border-stone-200 h-full transition-[box-shadow,transform,border-color] duration-200 ease-out',
         interactive ? 'group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:border-stone-300' : '',
       ].join(' ')}
     >
@@ -59,7 +59,7 @@ export const DashboardKpiCard: React.FC<DashboardKpiCardProps> = ({
       )}
       <div className="relative flex items-center justify-between">
         <div
-          className={`inline-flex items-center justify-center p-2.5 transition-transform duration-200 ease-out ${TONE_CLASSES[iconTone]} ${
+          className={`inline-flex items-center justify-center rounded-lg p-2.5 transition-transform duration-200 ease-out ${TONE_CLASSES[iconTone]} ${
             interactive ? 'group-hover:scale-105' : ''
           }`}
         >
@@ -70,9 +70,9 @@ export const DashboardKpiCard: React.FC<DashboardKpiCardProps> = ({
         ) : null}
       </div>
       <div className="relative mt-4">
-        <p className="text-3xl font-bold text-[#1C1917] tabular-nums tracking-tight">{value}</p>
-        <p className="text-sm text-[#78716C] mt-1">{label}</p>
-        {trend && <p className="text-xs text-[#A8A29E] mt-2">{trend}</p>}
+        <p className="truncate text-xl font-bold text-zinc-900 tabular-nums tracking-tight sm:text-2xl md:text-3xl">{value}</p>
+        <p className="mt-1 text-sm text-zinc-500">{label}</p>
+        {trend && <p className="mt-1.5 text-xs text-zinc-400">{trend}</p>}
       </div>
     </div>
   );

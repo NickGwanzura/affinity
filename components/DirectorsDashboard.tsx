@@ -459,7 +459,7 @@ const TransactionModal: React.FC<{
         </div>
       }
     >
-      <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+      <form id={formId} onSubmit={handleSubmit} className="space-y-3">
         {/* Type badge */}
         <div className={`flex items-center gap-2 rounded-xl p-3 ${isReceived ? 'bg-emerald-50' : 'bg-orange-50'}`}>
           {isReceived ? <ArrowDownLeft size={18} className="text-emerald-600" /> : <ArrowUpRight size={18} className="text-orange-600" />}

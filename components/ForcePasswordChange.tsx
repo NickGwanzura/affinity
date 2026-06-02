@@ -106,7 +106,7 @@ export const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({
             )}
 
             <form onSubmit={handleSubmit}>
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-4">
                 <PasswordInput
                   id="force-current-password"
                   labelText="Current password"
@@ -154,8 +154,7 @@ export const ForcePasswordChange: React.FC<ForcePasswordChangeProps> = ({
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="login-shell__link"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                  className="login-shell__link inline-flex items-center gap-1"
                 >
                   <LogOut size={14} /> Sign out
                 </button>

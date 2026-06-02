@@ -87,7 +87,7 @@ export const ExpenseEntryModal: React.FC<ExpenseEntryModalProps> = ({
         </div>
       }
     >
-      <form id="expense-entry-form" onSubmit={onSubmit} className="flex flex-col gap-6">
+      <form id="expense-entry-form" onSubmit={onSubmit} className="flex flex-col gap-4">
         {/* Vehicle selector */}
         <Select
           id="expense-vehicle"

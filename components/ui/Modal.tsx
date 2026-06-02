@@ -130,7 +130,7 @@ export const Modal: React.FC<ModalProps> = ({
           className="mx-auto mt-2.5 mb-0.5 h-1 w-10 shrink-0 rounded-full bg-stone-300 sm:hidden"
         />
         {(title || label) && (
-          <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-5 py-4 sm:px-8 sm:py-6">
+          <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-4 py-3 sm:px-6 sm:py-4">
             <div className="min-w-0">
               {label && (
                 <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#D97706]">
@@ -154,10 +154,10 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-7">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">{children}</div>
 
         {footer && (
-          <div className="border-t border-stone-200 bg-stone-50/60 px-5 py-4 sm:px-8 sm:py-5">{footer}</div>
+          <div className="border-t border-stone-200 bg-stone-50/60 px-4 py-3 sm:px-6 sm:py-4">{footer}</div>
         )}
       </div>
     </div>

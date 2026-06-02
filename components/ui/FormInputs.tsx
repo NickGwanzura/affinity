@@ -12,7 +12,7 @@ const errorCls = 'mt-1.5 flex items-start gap-1 text-xs text-red-600 leading-snu
 const baseInput =
   'block w-full bg-white text-zinc-900 text-base placeholder-zinc-400 ' +
   'border border-stone-300 rounded-lg ' +
-  'px-3.5 py-2.5 min-h-[2.75rem] shadow-sm appearance-none ' +
+  'px-3.5 py-2 min-h-[2.75rem] shadow-sm appearance-none ' +
   'transition-[border-color,box-shadow,background-color] duration-150 ease-out ' +
   'hover:border-stone-400 ' +
   'focus:outline-none focus-visible:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 ' +
@@ -170,7 +170,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
       id={id}
       rows={rows}
       aria-invalid={invalid || undefined}
-      className={`${baseInput} min-h-[6rem] resize-y leading-relaxed text-base ${invalid ? invalidCls : ''} ${className}`}
+      className={`${baseInput} min-h-[4.5rem] resize-y leading-relaxed text-base ${invalid ? invalidCls : ''} ${className}`}
       {...props}
     />
   </Field>

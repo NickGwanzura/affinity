@@ -200,9 +200,9 @@ export const Layout: React.FC<LayoutProps> = ({
               title={sidebarCollapsed ? label : undefined}
               aria-current={isActive ? 'page' : undefined}
               className={[
-                'group relative flex w-full items-center gap-3 rounded-md transition-[background-color,color] duration-150',
+                'group relative flex w-full items-center gap-3 rounded-lg transition-[background-color,color] duration-150',
                 'border-0 cursor-pointer mb-0.5',
-                sidebarCollapsed ? 'justify-center px-3 py-2.5' : 'justify-start px-3 py-2',
+                sidebarCollapsed ? 'justify-center px-3 py-3' : 'justify-start px-3 py-2.5',
                 isActive
                   ? 'bg-white/[0.08] text-white font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
                   : 'bg-transparent text-[#a1a1aa] font-normal hover:bg-white/[0.05] hover:text-white focus-visible:bg-white/[0.05] focus-visible:text-white',
@@ -243,7 +243,7 @@ export const Layout: React.FC<LayoutProps> = ({
           title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={[
-            'mt-2 hidden lg:flex w-full items-center gap-3 rounded-md bg-transparent text-xs transition-colors duration-150',
+            'mt-2 hidden lg:flex w-full items-center gap-3 rounded-lg bg-transparent text-xs transition-colors duration-150',
             sidebarCollapsed ? 'justify-center px-3 py-1.5' : 'justify-start px-3 py-1.5',
             'border-0 cursor-pointer text-[#71717a] hover:text-white hover:bg-white/[0.04] focus-visible:text-white focus-visible:bg-white/[0.04] focus:outline-none',
           ].join(' ')}
@@ -286,7 +286,7 @@ export const Layout: React.FC<LayoutProps> = ({
           type="button"
           onClick={() => setMobileOpen(false)}
           aria-label="Close sidebar"
-          className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-md text-[#a1a1aa] hover:bg-white/[0.06] hover:text-white focus-visible:bg-white/[0.06] focus-visible:text-white focus:outline-none lg:hidden"
+          className="absolute right-2 top-2 z-10 flex h-10 w-10 items-center justify-center rounded-lg text-[#a1a1aa] hover:bg-white/[0.06] hover:text-white focus-visible:bg-white/[0.06] focus-visible:text-white focus:outline-none lg:hidden"
         >
           <X size={18} />
         </button>

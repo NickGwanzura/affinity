@@ -39,7 +39,7 @@ export const TabList: React.FC<TabListProps> = ({ children, className = '', ...r
   return (
     <div
       role="tablist"
-      className={`relative overflow-x-auto border-b border-stone-300 [scrollbar-width:thin] ${className}`}
+      className={`relative overflow-x-auto border-b border-stone-200 [scrollbar-width:thin] ${className}`}
       {...rest}
     >
       <div className="flex min-w-max">

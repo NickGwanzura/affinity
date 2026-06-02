@@ -149,7 +149,7 @@ select:-webkit-autofill {
 }
 
 textarea {
-  min-height: 6rem;
+  min-height: 4.5rem;
   resize: vertical;
 }
 

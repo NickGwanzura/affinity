@@ -143,7 +143,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user, onProfile, onLogout }) => {
               type="button"
               role="menuitem"
               onClick={() => { setOpen(false); onProfile(); }}
-              className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm text-zinc-800 transition-colors duration-100 hover:bg-stone-100 focus:bg-stone-100 focus:outline-none ${FOCUS_RING}`}
+              className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-zinc-800 transition-colors duration-100 hover:bg-stone-100 focus:bg-stone-100 focus:outline-none ${FOCUS_RING}`}
             >
               <User size={14} aria-hidden="true" />
               Profile
@@ -154,7 +154,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user, onProfile, onLogout }) => {
               type="button"
               role="menuitem"
               onClick={() => { setOpen(false); onLogout(); }}
-              className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm text-zinc-800 transition-colors duration-100 hover:bg-stone-100 focus:bg-stone-100 focus:outline-none ${FOCUS_RING}`}
+              className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-zinc-800 transition-colors duration-100 hover:bg-stone-100 focus:bg-stone-100 focus:outline-none ${FOCUS_RING}`}
             >
               <LogOut size={14} aria-hidden="true" />
               Logout
@@ -200,7 +200,7 @@ export const Topbar: React.FC<TopbarProps> = ({
             type="button"
             onClick={onCommandPalette}
             aria-label="Open command palette"
-            className={`group flex h-10 w-full max-w-xl items-center justify-start gap-2.5 rounded-lg border border-stone-200 bg-stone-50/80 px-3 text-left text-sm text-zinc-500 transition-[background-color,border-color,box-shadow] duration-150 hover:border-stone-300 hover:bg-white hover:shadow-sm focus:outline-none sm:px-4 ${FOCUS_RING}`}
+            className={`group flex h-11 w-full max-w-xl items-center justify-start gap-2.5 rounded-lg border border-stone-200 bg-stone-50/80 px-3 text-left text-sm text-zinc-500 transition-[background-color,border-color,box-shadow] duration-150 hover:border-stone-300 hover:bg-white hover:shadow-sm focus:outline-none sm:px-4 ${FOCUS_RING}`}
           >
             <Search className="h-4 w-4 shrink-0 text-zinc-400 transition-colors group-hover:text-zinc-500" aria-hidden="true" />
             <span className="flex-1 truncate text-zinc-500 group-hover:text-zinc-600">

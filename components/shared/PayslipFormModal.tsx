@@ -110,7 +110,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
       }
     >
       <form id="payslip-form" onSubmit={onSubmit} className="space-y-8">
-        <section className="space-y-5">
+        <section className="space-y-4">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Pay period
           </h4>
@@ -294,7 +294,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
           </div>
         </section>
 
-        <section className="space-y-5">
+        <section className="space-y-4">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Payment
           </h4>

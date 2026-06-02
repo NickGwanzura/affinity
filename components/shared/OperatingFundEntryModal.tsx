@@ -96,7 +96,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
         </div>
       }
     >
-      <form id="opfund-form" onSubmit={onSubmit} className="space-y-6">
+      <form id="opfund-form" onSubmit={onSubmit} className="space-y-4">
           {typeSelectorVariant === 'cards' ? (
             <div>
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Transaction Type *</label>

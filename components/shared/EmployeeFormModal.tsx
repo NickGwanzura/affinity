@@ -111,7 +111,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     >
       <form id="employee-form" onSubmit={onSubmit} className="space-y-8">
         {/* Personal & contact */}
-        <section className="space-y-5">
+        <section className="space-y-4">
           <h4 className={sectionHeader}>Personal &amp; contact</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextInput
@@ -161,7 +161,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
         </section>
 
         {/* Role & compensation */}
-        <section className="space-y-5">
+        <section className="space-y-4">
           <h4 className={sectionHeader}>Role &amp; compensation</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
@@ -238,7 +238,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
         </section>
 
         {/* Banking & tax */}
-        <section className="space-y-5">
+        <section className="space-y-4">
           <div>
             <h4 className={sectionHeader}>Banking &amp; tax</h4>
             <p className="mt-1 text-xs text-zinc-500">Optional — used on payslip PDFs.</p>

@@ -194,7 +194,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             )}
 
             <form onSubmit={onSubmit}>
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4">
                 <TextInput
                   id="login-email"
                   type="email"
