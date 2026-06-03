@@ -97,7 +97,7 @@ export const TripPlannerModal: React.FC<TripPlannerModalProps> = ({
         Assign routes, drivers, vehicles, statuses, and ETAs from one place.
       </p>
       <form id="trip-planner-form" onSubmit={onSubmit} className="mt-5">
-        <Stack gap={5}>
+        <Stack gap={3}>
           <div className="grid gap-4 sm:grid-cols-2">
             <TextInput
               id="trip-title"

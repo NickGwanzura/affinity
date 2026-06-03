@@ -120,14 +120,14 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className={`app-modal-content-enter flex max-h-[95dvh] w-full flex-col bg-white shadow-2xl ring-1 ring-black/5 outline-none rounded-t-2xl sm:max-h-[90vh] sm:rounded-xl ${sizeClasses[size]}`}
+        className={`app-modal-content-enter flex max-h-[95dvh] w-full flex-col bg-white shadow-2xl ring-1 ring-black/5 outline-none rounded-t-3xl sm:max-h-[90vh] sm:rounded-2xl ${sizeClasses[size]}`}
         onMouseDown={(e) => e.stopPropagation()}
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {/* Mobile drag-handle affordance — purely decorative dismissibility cue. */}
         <div
           aria-hidden="true"
-          className="mx-auto mt-2.5 mb-0.5 h-1 w-10 shrink-0 rounded-full bg-stone-300 sm:hidden"
+          className="mx-auto mt-3 mb-1 h-1.5 w-12 shrink-0 rounded-full bg-stone-300 sm:hidden"
         />
         {(title || label) && (
           <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-4 py-3 sm:px-6 sm:py-4">
@@ -147,7 +147,7 @@ export const Modal: React.FC<ModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="-m-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-stone-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706] sm:h-9 sm:w-9"
+              className="-m-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-stone-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706] sm:h-9 sm:w-9"
             >
               <X size={20} />
             </button>
@@ -157,7 +157,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">{children}</div>
 
         {footer && (
-          <div className="border-t border-stone-200 bg-stone-50/60 px-4 py-3 sm:px-6 sm:py-4">{footer}</div>
+          <div className="modal-footer border-t border-stone-200 bg-stone-50/60 px-4 py-3 sm:px-6 sm:py-4">{footer}</div>
         )}
       </div>
     </div>

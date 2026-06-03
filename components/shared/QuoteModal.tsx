@@ -241,11 +241,11 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
         </div>
       }
     >
-      <Stack gap={7}>
+      <Stack gap={3}>
         {/* Quote Number (when editing) */}
         {editingQuote && (
           <section>
-            <div className="p-5 bg-white border-l-[3px] border-[#D97706] flex items-center gap-3">
+            <div className="p-3 rounded-lg bg-amber-50 border-l-4 border-[#D97706] flex items-center gap-3">
               <span className="font-mono text-sm font-semibold text-[#D97706]">
                 {editingQuote.quote_number}
               </span>
@@ -258,11 +258,11 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
 
         {/* Client Section */}
         <section>
-          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Client Information
           </h3>
 
-          <Stack gap={5}>
+          <Stack gap={3}>
             <Select
               id="quote-client"
               labelText="Saved Client"
@@ -312,7 +312,7 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
 
         {/* Quote Details */}
         <section>
-          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Quote Details
           </h3>
 
@@ -403,11 +403,11 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
             </Button>
           </div>
 
-          <Stack gap={4}>
+          <Stack gap={3}>
             {lineItems.map((item, index) => (
               <div
                 key={item.id || index}
-                className="p-5 bg-white border-l-[3px] border-stone-300"
+                className="p-3 rounded-lg bg-white border border-stone-200"
               >
                 <Grid>
                   <Column sm={4} md={6} lg={8}>
@@ -510,7 +510,7 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
           </div>
 
           {/* Dark Total Bar */}
-          <div className="mt-4 py-4 px-5 bg-zinc-900 flex justify-between items-center">
+          <div className="mt-3 rounded-lg py-3 px-4 bg-zinc-900 flex justify-between items-center">
             <span className="font-semibold text-sm text-zinc-400">
               Quote Total
             </span>
@@ -538,7 +538,7 @@ const QuoteSummaryCell: React.FC<{
   emphasis?: boolean;
   accent?: 'error' | 'success' | 'warning';
 }> = ({ label, value, emphasis, accent }) => (
-  <div className="rounded-md border border-stone-200 bg-white px-4 py-4 text-center">
+  <div className="rounded-lg border border-stone-200 bg-white px-3 py-3 text-center">
     <div className="mb-1 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-zinc-600">
       {label}
     </div>

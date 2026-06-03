@@ -233,7 +233,7 @@ const OverviewTab: React.FC<{ stats: Stats | null; txs: DirectorTx[] }> = ({ sta
       </div>
 
       {/* Recent activity */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <RecentList title="Recently Received" color="emerald" txs={received} />
         <RecentList title="Recently Disbursed" color="orange" txs={disbursed} />
       </div>
@@ -295,7 +295,7 @@ const SalesTab: React.FC<{ sales: SaleFeedItem[]; stats: Stats | null }> = ({ sa
   <div className="space-y-5">
     <div className="rounded-xl border border-stone-200 bg-white p-5">
       <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Sales Summary</h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <SummaryCell label="Today's Sales"      value={fmt(stats?.sales_today ?? 0)}      color="amber" />
         <SummaryCell label="This Month's Sales" value={fmt(stats?.sales_this_month ?? 0)} color="blue"  />
       </div>
@@ -477,7 +477,7 @@ const TransactionModal: React.FC<{
           required
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <TextInput
             id={`${formId}-amount`}
             type="number"
@@ -503,7 +503,7 @@ const TransactionModal: React.FC<{
           required
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <TextInput id={`${formId}-date`} type="date" labelText="Date" value={date} onChange={e => setDate(e.target.value)} />
           <TextInput id={`${formId}-ref`} labelText="Reference" value={reference} onChange={e => setReference(e.target.value)} placeholder="Optional" />
         </div>

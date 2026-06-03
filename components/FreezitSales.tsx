@@ -134,7 +134,7 @@ export const FreezitSales: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="Today's Revenue"  value={fmt(stats?.today_revenue ?? 0)}  Icon={TrendingUp} />
         <KpiCard label="Month Revenue"    value={fmt(stats?.month_revenue ?? 0)}  Icon={BarChart2} />
         <KpiCard label="Gross Profit"     value={fmt(stats?.gross_profit ?? 0)}   Icon={TrendingUp} danger={(stats?.gross_profit ?? 0) < 0} />
@@ -202,7 +202,7 @@ const OverviewTab: React.FC<{ stats: Stats | null; breakages: FreezitBreakage[] 
   <div className="space-y-5">
     <div className="rounded-xl border border-stone-200 bg-white p-5">
       <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">This Month</h3>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SummaryCell label="Revenue"       value={formatCurrency(stats?.month_revenue ?? 0, 'USD')} />
         <SummaryCell label="Gross Profit"  value={formatCurrency(stats?.gross_profit ?? 0, 'USD')}  accent={(stats?.gross_profit ?? 0) >= 0 ? 'green' : 'red'} />
         <SummaryCell label="Breakage Loss" value={formatCurrency(stats?.breakage_loss ?? 0, 'USD')} accent="red" />
@@ -360,11 +360,11 @@ const RecordSaleModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; onClos
           <SelectItem value="" text="Select item" />
           {stock.map(s => <SelectItem key={s.id} value={s.id} text={`${s.product_name} (${Math.round(Number(s.available_qty))} available)`} />)}
         </Select>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <TextInput id="fzs-qty" type="number" min="1" labelText="Quantity *" value={qty} onChange={e => setQty(e.target.value)} required />
           <TextInput id="fzs-price" type="number" step="0.01" min="0" labelText="Unit Price *" value={price} onChange={e => setPrice(e.target.value)} required />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Select id="fzs-method" labelText="Payment Method" value={method} onChange={e => setMethod(e.target.value)}>
             {PAYMENT_METHODS.map(m => <SelectItem key={m} value={m} text={m} />)}
           </Select>
@@ -411,11 +411,11 @@ const AddStockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: (
     >
       <form id="fz-stock-form" onSubmit={handleSubmit} className="space-y-3">
         <TextInput id="fzst-name" labelText="Product Name *" value={name} onChange={e => setName(e.target.value)} required />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <TextInput id="fzst-cost" type="number" step="0.01" min="0" labelText="Unit Cost" value={cost} onChange={e => setCost(e.target.value)} />
           <TextInput id="fzst-price" type="number" step="0.01" min="0" labelText="Selling Price *" value={price} onChange={e => setPrice(e.target.value)} required />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <TextInput id="fzst-qty" type="number" min="0" labelText="Opening Qty" value={openingQty} onChange={e => setOpeningQty(e.target.value)} />
           <TextInput id="fzst-date" type="date" labelText="Batch Date" value={batchDate} onChange={e => setBatchDate(e.target.value)} />
         </div>
@@ -458,11 +458,11 @@ const RestockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: ()
       footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" form="fz-restock-form" isLoading={loading}>Save Restock</Button></div>}
     >
       <form id="fz-restock-form" onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <TextInput id="fzr-qty" type="number" min="1" labelText="Qty Received *" value={qty} onChange={e => setQty(e.target.value)} required />
           <TextInput id="fzr-cost" type="number" step="0.01" min="0" labelText="Unit Cost" value={cost} onChange={e => setCost(e.target.value)} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <TextInput id="fzr-supplier" labelText="Supplier" value={supplier} onChange={e => setSupplier(e.target.value)} />
           <TextInput id="fzr-date" type="date" labelText="Date" value={date} onChange={e => setDate(e.target.value)} />
         </div>
@@ -513,7 +513,7 @@ const RecordBreakageModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; on
           <SelectItem value="" text="Select item" />
           {stock.map(s => <SelectItem key={s.id} value={s.id} text={`${s.product_name} (${Math.round(Number(s.available_qty))} available)`} />)}
         </Select>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <TextInput id="fzb-qty" type="number" min="1" labelText="Quantity *" value={qty} onChange={e => setQty(e.target.value)} required />
           <TextInput id="fzb-date" type="date" labelText="Date" value={date} onChange={e => setDate(e.target.value)} />
         </div>

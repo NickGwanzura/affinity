@@ -180,10 +180,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
       }
     >
-      <Stack gap={7}>
+      <Stack gap={3}>
         {/* ── Client ──────────────────────────────────────────────── */}
         <section>
-          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Client
           </h3>
           <Select
@@ -209,7 +209,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* ── Client Balance ──────────────────────────────────────── */}
         {clientBalance && formData.client_name && (
-          <div className="bg-white border border-stone-200 p-5">
+          <div className="rounded-lg bg-white border border-stone-200 p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold uppercase tracking-[0.05em] text-zinc-600">
                 Client Balance Summary
@@ -218,7 +218,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 Opening + Invoiced - Paid
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
               <div>
                 <div className="text-xs text-zinc-600">Opening</div>
                 <div className="font-bold">{formatMoney(clientBalance.openingBalance, clientBalance.currency)}</div>
@@ -266,7 +266,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* ── Payment Details ─────────────────────────────────────── */}
         <section>
-          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Payment Details
           </h3>
 
@@ -324,7 +324,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* ── Allocation Summary ──────────────────────────────────── */}
         {paymentAmount > 0 && (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <SummaryCell label="Payment Total" value={formatMoney(paymentAmount, formData.currency)} emphasis />
             <SummaryCell label="Allocated" value={formatMoney(totalAllocated, formData.currency)} />
             <SummaryCell
@@ -360,7 +360,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {formData.client_name && (
           <section>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Allocations{' '}
                 <span className="font-normal normal-case tracking-normal text-zinc-400">
                   (Optional)
@@ -381,7 +381,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               Split this payment across open invoices.
             </p>
 
-            <Stack gap={4}>
+            <Stack gap={3}>
               {allocations.map((allocation, index) => {
                 const selectedInvoice = allocationCandidates.find(
                   c => c.invoice.id === allocation.invoice_id,
@@ -393,7 +393,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 return (
                   <div
                     key={`${allocation.invoice_id || 'new'}-${index}`}
-                    className="p-5 bg-white border-l-[3px] border-stone-300"
+                    className="p-3 rounded-lg bg-white border border-stone-200"
                   >
                     <Grid>
                       <Column sm={4} md={5} lg={8}>
@@ -449,7 +449,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </Stack>
 
             {/* Allocated Total */}
-            <div className="mt-4 py-4 px-5 bg-zinc-900 flex justify-between items-center">
+            <div className="mt-3 rounded-lg py-3 px-4 bg-zinc-900 flex justify-between items-center">
               <span className="font-semibold text-sm text-zinc-400">
                 Allocated Total
               </span>
@@ -460,7 +460,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
             {/* No invoices available notice */}
             {allocationCandidates.length === 0 && (
-              <div className="mt-3 p-5 bg-white border border-stone-300">
+              <div className="mt-3 p-3 rounded-lg bg-white border border-stone-200">
                 <p className="text-sm text-zinc-600">
                   No pending invoices found for this client in {formData.currency}.
                 </p>

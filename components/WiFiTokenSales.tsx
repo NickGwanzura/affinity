@@ -86,7 +86,7 @@ export const WiFiTokenSales: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="Today"      value={fmt(stats?.today ?? 0)}      Icon={Wifi} />
         <KpiCard label="This Week"  value={fmt(stats?.this_week ?? 0)}  Icon={TrendingUp} />
         <KpiCard label="This Month" value={fmt(stats?.this_month ?? 0)} Icon={DollarSign} />
@@ -182,7 +182,7 @@ const AnalyticsTab: React.FC<{ stats: Stats | null; sales: WiFiSale[] }> = ({ st
     <div className="space-y-5">
       <div className="rounded-xl border border-stone-200 bg-white p-5">
         <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">This Month Summary</h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatCell label="Total Revenue"  value={fmt(stats?.this_month ?? 0)} />
           <StatCell label="Monthly Cost"   value={fmt(stats?.monthly_cost ?? 110)} note="Internet Package ($110/mo)" />
           <StatCell label="Net Profit"     value={fmt(stats?.net_profit ?? 0)} accent={(stats?.net_profit ?? 0) >= 0 ? 'green' : 'red'} />
@@ -282,13 +282,13 @@ const RecordWiFiSaleModal: React.FC<{ isOpen: boolean; onClose: () => void; onSa
       footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" form="wifi-sale-form" isLoading={loading}>Record Sale</Button></div>}
     >
       <form id="wifi-sale-form" onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Select id="ws-pkg" labelText="Package Type" value={packageType} onChange={e => setPackageType(e.target.value)}>
             {PACKAGE_TYPES.map(p => <SelectItem key={p} value={p} text={p} />)}
           </Select>
           <TextInput id="ws-tokens" type="number" min="1" labelText="Tokens Sold *" value={tokens} onChange={e => setTokens(e.target.value)} required />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <TextInput id="ws-price" type="number" step="0.01" min="0.01" labelText="Price per Token *" value={price} onChange={e => setPrice(e.target.value)} required />
           <Select id="ws-method" labelText="Payment Method" value={method} onChange={e => setMethod(e.target.value)}>
             {PAYMENT_METHODS.map(m => <SelectItem key={m} value={m} text={m} />)}
