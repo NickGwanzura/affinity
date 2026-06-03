@@ -76,7 +76,6 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   if (customColors) {
     return (
       <span
-        className={`inline-flex items-center font-medium ${sizeClasses[size]} ${className}`}
         className={`inline-flex cursor-default items-center font-medium ${sizeClasses[size]} ${className}`}
         style={{ backgroundColor: customColors.bg, color: customColors.text }}
       >

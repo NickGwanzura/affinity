@@ -24,25 +24,25 @@ export const ClientListSidebar: React.FC<ClientListSidebarProps> = ({
 }) => {
   return (
     <div className={`w-full lg:w-80 flex-shrink-0 ${hidden ? 'hidden lg:block' : ''}`}>
-      <div className="bg-white border border-gray-200">
-        <div className="p-3 border-b border-gray-200">
+      <div className="bg-white border border-zinc-200">
+        <div className="p-3 border-b border-zinc-200">
           <div className="relative">
             <Search
               size={14}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none"
             />
             <input
               type="search"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search clients..."
-              className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 bg-white"
+              className="w-full pl-8 pr-3 py-2 text-sm border border-zinc-300 bg-white"
             />
           </div>
         </div>
         <div className="overflow-y-auto max-h-none lg:max-h-[calc(100vh-260px)]">
           {clients.length === 0 ? (
-            <p className="text-center py-12 text-gray-500 text-sm">No clients found</p>
+            <p className="text-center py-12 text-zinc-500 text-sm">No clients found</p>
           ) : (
             clients.map((client) => {
               const stats = getStats(client.name);
@@ -52,21 +52,21 @@ export const ClientListSidebar: React.FC<ClientListSidebarProps> = ({
                   key={client.id}
                   type="button"
                   onClick={() => onSelect(client)}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-colors hover:bg-gray-50 ${
+                  className={`w-full text-left px-4 py-3 border-b border-zinc-100 transition-colors hover:bg-zinc-50 ${
                     isActive ? 'bg-amber-50 border-l-4 border-l-amber-600' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{client.name}</p>
+                      <p className="font-semibold text-zinc-900 text-sm truncate">{client.name}</p>
                       {client.company ? (
-                        <p className="text-xs text-gray-500 mt-0.5 truncate">{client.company}</p>
+                        <p className="text-xs text-zinc-500 mt-0.5 truncate">{client.company}</p>
                       ) : client.email ? (
-                        <p className="text-xs text-gray-500 mt-0.5 truncate">{client.email}</p>
+                        <p className="text-xs text-zinc-500 mt-0.5 truncate">{client.email}</p>
                       ) : null}
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs font-semibold text-gray-700">{stats.invoiceCount} inv</p>
+                      <p className="text-xs font-semibold text-zinc-700">{stats.invoiceCount} inv</p>
                       <SidebarBalance usd={stats.usdBalance} gbp={stats.gbpBalance} />
                     </div>
                   </div>

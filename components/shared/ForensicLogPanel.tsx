@@ -45,19 +45,19 @@ export const ForensicLogPanel: React.FC<ForensicLogPanelProps> = ({ logs, loadin
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className=" border border-blue-200 bg-blue-50 p-4">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Entries Loaded</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Entries Loaded</p>
           <p className="mt-3 text-3xl font-black text-blue-950">{logs.length}</p>
           <p className="mt-2 text-sm text-blue-800">Latest audit trail pulled from the API.</p>
         </div>
         <div className=" border border-emerald-200 bg-emerald-50 p-4">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-600">Auth Events</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">Auth Events</p>
           <p className="mt-3 text-3xl font-black text-emerald-950">
             {logs.filter((log) => log.action.startsWith('auth.')).length}
           </p>
           <p className="mt-2 text-sm text-emerald-800">Logins, password resets, and password changes.</p>
         </div>
         <div className=" border border-amber-200 bg-amber-50 p-4">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600">Mutation Events</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-amber-600">Mutation Events</p>
           <p className="mt-3 text-3xl font-black text-amber-950">
             {logs.filter((log) => !log.action.startsWith('auth.')).length}
           </p>
@@ -79,11 +79,11 @@ export const ForensicLogPanel: React.FC<ForensicLogPanelProps> = ({ logs, loadin
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-zinc-900 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white">
+                      <span className="rounded-full bg-zinc-900 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white">
                         {formatActionLabel(log.action)}
                       </span>
                       {log.table_name && (
-                        <span className="rounded-full bg-zinc-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
+                        <span className="rounded-full bg-zinc-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-zinc-600">
                           {log.table_name}
                         </span>
                       )}
@@ -101,13 +101,13 @@ export const ForensicLogPanel: React.FC<ForensicLogPanelProps> = ({ logs, loadin
 
                   <div className="grid gap-3 lg:w-[420px] lg:grid-cols-2">
                     <div className=" bg-zinc-50 p-3">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">Before</p>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Before</p>
                       <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-zinc-700">
                         {formatDataPreview(log.old_data)}
                       </pre>
                     </div>
                     <div className=" bg-zinc-50 p-3">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">After</p>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">After</p>
                       <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-zinc-700">
                         {formatDataPreview(log.new_data)}
                       </pre>

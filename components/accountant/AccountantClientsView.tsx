@@ -19,13 +19,13 @@ export const AccountantClientsView: React.FC<AccountantClientsViewProps> = ({
       <table className="w-full text-sm">
         <thead className="bg-zinc-50 border-b border-zinc-200">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-wider">Client</th>
-            <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-wider">Contact</th>
-            <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-wider">Company</th>
-            <th className="px-4 py-3 text-center text-xs font-bold text-zinc-500 uppercase tracking-wider">Invoices</th>
-            <th className="px-4 py-3 text-right text-xs font-bold text-zinc-500 uppercase tracking-wider">Total Revenue</th>
-            <th className="px-4 py-3 text-center text-xs font-bold text-zinc-500 uppercase tracking-wider">Source</th>
-            <th className="px-4 py-3 text-right text-xs font-bold text-zinc-500 uppercase tracking-wider">Actions</th>
+            <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-[0.08em]">Client</th>
+            <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-[0.08em]">Contact</th>
+            <th className="px-4 py-3 text-left text-xs font-bold text-zinc-500 uppercase tracking-[0.08em]">Company</th>
+            <th className="px-4 py-3 text-center text-xs font-bold text-zinc-500 uppercase tracking-[0.08em]">Invoices</th>
+            <th className="px-4 py-3 text-right text-xs font-bold text-zinc-500 uppercase tracking-[0.08em]">Total Revenue</th>
+            <th className="px-4 py-3 text-center text-xs font-bold text-zinc-500 uppercase tracking-[0.08em]">Source</th>
+            <th className="px-4 py-3 text-right text-xs font-bold text-zinc-500 uppercase tracking-[0.08em]">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">

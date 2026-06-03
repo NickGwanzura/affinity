@@ -51,7 +51,7 @@ export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
         <div>
           <span className="font-mono text-xs">{row.reference_id}</span>
           {getPaymentAllocationSummary(row) && (
-            <p className="text-xs text-gray-500 mt-0.5">{getPaymentAllocationSummary(row)}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">{getPaymentAllocationSummary(row)}</p>
           )}
         </div>
       ),
@@ -99,7 +99,7 @@ export const PaymentsSection: React.FC<PaymentsSectionProps> = ({
       {onRecordPayment && (
         <div
           className="px-4 py-3 border-b flex justify-end"
-          style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
+          style={{ borderColor: '#d6d3d1' }}
         >
           <Button renderIcon={Plus} onClick={onRecordPayment}>
             Record Payment

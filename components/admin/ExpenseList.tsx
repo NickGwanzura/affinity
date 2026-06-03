@@ -139,7 +139,7 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
     <tr className="hover:bg-zinc-50 transition-colors group">
       {/* Date Column */}
       <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{formattedDate}</span>
+        <span className="text-sm text-zinc-600">{formattedDate}</span>
       </td>
 
       {/* Category Column */}
@@ -158,9 +158,9 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
       {showVehicleColumn && (
         <td className="px-6 py-4">
           {vehicleName ? (
-            <span className="text-sm font-medium" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{vehicleName}</span>
+            <span className="text-sm font-medium text-zinc-900">{vehicleName}</span>
           ) : (
-            <span className="text-sm italic" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>General</span>
+            <span className="text-sm italic text-zinc-600">General</span>
           )}
         </td>
       )}
@@ -169,9 +169,9 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
       {showDriverColumn && (
         <td className="px-6 py-4">
           {expense.driver_name ? (
-            <span className="text-sm font-medium" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{expense.driver_name}</span>
+            <span className="text-sm font-medium text-zinc-900">{expense.driver_name}</span>
           ) : (
-            <span className="text-sm italic" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>—</span>
+            <span className="text-sm italic text-zinc-600">—</span>
           )}
         </td>
       )}
@@ -186,7 +186,7 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
       {/* Description Column */}
       <td className="px-6 py-4">
         <div className="flex flex-col">
-          <span className="text-sm line-clamp-1" style={{ color: 'var(--cds-text-primary, #18181b)' }} title={expense.description}>
+          <span className="text-sm line-clamp-1 text-zinc-900" title={expense.description}>
             {expense.description}
           </span>
           {isDriverDisbursement && expense.driver_name && (
@@ -200,9 +200,9 @@ const ExpenseRow: React.FC<ExpenseRowProps> = memo(({
       {/* Amount Column */}
       <td className="px-6 py-4 text-right tabular-nums">
         <div className="flex flex-col items-end">
-          <span className="text-sm font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{formattedAmount}</span>
+          <span className="text-sm font-bold text-zinc-900">{formattedAmount}</span>
           {expense.currency !== CURRENCIES.USD && (
-            <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+            <span className="text-xs text-zinc-600">
               ${usdAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD
             </span>
           )}
@@ -288,18 +288,18 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
   }
 
   return (
-    <div className="overflow-hidden" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+    <div className="overflow-hidden" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
       {/* Header */}
       <div className="px-6 py-5 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/30">
         <div>
-          <h3 className="text-lg font-black tracking-tight" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{title}</h3>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+          <h3 className="text-lg font-black tracking-tight text-zinc-900">{title}</h3>
+          <p className="text-sm mt-0.5 text-zinc-600">
             {totals.count} transaction{totals.count !== 1 ? 's' : ''}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Total (USD)</p>
-          <p className="text-xl font-black tabular-nums" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+          <p className="text-xs font-bold uppercase tracking-widest text-zinc-600">Total (USD)</p>
+          <p className="text-xl font-black tabular-nums text-zinc-900">
             ${totals.usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </p>
         </div>
@@ -317,14 +317,14 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Date
               </th>
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Category
               </th>
@@ -332,7 +332,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
                 <th
                   scope="col"
                   className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                 >
                   Vehicle
                 </th>
@@ -341,7 +341,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
                 <th
                   scope="col"
                   className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                 >
                   Driver
                 </th>
@@ -349,21 +349,21 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Location
               </th>
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Description
               </th>
               <th
                 scope="col"
                 className="px-6 py-4 font-black uppercase tracking-widest text-xs text-right"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Amount
               </th>
@@ -371,7 +371,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = memo(({
                 <th
                   scope="col"
                   className="px-6 py-4 font-black uppercase tracking-widest text-xs text-right"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                 >
                   Actions
                 </th>

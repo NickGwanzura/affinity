@@ -5,6 +5,7 @@ import {
   AuthenticatedRequest,
   verifyToken,
   requireAccessRole,
+  requireBusinessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
@@ -157,6 +158,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
+  if (!requireBusinessRole(authReq, res, ['Admin', 'Manager', 'Accountant'])) return;
 
   try {
     switch (req.method) {
@@ -201,7 +203,7 @@ async function listInvoices(req: AuthenticatedRequest, res: ApiResponse) {
     const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
     const [countResult, rows] = await Promise.all([
-      sql`SELECT COUNT(*) as total FROM invoices`,
+      sql`SELECT COUNT(*) as total FROM invoices WHERE deleted_at IS NULL`,
       sql`
         SELECT i.*,
           COALESCE(
@@ -209,6 +211,7 @@ async function listInvoices(req: AuthenticatedRequest, res: ApiResponse) {
             '[]'::jsonb
           ) as items
         FROM invoices i
+        WHERE i.deleted_at IS NULL
         ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
         LIMIT ${limit} OFFSET ${offset}
       `,
@@ -238,7 +241,7 @@ async function getInvoice(req: AuthenticatedRequest, res: ApiResponse) {
         '[]'::jsonb
       ) as items
     FROM invoices i
-    WHERE i.id = ${id}::uuid
+    WHERE i.id = ${id}::uuid AND i.deleted_at IS NULL
   `;
 
   if (rows.length === 0) {
@@ -506,7 +509,7 @@ async function deleteInvoice(req: AuthenticatedRequest, res: ApiResponse) {
 
   await withTransaction(async client => {
     await client.query('DELETE FROM invoice_items WHERE invoice_id = $1::uuid', [id]);
-    const result = await client.query('DELETE FROM invoices WHERE id = $1::uuid RETURNING id', [
+    const result = await client.query('UPDATE invoices SET deleted_at = NOW() WHERE id = $1::uuid RETURNING id', [
       id,
     ]);
     if (result.rows.length === 0) {

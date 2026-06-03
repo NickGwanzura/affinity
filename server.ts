@@ -54,6 +54,12 @@ const { default: aiHandler } = await import('./api/ai.js');
 const { default: auditLogsHandler } = await import('./api/audit-logs.js');
 const { default: emailsHandler } = await import('./api/emails.js');
 
+const { default: carHireHandler } = await import('./api/car-hire.js');
+const { default: iceSalesHandler } = await import('./api/ice-sales.js');
+const { default: lodgersHandler } = await import('./api/lodgers.js');
+const { default: salesPlHandler } = await import('./api/sales-pl.js');
+const { default: ceoHandler } = await import('./api/ceo.js');
+
 // Admin routes
 const { default: adminApprovalsHandler } = await import('./api/admin/approvals.js');
 const { default: adminLogsHandler } = await import('./api/admin/logs.js');
@@ -89,6 +95,11 @@ app.all('/api/assets/{*splat}', mount(assetsHandler));
 app.all('/api/ai', mount(aiHandler));
 app.all('/api/audit-logs', mount(auditLogsHandler));
 app.all('/api/emails', mount(emailsHandler));
+app.all('/api/car-hire', mount(carHireHandler));
+app.all('/api/ice-sales', mount(iceSalesHandler));
+app.all('/api/lodgers', mount(lodgersHandler));
+app.all('/api/sales-pl', mount(salesPlHandler));
+app.all('/api/ceo', mount(ceoHandler));
 
 app.all('/api/admin/approvals', mount(adminApprovalsHandler));
 app.all('/api/admin/logs', mount(adminLogsHandler));

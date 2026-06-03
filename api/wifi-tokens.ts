@@ -19,11 +19,13 @@ import { sql } from './_db.js';
 import {
   AuthenticatedRequest,
   verifyToken,
+  requireBusinessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
   apiError,
 } from './_middleware.js';
+import { logAuditEvent } from './_audit.js';
 import { z } from 'zod';
 
 const INTERNET_PACKAGE_FEE = 110;
@@ -56,6 +58,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
+  if (!requireBusinessRole(authReq, res, ['Sales', 'Director'])) return;
 
   const { method, query } = req;
   const resource = typeof query.resource === 'string' ? query.resource : 'stats';
@@ -70,7 +73,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     }
   } catch (err) {
     console.error('[wifi-tokens]', err);
-    return apiError(res, err);
+    return apiError(res, 500, 'Internal server error', err);
   }
 }
 
@@ -113,12 +116,31 @@ async function handleSales(
       VALUES (${saleDate}, ${d.tokens_sold}, ${d.package_type}, ${d.selling_price}, ${total}, ${d.payment_method}, ${d.notes ?? null})
       RETURNING *
     `;
+    await logAuditEvent({
+      req,
+      userId: req.user?.id || null,
+      action: 'wifi.sale.created',
+      tableName: 'wifi_token_sales',
+      recordId: sale.id,
+      newData: sale,
+    });
     return json(res, 201, sale);
   }
 
   if (method === 'DELETE') {
     if (!id) return json(res, 400, { error: 'id required' });
+    const [oldSale] = await sql`SELECT * FROM wifi_token_sales WHERE id = ${id}`;
     await sql`DELETE FROM wifi_token_sales WHERE id = ${id}`;
+    if (oldSale) {
+      await logAuditEvent({
+        req,
+        userId: req.user?.id || null,
+        action: 'wifi.sale.deleted',
+        tableName: 'wifi_token_sales',
+        recordId: id,
+        oldData: oldSale,
+      });
+    }
     return json(res, 200, { success: true });
   }
 

@@ -38,7 +38,7 @@ export const FinancialsTabBar: React.FC<FinancialsTabBarProps> = ({
   return (
     <div
       className="border-b"
-      style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
+      style={{ borderColor: '#d6d3d1' }}
     >
       <div className="flex overflow-x-auto">
         {TABS.map(tab => {
@@ -52,7 +52,7 @@ export const FinancialsTabBar: React.FC<FinancialsTabBarProps> = ({
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                 isActive
                   ? 'border-[#D97706] text-[#D97706]'
-                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                  : 'border-transparent text-zinc-600 hover:text-zinc-900 hover:border-zinc-300'
               }`}
             >
               <Icon size={16} />

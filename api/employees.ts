@@ -45,6 +45,7 @@ async function listEmployees(res: ApiResponse) {
   const rows = await sql`
     SELECT *
     FROM employees
+    WHERE deleted_at IS NULL
     ORDER BY created_at DESC
   `;
   return res.status(200).json(rows);
@@ -158,7 +159,7 @@ async function deleteEmployee(req: AuthenticatedRequest, res: ApiResponse) {
   const existing = await sql`SELECT * FROM employees WHERE id = ${id}::uuid`;
   if (existing.length === 0) return apiError(res, 404, 'Employee not found');
 
-  await sql`DELETE FROM employees WHERE id = ${id}::uuid`;
+  await sql`UPDATE employees SET deleted_at = NOW() WHERE id = ${id}::uuid`;
 
   await logAuditEvent({
     req,

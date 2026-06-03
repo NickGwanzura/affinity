@@ -190,7 +190,7 @@ export function DataTableWrapper<T extends { id: string }>({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
+        <table className="w-full text-left table-card-mobile">
           <thead>
             <tr className="bg-stone-50/80 border-b border-stone-200">
               {batchActions && (
@@ -215,7 +215,7 @@ export function DataTableWrapper<T extends { id: string }>({
                         ? sortDir === 'asc' ? 'ascending' : 'descending'
                         : undefined
                     }
-                    className={`${cellPadding} font-semibold text-[11px] uppercase tracking-[0.06em] text-zinc-600 transition-colors ${
+                    className={`${cellPadding} font-semibold text-[11px] uppercase tracking-[0.08em] text-zinc-600 transition-colors ${
                       isSortable ? 'cursor-pointer select-none hover:bg-stone-100/70 hover:text-zinc-900' : ''
                     }`}
                     style={{ width: col.width }}
@@ -239,7 +239,7 @@ export function DataTableWrapper<T extends { id: string }>({
               {(onEdit || onDelete) && (
                 <th
                   scope="col"
-                  className={`${cellPadding} font-semibold text-[11px] uppercase tracking-[0.06em] text-zinc-600 text-right`}
+                  className={`${cellPadding} font-semibold text-[11px] uppercase tracking-[0.08em] text-zinc-600 text-right`}
                 >
                   Actions
                 </th>
@@ -297,7 +297,7 @@ export function DataTableWrapper<T extends { id: string }>({
                       </td>
                     )}
                     {columns.map((col) => (
-                      <td key={col.key} className={`${cellPadding} text-zinc-800`}>
+                      <td key={col.key} className={`${cellPadding} text-zinc-800`} data-label={col.header}>
                         {col.render?.(row) ?? row[col.key]}
                       </td>
                     ))}

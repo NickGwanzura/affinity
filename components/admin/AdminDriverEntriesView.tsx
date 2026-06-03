@@ -47,18 +47,18 @@ export const AdminDriverEntriesView: React.FC<AdminDriverEntriesViewProps> = ({
       <div
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4"
         style={{
-          background: 'var(--cds-background, #ffffff)',
-          border: '1px solid var(--cds-border-subtle, #e7e5e4)',
+          background: '#ffffff',
+          border: '1px solid #e7e5e4',
         }}
       >
         <div>
           <h3
             className="text-sm font-black uppercase tracking-widest"
-            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+            style={{ color: '#52525b' }}
           >
             Filter by Driver
           </h3>
-          <p className="text-xs mt-1" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+          <p className="text-xs mt-1 text-zinc-600">
             Showing entries submitted by drivers and disbursements made to them.
           </p>
         </div>
@@ -67,9 +67,9 @@ export const AdminDriverEntriesView: React.FC<AdminDriverEntriesViewProps> = ({
           onChange={e => setSelectedDriver(e.target.value)}
           className="min-w-[14rem] px-3 py-2 text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
           style={{
-            background: 'var(--cds-background, #ffffff)',
-            borderColor: 'var(--cds-border-subtle, #e7e5e4)',
-            color: 'var(--cds-text-primary, #18181b)',
+            background: '#ffffff',
+            borderColor: '#e7e5e4',
+            color: '#18181b',
           }}
         >
           <option value={ALL}>All drivers ({driverEntries.length})</option>

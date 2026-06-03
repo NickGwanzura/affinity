@@ -383,7 +383,7 @@ export const VehiclesTab: React.FC = () => {
             </p>
           </div>
           <div className="text-right">
-            <p className="m-0 text-xs text-[#52525b] uppercase tracking-wider font-semibold">
+            <p className="m-0 text-xs text-[#52525b] uppercase tracking-[0.08em] font-semibold">
               Total Value
             </p>
             <p className="mt-1 text-xl font-semibold text-[#18181b] tabular-nums">
@@ -395,16 +395,16 @@ export const VehiclesTab: React.FC = () => {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-[#ffffff] border-b border-[#e7e5e4]">
-                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-wider">
+                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-[0.08em]">
                   Asset / VIN
                 </th>
-                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-wider">
+                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-[0.08em]">
                   Region
                 </th>
-                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-wider">
+                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-[0.08em]">
                   Purchase Cost
                 </th>
-                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-wider">
+                <th className="px-6 py-4 text-left font-semibold text-[#52525b] uppercase text-xs tracking-[0.08em]">
                   Landed Cost
                 </th>
               </tr>
@@ -425,7 +425,7 @@ export const VehiclesTab: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider"
+                      className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em]"
                       style={{
                         background:
                           s.status === 'UK'
@@ -455,7 +455,7 @@ export const VehiclesTab: React.FC = () => {
                             maximumFractionDigits: 0,
                           })}
                         </span>
-                        <span className="text-xs text-[#52525b] uppercase tracking-wider">
+                        <span className="text-xs text-[#52525b] uppercase tracking-[0.08em]">
                           Total Valuation
                         </span>
                       </div>

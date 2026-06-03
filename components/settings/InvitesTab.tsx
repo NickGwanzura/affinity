@@ -117,13 +117,13 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
         <div>
           <h2
             className="text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #18181b)' }}
+            style={{ color: '#18181b' }}
           >
             User Invitations
           </h2>
           <p
             className="font-medium"
-            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+            style={{ color: '#52525b' }}
           >
             Send email invitations to new team members
           </p>
@@ -145,69 +145,69 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
       <div
         className="overflow-hidden"
         style={{
-          background: 'var(--cds-layer-01, #ffffff)',
-          border: '1px solid var(--cds-border-subtle, #d6d3d1)',
+          background: '#ffffff',
+          border: '1px solid #d6d3d1',
         }}
       >
         <table className="w-full">
           <thead
             style={{
-              background: 'var(--cds-layer-02, #ffffff)',
-              borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)',
+              background: '#ffffff',
+              borderBottom: '1px solid #d6d3d1',
             }}
           >
             <tr>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Name
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Email
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Role
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Status
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Expires
               </th>
               <th
                 className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Invited By
               </th>
               <th
                 className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #d6d3d1)' }}>
+          <tbody style={{ borderTop: '1px solid #d6d3d1' }}>
             {invites.length === 0 ? (
               <tr>
                 <td
                   colSpan={7}
                   className="px-6 py-12 text-center font-medium"
-                  style={{ color: 'var(--cds-text-disabled, #a8a29e)' }}
+                  style={{ color: '#a8a29e' }}
                 >
                   No pending invitations. Click "Send Invitation" to invite team members.
                 </td>
@@ -216,17 +216,17 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
               invites.map(invite => (
                 <tr
                   key={invite.id}
-                  style={{ borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
+                  style={{ borderBottom: '1px solid #d6d3d1' }}
                 >
                   <td
                     className="px-6 py-4 font-semibold"
-                    style={{ color: 'var(--cds-text-primary, #18181b)' }}
+                    style={{ color: '#18181b' }}
                   >
                     {invite.name}
                   </td>
                   <td
                     className="px-6 py-4 font-mono text-sm"
-                    style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                    style={{ color: '#52525b' }}
                   >
                     {invite.email}
                   </td>
@@ -262,13 +262,13 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
                   </td>
                   <td
                     className="px-6 py-4 text-sm"
-                    style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                    style={{ color: '#52525b' }}
                   >
                     {new Date(invite.expiresAt).toLocaleDateString()}
                   </td>
                   <td
                     className="px-6 py-4 text-sm"
-                    style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                    style={{ color: '#52525b' }}
                   >
                     {invite.invitedBy}
                   </td>
@@ -326,43 +326,61 @@ export const InvitesTab: React.FC<InvitesTabProps> = ({ inviterEmail, onPendingC
           </div>
         }
       >
-        <form id="invite-form" onSubmit={handleSendInvite} className="flex flex-col gap-5">
-          <TextInput
-            id="invite-name"
-            labelText="Full Name"
-            placeholder="John Doe"
-            autoFocus
-            value={inviteForm.name}
-            onChange={e => setInviteForm({ ...inviteForm, name: e.target.value })}
-          />
-          <TextInput
-            id="invite-email"
-            type="email"
-            labelText="Email Address"
-            placeholder="john@company.com"
-            autoComplete="email"
-            value={inviteForm.email}
-            onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })}
-          />
-          <Select
-            id="invite-role"
-            labelText="Role"
-            value={inviteForm.role}
-            onChange={e => setInviteForm({ ...inviteForm, role: e.target.value as UserRole })}
-          >
-            <SelectItem value="Driver" text="Driver" />
-            <SelectItem value="Manager" text="Manager" />
-            <SelectItem value="Accountant" text="Accountant" />
-            <SelectItem value="Sales" text="Sales" />
-            <SelectItem value="Director" text="Director" />
-            <SelectItem value="Admin" text="Admin" />
-          </Select>
-          <InlineNotification
-            kind="info"
-            title="Note:"
-            subtitle="An invitation will be created with a secure signup link that expires in 7 days."
-            hideCloseButton
-          />
+        <form id="invite-form" onSubmit={handleSendInvite} className="flex flex-col gap-4">
+          {/* Personal Info */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Personal Info</h3>
+              <div className="space-y-3">
+              <TextInput
+                id="invite-name"
+                labelText="Full Name"
+                placeholder="John Doe"
+                autoFocus
+                value={inviteForm.name}
+                onChange={e => setInviteForm({ ...inviteForm, name: e.target.value })}
+              />
+              <TextInput
+                id="invite-email"
+                type="email"
+                labelText="Email Address"
+                placeholder="john@company.com"
+                autoComplete="email"
+                value={inviteForm.email}
+                onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })}
+              />
+            </div>
+          </div>
+        </section>
+
+          {/* Role & Access */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Role & Access</h3>
+              <div className="space-y-3">
+              <Select
+                id="invite-role"
+                labelText="Role"
+                value={inviteForm.role}
+                onChange={e => setInviteForm({ ...inviteForm, role: e.target.value as UserRole })}
+              >
+                <SelectItem value="Driver" text="Driver" />
+                <SelectItem value="Manager" text="Manager" />
+                <SelectItem value="Accountant" text="Accountant" />
+                <SelectItem value="Sales" text="Sales" />
+                <SelectItem value="Director" text="Director" />
+                <SelectItem value="Car Hire" text="Car Hire" />
+                <SelectItem value="Admin" text="Admin" />
+              </Select>
+              <InlineNotification
+                kind="info"
+                title="Note:"
+                subtitle="An invitation will be created with a secure signup link that expires in 7 days."
+                hideCloseButton
+              />
+            </div>
+          </div>
+        </section>
         </form>
       </Modal>
     </div>

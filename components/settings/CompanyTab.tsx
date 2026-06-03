@@ -115,12 +115,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({ company, setCompany }) =
           onChange={e => setCompany({ ...company, logo_url: e.target.value })}
         />
         {company.logo_url && (
-          <Tile style={{ padding: '1rem', background: 'var(--cds-layer-02, #ffffff)' }}>
+          <Tile style={{ padding: '1rem', background: '#ffffff' }}>
             <p
               style={{
                 fontSize: '0.75rem',
                 fontWeight: 600,
-                color: 'var(--cds-text-secondary, #52525b)',
+                color: '#52525b',
                 marginBottom: '0.75rem',
               }}
             >

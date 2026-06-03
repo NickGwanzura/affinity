@@ -6,6 +6,7 @@ import {
   apiError,
   handleCors,
   requireAccessRole,
+  requireBusinessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
@@ -153,7 +154,7 @@ async function replaceAllocationsForPayment(
   allocations: Array<{ invoice_id?: string; amount_allocated: number; currency: 'USD' | 'GBP'; status?: string }>,
   clientName?: string,
 ) {
-  const totalAllocated = allocations.reduce((sum, allocation) => sum + allocation.amount_allocated, 0);
+  const totalAllocated = allocations.reduce((sum, allocation) => sum + (allocation.amount_allocated || 0), 0);
   
   // Allow small overpayment (store as credit)
   if (totalAllocated > paymentAmountUsd + 0.01) {
@@ -221,6 +222,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
+  if (!requireBusinessRole(authReq, res, ['Admin', 'Accountant'])) return;
 
   try {
     const action = typeof req.query.action === 'string' ? req.query.action : '';
@@ -256,6 +258,7 @@ async function listPayments(res: ApiResponse) {
     const rows = await sql`
       SELECT id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
       FROM public.payments
+      WHERE deleted_at IS NULL
       ORDER BY date DESC
     `;
     return res.status(200).json(await attachAllocations(rows as PaymentRow[]));
@@ -517,22 +520,22 @@ async function deletePayment(req: AuthenticatedRequest, res: ApiResponse) {
   if (!oldPayment) return apiError(res, 404, 'Payment not found');
 
   await withTransaction(async (client) => {
-    // Collect affected invoice IDs before deleting allocations
+    // Collect affected invoice IDs before removing allocations
     const affectedInvoices = await client.query(
       'SELECT DISTINCT invoice_id FROM public.payment_allocations WHERE payment_id = $1::uuid AND invoice_id IS NOT NULL',
       [paymentId]
     );
 
-    // Delete allocations first
+    // Remove allocations
     await client.query('DELETE FROM public.payment_allocations WHERE payment_id = $1::uuid', [paymentId]);
 
-    // Delete the payment
-    const deleteResult = await client.query(
-      'DELETE FROM public.payments WHERE id = $1::uuid RETURNING id',
+    // Soft-delete the payment
+    const updateResult = await client.query(
+      'UPDATE public.payments SET deleted_at = NOW() WHERE id = $1::uuid RETURNING id',
       [paymentId]
     );
 
-    if (deleteResult.rows.length === 0) {
+    if (updateResult.rows.length === 0) {
       throw new Error('Payment not found');
     }
 

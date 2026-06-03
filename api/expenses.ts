@@ -4,6 +4,7 @@ import {
   apiError,
   handleCors,
   requireAccessRole,
+  requireBusinessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
@@ -28,6 +29,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
+  if (!requireBusinessRole(authReq, res, ['Admin', 'Manager', 'Accountant', 'Driver'])) return;
 
   try {
     switch (req.method) {
@@ -74,7 +76,9 @@ async function listExpenses(req: ApiRequest, res: ApiResponse) {
       whereClauses.push(`vehicle_id = $${params.length}::uuid`);
     }
 
-    const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const whereClause = whereClauses.length > 0
+      ? `WHERE ${whereClauses.join(' AND ')} AND deleted_at IS NULL`
+      : 'WHERE deleted_at IS NULL';
     const countQuery = `SELECT COUNT(*) AS total FROM expenses ${whereClause}`;
     const dataQuery = `
       SELECT *
@@ -103,7 +107,7 @@ async function listExpenses(req: ApiRequest, res: ApiResponse) {
 }
 
 async function getExpense(req: ApiRequest, res: ApiResponse) {
-  const rows = await sql`SELECT * FROM expenses WHERE id = ${req.query.id}::uuid`;
+  const rows = await sql`SELECT * FROM expenses WHERE id = ${req.query.id}::uuid AND deleted_at IS NULL`;
   if (rows.length === 0) return apiError(res, 404, 'Expense not found');
   return res.status(200).json(rows[0]);
 }
@@ -243,6 +247,6 @@ async function deleteExpense(req: ApiRequest, res: ApiResponse) {
     recordId: existing[0].id,
     oldData: existing[0],
   });
-  await sql`DELETE FROM expenses WHERE id = ${req.query.id}::uuid`;
+  await sql`UPDATE expenses SET deleted_at = NOW() WHERE id = ${req.query.id}::uuid`;
   return res.status(204).end();
 }

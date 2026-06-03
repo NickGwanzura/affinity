@@ -31,11 +31,13 @@ import { sql } from './_db.js';
 import {
   AuthenticatedRequest,
   verifyToken,
+  requireBusinessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
   apiError,
 } from './_middleware.js';
+import { logAuditEvent } from './_audit.js';
 import { z } from 'zod';
 
 const json = (res: ApiResponse, status: number, body: unknown) =>
@@ -88,6 +90,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
+  if (!requireBusinessRole(authReq, res, ['Sales', 'Director'])) return;
 
   const { method, query } = req;
   const resource = typeof query.resource === 'string' ? query.resource : 'stats';
@@ -104,7 +107,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     }
   } catch (err) {
     console.error('[freezit]', err);
-    return apiError(res, err);
+    return apiError(res, 500, 'Internal server error', err);
   }
 }
 
@@ -204,12 +207,29 @@ async function handleSales(
       VALUES (${d.stock_id}, ${saleDate}, ${d.qty_sold}, ${d.unit_selling_price}, ${total}, ${d.payment_method}, ${d.notes ?? null})
       RETURNING *
     `;
+    await logAuditEvent({
+      req,
+      userId: req.user?.id || null,
+      action: 'freezit.sale.created',
+      tableName: 'freezit_sales',
+      recordId: sale.id,
+      newData: sale,
+    });
     return json(res, 201, sale);
-  }
-
-  if (method === 'DELETE') {
+  }    if (method === 'DELETE') {
     if (!id) return json(res, 400, { error: 'id required' });
+    const [oldSale] = await sql`SELECT * FROM freezit_sales WHERE id = ${id}`;
     await sql`DELETE FROM freezit_sales WHERE id = ${id}`;
+    if (oldSale) {
+      await logAuditEvent({
+        req,
+        userId: req.user?.id || null,
+        action: 'freezit.sale.deleted',
+        tableName: 'freezit_sales',
+        recordId: id,
+        oldData: oldSale,
+      });
+    }
     return json(res, 200, { success: true });
   }
 

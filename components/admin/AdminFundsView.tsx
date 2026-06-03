@@ -30,7 +30,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
           </div>
           <span className="text-emerald-100 text-sm font-semibold uppercase tracking-wide">Funds Received</span>
         </div>
-        <p className="text-2xl sm:text-3xl font-black">${fundsBalance.received.toLocaleString()}</p>
+        <p className="text-2xl sm:text-3xl font-black">${(Number(fundsBalance.received) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
       </div>
 
       <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6  text-white shadow-lg">
@@ -42,10 +42,10 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
           </div>
           <span className="text-orange-100 text-sm font-semibold uppercase tracking-wide">Total Disbursed</span>
         </div>
-        <p className="text-2xl sm:text-3xl font-black">${fundsBalance.disbursed.toLocaleString()}</p>
+        <p className="text-2xl sm:text-3xl font-black">${(Number(fundsBalance.disbursed) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
       </div>
 
-      <div className={`bg-gradient-to-br ${fundsBalance.balance >= 0 ? 'from-blue-500 to-blue-600' : 'from-red-500 to-red-600'} p-6  text-white shadow-lg`}>
+      <div className={`bg-gradient-to-br ${(Number(fundsBalance.balance) || 0) >= 0 ? 'from-blue-500 to-blue-600' : 'from-red-500 to-red-600'} p-6  text-white shadow-lg`}>
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 bg-white/20 flex items-center justify-center">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +54,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
           </div>
           <span className="text-blue-100 text-sm font-semibold uppercase tracking-wide">Current Balance</span>
         </div>
-        <p className="text-2xl sm:text-3xl font-black">${fundsBalance.balance.toLocaleString()}</p>
+        <p className="text-2xl sm:text-3xl font-black">${(Number(fundsBalance.balance) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
       </div>
     </div>
 
@@ -79,23 +79,23 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
       />
     </div>
 
-    <div className="overflow-hidden shadow-lg" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+    <div className="overflow-hidden shadow-lg" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
       <div className="p-6 border-b border-zinc-200">
-        <h3 className="text-xl font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>Transaction History</h3>
-        <p className="text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Track all operating funds received and disbursed</p>
+        <h3 className="text-xl font-bold text-zinc-900">Transaction History</h3>
+        <p className="text-sm text-zinc-600">Track all operating funds received and disbursed</p>
       </div>
       <div className="space-y-3 p-4 sm:hidden">
         {operatingFunds.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm" style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-layer-01, #ffffff)', color: 'var(--cds-text-secondary, #52525b)' }}>
+          <div className="px-4 py-8 text-center text-sm" style={{ border: '1px solid #e7e5e4', background: '#ffffff', color: '#52525b' }}>
             No transactions yet. Record a transaction to get started.
           </div>
         ) : (
           operatingFunds.map((fund) => (
-            <div key={fund.id} className="p-4" style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}>
+            <div key={fund.id} className="p-4" style={{ border: '1px solid #e7e5e4', background: '#ffffff' }}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{formatDate(fund.date)}</p>
-                  <p className="mt-1 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fund.description}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-600">{formatDate(fund.date)}</p>
+                  <p className="mt-1 font-semibold text-zinc-900">{fund.description}</p>
                 </div>
                 <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold  ${
                   fund.type === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
@@ -103,9 +103,9 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
                   {fund.type}
                 </span>
               </div>
-              <div className="mt-3 space-y-1 text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
-                <p><span className="font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>Recipient:</span> {fund.recipient || '-'}</p>
-                <p><span className="font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>Reference:</span> {fund.reference || '-'}</p>
+              <div className="mt-3 space-y-1 text-sm text-zinc-600">
+                <p><span className="font-semibold text-zinc-900">Recipient:</span> {fund.recipient || '-'}</p>
+                <p><span className="font-semibold text-zinc-900">Reference:</span> {fund.reference || '-'}</p>
                 <p className={`${fund.type === 'Received' ? 'text-emerald-600' : 'text-orange-600'} font-bold`}>
                   {fund.type === 'Received' ? '+' : '-'}${fund.amount.toLocaleString()}
                 </p>
@@ -114,7 +114,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
                 <button
                   onClick={() => onDeleteOperatingFund(fund.id)}
                   className="min-h-[44px] text-sm font-semibold hover:opacity-80"
-                  style={{ color: 'var(--cds-support-error, #dc2626)' }}
+                  style={{ color: '#dc2626' }}
                 >
                   Delete
                 </button>
@@ -128,19 +128,19 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
         <table className="w-full">
           <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Date</th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Type</th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Description</th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Recipient</th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Reference</th>
-              <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Amount</th>
-              <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Actions</th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.08em] text-zinc-600">Date</th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.08em] text-zinc-600">Type</th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.08em] text-zinc-600">Description</th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.08em] text-zinc-600">Recipient</th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.08em] text-zinc-600">Reference</th>
+              <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-[0.08em] text-zinc-600">Amount</th>
+              <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-[0.08em] text-zinc-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200">
             {operatingFunds.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                <td colSpan={7} className="px-6 py-12 text-center text-zinc-600">
                   <div className="flex flex-col items-center gap-3">
                     <svg className="w-12 h-12 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -152,7 +152,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
             ) : (
               operatingFunds.map((fund) => (
                 <tr key={fund.id} className="hover:bg-zinc-50">
-                  <td className="px-6 py-4 text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                  <td className="px-6 py-4 text-sm text-zinc-600">
                     {formatDate(fund.date)}
                   </td>
                   <td className="px-6 py-4">
@@ -171,9 +171,9 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
                       {fund.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fund.description}</td>
-                  <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{fund.recipient || '-'}</td>
-                  <td className="px-6 py-4 text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{fund.reference || '-'}</td>
+                  <td className="px-6 py-4 font-semibold text-zinc-900">{fund.description}</td>
+                  <td className="px-6 py-4 text-zinc-600">{fund.recipient || '-'}</td>
+                  <td className="px-6 py-4 text-sm text-zinc-600">{fund.reference || '-'}</td>
                   <td className={`px-6 py-4 text-right font-bold ${fund.type === 'Received' ? 'text-emerald-600' : 'text-orange-600'}`}>
                     {fund.type === 'Received' ? '+' : '-'}${fund.amount.toLocaleString()}
                   </td>
@@ -181,7 +181,7 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
                     <button
                       onClick={() => onDeleteOperatingFund(fund.id)}
                       className="font-semibold text-sm hover:opacity-80"
-                      style={{ color: 'var(--cds-support-error, #dc2626)' }}
+                      style={{ color: '#dc2626' }}
                     >
                       Delete
                     </button>

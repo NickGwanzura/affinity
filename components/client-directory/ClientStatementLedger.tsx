@@ -65,7 +65,7 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end sm:justify-between">
           <div className="flex gap-3 flex-wrap">
             <div className="flex flex-col gap-1">
-              <label htmlFor="ledger-date-from" className="text-xs font-medium text-gray-700">
+              <label htmlFor="ledger-date-from" className="text-xs font-medium text-zinc-700">
                 From
               </label>
               <input
@@ -73,11 +73,11 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
                 type="date"
                 value={dateFrom}
                 onChange={(e) => onDateFromChange(e.target.value)}
-                className="border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                className="border border-zinc-300 bg-white px-2 py-1.5 text-sm"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label htmlFor="ledger-date-to" className="text-xs font-medium text-gray-700">
+              <label htmlFor="ledger-date-to" className="text-xs font-medium text-zinc-700">
                 To
               </label>
               <input
@@ -85,7 +85,7 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
                 type="date"
                 value={dateTo}
                 onChange={(e) => onDateToChange(e.target.value)}
-                className="border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                className="border border-zinc-300 bg-white px-2 py-1.5 text-sm"
               />
             </div>
           </div>
@@ -99,22 +99,22 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
         </div>
       </Tile>
 
-      <div className="bg-white border border-gray-200 overflow-x-auto">
+      <div className="bg-white border border-zinc-200 overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Date</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Type</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Reference</th>
-              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Debit</th>
-              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Credit</th>
-              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Balance</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Date</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Type</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Reference</th>
+              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Debit</th>
+              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Credit</th>
+              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Balance</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-gray-500 text-sm">
+                <td colSpan={6} className="px-3 py-8 text-center text-zinc-500 text-sm">
                   No entries for the selected date range
                 </td>
               </tr>
@@ -123,10 +123,10 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
                 {filtered.map((entry, idx) => {
                   const rowCurrency = entry.currency || 'USD';
                   return (
-                    <tr key={idx} className="border-t border-gray-100 hover:bg-gray-50">
-                      <td className="px-3 py-2 text-gray-800">{entry.date.toLocaleDateString()}</td>
+                    <tr key={idx} className="border-t border-zinc-100 hover:bg-zinc-50">
+                      <td className="px-3 py-2 text-zinc-800">{entry.date.toLocaleDateString()}</td>
                       <td className="px-3 py-2">{typeTag(entry.type)}</td>
-                      <td className="px-3 py-2 font-mono text-xs text-gray-700">{entry.reference}</td>
+                      <td className="px-3 py-2 font-mono text-xs text-zinc-700">{entry.reference}</td>
                       <td className="px-3 py-2 text-right font-semibold text-red-600">
                         {entry.debit > 0 ? formatMoney(entry.debit, rowCurrency) : '–'}
                       </td>
@@ -139,7 +139,7 @@ export const ClientStatementLedger: React.FC<ClientStatementLedgerProps> = ({
                             ? 'text-red-600'
                             : entry.balance < 0
                               ? 'text-green-600'
-                              : 'text-gray-900'
+                              : 'text-zinc-900'
                         }`}
                       >
                         {formatMoney(Math.abs(entry.balance), rowCurrency)}{' '}
@@ -188,9 +188,9 @@ const ClosingBalanceRow: React.FC<{
   amount: number;
   currency: 'USD' | 'GBP';
 }> = ({ label, amount, currency }) => (
-  <tr className="border-t-2 border-gray-800 bg-gray-50">
+  <tr className="border-t-2 border-zinc-800 bg-zinc-50">
     <td colSpan={5} className="px-3 py-3">
-      <span className="font-semibold uppercase tracking-wider text-xs">{label}</span>
+      <span className="font-semibold uppercase tracking-[0.08em] text-xs">{label}</span>
     </td>
     <td
       className={`px-3 py-3 text-right font-bold text-lg ${
@@ -198,7 +198,7 @@ const ClosingBalanceRow: React.FC<{
           ? 'text-red-600'
           : amount < 0
             ? 'text-green-600'
-            : 'text-gray-900'
+            : 'text-zinc-900'
       }`}
     >
       {amount > 0

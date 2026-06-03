@@ -19,11 +19,13 @@ import { sql } from './_db.js';
 import {
   AuthenticatedRequest,
   verifyToken,
+  requireBusinessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
   apiError,
 } from './_middleware.js';
+import { logAuditEvent } from './_audit.js';
 import { z } from 'zod';
 
 const json = (res: ApiResponse, status: number, body: unknown) =>
@@ -51,6 +53,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
+  if (!requireBusinessRole(authReq, res, ['Director'])) return;
 
   const { method, query } = req;
   const resource = typeof query.resource === 'string' ? query.resource : 'stats';
@@ -65,7 +68,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     }
   } catch (err) {
     console.error('[director]', err);
-    return apiError(res, err);
+    return apiError(res, 500, 'Internal server error', err);
   }
 }
 
@@ -102,6 +105,14 @@ async function handleTransactions(
          ${d.description ?? null}, ${txDate}, ${recordedBy}, ${d.reference ?? null})
       RETURNING *
     `;
+    await logAuditEvent({
+      req,
+      userId: req.user?.id || null,
+      action: 'director.transaction.created',
+      tableName: 'director_transactions',
+      recordId: row.id,
+      newData: row,
+    });
     return json(res, 201, row);
   }
 
@@ -110,6 +121,7 @@ async function handleTransactions(
     const parsed = TransactionSchema.partial().safeParse(req.body);
     if (!parsed.success) return json(res, 400, { error: 'Invalid data', details: parsed.error.issues });
     const d = parsed.data;
+    const [oldRow] = await sql`SELECT * FROM director_transactions WHERE id = ${id}`;
     const [row] = await sql`
       UPDATE director_transactions SET
         type        = COALESCE(${d.type ?? null},        type),
@@ -124,12 +136,32 @@ async function handleTransactions(
       RETURNING *
     `;
     if (!row) return json(res, 404, { error: 'Transaction not found' });
+    await logAuditEvent({
+      req,
+      userId: req.user?.id || null,
+      action: 'director.transaction.updated',
+      tableName: 'director_transactions',
+      recordId: id,
+      oldData: oldRow,
+      newData: row,
+    });
     return json(res, 200, row);
   }
 
   if (method === 'DELETE') {
     if (!id) return json(res, 400, { error: 'id required' });
+    const [oldRow] = await sql`SELECT * FROM director_transactions WHERE id = ${id}`;
     await sql`DELETE FROM director_transactions WHERE id = ${id}`;
+    if (oldRow) {
+      await logAuditEvent({
+        req,
+        userId: req.user?.id || null,
+        action: 'director.transaction.deleted',
+        tableName: 'director_transactions',
+        recordId: id,
+        oldData: oldRow,
+      });
+    }
     return json(res, 200, { success: true });
   }
 

@@ -160,17 +160,17 @@ const TableContainer: React.FC<{
   description?: string;
   children:     React.ReactNode;
 }> = ({ title, description, children }) => (
-  <div className="bg-white border border-gray-200">
-    <div className="px-4 py-3 border-b border-gray-200">
-      <h3 className="m-0 text-sm font-semibold text-gray-900">{title}</h3>
-      {description && <p className="mt-1 text-xs text-gray-500">{description}</p>}
+  <div className="bg-white border border-zinc-200">
+    <div className="px-4 py-3 border-b border-zinc-200">
+      <h3 className="m-0 text-sm font-semibold text-zinc-900">{title}</h3>
+      {description && <p className="mt-1 text-xs text-zinc-500">{description}</p>}
     </div>
     {children}
   </div>
 );
 
-const thCls   = 'px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600';
-const tdCls   = 'px-3 py-2 text-sm text-gray-800 border-t border-gray-100';
+const thCls   = 'px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600';
+const tdCls   = 'px-3 py-2 text-sm text-zinc-800 border-t border-zinc-100';
 
 export const SuperAdminDashboard: React.FC = () => {
   const { showToast } = useToast();
@@ -298,7 +298,7 @@ export const SuperAdminDashboard: React.FC = () => {
 
       <TableContainer title="Recent Platform Activity" description="Latest actions across the platform.">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-zinc-50">
             <tr>
               <th className={thCls}>Action</th>
               <th className={thCls}>Actor</th>
@@ -322,7 +322,7 @@ export const SuperAdminDashboard: React.FC = () => {
   const usersContent = (
     <TableContainer title="User Management" description="Global user controls.">
       <table className="w-full">
-        <thead className="bg-gray-50">
+        <thead className="bg-zinc-50">
           <tr>
             <th className={thCls}>User</th>
             <th className={thCls}>Access</th>
@@ -334,8 +334,8 @@ export const SuperAdminDashboard: React.FC = () => {
           {users.slice(0, 120).map((user) => (
             <tr key={user.id}>
               <td className={tdCls}>
-                <div className="font-medium text-gray-900">{user.name}</div>
-                <div className="text-xs text-gray-500">{user.email}</div>
+                <div className="font-medium text-zinc-900">{user.name}</div>
+                <div className="text-xs text-zinc-500">{user.email}</div>
               </td>
               <td className={tdCls}>
                 <Tag type={accessRoleTagType(user.access_role)}>{user.access_role}</Tag>
@@ -377,7 +377,7 @@ export const SuperAdminDashboard: React.FC = () => {
         <StatCard title="Submissions" value={submissions?.summary.submissions ?? 0} intent="primary" />
         <StatCard title="Pending" value={submissions?.summary.pendingSubmissions ?? 0} intent="warning" />
         <Tile>
-          <h3 className="m-0 text-sm font-semibold text-gray-900">Data Sources</h3>
+          <h3 className="m-0 text-sm font-semibold text-zinc-900">Data Sources</h3>
           <div className="mt-3 flex flex-wrap gap-2">
             <Tag type={submissions?.sources.questionnairesTable ? 'green' : 'cool-gray'}>questionnaires</Tag>
             <Tag type={submissions?.sources.questionnaireSubmissionsTable ? 'green' : 'cool-gray'}>questionnaire_submissions</Tag>
@@ -389,7 +389,7 @@ export const SuperAdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TableContainer title="Questionnaires" description="Questionnaire templates.">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-zinc-50">
               <tr>
                 <th className={thCls}>Title</th>
                 <th className={thCls}>Status</th>
@@ -416,7 +416,7 @@ export const SuperAdminDashboard: React.FC = () => {
             <select
               value={submissionTypeFilter}
               onChange={(event) => setSubmissionTypeFilter(event.target.value as typeof submissionTypeFilter)}
-              className="p-2 border border-gray-300"
+              className="p-2 border border-zinc-300"
             >
               <option value="all">All types</option>
               <option value="registration_request">Registration requests</option>
@@ -425,7 +425,7 @@ export const SuperAdminDashboard: React.FC = () => {
             <select
               value={submissionStatusFilter}
               onChange={(event) => setSubmissionStatusFilter(event.target.value)}
-              className="p-2 border border-gray-300"
+              className="p-2 border border-zinc-300"
             >
               <option value="">All statuses</option>
               <option value="Pending">Pending</option>
@@ -436,7 +436,7 @@ export const SuperAdminDashboard: React.FC = () => {
             </select>
           </div>
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-zinc-50">
               <tr>
                 <th className={thCls}>Type</th>
                 <th className={thCls}>Submitter</th>
@@ -449,9 +449,9 @@ export const SuperAdminDashboard: React.FC = () => {
                 <tr key={submission.id}>
                   <td className={tdCls}>{submission.type}</td>
                   <td className={tdCls}>
-                    <div className="font-medium text-gray-900">{submission.submitter_name || submission.title || '-'}</div>
+                    <div className="font-medium text-zinc-900">{submission.submitter_name || submission.title || '-'}</div>
                     {submission.submitter_email && (
-                      <div className="text-xs text-gray-500">{submission.submitter_email}</div>
+                      <div className="text-xs text-zinc-500">{submission.submitter_email}</div>
                     )}
                   </td>
                   <td className={tdCls}><Tag type={userStatusTagType(submission.status)}>{submission.status}</Tag></td>
@@ -471,19 +471,19 @@ export const SuperAdminDashboard: React.FC = () => {
   const systemContent = (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Tile>
-        <h3 className="m-0 text-sm font-semibold text-gray-900">System Health</h3>
+        <h3 className="m-0 text-sm font-semibold text-zinc-900">System Health</h3>
         <div className="mt-3 flex flex-wrap gap-2">
           <Tag type={system?.checks.api ? 'green' : 'red'}>API: {system?.checks.api ? 'healthy' : 'unhealthy'}</Tag>
           <Tag type={system?.checks.database ? 'green' : 'red'}>DB: {system?.checks.database ? 'healthy' : 'unhealthy'}</Tag>
           <Tag type={system?.status === 'healthy' ? 'green' : 'red'}>Status: {system?.status || 'unknown'}</Tag>
         </div>
-        <p className="mt-3 text-sm text-gray-500">Uptime: {formatUptime(system?.uptimeSeconds ?? 0)}</p>
-        <p className="mt-1 text-sm text-gray-500">Last check: {compactDateTime(system?.timestamp)}</p>
+        <p className="mt-3 text-sm text-zinc-500">Uptime: {formatUptime(system?.uptimeSeconds ?? 0)}</p>
+        <p className="mt-1 text-sm text-zinc-500">Last check: {compactDateTime(system?.timestamp)}</p>
       </Tile>
 
       <TableContainer title="Recent Error Signals" description="Latest failed/error/rejected events detected in audit stream.">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-zinc-50">
             <tr>
               <th className={thCls}>Action</th>
               <th className={thCls}>Table</th>
@@ -531,7 +531,7 @@ export const SuperAdminDashboard: React.FC = () => {
         </Button>
       </div>
       <table className="w-full">
-        <thead className="bg-gray-50">
+        <thead className="bg-zinc-50">
           <tr>
             <th className={thCls}>Action</th>
             <th className={thCls}>Actor</th>
@@ -570,7 +570,7 @@ export const SuperAdminDashboard: React.FC = () => {
   const systemHealthLabel = system?.status === 'healthy' ? 'All systems go' : system?.status === 'degraded' ? 'Degraded' : 'Unknown';
 
   return (
-    <div className="p-6 bg-gray-100 min-h-full space-y-6">
+    <div className="p-6 bg-zinc-100 min-h-full space-y-6">
       <DashboardPageHeader
         title="Super Admin"
         subtitle="Platform oversight"

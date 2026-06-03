@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Route, CheckCircle2, Wallet } from 'lucide-react';
+import { Route, CheckCircle2, Wallet } from 'lucide-react';
 import { Currency, Expense, ExpenseCategory, OperatingFund, Trip, Vehicle, VehicleStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
 import { dataService } from '../services/dataService';
@@ -7,6 +7,10 @@ import { useSession } from '../contexts/SessionContext';
 import {
   Button,
   StatCard,
+  TextInput,
+  Select,
+  SelectItem,
+  TextArea,
   DashboardPageHeader,
   DashboardKpiCard,
   DashboardSection,
@@ -166,17 +170,17 @@ export const DriverPortal: React.FC = () => {
   );
 
   const allocatedFromExpenseUsd = useMemo(
-    () => expenseDisbursements.reduce((sum, expense) => sum + expense.amount * (expense.exchange_rate_to_usd || 1), 0),
+    () => expenseDisbursements.reduce((sum, expense) => sum + (expense.amount || 0) * (expense.exchange_rate_to_usd || 1), 0),
     [expenseDisbursements],
   );
 
   const allocatedFromFundsUsd = useMemo(
-    () => driverFunds.reduce((sum, fund) => sum + fund.amount * (EXCHANGE_RATES[fund.currency] || 1), 0),
+    () => driverFunds.reduce((sum, fund) => sum + (fund.amount || 0) * (EXCHANGE_RATES[fund.currency] || 1), 0),
     [driverFunds],
   );
 
   const spentUsd = useMemo(
-    () => drawdowns.reduce((sum, expense) => sum + expense.amount * (expense.exchange_rate_to_usd || 1), 0),
+    () => drawdowns.reduce((sum, expense) => sum + (expense.amount || 0) * (expense.exchange_rate_to_usd || 1), 0),
     [drawdowns],
   );
 
@@ -488,11 +492,45 @@ export const DriverPortal: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <div className="bg-white border border-gray-200 p-8">
-          <div className="flex justify-center items-center gap-3">
-            <Loader2 className="animate-spin" size={24} />
-            <span className="text-sm text-gray-600">Loading your funds and drawdowns...</span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Header skeleton */}
+        <div className="space-y-2">
+          <div className="h-8 w-40 app-shimmer rounded" />
+          <div className="h-4 w-56 app-shimmer rounded" />
+        </div>
+        {/* KPI row skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {[1,2,3].map(i => (
+            <div key={i} className="rounded-lg border border-stone-200 bg-white p-6">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="h-3 w-24 app-shimmer rounded" />
+                <div className="h-10 w-10 app-shimmer rounded-lg" />
+              </div>
+              <div className="h-8 w-32 app-shimmer rounded mb-2" />
+              <div className="h-3 w-28 app-shimmer rounded" />
+            </div>
+          ))}
+        </div>
+        {/* Content skeleton */}
+        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="rounded-lg border border-stone-200 bg-white p-6">
+            <div className="h-5 w-36 app-shimmer rounded mb-2" />
+            <div className="h-3 w-64 app-shimmer rounded mb-6" />
+            <div className="space-y-4">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="h-12 w-full app-shimmer rounded" />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="rounded-lg border border-stone-200 bg-white p-6">
+              <div className="h-5 w-32 app-shimmer rounded mb-6" />
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                {[1,2,3,4,5,6,7].map(i => (
+                  <div key={i} className="h-24 app-shimmer rounded" />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -507,7 +545,7 @@ export const DriverPortal: React.FC = () => {
         banner={
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D97706]">Available To Draw</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#D97706]">Available To Draw</p>
               <p className={`text-2xl font-bold mt-1 ${availableUsd >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                 {availableBalanceDisplay}
               </p>
@@ -579,119 +617,99 @@ export const DriverPortal: React.FC = () => {
           <div className="space-y-6">
 
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">Success</p>
-                    <p className="text-sm mt-0.5">Expense logged successfully and your drawdown balance has been refreshed.</p>
-                  </div>
-                  <button onClick={() => setSuccess(false)} className="text-green-600 hover:text-green-800 text-lg leading-none">×</button>
+              <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <div className="flex-1">
+                  <p className="font-semibold">Success</p>
+                  <p className="mt-0.5 text-emerald-700">Expense logged successfully and your drawdown balance has been refreshed.</p>
                 </div>
+                <button onClick={() => setSuccess(false)} className="shrink-0 text-emerald-500 hover:text-emerald-700">×</button>
               </div>
             )}
 
             {uploadError && (
-              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">Could not complete request</p>
-                    <p className="text-sm mt-0.5">{uploadError}</p>
-                  </div>
-                  <button onClick={() => setUploadError('')} className="text-red-600 hover:text-red-800 text-lg leading-none">×</button>
+              <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <div className="flex-1">
+                  <p className="font-semibold">Could not complete request</p>
+                  <p className="mt-0.5 text-red-700">{uploadError}</p>
                 </div>
+                <button onClick={() => setUploadError('')} className="shrink-0 text-red-500 hover:text-red-700">×</button>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label htmlFor="vehicle-select" className="block text-sm font-medium text-gray-700 mb-1">Vehicle (Optional)</label>
-                  <select
-                    id="vehicle-select"
-                    value={selectedVehicle}
-                    onChange={(event) => setSelectedVehicle(event.target.value)}
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
-                  >
-                    <option value="">General drawdown</option>
-                    {vehicles.map((vehicle) => (
-                      <option key={vehicle.id} value={vehicle.id}>
-                        {vehicle.make_model} ({vehicle.vin_number})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  id="vehicle-select"
+                  labelText="Vehicle (Optional)"
+                  value={selectedVehicle}
+                  onChange={(e) => setSelectedVehicle(e.target.value)}
+                >
+                  <SelectItem value="" text="General drawdown" />
+                  {vehicles.map((vehicle) => (
+                    <SelectItem key={vehicle.id} value={vehicle.id} text={`${vehicle.make_model} (${vehicle.vin_number})`} />
+                  ))}
+                </Select>
 
-                <div>
-                  <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select
-                    id="category-select"
-                    value={category}
-                    onChange={(event) => setCategory(event.target.value as Exclude<ExpenseCategory, 'Driver Disbursement'>)}
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
-                  >
-                    <option value="Fuel">Fuel</option>
-                    <option value="Tolls">Tolls</option>
-                    <option value="Food">Food</option>
-                    <option value="Repairs">Repairs</option>
-                    <option value="Duty">Duty</option>
-                    <option value="Shipping">Shipping</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+                <Select
+                  id="category-select"
+                  labelText="Category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as Exclude<ExpenseCategory, 'Driver Disbursement'>)}
+                >
+                  <SelectItem value="Fuel" text="Fuel" />
+                  <SelectItem value="Tolls" text="Tolls" />
+                  <SelectItem value="Food" text="Food" />
+                  <SelectItem value="Repairs" text="Repairs" />
+                  <SelectItem value="Duty" text="Duty" />
+                  <SelectItem value="Shipping" text="Shipping" />
+                  <SelectItem value="Other" text="Other" />
+                </Select>
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="md:col-span-2">
-                  <label htmlFor="amount-input" className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                  <input
+                  <TextInput
                     id="amount-input"
                     type="number"
                     step="0.01"
                     min="0.01"
+                    labelText="Amount *"
                     value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
+                    onChange={(e) => setAmount(e.target.value)}
                     required
-                    autoComplete="off"
                     placeholder="0.00"
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-zinc-500 mt-2">
                     Available balance: {availableBalanceDisplay}
                   </p>
                 </div>
 
-                <div>
-                  <label htmlFor="currency-select" className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-                  <select
-                    id="currency-select"
-                    value={currency}
-                    onChange={(event) => setCurrency(event.target.value as Currency)}
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
-                  >
-                    <option value="NAD">Namibian Dollars (NAD)</option>
-                    <option value="ZAR">Rands (ZAR)</option>
-                    <option value="BWP">Pulas (BWP)</option>
-                    <option value="USD">US Dollars (USD)</option>
-                    <option value="GBP">British Pounds (GBP)</option>
-                  </select>
-                </div>
+                <Select
+                  id="currency-select"
+                  labelText="Currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as Currency)}
+                >
+                  <SelectItem value="NAD" text="Namibian Dollars (NAD)" />
+                  <SelectItem value="ZAR" text="Rands (ZAR)" />
+                  <SelectItem value="BWP" text="Pulas (BWP)" />
+                  <SelectItem value="USD" text="US Dollars (USD)" />
+                  <SelectItem value="GBP" text="British Pounds (GBP)" />
+                </Select>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label htmlFor="location-select" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                  <select
-                    id="location-select"
-                    value={location}
-                    onChange={(event) => setLocation(event.target.value as VehicleStatus)}
-                    className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
-                  >
-                    <option value="UK">UK</option>
-                    <option value="Namibia">Namibia</option>
-                    <option value="Zimbabwe">Zimbabwe</option>
-                    <option value="Botswana">Botswana</option>
-                  </select>
-                </div>
+                <Select
+                  id="location-select"
+                  labelText="Location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value as VehicleStatus)}
+                >
+                  <SelectItem value="UK" text="UK" />
+                  <SelectItem value="Namibia" text="Namibia" />
+                  <SelectItem value="Zimbabwe" text="Zimbabwe" />
+                  <SelectItem value="Botswana" text="Botswana" />
+                </Select>
 
                 <div className="space-y-3">
                   <label htmlFor="receipt-input" className="block text-sm font-medium text-zinc-700">
@@ -705,7 +723,7 @@ export const DriverPortal: React.FC = () => {
                     onChange={handleFileSelect}
                     className="hidden"
                   />
-                  <div className="flex flex-col gap-3 border border-dashed border-gray-300 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-3 border border-dashed border-stone-300 p-4 rounded-lg sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-zinc-800">
                         {selectedFile ? selectedFile.name : 'No receipt selected'}
@@ -726,39 +744,33 @@ export const DriverPortal: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="trip-reference-input" className="block text-sm font-medium text-gray-700 mb-1">Trip Reference (Optional)</label>
-                <input
-                  id="trip-reference-input"
-                  value={tripReference}
-                  onChange={(event) => setTripReference(event.target.value)}
-                  placeholder="e.g. Windhoek delivery - April run"
-                  autoComplete="off"
-                  className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
-                />
-              </div>
+              <TextInput
+                id="trip-reference-input"
+                labelText="Trip Reference (Optional)"
+                value={tripReference}
+                onChange={(e) => setTripReference(e.target.value)}
+                placeholder="e.g. Windhoek delivery - April run"
+              />
 
-              <div>
-                <label htmlFor="description-input" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  id="description-input"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  rows={4}
-                  placeholder="What is this expense for?"
-                  className="block w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#D97706]/30"
-                />
-              </div>
+              <TextArea
+                id="description-input"
+                labelText="Description *"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                placeholder="What is this expense for?"
+                required
+              />
 
               {previewUrl && (
-                <div className="bg-white border border-gray-200 p-4">
+                <div className="bg-white border border-zinc-200 p-4">
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-zinc-900">Receipt preview</p>
                         <p className="text-xs text-zinc-500 mt-1">Double-check the image before you submit.</p>
                       </div>
-                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-800">{selectedFile?.type || 'image'}</span>
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-800">{selectedFile?.type || 'image'}</span>
                     </div>
                     <img
                       src={previewUrl}
@@ -803,7 +815,7 @@ export const DriverPortal: React.FC = () => {
                         : 'border-zinc-200 bg-zinc-50'
                     }`}
                   >
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">{day.label}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">{day.label}</p>
                     <p className="mt-2 text-2xl font-black text-zinc-900">{day.dayNumber}</p>
                     <p className="mt-2 text-xs text-zinc-600">
                       {day.events.length > 0 ? `${day.events.length} trip item${day.events.length === 1 ? '' : 's'}` : 'Open'}
@@ -820,7 +832,7 @@ export const DriverPortal: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   {upcomingTrips.slice(0, 3).map((trip) => (
-                    <div key={trip.id} className="bg-white border border-gray-200 p-4">
+                    <div key={trip.id} className="bg-white border border-zinc-200 p-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
@@ -866,7 +878,7 @@ export const DriverPortal: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   {ledger.slice(0, 8).map((entry) => (
-                    <div key={entry.id} className="bg-white border border-gray-200 p-4">
+                    <div key={entry.id} className="bg-white border border-zinc-200 p-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0 space-y-2">
                           <div className="flex flex-wrap items-center gap-2">

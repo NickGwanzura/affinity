@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { api } from '../services/apiClient';
 import { useToast } from './Toast';
-import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection, Modal } from './ui';
+import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection, Modal, TextInput, Select, SelectItem, TextArea } from './ui';
 import { Send, FileText, Plus, Edit, Trash2, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface EmailTemplate {
@@ -228,7 +228,7 @@ export const UpdateCenter: React.FC = () => {
               className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                 activeTab === id
                   ? 'border-[#D97706] text-[#D97706] font-semibold'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-700'
               }`}
             >
               <Icon size={18} />
@@ -249,21 +249,21 @@ export const UpdateCenter: React.FC = () => {
       {activeTab === 'templates' && (
         <div className="bg-white border overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-zinc-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                   Name
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                   Type
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                   Subject
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                   Status
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">
                   Actions
                 </th>
               </tr>
@@ -271,23 +271,23 @@ export const UpdateCenter: React.FC = () => {
             <tbody className="divide-y">
               {templates.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
                     No email templates. Create your first template.
                   </td>
                 </tr>
               ) : (
                 templates.map(template => (
-                  <tr key={template.id} className="hover:bg-gray-50">
+                  <tr key={template.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3 font-medium">{template.name}</td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-1 bg-stone-100 text-stone-700 text-xs">
                         {template.type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{template.subject}</td>
+                    <td className="px-4 py-3 text-zinc-600">{template.subject}</td>
                     <td className="px-4 py-3">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${template.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
+                        className={`px-2 py-1 rounded text-xs ${template.is_active ? 'bg-green-100 text-green-800' : 'bg-zinc-100 text-zinc-800'}`}
                       >
                         {template.is_active ? 'Active' : 'Inactive'}
                       </span>
@@ -316,21 +316,21 @@ export const UpdateCenter: React.FC = () => {
       {activeTab === 'queue' && (
         <div className="bg-white border overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-zinc-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                   To
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                   Subject
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                   Type
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                   Sent
                 </th>
               </tr>
@@ -338,20 +338,20 @@ export const UpdateCenter: React.FC = () => {
             <tbody className="divide-y">
               {queue.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
                     No emails in queue.
                   </td>
                 </tr>
               ) : (
                 queue.map(item => (
-                  <tr key={item.id} className="hover:bg-gray-50">
+                  <tr key={item.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3">
                       <div className="font-medium">{item.to_name || 'N/A'}</div>
-                      <div className="text-sm text-gray-500">{item.to_email}</div>
+                      <div className="text-sm text-zinc-500">{item.to_email}</div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{item.subject}</td>
+                    <td className="px-4 py-3 text-zinc-600">{item.subject}</td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                      <span className="px-2 py-1 bg-zinc-100 text-zinc-800 rounded text-xs">
                         {item.type}
                       </span>
                     </td>
@@ -368,7 +368,7 @@ export const UpdateCenter: React.FC = () => {
                         {item.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-sm">
+                    <td className="px-4 py-3 text-zinc-600 text-sm">
                       {item.sent_at ? new Date(item.sent_at).toLocaleString() : '-'}
                     </td>
                   </tr>
@@ -398,53 +398,58 @@ export const UpdateCenter: React.FC = () => {
         }
       >
         <form id="template-form" onSubmit={handleSaveTemplate} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Template Name</label>
-            <input
-              type="text"
-              value={templateForm.name}
-              onChange={e => setTemplateForm({ ...templateForm, name: e.target.value })}
-              required
-              className="w-full px-3 py-2 border"
-              placeholder="e.g. Monthly Statement"
-            />
+          {/* Template Info */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Template Info</h3>
+              <div className="space-y-3">
+              <TextInput
+                id="template-name"
+                labelText="Template Name"
+                placeholder="e.g. Monthly Statement"
+                value={templateForm.name}
+                onChange={e => setTemplateForm({ ...templateForm, name: e.target.value })}
+                required
+              />
+              <Select
+                id="template-type"
+                labelText="Type"
+                value={templateForm.type}
+                onChange={e => setTemplateForm({ ...templateForm, type: e.target.value })}
+              >
+                {templateTypes.map(t => (
+                  <SelectItem key={t.value} value={t.value} text={t.label} />
+                ))}
+              </Select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Type</label>
-            <select
-              value={templateForm.type}
-              onChange={e => setTemplateForm({ ...templateForm, type: e.target.value })}
-              className="w-full px-3 py-2 border"
-            >
-              {templateTypes.map(t => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+        </section>
+
+          {/* Content */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Content</h3>
+              <div className="space-y-3">
+              <TextInput
+                id="template-subject"
+                labelText="Subject"
+                placeholder="e.g. Your Monthly Statement from Affinity Logistics"
+                value={templateForm.subject}
+                onChange={e => setTemplateForm({ ...templateForm, subject: e.target.value })}
+                required
+              />
+              <TextArea
+                id="template-body"
+                labelText="Body (HTML)"
+                placeholder="<html>...</html>"
+                rows={10}
+                value={templateForm.body}
+                onChange={e => setTemplateForm({ ...templateForm, body: e.target.value })}
+                required
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Subject</label>
-            <input
-              type="text"
-              value={templateForm.subject}
-              onChange={e => setTemplateForm({ ...templateForm, subject: e.target.value })}
-              required
-              className="w-full px-3 py-2 border"
-              placeholder="e.g. Your Monthly Statement from Affinity Logistics"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Body (HTML)</label>
-            <textarea
-              value={templateForm.body}
-              onChange={e => setTemplateForm({ ...templateForm, body: e.target.value })}
-              required
-              rows={10}
-              className="w-full px-3 py-2 border font-mono text-sm"
-              placeholder="<html>...</html>"
-            />
-          </div>
+        </section>
         </form>
       </Modal>
 
@@ -466,79 +471,91 @@ export const UpdateCenter: React.FC = () => {
         }
       >
         <form id="send-email-form" onSubmit={handleSendEmail} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Load Template (optional)</label>
-            <select
-              value={sendForm.template_id}
-              onChange={e => loadTemplate(e.target.value)}
-              className="w-full px-3 py-2 border"
-            >
-              <option value="">No template</option>
-              {templates
-                .filter(t => t.is_active)
-                .map(t => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} - {t.subject}
-                  </option>
+          {/* Quick Select */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Quick Select</h3>
+              <div className="space-y-3">
+              <Select
+                id="send-template"
+                labelText="Load Template"
+                helperText="Pre-fill subject and body from an active template"
+                value={sendForm.template_id}
+                onChange={e => loadTemplate(e.target.value)}
+              >
+                <SelectItem value="" text="No template" />
+                {templates
+                  .filter(t => t.is_active)
+                  .map(t => (
+                    <SelectItem key={t.id} value={t.id} text={`${t.name} - ${t.subject}`} />
+                  ))}
+              </Select>
+              <Select
+                id="send-client"
+                labelText="Or Select Client"
+                helperText="Auto-fill recipient email and name"
+                value=""
+                onChange={e => selectClient(e.target.value)}
+              >
+                <SelectItem value="" text="Select client" />
+                {clients.map(c => (
+                  <SelectItem key={c.id} value={c.id} text={`${c.name} (${c.email})`} />
                 ))}
-            </select>
+              </Select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Or Select Client</label>
-            <select
-              value=""
-              onChange={e => selectClient(e.target.value)}
-              className="w-full px-3 py-2 border"
-            >
-              <option value="">Select client</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.email})
-                </option>
-              ))}
-            </select>
+        </section>
+
+          {/* Recipient */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Recipient</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <TextInput
+                id="send-email"
+                labelText="To Email *"
+                type="email"
+                placeholder="client@example.com"
+                value={sendForm.to_email}
+                onChange={e => setSendForm({ ...sendForm, to_email: e.target.value })}
+                required
+              />
+              <TextInput
+                id="send-name"
+                labelText="To Name"
+                placeholder="Client Name"
+                value={sendForm.to_name}
+                onChange={e => setSendForm({ ...sendForm, to_name: e.target.value })}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">To Email</label>
-            <input
-              type="email"
-              value={sendForm.to_email}
-              onChange={e => setSendForm({ ...sendForm, to_email: e.target.value })}
-              required
-              className="w-full px-3 py-2 border"
-              placeholder="client@example.com"
-            />
+        </section>
+
+          {/* Message */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Message</h3>
+              <div className="space-y-3">
+              <TextInput
+                id="send-subject"
+                labelText="Subject *"
+                placeholder="Email subject line"
+                value={sendForm.subject}
+                onChange={e => setSendForm({ ...sendForm, subject: e.target.value })}
+                required
+              />
+              <TextArea
+                id="send-body"
+                labelText="Body (HTML)"
+                placeholder="<html>...</html>"
+                rows={8}
+                value={sendForm.body}
+                onChange={e => setSendForm({ ...sendForm, body: e.target.value })}
+                required
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">To Name</label>
-            <input
-              type="text"
-              value={sendForm.to_name}
-              onChange={e => setSendForm({ ...sendForm, to_name: e.target.value })}
-              className="w-full px-3 py-2 border"
-              placeholder="Client Name"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Subject</label>
-            <input
-              type="text"
-              value={sendForm.subject}
-              onChange={e => setSendForm({ ...sendForm, subject: e.target.value })}
-              required
-              className="w-full px-3 py-2 border"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Body (HTML)</label>
-            <textarea
-              value={sendForm.body}
-              onChange={e => setSendForm({ ...sendForm, body: e.target.value })}
-              required
-              rows={8}
-              className="w-full px-3 py-2 border font-mono text-sm"
-            />
-          </div>
+        </section>
         </form>
       </Modal>
     </div>

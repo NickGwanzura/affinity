@@ -1,0 +1,50 @@
+-- Lodgers (Accommodation/Tenants) Tracking Module
+--
+-- Note: The lodgers & lodger_payments tables were previously deployed with
+-- a different schema from the original 0040 design. The schema below
+-- documents what already exists in the database and is what the
+-- api/lodgers.ts and components/Lodgers.tsx code expects.
+--
+-- If deploying to a fresh database, uncomment and run:
+
+-- CREATE EXTENSION IF NOT EXISTS pgcrypto;
+--
+-- CREATE TABLE IF NOT EXISTS public.lodgers (
+--   id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   full_name              TEXT NOT NULL,
+--   phone_number           TEXT,
+--   id_number              TEXT,
+--   room_number            TEXT NOT NULL,
+--   checkin_date           DATE NOT NULL DEFAULT CURRENT_DATE,
+--   expected_duration_days INTEGER DEFAULT 1,
+--   deposit_amount         NUMERIC(10,2) NOT NULL DEFAULT 0,
+--   amount_paid            NUMERIC(10,2) NOT NULL DEFAULT 0,
+--   checkout_date          DATE,
+--   status                 TEXT NOT NULL DEFAULT 'ACTIVE'
+--     CHECK (status IN ('ACTIVE', 'CHECKED_OUT')),
+--   notes                  TEXT,
+--   created_by             UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+--   created_at             TIMESTAMPTZ DEFAULT NOW(),
+--   updated_at             TIMESTAMPTZ DEFAULT NOW(),
+--   deleted_at             TIMESTAMPTZ
+-- );
+--
+-- CREATE INDEX IF NOT EXISTS idx_lodgers_name ON public.lodgers(full_name);
+-- CREATE INDEX IF NOT EXISTS idx_lodgers_status ON public.lodgers(status);
+-- CREATE INDEX IF NOT EXISTS idx_lodgers_checkin ON public.lodgers(checkin_date);
+--
+-- CREATE TABLE IF NOT EXISTS public.lodger_payments (
+--   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   lodger_id       UUID NOT NULL REFERENCES public.lodgers(id) ON DELETE CASCADE,
+--   amount          NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+--   currency        VARCHAR(3) NOT NULL DEFAULT 'USD',
+--   payment_date    DATE NOT NULL DEFAULT CURRENT_DATE,
+--   payment_method  TEXT NOT NULL DEFAULT 'Cash',
+--   month_covered   TEXT,
+--   notes           TEXT,
+--   created_by      UUID REFERENCES public.user_profiles(id) ON DELETE SET NULL,
+--   created_at      TIMESTAMPTZ DEFAULT NOW()
+-- );
+--
+-- CREATE INDEX IF NOT EXISTS idx_lodger_payments_lodger ON public.lodger_payments(lodger_id);
+-- CREATE INDEX IF NOT EXISTS idx_lodger_payments_date ON public.lodger_payments(payment_date);

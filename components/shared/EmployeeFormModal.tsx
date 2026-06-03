@@ -89,7 +89,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     new Set(existingEmployees.map((e) => e.position).filter(Boolean))
   ) as string[];
 
-  const sectionHeader = 'text-xs font-semibold uppercase tracking-wider text-zinc-500';
+  const sectionHeader = 'text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400';
 
   return (
     <FormModalShell

@@ -16,7 +16,7 @@ import { sendInviteEmail, sendWelcomeEmail } from './_email.js';
 
 const InviteCreateSchema = z.object({
   email: z.string().email(),
-  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver']),
+  role: z.enum(['Admin', 'Manager', 'Accountant', 'Driver', 'Sales', 'Director', 'Car Hire', 'CEO']),
   name: z.string().min(1),
   invitedBy: z.string().optional(),
 });
@@ -32,7 +32,7 @@ const isMissingColumnError = (error: unknown, columnName: string): boolean =>
 type InviteRecord = {
   id: string;
   email: string;
-  role: 'Admin' | 'Manager' | 'Accountant' | 'Driver';
+  role: 'Admin' | 'Manager' | 'Accountant' | 'Driver' | 'Sales' | 'Director' | 'Car Hire' | 'CEO';
   name?: string;
   status: 'Pending' | 'Accepted' | 'Expired' | 'Cancelled' | 'Revoked';
   invited_by?: string | null;

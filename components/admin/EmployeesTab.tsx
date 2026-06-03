@@ -209,13 +209,13 @@ export const EmployeesTab: React.FC = () => {
   };
 
   const thCls =
-    'px-6 py-4 text-left text-xs font-bold uppercase tracking-wider select-none cursor-pointer hover:text-zinc-900 transition-colors';
+    'px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.08em] select-none cursor-pointer hover:text-zinc-900 transition-colors';
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-stone-200 border-t-[#D97706]" />
-        <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+        <p className="font-bold animate-pulse uppercase tracking-widest text-xs text-zinc-600">
           Loading Employees
         </p>
       </div>
@@ -291,7 +291,7 @@ export const EmployeesTab: React.FC = () => {
       {/* Table */}
       <div
         className="overflow-hidden shadow-lg"
-        style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}
+        style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}
       >
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -299,48 +299,48 @@ export const EmployeesTab: React.FC = () => {
               <tr>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                 >
                   Employee #
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('name')}
                 >
                   Name <SortIcon field="name" />
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('position')}
                 >
                   Position <SortIcon field="position" />
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('base_pay_usd')}
                 >
                   Base Pay <SortIcon field="base_pay_usd" />
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('employment_type')}
                 >
                   Type <SortIcon field="employment_type" />
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('status')}
                 >
                   Status <SortIcon field="status" />
                 </th>
                 <th
-                  className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  className="px-6 py-4 text-right text-xs font-bold uppercase tracking-[0.08em]"
+                  style={{ color: '#52525b' }}
                 >
                   Actions
                 </th>
@@ -369,19 +369,19 @@ export const EmployeesTab: React.FC = () => {
               ) : (
                 filteredAndSorted.map((employee) => (
                   <tr key={employee.id} className="hover:bg-zinc-50">
-                    <td className="px-6 py-4 font-mono text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <td className="px-6 py-4 font-mono text-sm text-zinc-600">
                       {employee.employee_number}
                     </td>
-                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+                    <td className="px-6 py-4 font-semibold text-zinc-900">
                       {employee.name}
                     </td>
-                    <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <td className="px-6 py-4 text-zinc-600">
                       {employee.position}
                     </td>
-                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+                    <td className="px-6 py-4 font-semibold text-zinc-900">
                       {employee.base_pay_usd.toLocaleString()} {employee.currency}
                     </td>
-                    <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <td className="px-6 py-4 text-zinc-600">
                       {employee.employment_type}
                     </td>
                     <td className="px-6 py-4">

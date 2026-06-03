@@ -67,16 +67,18 @@ export const DirectorsDashboard: React.FC = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, txRes, salesRes] = await Promise.all([
-        fetch(`${API}?resource=stats`),
-        fetch(`${API}?resource=transactions`),
-        fetch(`${API}?resource=sales`),
+      const results = await Promise.allSettled([
+        fetch(`${API}?resource=stats`).then(r => { if (!r.ok) throw new Error('Stats failed'); return r.json(); }),
+        fetch(`${API}?resource=transactions`).then(r => { if (!r.ok) throw new Error('Transactions failed'); return r.json(); }),
+        fetch(`${API}?resource=sales`).then(r => { if (!r.ok) throw new Error('Sales failed'); return r.json(); }),
       ]);
-      setStats(await statsRes.json());
-      setTxs(await txRes.json());
-      setSales(await salesRes.json());
-    } catch {
-      showToast('Failed to load Director data', 'error');
+      setStats(results[0].status === 'fulfilled' ? results[0].value : null);
+      setTxs(results[1].status === 'fulfilled' && Array.isArray(results[1].value) ? results[1].value : []);
+      setSales(results[2].status === 'fulfilled' && Array.isArray(results[2].value) ? results[2].value : []);
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        showToast(`Failed to load ${failures.length} resource(s)`, 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,9 +87,15 @@ export const DirectorsDashboard: React.FC = () => {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleDelete = async (id: string) => {
-    await fetch(`${API}?resource=transactions&id=${id}`, { method: 'DELETE' });
-    showToast('Transaction deleted', 'success');
+    try {
+      const res = await fetch(`${API}?resource=transactions&id=${id}`, { method: 'DELETE' });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Delete failed'); }
+      showToast('Transaction deleted', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete', 'error');
+    }
     fetchAll();
+
   };
 
   const tabs = [
@@ -159,7 +167,28 @@ export const DirectorsDashboard: React.FC = () => {
 
       {/* Tab Content */}
       {loading ? (
-        <div className="py-16 text-center text-sm text-zinc-400">Loading...</div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="rounded-xl border border-stone-200 bg-white p-4">
+                <div className="h-3 w-20 app-shimmer rounded mb-3" />
+                <div className="h-7 w-28 app-shimmer rounded" />
+              </div>
+            ))}
+          </div>
+          {tab === 'overview' && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[1,2].map(i => (
+                <div key={i} className="rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="h-4 w-32 app-shimmer rounded mb-4" />
+                  {[1,2,3].map(j => (
+                    <div key={j} className="h-10 w-full app-shimmer rounded mb-2" />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <>
           {tab === 'overview' && <OverviewTab stats={stats} txs={txs} />}
@@ -224,7 +253,7 @@ const OverviewTab: React.FC<{ stats: Stats | null; txs: DirectorTx[] }> = ({ sta
     <div className="space-y-5">
       {/* This month summary */}
       <div className="rounded-xl border border-stone-200 bg-white p-5">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">This Month</h3>
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">This Month</h3>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <SummaryCell label="Received"   value={fmt(stats?.month_received ?? 0)}  color="emerald" />
           <SummaryCell label="Disbursed"  value={fmt(stats?.month_disbursed ?? 0)} color="orange"  />
@@ -253,7 +282,7 @@ const HistoryTab: React.FC<{
       <div className="py-16 text-center text-sm text-zinc-400">No transactions recorded yet.</div>
     ) : (
       txs.map(tx => (
-        <div key={tx.id} className={`rounded-xl border bg-white p-4 ${tx.type === 'Received' ? 'border-l-4 border-l-emerald-400' : 'border-l-4 border-l-orange-400'}`}>
+        <div key={tx.id} className={`rounded-xl border bg-white p-4 ${tx.type === 'Received' ? 'border-l-4 border-l-emerald-400' : 'border-l-4 border-l-orange-400'}`} style={{ animationDelay: `${txs.indexOf(tx) * 40}ms` }}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -294,7 +323,7 @@ const HistoryTab: React.FC<{
 const SalesTab: React.FC<{ sales: SaleFeedItem[]; stats: Stats | null }> = ({ sales, stats }) => (
   <div className="space-y-5">
     <div className="rounded-xl border border-stone-200 bg-white p-5">
-      <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Sales Summary</h3>
+      <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Sales Summary</h3>
       <div className="grid grid-cols-2 gap-3">
         <SummaryCell label="Today's Sales"      value={fmt(stats?.sales_today ?? 0)}      color="amber" />
         <SummaryCell label="This Month's Sales" value={fmt(stats?.sales_this_month ?? 0)} color="blue"  />
@@ -303,29 +332,35 @@ const SalesTab: React.FC<{ sales: SaleFeedItem[]; stats: Stats | null }> = ({ sa
 
     <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
       {sales.length === 0 ? (
-        <p className="py-12 text-center text-sm text-zinc-400">No sales data yet.</p>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-stone-100">
+            <BarChart2 size={20} className="text-zinc-400" />
+          </div>
+          <p className="text-sm font-medium text-zinc-700">No sales data yet</p>
+          <p className="mt-1 text-xs text-zinc-400">Sales data from Freezit and WiFi modules will appear here.</p>
+        </div>
       ) : (
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-card-mobile">
           <thead className="border-b border-stone-200 bg-stone-50">
             <tr>
               {['Date', 'Source', 'Item', 'Qty', 'Total', 'Method'].map(col => (
-                <th key={col} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{col}</th>
+                <th key={col} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-400">{col}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100">
             {sales.map((sale, i) => (
               <tr key={i} className="hover:bg-stone-50">
-                <td className="px-4 py-3 text-zinc-700">{sale.date}</td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 text-zinc-700" data-label="Date">{sale.date}</td>
+                <td className="px-4 py-3" data-label="Source">
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                     sale.source === 'Freezit' ? 'bg-blue-100 text-blue-700' : 'bg-violet-100 text-violet-700'
                   }`}>{sale.source}</span>
                 </td>
-                <td className="px-4 py-3 text-zinc-700">{sale.item}</td>
-                <td className="px-4 py-3 text-zinc-700">{sale.quantity}</td>
-                <td className="px-4 py-3 font-semibold text-zinc-900">{fmt(Number(sale.total))}</td>
-                <td className="px-4 py-3 text-zinc-500">{sale.payment_method}</td>
+                <td className="px-4 py-3 text-zinc-700" data-label="Item">{sale.item}</td>
+                <td className="px-4 py-3 text-zinc-700" data-label="Qty">{sale.quantity}</td>
+                <td className="px-4 py-3 font-semibold text-zinc-900" data-label="Total">{fmt(Number(sale.total))}</td>
+                <td className="px-4 py-3 text-zinc-500" data-label="Method">{sale.payment_method}</td>
               </tr>
             ))}
           </tbody>
@@ -341,7 +376,7 @@ const SummaryCell: React.FC<{ label: string; value: string; color: string; class
   const textColor = color === 'emerald' ? 'text-emerald-600' : color === 'orange' ? 'text-orange-600' : color === 'red' ? 'text-red-600' : color === 'amber' ? 'text-amber-600' : 'text-blue-600';
   return (
     <div className={className}>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{label}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-400">{label}</p>
       <p className={`mt-1 text-xl font-bold tabular-nums ${textColor}`}>{value}</p>
     </div>
   );
@@ -355,7 +390,7 @@ const RecentList: React.FC<{ title: string; color: string; txs: DirectorTx[] }> 
 
   return (
     <div className={`rounded-xl border ${borderColor} ${bgColor} p-4`}>
-      <p className={`mb-3 text-xs font-semibold uppercase tracking-wider ${textColor}`}>{title}</p>
+      <p className={`mb-3 text-xs font-semibold uppercase tracking-[0.08em] ${textColor}`}>{title}</p>
       {txs.length === 0 ? (
         <p className="text-xs text-zinc-400">None yet</p>
       ) : (
@@ -427,10 +462,10 @@ const TransactionModal: React.FC<{
         }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Failed'); }
-      addToast({ kind: 'success', title: isEdit ? 'Transaction updated' : `${type} recorded` });
+      showToast(isEdit ? 'Transaction updated' : `${type} recorded`, 'success');
       onSaved();
     } catch (err: any) {
-      addToast({ kind: 'error', title: err.message });
+      showToast(err.message || 'Failed to save', 'error');
     } finally {
       setLoading(false);
     }
@@ -438,8 +473,7 @@ const TransactionModal: React.FC<{
 
   const formId = `dir-tx-form-${type.toLowerCase()}`;
 
-  return (
-    <Modal
+  return (      <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={isEdit ? `Edit ${editingTx!.type}` : type === 'Received' ? 'Record Receipt' : 'Record Disbursement'}
@@ -459,8 +493,8 @@ const TransactionModal: React.FC<{
         </div>
       }
     >
-      <form id={formId} onSubmit={handleSubmit} className="space-y-3">
-        {/* Type badge */}
+      <form id={formId} onSubmit={handleSubmit} className="space-y-6">
+        {/* Transaction Type badge */}
         <div className={`flex items-center gap-2 rounded-xl p-3 ${isReceived ? 'bg-emerald-50' : 'bg-orange-50'}`}>
           {isReceived ? <ArrowDownLeft size={18} className="text-emerald-600" /> : <ArrowUpRight size={18} className="text-orange-600" />}
           <span className={`text-sm font-semibold ${accentColor}`}>
@@ -468,54 +502,67 @@ const TransactionModal: React.FC<{
           </span>
         </div>
 
-        <TextInput
-          id={`${formId}-party`}
-          labelText={partyLabel}
-          value={party}
-          onChange={e => setParty(e.target.value)}
-          placeholder={isReceived ? 'Who gave the money' : 'Who received the money'}
-          required
-        />
+        {/* Party Details */}
+        <section>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Party Details</h3>
+            <div className="space-y-3">
+              <TextInput
+                id={`${formId}-party`}
+                labelText={partyLabel}
+                value={party}
+                onChange={e => setParty(e.target.value)}
+                placeholder={isReceived ? 'Who gave the money' : 'Who received the money'}
+                required
+              />
+            </div>
+          </div>
+        </section>
 
-        <div className="grid grid-cols-2 gap-3">
-          <TextInput
-            id={`${formId}-amount`}
-            type="number"
-            step="0.01"
-            min="0.01"
-            labelText="Amount *"
-            placeholder="0.00"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            required
-          />
-          <Select id={`${formId}-currency`} labelText="Currency" value={currency} onChange={e => setCurrency(e.target.value)}>
-            {CURRENCIES.map(c => <SelectItem key={c} value={c} text={c} />)}
-          </Select>
-        </div>
-
-        <TextInput
-          id={`${formId}-purpose`}
-          labelText="Purpose *"
-          value={purpose}
-          onChange={e => setPurpose(e.target.value)}
-          placeholder={isReceived ? 'e.g. Sales proceeds, Office float' : 'e.g. Trip expenses, Staff wages'}
-          required
-        />
-
-        <div className="grid grid-cols-2 gap-3">
-          <TextInput id={`${formId}-date`} type="date" labelText="Date" value={date} onChange={e => setDate(e.target.value)} />
-          <TextInput id={`${formId}-ref`} labelText="Reference" value={reference} onChange={e => setReference(e.target.value)} placeholder="Optional" />
-        </div>
-
-        <TextArea
-          id={`${formId}-desc`}
-          labelText="Description"
-          rows={2}
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          placeholder="Any additional notes..."
-        />
+        {/* Transaction Details */}
+        <section>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Transaction Details</h3>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <TextInput
+                  id={`${formId}-amount`}
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  labelText="Amount *"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  required
+                />
+                <Select id={`${formId}-currency`} labelText="Currency" value={currency} onChange={e => setCurrency(e.target.value)}>
+                  {CURRENCIES.map(c => <SelectItem key={c} value={c} text={c} />)}
+                </Select>
+              </div>
+              <TextInput
+                id={`${formId}-purpose`}
+                labelText="Purpose *"
+                value={purpose}
+                onChange={e => setPurpose(e.target.value)}
+                placeholder={isReceived ? 'e.g. Sales proceeds, Office float' : 'e.g. Trip expenses, Staff wages'}
+                required
+              />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <TextInput id={`${formId}-date`} type="date" labelText="Date" value={date} onChange={e => setDate(e.target.value)} />
+                <TextInput id={`${formId}-ref`} labelText="Reference" value={reference} onChange={e => setReference(e.target.value)} placeholder="Optional" />
+              </div>
+              <TextArea
+                id={`${formId}-desc`}
+                labelText="Description"
+                rows={2}
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Any additional notes..."
+              />
+            </div>
+          </div>
+        </section>
 
         <p className="text-xs text-zinc-400">Will be recorded as: <span className="font-medium text-zinc-600">{userName || 'Director'}</span></p>
       </form>

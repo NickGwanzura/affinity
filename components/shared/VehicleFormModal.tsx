@@ -105,107 +105,117 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         </div>
       }
     >
-      <form id="vehicle-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Row 1: Make and Model — full width, autoFocus */}
-        <TextInput
-          id="vehicle-model"
-          labelText="Make and Model *"
-          placeholder="e.g. Toyota Land Cruiser V8"
-          autoFocus
-          value={form.model}
-          onChange={(e) => {
-            if (errors.model) setErrors((prev) => ({ ...prev, model: undefined }));
-            onChange({ model: e.target.value });
-          }}
-          invalid={!!errors.model}
-          invalidText={errors.model}
-        />
-
-        {/* Row 2: VIN | Reg — 2-col grid */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <TextInput
-            id="vehicle-vin"
-            labelText="VIN Number *"
-            helperText="Unique vehicle identification number"
-            placeholder="Enter VIN number"
-            autoComplete="off"
-            value={form.vin}
-            onChange={(e) => {
-              if (errors.vin) setErrors((prev) => ({ ...prev, vin: undefined }));
-              onChange({ vin: e.target.value.toUpperCase() });
-            }}
-            invalid={!!errors.vin}
-            invalidText={errors.vin}
-          />
-          <TextInput
-            id="vehicle-reg"
-            labelText="Registration Number"
-            helperText="Leave blank if not yet registered."
-            placeholder="e.g. N 12345 AB"
-            value={form.reg}
-            onChange={(e) => onChange({ reg: e.target.value })}
-          />
+      <form id="vehicle-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
+        {/* Basic Details */}
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Basic Details</h3>
+          <div className="space-y-3">
+            <TextInput
+              id="vehicle-model"
+              labelText="Make and Model *"
+              placeholder="e.g. Toyota Land Cruiser V8"
+              autoFocus
+              value={form.model}
+              onChange={(e) => {
+                if (errors.model) setErrors((prev) => ({ ...prev, model: undefined }));
+                onChange({ model: e.target.value });
+              }}
+              invalid={!!errors.model}
+              invalidText={errors.model}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <TextInput
+                id="vehicle-vin"
+                labelText="VIN Number *"
+                helperText="17-char identifier"
+                placeholder="Enter VIN"
+                autoComplete="off"
+                value={form.vin}
+                onChange={(e) => {
+                  if (errors.vin) setErrors((prev) => ({ ...prev, vin: undefined }));
+                  onChange({ vin: e.target.value.toUpperCase() });
+                }}
+                invalid={!!errors.vin}
+                invalidText={errors.vin}
+              />
+              <TextInput
+                id="vehicle-reg"
+                labelText="Registration"
+                helperText="Leave blank if unregistered"
+                placeholder="e.g. N 12345 AB"
+                value={form.reg}
+                onChange={(e) => onChange({ reg: e.target.value })}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Row 3: Price | Currency — 3-col grid */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="sm:col-span-2">
-            <TextInput
-              id="vehicle-price"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              labelText="Purchase Price *"
-              placeholder="0.00"
-              value={form.price}
-              onChange={(e) => {
-                if (errors.price) setErrors((prev) => ({ ...prev, price: undefined }));
-                onChange({ price: e.target.value });
-              }}
-              invalid={!!errors.price}
-              invalidText={errors.price}
+        {/* Pricing */}
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Pricing</h3>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <TextInput
+                id="vehicle-price"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                labelText="Purchase Price *"
+                placeholder="0.00"
+                value={form.price}
+                onChange={(e) => {
+                  if (errors.price) setErrors((prev) => ({ ...prev, price: undefined }));
+                  onChange({ price: e.target.value });
+                }}
+                invalid={!!errors.price}
+                invalidText={errors.price}
+              />
+            </div>
+            <Select
+              id="vehicle-currency"
+              labelText="Currency"
+              value={form.currency ?? 'GBP'}
+              onChange={(e) => onChange({ currency: e.target.value as 'GBP' | 'USD' })}
+            >
+              <SelectItem value="GBP" text="GBP" />
+              <SelectItem value="USD" text="USD" />
+            </Select>
+          </div>
+        </div>
+
+        {/* Classification */}
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Classification</h3>
+          <div className="space-y-3">
+            {!hidePurpose && (
+              <Select
+                id="vehicle-purpose"
+                labelText="Purpose"
+                value={form.purpose}
+                onChange={(e) => onChange({ purpose: e.target.value as 'Resale' | 'Client' })}
+              >
+                <SelectItem value="Resale" text="Resale" />
+                <SelectItem value="Client" text="Client" />
+              </Select>
+            )}
+            <Checkbox
+              id="vehicle-cbca"
+              labelText="CBCA Applied For"
+              helperText="Cross-border cargo authorisation lodged with customs"
+              checked={form.cbcaApplied}
+              onChange={(e) => onChange({ cbcaApplied: e.target.checked })}
             />
           </div>
-          <Select
-            id="vehicle-currency"
-            labelText="Currency"
-            value={form.currency ?? 'GBP'}
-            onChange={(e) => onChange({ currency: e.target.value as 'GBP' | 'USD' })}
-          >
-            <SelectItem value="GBP" text="GBP" />
-            <SelectItem value="USD" text="USD" />
-          </Select>
         </div>
 
-        {/* Row 4: Purpose Select — only when !hidePurpose */}
-        {!hidePurpose && (
-          <Select
-            id="vehicle-purpose"
-            labelText="Purpose"
-            value={form.purpose}
-            onChange={(e) => onChange({ purpose: e.target.value as 'Resale' | 'Client' })}
-          >
-            <SelectItem value="Resale" text="Resale" />
-            <SelectItem value="Client" text="Client" />
-          </Select>
-        )}
-
-        {/* Row 5: CBCA Checkbox */}
-        <Checkbox
-          id="vehicle-cbca"
-          labelText="CBCA Applied For"
-          helperText="Cross-border cargo authorisation lodged with customs"
-          checked={form.cbcaApplied}
-          onChange={(e) => onChange({ cbcaApplied: e.target.checked })}
-        />
-
-        {/* Row 6: Reg book URL */}
-        <div>
+        {/* Documentation */}
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Documentation</h3>
           <TextInput
             id="vehicle-reg-book"
             type="url"
-            labelText="Reg book URL"
+            labelText="Reg Book URL"
             helperText="Paste a link to a hosted PDF of the registration book"
             autoComplete="url"
             value={form.regBookUrl}
@@ -219,7 +229,6 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
           )}
         </div>
 
-        {/* Row 7: UK status notice — only when adding */}
         {!isEditing && (
           <InlineNotification
             kind="info"

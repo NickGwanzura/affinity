@@ -4,6 +4,7 @@ import {
   apiError,
   handleCors,
   requireAccessRole,
+  requireBusinessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
   verifyToken,
@@ -42,6 +43,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
+  if (!requireBusinessRole(authReq, res, ['Accountant'])) return;
 
   try {
     const { action } = req.query;

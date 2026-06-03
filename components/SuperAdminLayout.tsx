@@ -78,7 +78,7 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({
       {/* Fixed sidebar */}
       <nav
         aria-label="Admin navigation"
-        className="fixed top-12 left-0 bottom-0 z-[7500] w-64 border-r border-gray-200 bg-white"
+        className="fixed top-12 left-0 bottom-0 z-[7500] w-64 border-r border-zinc-200 bg-white"
       >
         <div className="flex flex-col py-2">
           {NAV_SECTIONS.map((section) => (
@@ -91,8 +91,8 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({
               }}
               className={`px-4 py-3 text-sm ${
                 activeSection === section.id
-                  ? 'border-l-4 border-[#D97706] bg-gray-100 font-semibold text-gray-900'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'border-l-4 border-[#D97706] bg-zinc-100 font-semibold text-zinc-900'
+                  : 'text-zinc-700 hover:bg-zinc-50'
               }`}
               aria-current={activeSection === section.id ? 'page' : undefined}
             >
@@ -104,7 +104,7 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({
 
       <main
         id="main-content"
-        className="min-h-screen bg-gray-100 pt-12 pl-64"
+        className="min-h-screen bg-zinc-100 pt-12 pl-64"
       >
         {children}
       </main>

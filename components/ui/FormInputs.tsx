@@ -4,22 +4,22 @@ import { Eye, EyeOff, Loader2, Check, AlertCircle, ChevronDown, Info, AlertTrian
 /* ──────────────────────────────────────────────────────────────────────────
    Shared tokens
    ──────────────────────────────────────────────────────────────────────── */
-const labelCls = 'block text-sm font-medium text-zinc-700 mb-1.5';
-const helperCls = 'mt-1.5 text-xs text-zinc-500 leading-snug';
-const errorCls = 'mt-1.5 flex items-start gap-1 text-xs text-red-600 leading-snug';
+const labelCls = 'block text-xs font-medium text-zinc-500 mb-1 leading-snug';
+const helperCls = 'mt-1 text-xs text-zinc-400 leading-snug';
+const errorCls = 'mt-1 flex items-start gap-1 text-xs text-red-600 leading-snug';
 
-// 44px min-height (touch target), text-base (prevents iOS zoom), rounded-lg.
+// 44px min-height, 16px font (prevents iOS auto-zoom), refined focus ring.
 const baseInput =
-  'block w-full bg-white text-zinc-900 text-base placeholder-zinc-400 ' +
-  'border border-stone-300 rounded-lg ' +
-  'px-3.5 py-2 min-h-[2.75rem] shadow-sm appearance-none ' +
-  'transition-[border-color,box-shadow,background-color] duration-150 ease-out ' +
-  'hover:border-stone-400 ' +
-  'focus:outline-none focus-visible:outline-none focus-visible:border-[#D97706] focus-visible:ring-2 focus-visible:ring-[#D97706]/30 ' +
-  'disabled:bg-stone-100 disabled:text-zinc-400 disabled:border-stone-200 disabled:cursor-not-allowed disabled:shadow-none';
+  'block w-full bg-white text-zinc-900 text-base placeholder:text-zinc-400 ' +
+  'border border-stone-200 rounded-lg ' +
+  'px-3.5 py-2.5 min-h-[44px] appearance-none ' +
+  'transition-[border-color,box-shadow] duration-150 ease-out ' +
+  'hover:border-stone-300 ' +
+  'focus:outline-none focus-visible:outline-none focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500/30 ' +
+  'disabled:bg-stone-50 disabled:text-zinc-400 disabled:border-stone-200 disabled:cursor-not-allowed';
 
 const invalidCls =
-  'border-red-500 focus-visible:border-red-600 focus-visible:ring-red-500/30';
+  'border-red-500 focus-visible:border-red-600 focus-visible:ring-1 focus-visible:ring-red-500/30';
 
 /* ── Field wrapper ─────────────────────────────────────────────────────── */
 interface FieldProps {
@@ -137,6 +137,43 @@ export const PasswordInput: React.FC<TextInputProps> = (props) => {
     </Field>
   );
 };
+
+/* ── DateInput ────────────────────────────────────────────────────────────── */
+export interface DateInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
+  id: string;
+  labelText: string;
+  hideLabel?: boolean;
+  helperText?: string;
+  invalid?: boolean;
+  invalidText?: string;
+}
+export const DateInput: React.FC<DateInputProps> = ({
+  id,
+  labelText,
+  hideLabel,
+  helperText,
+  invalid,
+  invalidText,
+  className = '',
+  ...props
+}) => (
+  <Field
+    id={id}
+    labelText={labelText}
+    hideLabel={hideLabel}
+    helperText={helperText}
+    invalid={invalid}
+    invalidText={invalidText}
+  >
+    <input
+      id={id}
+      type="date"
+      aria-invalid={invalid || undefined}
+      className={`${baseInput} ${invalid ? invalidCls : ''} ${className}`}
+      {...props}    />
+  </Field>
+);
 
 /* ── TextArea ──────────────────────────────────────────────────────────── */
 export interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -494,11 +531,11 @@ const tagTypeCls: Record<TagColor, string> = {
   cyan:            'bg-cyan-100 text-cyan-800',
   teal:            'bg-teal-100 text-teal-800',
   green:           'bg-green-100 text-green-800',
-  gray:            'bg-gray-100 text-gray-800',
-  'cool-gray':     'bg-slate-100 text-slate-800',
+  gray:            'bg-zinc-100 text-zinc-800',
+  'cool-gray':     'bg-slate-100 text-zinc-800',
   'warm-gray':     'bg-stone-100 text-stone-800',
-  'high-contrast': 'bg-gray-900 text-white',
-  outline:         'border border-gray-400 text-gray-700',
+  'high-contrast': 'bg-zinc-900 text-white',
+  outline:         'border border-zinc-400 text-zinc-700',
 };
 export const Tag: React.FC<TagProps> = ({
   type = 'gray', size = 'md', children, className = '', onClick,

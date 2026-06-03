@@ -1,15 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
-export type ModalSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl';
 
+/**
+ * Modal sizes matching Stripe/Linear premium SaaS standards:
+ *   sm = 420px — confirmations, quick actions
+ *   md = 640px — simple forms
+ *   lg = 800px — operational forms
+ *   xl = 1100px — data-heavy workflows
+ */
 const sizeClasses: Record<ModalSize, string> = {
-  xs: 'max-w-sm',
-  sm: 'max-w-md',
-  md: 'max-w-2xl',
-  lg: 'max-w-4xl',
-  xl: 'max-w-6xl',
-  '2xl': 'max-w-7xl',
+  sm: 'max-w-[420px]',
+  md: 'max-w-[640px]',
+  lg: 'max-w-[800px]',
+  xl: 'max-w-[1100px]',
 };
 
 interface ModalProps {
@@ -21,7 +26,6 @@ interface ModalProps {
   children: React.ReactNode;
   footer?:  React.ReactNode;
   preventCloseOnClickOutside?: boolean;
-  danger?:  boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -29,7 +33,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   label,
-  size = 'lg',
+  size = 'md',
   children,
   footer,
   preventCloseOnClickOutside = false,
@@ -41,6 +45,7 @@ export const Modal: React.FC<ModalProps> = ({
     if (!isOpen) return;
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
+    const scrollY = window.scrollY;
 
     const focusableSelector =
       'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), ' +
@@ -87,16 +92,37 @@ export const Modal: React.FC<ModalProps> = ({
       }
     };
 
+    // Prevent iOS rubber-band scroll on the body
+    const preventTouchMove = (e: TouchEvent) => {
+      if (e.target && dialogRef.current?.contains(e.target as Node)) {
+        return;
+      }
+      e.preventDefault();
+    };
+
     document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
+    document.addEventListener('touchmove', preventTouchMove, { passive: false });
+
+    const prevOverflow = document.body.style.overflow;
+    const prevPosition = document.body.style.position;
+    const prevTop = document.body.style.top;
+    const prevWidth = document.body.style.width;
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
 
     const focusTimer = window.setTimeout(focusFirst, 0);
 
     return () => {
       window.clearTimeout(focusTimer);
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
+      document.removeEventListener('touchmove', preventTouchMove);
+      document.body.style.overflow = prevOverflow;
+      document.body.style.position = prevPosition;
+      document.body.style.top = prevTop;
+      document.body.style.width = prevWidth;
+      window.scrollTo(0, scrollY);
       previouslyFocused?.focus?.();
     };
   }, [isOpen, onClose]);
@@ -115,30 +141,39 @@ export const Modal: React.FC<ModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={title ?? label}
-      className="app-modal-overlay-enter fixed inset-0 z-[9000] flex items-end justify-center bg-black/55 backdrop-blur-[3px] sm:items-center sm:p-4"
+      className="fixed inset-0 z-[9000] flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center sm:p-4 app-modal-overlay-enter"
     >
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className={`app-modal-content-enter flex max-h-[95dvh] w-full flex-col bg-white shadow-2xl ring-1 ring-black/5 outline-none rounded-t-3xl sm:max-h-[90vh] sm:rounded-2xl ${sizeClasses[size]}`}
-        onMouseDown={(e) => e.stopPropagation()}
+        className={`
+          flex w-full flex-col bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_12px_40px_rgba(0,0,0,0.12)] outline-none
+          /* Mobile: full-screen sheet with top drag handle */
+          max-h-[100dvh] rounded-t-2xl
+          /* Desktop: centered modal with max-width constraint */
+          sm:max-h-[90vh] sm:rounded-xl sm:mx-auto
+          ${sizeClasses[size]}
+          app-modal-content-enter
+        `}
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        {/* Mobile drag-handle affordance — purely decorative dismissibility cue. */}
+        {/* Mobile drag-handle affordance */}
         <div
           aria-hidden="true"
-          className="mx-auto mt-3 mb-1 h-1.5 w-12 shrink-0 rounded-full bg-stone-300 sm:hidden"
+          className="mx-auto mt-2 mb-1 h-1 w-10 shrink-0 rounded-full bg-stone-300 sm:hidden"
         />
+
+        {/* ── Sticky Header ─────────────────────────────────────────────── */}
         {(title || label) && (
-          <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-4 py-3 sm:px-6 sm:py-4">
-            <div className="min-w-0">
+          <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-stone-200 bg-white px-5 py-3 sm:px-6 sm:py-3">
+            <div className="min-w-0 flex-1">
               {label && (
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#D97706]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-600">
                   {label}
                 </p>
               )}
               {title && (
-                <h2 className="mt-1 text-lg font-semibold tracking-tight text-zinc-900 truncate sm:text-xl">
+                <h2 className="mt-0.5 text-base font-semibold tracking-tight text-zinc-900 truncate sm:text-lg">
                   {title}
                 </h2>
               )}
@@ -147,17 +182,23 @@ export const Modal: React.FC<ModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="-m-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-stone-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D97706] sm:h-9 sm:w-9"
+              className="-mr-1.5 -mt-1.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-zinc-400 transition-colors hover:bg-stone-100 hover:text-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">{children}</div>
+        {/* ── Scrollable Body ───────────────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 sm:py-5">
+          {children}
+        </div>
 
+        {/* ── Sticky Footer ─────────────────────────────────────────────── */}
         {footer && (
-          <div className="modal-footer border-t border-stone-200 bg-stone-50/60 px-4 py-3 sm:px-6 sm:py-4">{footer}</div>
+          <div className="sticky bottom-0 z-10 border-t border-stone-200 bg-white px-5 py-3 sm:px-6 sm:py-3">
+            {footer}
+          </div>
         )}
       </div>
     </div>

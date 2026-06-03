@@ -6,13 +6,9 @@ import {
   Select,
   SelectItem,
   Button,
-  IconButton,
-  Stack,
-  Grid,
-  Column,
   NumberInput,
 } from '../ui';
-import { Plus, Trash2, AlertTriangle, Check } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import type { Invoice, Payment } from '../../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -180,146 +176,137 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
       }
     >
-      <Stack gap={3}>
+      <div className="space-y-6">
         {/* ── Client ──────────────────────────────────────────────── */}
         <section>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Client
-          </h3>
-          <Select
-            id="payment-client"
-            labelText="Client *"
-            value={formData.client_id}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-              const opt = clientOptions.find(c => c.id === e.target.value);
-              onClientChange(e.target.value, opt?.name || '');
-            }}
-            disabled={!!editingPayment}
-          >
-            <SelectItem value="" text="Select a client" />
-            {clientOptions.map(c => (
-              <SelectItem
-                key={c.id}
-                value={c.id}
-                text={`${c.name}${!c.isRegistered ? ' (unregistered)' : ''}`}
-              />
-            ))}
-          </Select>
-        </section>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Client</h3>
+            <div className="space-y-3">
+              <Select
+                id="payment-client"
+                labelText="Client *"
+                value={formData.client_id}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  const opt = clientOptions.find(c => c.id === e.target.value);
+                  onClientChange(e.target.value, opt?.name || '');
+                }}
+                disabled={!!editingPayment}
+              >
+                <SelectItem value="" text="Select a client" />
+                {clientOptions.map(c => (
+                  <SelectItem
+                    key={c.id}
+                    value={c.id}
+                    text={`${c.name}${!c.isRegistered ? ' (unregistered)' : ''}`}
+                  />
+                ))}
+              </Select>
 
-        {/* ── Client Balance ──────────────────────────────────────── */}
-        {clientBalance && formData.client_name && (
-          <div className="rounded-lg bg-white border border-stone-200 p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.05em] text-zinc-600">
-                Client Balance Summary
-              </span>
-              <span className="text-xs text-zinc-600">
-                Opening + Invoiced - Paid
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-              <div>
-                <div className="text-xs text-zinc-600">Opening</div>
-                <div className="font-bold">{formatMoney(clientBalance.openingBalance, clientBalance.currency)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-zinc-600">Invoiced</div>
-                <div className="font-bold">{formatMoney(clientBalance.totalInvoiced, clientBalance.currency)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-zinc-600">Paid</div>
-                <div className="font-bold text-emerald-500">
-                  {formatMoney(clientBalance.totalPaid, clientBalance.currency)}
+              {clientBalance && formData.client_name && (
+                <div className="rounded-xl bg-white border border-stone-200 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">
+                    Client Balance Summary
+                  </span>
+                  <span className="text-xs text-zinc-400">
+                    Opening + Invoiced − Paid
+                  </span>
                 </div>
-              </div>
-              <div>
-                <div className="text-xs text-zinc-600">
-                  {clientBalance.balance > 0 ? 'Due' : clientBalance.credit > 0 ? 'Credit' : 'Balance'}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="text-center">
+                    <div className="text-xs text-zinc-500">Opening</div>
+                    <div className="font-bold text-zinc-900">{formatMoney(clientBalance.openingBalance, clientBalance.currency)}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-zinc-500">Invoiced</div>
+                    <div className="font-bold text-zinc-900">{formatMoney(clientBalance.totalInvoiced, clientBalance.currency)}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-zinc-500">Paid</div>
+                    <div className="font-bold text-emerald-600">
+                      {formatMoney(clientBalance.totalPaid, clientBalance.currency)}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-zinc-500">
+                      {clientBalance.balance > 0 ? 'Due' : clientBalance.credit > 0 ? 'Credit' : 'Balance'}
+                    </div>
+                    <div
+                      className={`text-lg font-bold ${
+                        clientBalance.balance > 0
+                          ? 'text-red-600'
+                          : clientBalance.credit > 0
+                            ? 'text-emerald-600'
+                            : 'text-zinc-900'
+                      }`}
+                    >
+                      {clientBalance.balance > 0
+                        ? formatMoney(clientBalance.balance, clientBalance.currency)
+                        : clientBalance.credit > 0
+                          ? formatMoney(clientBalance.credit, clientBalance.currency)
+                          : formatMoney(0, clientBalance.currency)}
+                    </div>
+                  </div>
                 </div>
-                <div
-                  className={[
-                    'text-lg font-bold',
-                    clientBalance.balance > 0
-                      ? 'text-red-600'
-                      : clientBalance.credit > 0
-                        ? 'text-emerald-500'
-                        : 'text-zinc-900',
-                  ].join(' ')}
-                >
-                  {clientBalance.balance > 0
-                    ? formatMoney(clientBalance.balance, clientBalance.currency)
-                    : clientBalance.credit > 0
-                      ? formatMoney(clientBalance.credit, clientBalance.currency)
-                      : formatMoney(0, clientBalance.currency)}
-                </div>
-              </div>
-            </div>
-            {clientBalance.balance <= 0 && clientBalance.credit === 0 && (
-              <div className="mt-2 p-2 bg-amber-100 text-xs flex items-center gap-2">
-                <AlertTriangle size={14} />
-                Client has no outstanding balance. Payment will be recorded as credit.
+                {clientBalance.balance <= 0 && clientBalance.credit === 0 && (
+                  <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs flex items-center gap-2 text-amber-700">
+                    <AlertTriangle size={14} />
+                    <span>No outstanding balance. Payment will be recorded as credit.</span>
+                  </div>
+                )}
               </div>
             )}
+            </div>
           </div>
-        )}
+        </section>
 
         {/* ── Payment Details ─────────────────────────────────────── */}
         <section>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Payment Details
-          </h3>
-
-          <Grid>
-            <Column sm={4} md={4} lg={8}>
-              <NumberInput
-                id="payment-amount"
-                labelText="Amount *"
-                value={formData.amount}
-                onChange={(_e: any, { value }: any) => onFormChange({ amount: String(value) })}
-                step={0.01}
-                min={0}
-              />
-            </Column>
-            <Column sm={4} md={4} lg={8}>
-              <Select
-                id="payment-currency"
-                labelText="Currency"
-                value={formData.currency}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  onFormChange({ currency: e.target.value as 'USD' | 'GBP' })
-                }
-              >
-                <SelectItem value="USD" text="USD ($)" />
-                <SelectItem value="GBP" text="GBP (£)" />
-              </Select>
-            </Column>
-            <Column sm={4} md={4} lg={8}>
-              <Select
-                id="payment-method"
-                labelText="Payment Method"
-                value={formData.method}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  onFormChange({ method: e.target.value })
-                }
-              >
-                {PAYMENT_METHODS.map(m => (
-                  <SelectItem key={m} value={m} text={m} />
-                ))}
-              </Select>
-            </Column>
-            <Column sm={4} md={4} lg={8}>
-              <TextInput
-                id="payment-date"
-                labelText="Payment Date *"
-                type="date"
-                value={formData.date}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  onFormChange({ date: e.target.value })
-                }
-              />
-            </Column>
-          </Grid>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Payment Details</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <NumberInput
+              id="payment-amount"
+              labelText="Amount *"
+              value={formData.amount}
+              onChange={(_e: any, { value }: any) => onFormChange({ amount: String(value) })}
+              step={0.01}
+              min={0}
+            />
+            <Select
+              id="payment-currency"
+              labelText="Currency"
+              value={formData.currency}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                onFormChange({ currency: e.target.value as 'USD' | 'GBP' })
+              }
+            >
+              <SelectItem value="USD" text="USD ($)" />
+              <SelectItem value="GBP" text="GBP (£)" />
+            </Select>
+            <Select
+              id="payment-method"
+              labelText="Payment Method"
+              value={formData.method}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                onFormChange({ method: e.target.value })
+              }
+            >
+              {PAYMENT_METHODS.map(m => (
+                <SelectItem key={m} value={m} text={m} />
+              ))}
+            </Select>
+            <TextInput
+              id="payment-date"
+              labelText="Payment Date *"
+              type="date"
+              value={formData.date}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onFormChange({ date: e.target.value })
+              }
+            />
+            </div>
+          </div>
         </section>
 
         {/* ── Allocation Summary ──────────────────────────────────── */}
@@ -348,40 +335,35 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         )}
 
         {isOverAllocated && (
-          <div className="flex items-center gap-2 py-3 px-4 bg-red-100 border-l-[3px] border-red-600 text-red-600">
+          <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-600">
             <AlertTriangle size={16} />
-            <span className="text-sm font-semibold">
-              Allocated amount exceeds payment total
-            </span>
+            <span className="text-sm font-semibold">Allocated amount exceeds payment total</span>
           </div>
         )}
 
         {/* ── Allocations ─────────────────────────────────────────── */}
         {formData.client_name && (
           <section>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Allocations{' '}
-                <span className="font-normal normal-case tracking-normal text-zinc-400">
-                  (Optional)
-                </span>
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                renderIcon={Plus}
-                onClick={addAllocationRow}
-                disabled={!formData.client_name}
-              >
-                Add
-              </Button>
-            </div>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+                  Allocations{' '}
+                  <span className="font-normal normal-case tracking-normal text-zinc-400">(Optional)</span>
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  renderIcon={Plus}
+                  onClick={addAllocationRow}
+                  disabled={!formData.client_name}
+                >
+                  Add
+                </Button>
+              </div>
 
-            <p className="text-xs text-zinc-600 mb-3">
-              Split this payment across open invoices.
-            </p>
+              <p className="text-xs text-zinc-500 mb-3">Split this payment across open invoices.</p>
 
-            <Stack gap={3}>
+            <div className="space-y-3">
               {allocations.map((allocation, index) => {
                 const selectedInvoice = allocationCandidates.find(
                   c => c.invoice.id === allocation.invoice_id,
@@ -393,10 +375,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 return (
                   <div
                     key={`${allocation.invoice_id || 'new'}-${index}`}
-                    className="p-3 rounded-lg bg-white border border-stone-200"
+                    className="rounded-xl border border-stone-200 bg-white p-4"
                   >
-                    <Grid>
-                      <Column sm={4} md={5} lg={8}>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+                      <div className="sm:col-span-6">
                         <Select
                           id={`alloc-invoice-${index}`}
                           labelText="Invoice"
@@ -414,8 +396,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             />
                           ))}
                         </Select>
-                      </Column>
-                      <Column sm={3} md={4} lg={6}>
+                      </div>
+                      <div className="sm:col-span-4">
                         <NumberInput
                           id={`alloc-amount-${index}`}
                           labelText="Allocated Amount"
@@ -427,65 +409,65 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                           min={0}
                         />
                         {selectedInvoice && (
-                          <p className="text-xs text-zinc-600 mt-1">
+                          <p className="text-xs text-zinc-500 mt-1">
                             Outstanding: {formatMoney(selectedInvoice.outstandingAmount, selectedInvoice.invoice.currency)}
                           </p>
                         )}
-                      </Column>
-                      <Column sm={1} md={1} lg={2} className="flex items-end">
-                        <IconButton
-                          variant="ghost"
-                          size="sm"
-                          icon={<Trash2 size={14} />}
-                          label="Remove allocation"
+                      </div>
+                      <div className="sm:col-span-2 flex items-end pb-1">
+                        <button
+                          type="button"
                           onClick={() => removeAllocation(index)}
-                          className="text-red-600"
-                        />
-                      </Column>
-                    </Grid>
+                          className="inline-flex h-12 w-full items-center justify-center rounded-xl text-red-500 hover:bg-red-50 transition-colors border border-dashed border-red-200"
+                          aria-label="Remove allocation"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
-            </Stack>
+            </div>
 
             {/* Allocated Total */}
-            <div className="mt-3 rounded-lg py-3 px-4 bg-zinc-900 flex justify-between items-center">
-              <span className="font-semibold text-sm text-zinc-400">
-                Allocated Total
-              </span>
-              <span className="font-bold text-white">
-                {formatMoney(totalAllocated, formData.currency)}
-              </span>
+            <div className="mt-3 rounded-xl py-3 px-4 bg-zinc-900 flex justify-between items-center">
+              <span className="font-semibold text-sm text-zinc-400">Allocated Total</span>
+              <span className="font-bold text-white">{formatMoney(totalAllocated, formData.currency)}</span>
             </div>
 
             {/* No invoices available notice */}
             {allocationCandidates.length === 0 && (
-              <div className="mt-3 p-3 rounded-lg bg-white border border-stone-200">
+              <div className="mt-3 rounded-xl bg-white border border-stone-200 p-4">
                 <p className="text-sm text-zinc-600">
                   No pending invoices found for this client in {formData.currency}.
                 </p>
-                <p className="mt-1 text-sm font-semibold text-amber-500">
+                <p className="mt-1 text-sm font-semibold text-amber-600">
                   This payment will be recorded as UNALLOCATED (client credit).
                 </p>
               </div>
             )}
+          </div>
           </section>
         )}
 
         {/* ── Notes ───────────────────────────────────────────────── */}
         <section>
-          <TextArea
-            id="payment-notes"
-            labelText="Notes"
-            value={formData.notes}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-              onFormChange({ notes: e.target.value })
-            }
-            rows={2}
-            placeholder="Optional receipt notes"
-          />
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Notes</h3>
+            <TextArea
+              id="payment-notes"
+              labelText="Notes"
+              value={formData.notes}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                onFormChange({ notes: e.target.value })
+              }
+              rows={2}
+              placeholder="Optional receipt notes"
+            />
+          </div>
         </section>
-      </Stack>
+      </div>
     </Modal>
   );
 };
@@ -505,13 +487,13 @@ const SummaryCell: React.FC<{
   accent?: 'error' | 'success' | 'warning';
 }> = ({ label, value, emphasis, accent }) => (
   <div className="bg-white border border-stone-200 rounded-md px-4 py-4 text-center">
-    <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-zinc-600 mb-1">
+    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-600 mb-1">
       {label}
     </div>
     <div
       className={[
         'font-bold',
-        emphasis ? 'text-lg' : 'text-[0.9375rem]',
+        emphasis ? 'text-lg' : 'text-sm',
         accent ? accentClasses[accent] : 'text-zinc-900',
       ].join(' ')}
     >

@@ -3,6 +3,7 @@ import {
   AuthenticatedRequest,
   verifyToken,
   requireAccessRole,
+  requireBusinessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
@@ -26,6 +27,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
+  if (!requireBusinessRole(authReq, res, ['Admin', 'Manager', 'Accountant', 'Driver'])) return;
 
   try {
     switch (req.method) {

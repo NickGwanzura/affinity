@@ -183,7 +183,7 @@ async function listQuotes(req: AuthenticatedRequest, res: ApiResponse) {
     const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
     const [countResult, rows] = await Promise.all([
-      sql`SELECT COUNT(*) as total FROM quotes`,
+      sql`SELECT COUNT(*) as total FROM quotes WHERE deleted_at IS NULL`,
       sql`
         SELECT q.*,
           COALESCE(
@@ -191,6 +191,7 @@ async function listQuotes(req: AuthenticatedRequest, res: ApiResponse) {
             '[]'::jsonb
           ) as items
         FROM quotes q
+        WHERE q.deleted_at IS NULL
         ORDER BY ${sql.unsafe(orderColumn)} ${sql.unsafe(orderDirection)}
         LIMIT ${limit} OFFSET ${offset}
       `,
@@ -220,7 +221,7 @@ async function getQuote(req: AuthenticatedRequest, res: ApiResponse) {
         '[]'::jsonb
       ) as items
     FROM quotes q
-    WHERE q.id = ${id}::uuid
+    WHERE q.id = ${id}::uuid AND q.deleted_at IS NULL
   `;
 
   if (rows.length === 0) {
@@ -463,7 +464,7 @@ async function deleteQuote(req: AuthenticatedRequest, res: ApiResponse) {
 
   await withTransaction(async client => {
     await client.query('DELETE FROM quote_items WHERE quote_id = $1::uuid', [id]);
-    const result = await client.query('DELETE FROM quotes WHERE id = $1::uuid RETURNING id', [id]);
+    const result = await client.query('UPDATE quotes SET deleted_at = NOW() WHERE id = $1::uuid RETURNING id', [id]);
     if (result.rows.length === 0) {
       throw new Error('Not found');
     }

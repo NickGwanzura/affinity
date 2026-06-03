@@ -75,10 +75,10 @@ export const ClientDetailPanel: React.FC<Props> = ({
 }) => {
   if (!c) {
     return (
-      <div className="bg-white border border-gray-200 flex items-center justify-center min-h-[400px]">
+      <div className="bg-white border border-zinc-200 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Users size={36} className="mx-auto text-gray-400 mb-3" />
-          <p className="text-gray-500 text-sm font-medium">Select a client to view details</p>
+          <Users size={36} className="mx-auto text-zinc-400 mb-3" />
+          <p className="text-zinc-500 text-sm font-medium">Select a client to view details</p>
         </div>
       </div>
     );
@@ -100,7 +100,7 @@ export const ClientDetailPanel: React.FC<Props> = ({
         onBack={onBack}
       />
 
-      <div className="bg-white border border-gray-200">
+      <div className="bg-white border border-zinc-200">
         <Tabs
           selectedIndex={activeTab}
           onChange={({ selectedIndex }) => onActiveTabChange(selectedIndex)}

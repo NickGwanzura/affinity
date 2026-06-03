@@ -1670,7 +1670,7 @@ export const Financials: React.FC = () => {
         onClose={closePreview}
         title={`${previewTitle} Preview`}
         label="PDF preview"
-        size="2xl"
+        size="xl"
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={closePreview}>Close</Button>

@@ -36,12 +36,12 @@ export const ActionMenu: React.FC<{ items: ActionItem[] }> = ({ items }) => {
         onClick={() => setOpen(v => !v)}
       />
       {open && (
-        <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 shadow-lg z-50">
+        <div className="absolute right-0 mt-1 w-44 bg-white border border-zinc-200 shadow-lg z-50">
           {items.map((item, i) => (
             <button
               key={i}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
-                item.danger ? 'text-red-600' : 'text-gray-700'
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 ${
+                item.danger ? 'text-red-600' : 'text-zinc-700'
               }`}
               onClick={() => {
                 setOpen(false);

@@ -157,135 +157,152 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
         </div>
       }
     >
-      <form id="expense-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Select
-          id="expense-vehicle"
-          labelText="Vehicle"
-          helperText="Optional — leave empty for general expenses"
-          value={formData.vehicle_id}
-          onChange={(e) => handleChange('vehicle_id', e.target.value)}
-          disabled={isSubmitting}
-        >
-          <SelectItem value="" text="None (General expense)" />
-          {vehicles.map((v) => (
-            <SelectItem key={v.id} value={v.id} text={`${v.make_model} (${v.vin_number})`} />
-          ))}
-        </Select>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <NumberInput
-            id="expense-amount"
-            labelText="Amount *"
-            placeholder="0.00"
-            value={formData.amount}
-            onChange={(e) => handleChange('amount', e.target.value)}
-            min={0.01}
-            step={0.01}
-            required
-            disabled={isSubmitting}
-            invalid={!!errors.amount}
-            invalidText={errors.amount}
-          />
-          <Select
-            id="expense-currency"
-            labelText="Currency"
-            value={formData.currency}
-            onChange={(e) => handleChange('currency', e.target.value as Currency)}
-            disabled={isSubmitting}
-          >
-            <SelectItem value={CURRENCIES.NAD} text="NAD (Namibia)" />
-            <SelectItem value={CURRENCIES.GBP} text="GBP (UK)" />
-            <SelectItem value={CURRENCIES.USD} text="USD (General)" />
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Select
-            id="expense-category"
-            labelText="Category"
-            value={formData.category}
-            onChange={(e) => handleChange('category', e.target.value as ExpenseCategory)}
-            disabled={isSubmitting}
-          >
-            <SelectItem value={EXPENSE_CATEGORIES.FUEL} text="Fuel" />
-            <SelectItem value={EXPENSE_CATEGORIES.TOLLS} text="Tolls" />
-            <SelectItem value={EXPENSE_CATEGORIES.FOOD} text="Food" />
-            <SelectItem value={EXPENSE_CATEGORIES.REPAIRS} text="Repairs" />
-            <SelectItem value={EXPENSE_CATEGORIES.DUTY} text="Duty" />
-            <SelectItem value={EXPENSE_CATEGORIES.SHIPPING} text="Shipping" />
-            <SelectItem
-              value={EXPENSE_CATEGORIES.DRIVER_DISBURSEMENT}
-              text="💰 Driver Disbursement"
-            />
-            <SelectItem value={EXPENSE_CATEGORIES.OTHER} text="Other" />
-          </Select>
-          <Select
-            id="expense-location"
-            labelText="Location"
-            value={formData.location}
-            onChange={(e) => handleChange('location', e.target.value as VehicleStatus)}
-            disabled={isSubmitting}
-          >
-            <SelectItem value={VEHICLE_STATUS.UK} text="UK" />
-            <SelectItem value={VEHICLE_STATUS.NAMIBIA} text="Namibia" />
-            <SelectItem value={VEHICLE_STATUS.ZIMBABWE} text="Zimbabwe" />
-            <SelectItem value={VEHICLE_STATUS.BOTSWANA} text="Botswana" />
-          </Select>
-        </div>
-
-        {isDriverDisbursement && (
-          <>
-            <InlineNotification
-              kind="warning"
-              title="Driver disbursement"
-              subtitle="Money will be recorded as disbursed to the selected driver for trip expenses."
-              hideCloseButton
-            />
+      <form id="expense-form" onSubmit={handleSubmit} className="space-y-4">
+        {/* Expense Details */}
+        <section>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Expense Details</h3>
+            <div className="space-y-3">
             <Select
-              id="expense-driver"
-              labelText="Driver *"
-              helperText="Money disbursed to this driver for trip expenses"
-              value={formData.driver_name}
-              onChange={(e) => handleChange('driver_name', e.target.value)}
-              required={isDriverDisbursement}
+              id="expense-vehicle"
+              labelText="Vehicle"
+              helperText="Optional — leave empty for general expenses"
+              value={formData.vehicle_id}
+              onChange={(e) => handleChange('vehicle_id', e.target.value)}
               disabled={isSubmitting}
-              invalid={!!errors.driver_name}
-              invalidText={errors.driver_name}
             >
-              <SelectItem value="" text="-- Select Driver --" />
-              {DRIVERS.map((d) => (
-                <SelectItem key={d} value={d} text={d} />
+              <SelectItem value="" text="None (General expense)" />
+              {vehicles.map((v) => (
+                <SelectItem key={v.id} value={v.id} text={`${v.make_model} (${v.vin_number})`} />
               ))}
             </Select>
-          </>
-        )}
 
-        <TextArea
-          id="expense-description"
-          labelText={
-            formData.category === EXPENSE_CATEGORIES.OTHER ? 'Description *' : 'Description'
-          }
-          placeholder={
-            formData.category === EXPENSE_CATEGORIES.OTHER
-              ? 'Please specify the type of expense'
-              : 'E.g. Full tank at Engen Windhoek'
-          }
-          rows={3}
-          value={formData.description}
-          onChange={(e) => handleChange('description', e.target.value)}
-          required={formData.category === EXPENSE_CATEGORIES.OTHER}
-          disabled={isSubmitting}
-          invalid={!!errors.description}
-          invalidText={errors.description}
-        />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <NumberInput
+                id="expense-amount"
+                labelText="Amount *"
+                placeholder="0.00"
+                value={formData.amount}
+                onChange={(e) => handleChange('amount', e.target.value)}
+                min={0.01}
+                step={0.01}
+                required
+                disabled={isSubmitting}
+                invalid={!!errors.amount}
+                invalidText={errors.amount}
+              />
+              <Select
+                id="expense-currency"
+                labelText="Currency"
+                value={formData.currency}
+                onChange={(e) => handleChange('currency', e.target.value as Currency)}
+                disabled={isSubmitting}
+              >
+                <SelectItem value={CURRENCIES.NAD} text="NAD (Namibia)" />
+                <SelectItem value={CURRENCIES.GBP} text="GBP (UK)" />
+                <SelectItem value={CURRENCIES.USD} text="USD (General)" />
+              </Select>
+            </div>
 
-        {Object.keys(errors).length > 0 && (
-          <InlineNotification
-            kind="error"
-            title="Please fix the errors"
-            subtitle="Review the highlighted fields and try again."
-          />
-        )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Select
+                id="expense-category"
+                labelText="Category"
+                value={formData.category}
+                onChange={(e) => handleChange('category', e.target.value as ExpenseCategory)}
+                disabled={isSubmitting}
+              >
+                <SelectItem value={EXPENSE_CATEGORIES.FUEL} text="Fuel" />
+                <SelectItem value={EXPENSE_CATEGORIES.TOLLS} text="Tolls" />
+                <SelectItem value={EXPENSE_CATEGORIES.FOOD} text="Food" />
+                <SelectItem value={EXPENSE_CATEGORIES.REPAIRS} text="Repairs" />
+                <SelectItem value={EXPENSE_CATEGORIES.DUTY} text="Duty" />
+                <SelectItem value={EXPENSE_CATEGORIES.SHIPPING} text="Shipping" />
+                <SelectItem
+                  value={EXPENSE_CATEGORIES.DRIVER_DISBURSEMENT}
+                  text="💰 Driver Disbursement"
+                />
+                <SelectItem value={EXPENSE_CATEGORIES.OTHER} text="Other" />
+              </Select>
+              <Select
+                id="expense-location"
+                labelText="Location"
+                value={formData.location}
+                onChange={(e) => handleChange('location', e.target.value as VehicleStatus)}
+                disabled={isSubmitting}
+              >
+                <SelectItem value={VEHICLE_STATUS.UK} text="UK" />
+                <SelectItem value={VEHICLE_STATUS.NAMIBIA} text="Namibia" />
+                <SelectItem value={VEHICLE_STATUS.ZIMBABWE} text="Zimbabwe" />
+                <SelectItem value={VEHICLE_STATUS.BOTSWANA} text="Botswana" />
+              </Select>
+            </div>
+          </div>
+        </div>
+        </section>
+
+        {/* Driver Info */}
+        <section>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Description & Notes</h3>
+            <div className="space-y-3">
+            {/* Driver Disbursement */}
+            {isDriverDisbursement && (
+              <>
+                <InlineNotification
+                  kind="warning"
+                  title="Driver disbursement"
+                  subtitle="Money will be recorded as disbursed to the selected driver for trip expenses."
+                  hideCloseButton
+                />
+                <Select
+                  id="expense-driver"
+                  labelText="Driver *"
+                  helperText="Money disbursed to this driver for trip expenses"
+                  value={formData.driver_name}
+                  onChange={(e) => handleChange('driver_name', e.target.value)}
+                  required={isDriverDisbursement}
+                  disabled={isSubmitting}
+                  invalid={!!errors.driver_name}
+                  invalidText={errors.driver_name}
+                >
+                  <SelectItem value="" text="-- Select Driver --" />
+                  {DRIVERS.map((d) => (
+                    <SelectItem key={d} value={d} text={d} />
+                  ))}
+                </Select>
+              </>
+            )}
+
+            <TextArea
+              id="expense-description"
+              labelText={
+                formData.category === EXPENSE_CATEGORIES.OTHER ? 'Description *' : 'Description'
+              }
+              placeholder={
+                formData.category === EXPENSE_CATEGORIES.OTHER
+                  ? 'Please specify the type of expense'
+                  : 'E.g. Full tank at Engen Windhoek'
+              }
+              rows={3}
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              required={formData.category === EXPENSE_CATEGORIES.OTHER}
+              disabled={isSubmitting}
+              invalid={!!errors.description}
+              invalidText={errors.description}
+            />
+
+            {Object.keys(errors).length > 0 && (
+              <InlineNotification
+                kind="error"
+                title="Please fix the errors"
+                subtitle="Review the highlighted fields and try again."
+              />
+            )}
+          </div>
+        </div>
+        </section>
       </form>
     </Modal>
   );

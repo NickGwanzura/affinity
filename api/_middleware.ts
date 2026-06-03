@@ -207,6 +207,29 @@ export function requireAccessRole(req: AuthenticatedRequest, res: ApiResponse, r
 }
 
 /**
+ * Check that the authenticated user has one of the allowed business roles.
+ * Super admins and admins always pass through.
+ */
+export function requireBusinessRole(req: AuthenticatedRequest, res: ApiResponse, allowedRoles: string[]): boolean {
+  if (!req.user) {
+    res.status(401).json({ error: 'Authentication required' });
+    return false;
+  }
+
+  // Super admin and admin bypass business-role checks
+  if (req.user.accessRole === 'super_admin' || req.user.accessRole === 'admin') {
+    return true;
+  }
+
+  if (!allowedRoles.includes(req.user.role)) {
+    res.status(403).json({ error: 'Access denied' });
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Block authenticated requests from users who still need to change
  * their initial password. Callers should invoke this immediately
  * after verifyToken, *except* on the change-password/me/logout paths.

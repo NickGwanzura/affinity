@@ -293,7 +293,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           <div className="flex items-center justify-between mb-2">
             <svg
               className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0"
-              style={{ color: 'var(--cds-interactive, #D97706)' }}
+              style={{ color: '#D97706' }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -308,13 +308,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
           <p
             className="text-2xl sm:text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #18181b)' }}
+            style={{ color: '#18181b' }}
           >
             {users.length}
           </p>
           <p
-            className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1"
-            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+            className="text-xs sm:text-xs font-bold uppercase tracking-[0.08em] mt-1"
+            style={{ color: '#52525b' }}
           >
             Total Users
           </p>
@@ -324,7 +324,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           <div className="flex items-center justify-between mb-2">
             <svg
               className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0"
-              style={{ color: 'var(--cds-support-success, #10b981)' }}
+              style={{ color: '#10b981' }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -339,13 +339,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
           <p
             className="text-2xl sm:text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #18181b)' }}
+            style={{ color: '#18181b' }}
           >
             {users.filter(u => u.status === 'Active').length}
           </p>
           <p
-            className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1"
-            style={{ color: 'var(--cds-support-success, #10b981)' }}
+            className="text-xs sm:text-xs font-bold uppercase tracking-[0.08em] mt-1"
+            style={{ color: '#10b981' }}
           >
             Active Users
           </p>
@@ -355,7 +355,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           <div className="flex items-center justify-between mb-2">
             <svg
               className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0"
-              style={{ color: 'var(--cds-tag-color-purple, #8a3ffc)' }}
+              style={{ color: '#8a3ffc' }}
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -368,13 +368,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
           <p
             className="text-2xl sm:text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #18181b)' }}
+            style={{ color: '#18181b' }}
           >
             {users.filter(u => u.role === 'Admin').length}
           </p>
           <p
-            className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1"
-            style={{ color: 'var(--cds-tag-color-purple, #8a3ffc)' }}
+            className="text-xs sm:text-xs font-bold uppercase tracking-[0.08em] mt-1"
+            style={{ color: '#8a3ffc' }}
           >
             Administrators
           </p>
@@ -384,7 +384,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           <div className="flex items-center justify-between mb-2">
             <svg
               className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0"
-              style={{ color: 'var(--cds-tag-color-warm-gray, #a8a29e)' }}
+              style={{ color: '#a8a29e' }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -399,13 +399,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
           <p
             className="text-2xl sm:text-2xl font-black"
-            style={{ color: 'var(--cds-text-primary, #18181b)' }}
+            style={{ color: '#18181b' }}
           >
             {users.filter(u => u.status === 'Inactive').length}
           </p>
           <p
-            className="text-xs sm:text-xs font-bold uppercase tracking-wider mt-1"
-            style={{ color: 'var(--cds-text-disabled, #a8a29e)' }}
+            className="text-xs sm:text-xs font-bold uppercase tracking-[0.08em] mt-1"
+            style={{ color: '#a8a29e' }}
           >
             Inactive Users
           </p>
@@ -417,13 +417,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
         <div className="flex-shrink-0">
           <h3
             className="text-base sm:text-lg font-bold"
-            style={{ color: 'var(--cds-text-primary, #18181b)' }}
+            style={{ color: '#18181b' }}
           >
             Team Directory
           </h3>
           <p
             className="text-xs sm:text-sm mt-0.5 sm:mt-1"
-            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+            style={{ color: '#52525b' }}
           >
             {users.length} user{users.length !== 1 ? 's' : ''} in database
           </p>
@@ -529,12 +529,12 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
       {/* User List Container */}
       <div
         className="overflow-hidden"
-        style={{ border: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
+        style={{ border: '1px solid #d6d3d1' }}
       >
         {loading ? (
           <div
             className="p-6 sm:p-8 text-center"
-            style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+            style={{ color: '#52525b' }}
           >
             Loading users...
           </div>
@@ -543,7 +543,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
             <div className="max-w-md mx-auto">
               <svg
                 className="w-16 h-16 mx-auto mb-4"
-                style={{ color: 'var(--cds-text-disabled, #a8a29e)' }}
+                style={{ color: '#a8a29e' }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -557,13 +557,13 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               </svg>
               <h3
                 className="text-lg font-bold mb-2"
-                style={{ color: 'var(--cds-text-primary, #18181b)' }}
+                style={{ color: '#18181b' }}
               >
                 No Users Found
               </h3>
               <p
                 className="mb-4 text-sm sm:text-base"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 Users appear here after they log in. Click <strong>"Sync & Refresh"</strong>{' '}
                 to add yourself, or invite new team members.
@@ -600,7 +600,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               </div>
               <p
                 className="text-xs mt-4"
-                style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                style={{ color: '#52525b' }}
               >
                 To change a user's role: Click the <strong>Edit</strong> (pencil) icon next
                 to their name.
@@ -614,8 +614,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               <table className="w-full text-left text-xs lg:text-sm">
                 <thead
                   style={{
-                    background: 'var(--cds-layer-02, #ffffff)',
-                    borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)',
+                    background: '#ffffff',
+                    borderBottom: '1px solid #d6d3d1',
                   }}
                 >
                   <tr>
@@ -627,48 +627,48 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         }
                         onChange={toggleSelectAll}
                         className="w-4 h-4"
-                        style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
+                        style={{ borderColor: '#d6d3d1' }}
                       />
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold"
-                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                      style={{ color: '#52525b' }}
                     >
                       User
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold hidden lg:table-cell"
-                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                      style={{ color: '#52525b' }}
                     >
                       Email
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold"
-                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                      style={{ color: '#52525b' }}
                     >
                       Role
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold"
-                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                      style={{ color: '#52525b' }}
                     >
                       Status
                     </th>
                     <th
                       className="px-4 lg:px-6 py-3 font-semibold text-right"
-                      style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                      style={{ color: '#52525b' }}
                     >
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody style={{ borderTop: '1px solid var(--cds-border-subtle, #d6d3d1)' }}>
+                <tbody style={{ borderTop: '1px solid #d6d3d1' }}>
                   {users.map(user => (
                     <tr
                       key={user.id}
                       className="group"
                       style={{
-                        borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)',
+                        borderBottom: '1px solid #d6d3d1',
                       }}
                     >
                       <td className="px-4 lg:px-6 py-4">
@@ -677,7 +677,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                           checked={selectedUserIds.includes(user.id)}
                           onChange={() => toggleSelectUser(user.id)}
                           className="w-4 h-4"
-                          style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
+                          style={{ borderColor: '#d6d3d1' }}
                         />
                       </td>
                       <td className="px-4 lg:px-6 py-4">
@@ -687,7 +687,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                               className="w-9 h-9 lg:w-10 lg:h-10 overflow-hidden"
                               style={{
                                 borderRadius: '50%',
-                                border: '2px solid var(--cds-layer-01, #ffffff)',
+                                border: '2px solid #ffffff',
                               }}
                             >
                               <img
@@ -700,25 +700,25 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                               className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 lg:w-3 lg:h-3 border-2"
                               style={{
                                 borderRadius: '50%',
-                                borderColor: 'var(--cds-layer-01, #ffffff)',
+                                borderColor: '#ffffff',
                                 background:
                                   user.status === 'Active'
-                                    ? 'var(--cds-support-success, #10b981)'
-                                    : 'var(--cds-text-disabled, #a8a29e)',
+                                    ? '#10b981'
+                                    : '#a8a29e',
                               }}
                             ></div>
                           </div>
                           <div className="min-w-0">
                             <p
                               className="font-semibold truncate"
-                              style={{ color: 'var(--cds-text-primary, #18181b)' }}
+                              style={{ color: '#18181b' }}
                             >
                               {user.name}
                             </p>
                             {/* Email shown under name on tablet, hidden on desktop (shown in separate column) */}
                             <p
                               className="text-xs truncate lg:hidden"
-                              style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                              style={{ color: '#52525b' }}
                             >
                               {user.email}
                             </p>
@@ -728,7 +728,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                       <td className="px-4 lg:px-6 py-4 hidden lg:table-cell">
                         <span
                           className="font-mono text-xs truncate block max-w-[200px]"
-                          style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                          style={{ color: '#52525b' }}
                           title={user.email}
                         >
                           {user.email}
@@ -809,35 +809,35 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
               {/* Select All Header for Mobile */}
               <div
                 className="px-4 py-3 flex items-center justify-between"
-                style={{ background: 'var(--cds-layer-02, #ffffff)' }}
+                style={{ background: '#ffffff' }}
               >
                 <label
                   className="flex items-center gap-2 text-sm font-medium"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                 >
                   <input
                     type="checkbox"
                     checked={selectedUserIds.length === users.length && users.length > 0}
                     onChange={toggleSelectAll}
                     className="w-4 h-4 flex-shrink-0"
-                    style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
+                    style={{ borderColor: '#d6d3d1' }}
                   />
                   Select All
                 </label>
                 <span
                   className="text-xs"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                 >
                   {users.length} user{users.length !== 1 ? 's' : ''}
                 </span>
               </div>
 
-              <div style={{ borderTop: '1px solid var(--cds-border-subtle, #d6d3d1)' }}>
+              <div style={{ borderTop: '1px solid #d6d3d1' }}>
                 {users.map(user => (
                   <div
                     key={user.id}
                     className="p-4"
-                    style={{ borderBottom: '1px solid var(--cds-border-subtle, #d6d3d1)' }}
+                    style={{ borderBottom: '1px solid #d6d3d1' }}
                   >
                     {/* Top Row: Checkbox, Avatar, Name/Email, Actions */}
                     <div className="flex items-center gap-3">
@@ -846,14 +846,14 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         checked={selectedUserIds.includes(user.id)}
                         onChange={() => toggleSelectUser(user.id)}
                         className="w-4 h-4 flex-shrink-0"
-                        style={{ borderColor: 'var(--cds-border-subtle, #d6d3d1)' }}
+                        style={{ borderColor: '#d6d3d1' }}
                       />
                       <div className="relative flex-shrink-0">
                         <div
                           className="w-10 h-10 overflow-hidden"
                           style={{
                             borderRadius: '50%',
-                            border: '2px solid var(--cds-layer-01, #ffffff)',
+                            border: '2px solid #ffffff',
                           }}
                         >
                           <img
@@ -866,24 +866,24 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                           className="absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2"
                           style={{
                             borderRadius: '50%',
-                            borderColor: 'var(--cds-layer-01, #ffffff)',
+                            borderColor: '#ffffff',
                             background:
                               user.status === 'Active'
-                                ? 'var(--cds-support-success, #10b981)'
-                                : 'var(--cds-text-disabled, #a8a29e)',
+                                ? '#10b981'
+                                : '#a8a29e',
                           }}
                         ></div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p
                           className="font-semibold truncate"
-                          style={{ color: 'var(--cds-text-primary, #18181b)' }}
+                          style={{ color: '#18181b' }}
                         >
                           {user.name}
                         </p>
                         <p
                           className="text-xs truncate"
-                          style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                          style={{ color: '#52525b' }}
                         >
                           {user.email}
                         </p>
@@ -1001,51 +1001,70 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
         }
       >
-            <form id="create-user-form" onSubmit={handleCreateUser} className="flex flex-col gap-5">
-              <TextInput
-                id="create-user-name"
-                labelText="Full Name"
-                placeholder="John Doe"
-                autoFocus
-                value={userForm.name}
-                onChange={e => setUserForm({ ...userForm, name: e.target.value })}
-              />
-              <TextInput
-                id="create-user-email"
-                type="email"
-                labelText="Email Address"
-                placeholder="john@affinity.com"
-                autoComplete="email"
-                value={userForm.email}
-                onChange={e => setUserForm({ ...userForm, email: e.target.value })}
-              />
-              <PasswordInput
-                id="create-user-password"
-                labelText="Password"
-                helperText="Must be at least 8 characters"
-                placeholder="Min 8 characters"
-                autoComplete="new-password"
-                value={userForm.password}
-                onChange={e => setUserForm({ ...userForm, password: e.target.value })}
-              />
-              <div className="space-y-2">
-                <p className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Role</p>
+            <form id="create-user-form" onSubmit={handleCreateUser} className="flex flex-col gap-4">
+              {/* User Info */}
+              <section>
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">User Info</h3>
+                  <div className="space-y-3">
+                  <TextInput
+                    id="create-user-name"
+                    labelText="Full Name"
+                    placeholder="John Doe"
+                    autoFocus
+                    value={userForm.name}
+                    onChange={e => setUserForm({ ...userForm, name: e.target.value })}
+                  />
+                  <TextInput
+                    id="create-user-email"
+                    type="email"
+                    labelText="Email Address"
+                    placeholder="john@affinity.com"
+                    autoComplete="email"
+                    value={userForm.email}
+                    onChange={e => setUserForm({ ...userForm, email: e.target.value })}
+                  />
+                </div>
+              </div>
+            </section>
+
+              {/* Security */}
+              <section>
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Security</h3>
+                  <PasswordInput
+                  id="create-user-password"
+                  labelText="Password"
+                  helperText="Must be at least 8 characters"
+                  placeholder="Min 8 characters"
+                  autoComplete="new-password"
+                  value={userForm.password}
+                  onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+                />
+              </div>
+            </section>
+
+              {/* Role */}
+              <section>
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Role</h3>
+                  <p className="text-xs text-zinc-500 mb-3">Select the level of access for this user</p>
                 <div className="space-y-2">
                   <div
                     onClick={() => setUserForm({ ...userForm, role: 'Admin' })}
-                    className="p-4 cursor-pointer transition-all"
+                    className="p-4 cursor-pointer transition-all rounded-xl"
                     style={{
-                      border: `2px solid ${userForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                      border: `2px solid ${userForm.role === 'Admin' ? '#8a3ffc' : '#d6d3d1'}`,
                       background:
                         userForm.role === 'Admin'
-                          ? 'var(--cds-tag-background-purple, #f6f2ff)'
+                          ? '#f3e8ff'
                           : 'transparent',
                     }}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className="font-bold"
-                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
+                        style={{ color: '#18181b' }}
                       >
                         Administrator
                       </span>
@@ -1053,10 +1072,10 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                          border: `2px solid ${userForm.role === 'Admin' ? '#8a3ffc' : '#d6d3d1'}`,
                           background:
                             userForm.role === 'Admin'
-                              ? 'var(--cds-tag-color-purple, #8a3ffc)'
+                              ? '#8a3ffc'
                               : 'transparent',
                         }}
                       >
@@ -1075,26 +1094,26 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <p className="text-xs text-zinc-600">
                       Full system access, user management, and all settings
                     </p>
                   </div>
 
                   <div
                     onClick={() => setUserForm({ ...userForm, role: 'Manager' })}
-                    className="p-4 cursor-pointer transition-all"
+                    className="p-4 cursor-pointer transition-all rounded-xl"
                     style={{
-                      border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                      border: `2px solid ${userForm.role === 'Manager' ? '#D97706' : '#d6d3d1'}`,
                       background:
                         userForm.role === 'Manager'
-                          ? 'var(--cds-layer-selected-01, #e5f6ff)'
+                          ? '#fef3c7'
                           : 'transparent',
                     }}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className="font-bold"
-                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
+                        style={{ color: '#18181b' }}
                       >
                         Manager
                       </span>
@@ -1102,10 +1121,10 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                          border: `2px solid ${userForm.role === 'Manager' ? '#D97706' : '#d6d3d1'}`,
                           background:
                             userForm.role === 'Manager'
-                              ? 'var(--cds-interactive, #D97706)'
+                              ? '#D97706'
                               : 'transparent',
                         }}
                       >
@@ -1124,26 +1143,26 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <p className="text-xs text-zinc-600">
                       Dashboard, reports, vehicles, and operational data
                     </p>
                   </div>
 
                   <div
                     onClick={() => setUserForm({ ...userForm, role: 'Accountant' })}
-                    className="p-4 cursor-pointer transition-all"
+                    className="p-4 cursor-pointer transition-all rounded-xl"
                     style={{
-                      border: `2px solid ${userForm.role === 'Accountant' ? 'var(--cds-support-success, #10b981)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                      border: `2px solid ${userForm.role === 'Accountant' ? '#10b981' : '#d6d3d1'}`,
                       background:
                         userForm.role === 'Accountant'
-                          ? 'var(--cds-tag-background-green, #d1fae5)'
+                          ? '#dcfce7'
                           : 'transparent',
                     }}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className="font-bold"
-                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
+                        style={{ color: '#18181b' }}
                       >
                         Accountant
                       </span>
@@ -1151,10 +1170,10 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Accountant' ? 'var(--cds-support-success, #10b981)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                          border: `2px solid ${userForm.role === 'Accountant' ? '#10b981' : '#d6d3d1'}`,
                           background:
                             userForm.role === 'Accountant'
-                              ? 'var(--cds-support-success, #10b981)'
+                              ? '#10b981'
                               : 'transparent',
                         }}
                       >
@@ -1173,26 +1192,26 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <p className="text-xs text-zinc-600">
                       Financial data, expenses, quotes, invoices, and payments
                     </p>
                   </div>
 
                   <div
                     onClick={() => setUserForm({ ...userForm, role: 'Driver' })}
-                    className="p-4 cursor-pointer transition-all"
+                    className="p-4 cursor-pointer transition-all rounded-xl"
                     style={{
-                      border: `2px solid ${userForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                      border: `2px solid ${userForm.role === 'Driver' ? '#06b6d4' : '#d6d3d1'}`,
                       background:
                         userForm.role === 'Driver'
-                          ? 'var(--cds-tag-background-cyan, #e5f6ff)'
+                          ? '#cffafe'
                           : 'transparent',
                     }}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span
                         className="font-bold"
-                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
+                        style={{ color: '#18181b' }}
                       >
                         Driver
                       </span>
@@ -1200,10 +1219,10 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                          border: `2px solid ${userForm.role === 'Driver' ? '#06b6d4' : '#d6d3d1'}`,
                           background:
                             userForm.role === 'Driver'
-                              ? 'var(--cds-tag-color-cyan, #1192e8)'
+                              ? '#06b6d4'
                               : 'transparent',
                         }}
                       >
@@ -1222,28 +1241,28 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <p className="text-xs text-zinc-600">
                       Driver portal, document uploads, and trip logs
                     </p>
                   </div>
 
                   <div
                     onClick={() => setUserForm({ ...userForm, role: 'Sales' })}
-                    className="p-4 cursor-pointer transition-all"
+                    className="p-4 cursor-pointer transition-all rounded-xl"
                     style={{
-                      border: `2px solid ${userForm.role === 'Sales' ? '#f59e0b' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                      border: `2px solid ${userForm.role === 'Sales' ? '#f59e0b' : '#d6d3d1'}`,
                       background: userForm.role === 'Sales' ? '#fffbeb' : 'transparent',
                     }}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+                      <span className="font-bold text-zinc-900">
                         Sales
                       </span>
                       <div
                         className="w-5 h-5 flex items-center justify-center"
                         style={{
                           borderRadius: '50%',
-                          border: `2px solid ${userForm.role === 'Sales' ? '#f59e0b' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                          border: `2px solid ${userForm.role === 'Sales' ? '#f59e0b' : '#d6d3d1'}`,
                           background: userForm.role === 'Sales' ? '#f59e0b' : 'transparent',
                         }}
                       >
@@ -1254,24 +1273,24 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <p className="text-xs text-zinc-600">
                       Freezit Sales and WiFi Token Sales only
                     </p>
                   </div>
 
                   <div
                     onClick={() => setUserForm({ ...userForm, role: 'Director' })}
-                    className="p-4 cursor-pointer transition-all"
+                    className="p-4 cursor-pointer transition-all rounded-xl"
                     style={{
-                      border: `2px solid ${userForm.role === 'Director' ? '#7c3aed' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                      border: `2px solid ${userForm.role === 'Director' ? '#7c3aed' : '#d6d3d1'}`,
                       background: userForm.role === 'Director' ? '#f5f3ff' : 'transparent',
                     }}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>Director</span>
+                      <span className="font-bold text-zinc-900">Director</span>
                       <div className="w-5 h-5 flex items-center justify-center" style={{
                         borderRadius: '50%',
-                        border: `2px solid ${userForm.role === 'Director' ? '#7c3aed' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                        border: `2px solid ${userForm.role === 'Director' ? '#7c3aed' : '#d6d3d1'}`,
                         background: userForm.role === 'Director' ? '#7c3aed' : 'transparent',
                       }}>
                         {userForm.role === 'Director' && (
@@ -1281,12 +1300,40 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <p className="text-xs text-zinc-600">
                       Director dashboard, sales oversight, fund disbursements
+                    </p>
+                  </div>
+
+                  <div
+                    onClick={() => setUserForm({ ...userForm, role: 'Car Hire' })}
+                    className="p-4 cursor-pointer transition-all rounded-xl"
+                    style={{
+                      border: `2px solid ${userForm.role === 'Car Hire' ? '#D97706' : '#d6d3d1'}`,
+                      background: userForm.role === 'Car Hire' ? '#fffbeb' : 'transparent',
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-zinc-900">Car Hire</span>
+                      <div className="w-5 h-5 flex items-center justify-center" style={{
+                        borderRadius: '50%',
+                        border: `2px solid ${userForm.role === 'Car Hire' ? '#D97706' : '#d6d3d1'}`,
+                        background: userForm.role === 'Car Hire' ? '#D97706' : 'transparent',
+                      }}>
+                        {userForm.role === 'Car Hire' && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-zinc-600">
+                      Car Hire module: vehicle tracking, bookings &amp; expenses
                     </p>
                   </div>
                 </div>
               </div>
+            </section>
             </form>
       </Modal>
 
@@ -1320,26 +1367,32 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
             </Button>
           </div>
         }
-      >
-        <form id="set-password-form" onSubmit={handleSetPassword} className="flex flex-col gap-5">
-          <PasswordInput
-            id="set-password-new"
-            labelText="New Password"
-            helperText="Must be at least 8 characters"
-            placeholder="Min 8 characters"
-            autoComplete="new-password"
-            autoFocus
-            value={passwordForm.newPassword}
-            onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-          />
-          <PasswordInput
-            id="set-password-confirm"
-            labelText="Confirm Password"
-            placeholder="Re-enter password"
-            autoComplete="new-password"
-            value={passwordForm.confirmPassword}
-            onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-          />
+      >            <form id="set-password-form" onSubmit={handleSetPassword} className="flex flex-col gap-4">
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">New Password</h3>
+              <div className="space-y-3">
+              <PasswordInput
+                id="set-password-new"
+                labelText="New Password"
+                helperText="Must be at least 8 characters"
+                placeholder="Min 8 characters"
+                autoComplete="new-password"
+                autoFocus
+                value={passwordForm.newPassword}
+                onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+              />
+              <PasswordInput
+                id="set-password-confirm"
+                labelText="Confirm Password"
+                placeholder="Re-enter password"
+                autoComplete="new-password"
+                value={passwordForm.confirmPassword}
+                onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+              />
+            </div>
+          </div>
+        </section>
           <InlineNotification
             kind="warning"
             title="Note:"
@@ -1372,225 +1425,314 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onSwitchToInvites }) => {
           </div>
         }
       >
-        <form id="edit-user-form" onSubmit={handleEditUser} className="flex flex-col gap-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TextInput
-              id="edit-user-name"
-              labelText="Full Name"
-              placeholder="John Doe"
-              autoFocus
-              value={editForm.name}
-              onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-            />
-            <TextInput
-              id="edit-user-email"
-              type="email"
-              labelText="Email Address"
-              placeholder="john@affinity.com"
-              autoComplete="email"
-              value={editForm.email}
-              onChange={e => setEditForm({ ...editForm, email: e.target.value })}
-            />
+        <form id="edit-user-form" onSubmit={handleEditUser} className="flex flex-col gap-4">
+          {/* User Info */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">User Info</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <TextInput
+                id="edit-user-name"
+                labelText="Full Name"
+                placeholder="John Doe"
+                autoFocus
+                value={editForm.name}
+                onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+              />
+              <TextInput
+                id="edit-user-email"
+                type="email"
+                labelText="Email Address"
+                placeholder="john@affinity.com"
+                autoComplete="email"
+                value={editForm.email}
+                onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <p className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Role</p>
-                <div className="space-y-2">
+        </section>
+
+          {/* Role */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Role</h3>
+            <div className="space-y-2">
+              <div
+                onClick={() => setEditForm({ ...editForm, role: 'Admin' })}
+                className="p-3 cursor-pointer transition-all rounded-xl"
+                style={{
+                  border: `2px solid ${editForm.role === 'Admin' ? '#8a3ffc' : '#d6d3d1'}`,
+                  background:
+                    editForm.role === 'Admin'
+                      ? '#f3e8ff'
+                      : 'transparent',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="font-bold text-sm"
+                    style={{ color: '#18181b' }}
+                  >
+                    Administrator
+                  </span>
                   <div
-                    onClick={() => setEditForm({ ...editForm, role: 'Admin' })}
-                    className="p-3 cursor-pointer transition-all"
+                    className="w-4 h-4 flex items-center justify-center"
                     style={{
-                      border: `2px solid ${editForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
+                      borderRadius: '50%',
+                      border: `2px solid ${editForm.role === 'Admin' ? '#8a3ffc' : '#d6d3d1'}`,
                       background:
                         editForm.role === 'Admin'
-                          ? 'var(--cds-tag-background-purple, #f6f2ff)'
+                          ? '#8a3ffc'
                           : 'transparent',
                     }}
                   >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="font-bold text-sm"
-                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
+                    {editForm.role === 'Admin' && (
+                      <svg
+                        className="w-2.5 h-2.5 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
                       >
-                        Administrator
-                      </span>
-                      <div
-                        className="w-4 h-4 flex items-center justify-center"
-                        style={{
-                          borderRadius: '50%',
-                          border: `2px solid ${editForm.role === 'Admin' ? 'var(--cds-tag-color-purple, #8a3ffc)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
-                          background:
-                            editForm.role === 'Admin'
-                              ? 'var(--cds-tag-color-purple, #8a3ffc)'
-                              : 'transparent',
-                        }}
-                      >
-                        {editForm.role === 'Admin' && (
-                          <svg
-                            className="w-2.5 h-2.5 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    onClick={() => setEditForm({ ...editForm, role: 'Manager' })}
-                    className="p-3 cursor-pointer transition-all"
-                    style={{
-                      border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
-                      background:
-                        editForm.role === 'Manager'
-                          ? 'var(--cds-layer-selected-01, #e5f6ff)'
-                          : 'transparent',
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="font-bold text-sm"
-                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
-                      >
-                        Manager
-                      </span>
-                      <div
-                        className="w-4 h-4 flex items-center justify-center"
-                        style={{
-                          borderRadius: '50%',
-                          border: `2px solid ${editForm.role === 'Manager' ? 'var(--cds-interactive, #D97706)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
-                          background:
-                            editForm.role === 'Manager'
-                              ? 'var(--cds-interactive, #D97706)'
-                              : 'transparent',
-                        }}
-                      >
-                        {editForm.role === 'Manager' && (
-                          <svg
-                            className="w-2.5 h-2.5 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    onClick={() => setEditForm({ ...editForm, role: 'Accountant' })}
-                    className="p-3 cursor-pointer transition-all"
-                    style={{
-                      border: `2px solid ${editForm.role === 'Accountant' ? 'var(--cds-support-success, #10b981)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
-                      background:
-                        editForm.role === 'Accountant'
-                          ? 'var(--cds-tag-background-green, #d1fae5)'
-                          : 'transparent',
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="font-bold text-sm"
-                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
-                      >
-                        Accountant
-                      </span>
-                      <div
-                        className="w-4 h-4 flex items-center justify-center"
-                        style={{
-                          borderRadius: '50%',
-                          border: `2px solid ${editForm.role === 'Accountant' ? 'var(--cds-support-success, #10b981)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
-                          background:
-                            editForm.role === 'Accountant'
-                              ? 'var(--cds-support-success, #10b981)'
-                              : 'transparent',
-                        }}
-                      >
-                        {editForm.role === 'Accountant' && (
-                          <svg
-                            className="w-2.5 h-2.5 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    onClick={() => setEditForm({ ...editForm, role: 'Driver' })}
-                    className="p-3 cursor-pointer transition-all"
-                    style={{
-                      border: `2px solid ${editForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
-                      background:
-                        editForm.role === 'Driver'
-                          ? 'var(--cds-tag-background-cyan, #e5f6ff)'
-                          : 'transparent',
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="font-bold text-sm"
-                        style={{ color: 'var(--cds-text-primary, #18181b)' }}
-                      >
-                        Driver
-                      </span>
-                      <div
-                        className="w-4 h-4 flex items-center justify-center"
-                        style={{
-                          borderRadius: '50%',
-                          border: `2px solid ${editForm.role === 'Driver' ? 'var(--cds-tag-color-cyan, #1192e8)' : 'var(--cds-border-subtle, #d6d3d1)'}`,
-                          background:
-                            editForm.role === 'Driver'
-                              ? 'var(--cds-tag-color-cyan, #1192e8)'
-                              : 'transparent',
-                        }}
-                      >
-                        {editForm.role === 'Driver' && (
-                          <svg
-                            className="w-2.5 h-2.5 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
                   </div>
                 </div>
+              </div>
+
+              <div
+                onClick={() => setEditForm({ ...editForm, role: 'Manager' })}
+                className="p-3 cursor-pointer transition-all rounded-xl"
+                style={{
+                  border: `2px solid ${editForm.role === 'Manager' ? '#D97706' : '#d6d3d1'}`,
+                  background:
+                    editForm.role === 'Manager'
+                      ? '#fef3c7'
+                      : 'transparent',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="font-bold text-sm"
+                    style={{ color: '#18181b' }}
+                  >
+                    Manager
+                  </span>
+                  <div
+                    className="w-4 h-4 flex items-center justify-center"
+                    style={{
+                      borderRadius: '50%',
+                      border: `2px solid ${editForm.role === 'Manager' ? '#D97706' : '#d6d3d1'}`,
+                      background:
+                        editForm.role === 'Manager'
+                          ? '#D97706'
+                          : 'transparent',
+                    }}
+                  >
+                    {editForm.role === 'Manager' && (
+                      <svg
+                        className="w-2.5 h-2.5 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setEditForm({ ...editForm, role: 'Accountant' })}
+                className="p-3 cursor-pointer transition-all rounded-xl"
+                style={{
+                  border: `2px solid ${editForm.role === 'Accountant' ? '#10b981' : '#d6d3d1'}`,
+                  background:
+                    editForm.role === 'Accountant'
+                      ? '#dcfce7'
+                      : 'transparent',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="font-bold text-sm"
+                    style={{ color: '#18181b' }}
+                  >
+                    Accountant
+                  </span>
+                  <div
+                    className="w-4 h-4 flex items-center justify-center"
+                    style={{
+                      borderRadius: '50%',
+                      border: `2px solid ${editForm.role === 'Accountant' ? '#10b981' : '#d6d3d1'}`,
+                      background:
+                        editForm.role === 'Accountant'
+                          ? '#10b981'
+                          : 'transparent',
+                    }}
+                  >
+                    {editForm.role === 'Accountant' && (
+                      <svg
+                        className="w-2.5 h-2.5 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setEditForm({ ...editForm, role: 'Sales' })}
+                className="p-3 cursor-pointer transition-all rounded-xl"
+                style={{
+                  border: `2px solid ${editForm.role === 'Sales' ? '#f59e0b' : '#d6d3d1'}`,
+                  background: editForm.role === 'Sales' ? '#fffbeb' : 'transparent',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm text-zinc-900">Sales</span>
+                  <div className="w-4 h-4 flex items-center justify-center" style={{
+                    borderRadius: '50%',
+                    border: `2px solid ${editForm.role === 'Sales' ? '#f59e0b' : '#d6d3d1'}`,
+                    background: editForm.role === 'Sales' ? '#f59e0b' : 'transparent',
+                  }}>
+                    {editForm.role === 'Sales' && (
+                      <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setEditForm({ ...editForm, role: 'Director' })}
+                className="p-3 cursor-pointer transition-all rounded-xl"
+                style={{
+                  border: `2px solid ${editForm.role === 'Director' ? '#7c3aed' : '#d6d3d1'}`,
+                  background: editForm.role === 'Director' ? '#f5f3ff' : 'transparent',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm text-zinc-900">Director</span>
+                  <div className="w-4 h-4 flex items-center justify-center" style={{
+                    borderRadius: '50%',
+                    border: `2px solid ${editForm.role === 'Director' ? '#7c3aed' : '#d6d3d1'}`,
+                    background: editForm.role === 'Director' ? '#7c3aed' : 'transparent',
+                  }}>
+                    {editForm.role === 'Director' && (
+                      <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setEditForm({ ...editForm, role: 'Driver' })}
+                className="p-3 cursor-pointer transition-all rounded-xl"
+                style={{
+                  border: `2px solid ${editForm.role === 'Driver' ? '#06b6d4' : '#d6d3d1'}`,
+                  background:
+                    editForm.role === 'Driver'
+                      ? '#cffafe'
+                      : 'transparent',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="font-bold text-sm"
+                    style={{ color: '#18181b' }}
+                  >
+                    Driver
+                  </span>
+                  <div
+                    className="w-4 h-4 flex items-center justify-center"
+                    style={{
+                      borderRadius: '50%',
+                      border: `2px solid ${editForm.role === 'Driver' ? '#06b6d4' : '#d6d3d1'}`,
+                      background:
+                        editForm.role === 'Driver'
+                          ? '#06b6d4'
+                          : 'transparent',
+                    }}
+                  >
+                    {editForm.role === 'Driver' && (
+                      <svg
+                        className="w-2.5 h-2.5 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setEditForm({ ...editForm, role: 'Car Hire' })}
+                className="p-3 cursor-pointer transition-all rounded-xl"
+                style={{
+                  border: `2px solid ${editForm.role === 'Car Hire' ? '#D97706' : '#d6d3d1'}`,
+                  background: editForm.role === 'Car Hire' ? '#fffbeb' : 'transparent',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm text-zinc-900">Car Hire</span>
+                  <div className="w-4 h-4 flex items-center justify-center" style={{
+                    borderRadius: '50%',
+                    border: `2px solid ${editForm.role === 'Car Hire' ? '#D97706' : '#d6d3d1'}`,
+                    background: editForm.role === 'Car Hire' ? '#D97706' : 'transparent',
+                  }}>
+                    {editForm.role === 'Car Hire' && (
+                      <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <Select
-            id="edit-user-status"
-            labelText="Status"
-            value={editForm.status}
-            onChange={e =>
-              setEditForm({ ...editForm, status: e.target.value as 'Active' | 'Inactive' })
-            }
-          >
-            <SelectItem value="Active" text="Active" />
-            <SelectItem value="Inactive" text="Inactive" />
-          </Select>
+        </section>
+
+          {/* Status */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Status</h3>
+              <Select
+              id="edit-user-status"
+              labelText="Account Status"
+              value={editForm.status}
+              onChange={e =>
+                setEditForm({ ...editForm, status: e.target.value as 'Active' | 'Inactive' })
+              }
+            >
+              <SelectItem value="Active" text="Active" />
+              <SelectItem value="Inactive" text="Inactive" />
+            </Select>
+          </div>
+        </section>
         </form>
       </Modal>
 

@@ -54,6 +54,12 @@ const notImplemented = (feature: string): never => {
   throw new Error(`${feature} not implemented`);
 };
 
+/** Coerce an unknown value to a finite number, defaulting to 0 for NaN/null/undefined. */
+const safeNumeric = (val: unknown): number => {
+  const n = Number(val);
+  return Number.isFinite(n) ? n : 0;
+};
+
 class DataService {
   async login(email: string, password: string): Promise<AuthSession> {
     return authService.login(email, password);
@@ -404,7 +410,7 @@ class DataService {
     const totals = funds.reduce(
       (accumulator, fund) => {
         const rate = this.getCurrencyRate(fund.currency);
-        const value = fund.amount * rate;
+        const value = safeNumeric(fund.amount) * rate;
         if (fund.type === 'Received') accumulator.received += value;
         if (fund.type === 'Disbursed') accumulator.disbursed += value;
         return accumulator;
@@ -412,7 +418,9 @@ class DataService {
       { received: 0, disbursed: 0, balance: 0 }
     );
 
-    totals.balance = totals.received - totals.disbursed;
+    totals.received = Math.round(totals.received * 100) / 100;
+    totals.disbursed = Math.round(totals.disbursed * 100) / 100;
+    totals.balance = Math.round((totals.received - totals.disbursed) * 100) / 100;
     return totals;
   }
 
@@ -432,7 +440,8 @@ class DataService {
       const totalExpensesUsd = vehicleExpenses.reduce(
         (sum, expense) =>
           sum +
-          expense.amount * (expense.exchange_rate_to_usd || this.getCurrencyRate(expense.currency)),
+          safeNumeric(expense.amount) *
+            (safeNumeric(expense.exchange_rate_to_usd) || this.getCurrencyRate(expense.currency)),
         0
       );
 
@@ -440,10 +449,11 @@ class DataService {
         vehicle_id: vehicle.id,
         vin_number: vehicle.vin_number,
         make_model: vehicle.make_model,
-        purchase_price_gbp: vehicle.purchase_price_gbp,
-        total_expenses_usd: totalExpensesUsd,
-        total_landed_cost_usd:
-          totalExpensesUsd + vehicle.purchase_price_gbp * this.getCurrencyRate('GBP'),
+        purchase_price_gbp: safeNumeric(vehicle.purchase_price_gbp),
+        total_expenses_usd: Math.round(totalExpensesUsd * 100) / 100,
+        total_landed_cost_usd: Math.round(
+          (totalExpensesUsd + safeNumeric(vehicle.purchase_price_gbp) * this.getCurrencyRate('GBP')) * 100
+        ) / 100,
         status: vehicle.status,
       };
     });
@@ -605,7 +615,7 @@ class DataService {
     let usdInvoiced = 0;
     let gbpInvoiced = 0;
     clientInvoices.forEach(inv => {
-      const amount = Number(inv.amount_usd) || 0;
+      const amount = safeNumeric(inv.amount_usd);
       if ((inv.currency || 'USD') === 'GBP') gbpInvoiced += amount;
       else usdInvoiced += amount;
     });
@@ -613,7 +623,7 @@ class DataService {
     let usdPaid = 0;
     let gbpPaid = 0;
     clientPayments.forEach(pay => {
-      const amount = Number(pay.amount_usd) || 0;
+      const amount = safeNumeric(pay.amount_usd);
       if ((pay.currency || 'USD') === 'GBP') gbpPaid += amount;
       else usdPaid += amount;
     });

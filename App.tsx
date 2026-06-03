@@ -51,6 +51,21 @@ const DirectorsDashboard = lazy(() =>
 const WiFiTokenSales = lazy(() =>
   import('./components/WiFiTokenSales').then(module => ({ default: module.WiFiTokenSales }))
 );
+const CarHire = lazy(() =>
+  import('./components/CarHire').then(module => ({ default: module.CarHire }))
+);
+const IceSales = lazy(() =>
+  import('./components/IceSales').then(module => ({ default: module.IceSales }))
+);
+const CEODashboard = lazy(() =>
+  import('./components/CEODashboard').then(module => ({ default: module.CEODashboard }))
+);
+const Lodgers = lazy(() =>
+  import('./components/Lodgers').then(module => ({ default: module.Lodgers }))
+);
+const SalesPL = lazy(() =>
+  import('./components/SalesPL').then(module => ({ default: module.SalesPL }))
+);
 
 /**
  * Layout-preserving skeleton used while lazy views load.
@@ -135,6 +150,7 @@ export default function App() {
     if (role === 'Accountant') return 'accountant' as const;
     if (role === 'Sales') return 'freezit' as const;
     if (role === 'Director') return 'director' as const;
+    if (role === 'CEO') return 'ceo' as const;
     return 'admin' as const;
   };
 
@@ -284,6 +300,16 @@ export default function App() {
         return <ErrorBoundary view="freezit"><FreezitSales /></ErrorBoundary>;
       case 'wifi-tokens':
         return <ErrorBoundary view="wifi-tokens"><WiFiTokenSales /></ErrorBoundary>;
+      case 'car-hire':
+        return <ErrorBoundary view="car-hire"><CarHire /></ErrorBoundary>;
+      case 'ice-sales':
+        return <ErrorBoundary view="ice-sales"><IceSales /></ErrorBoundary>;
+      case 'ceo':
+        return <ErrorBoundary view="ceo"><CEODashboard /></ErrorBoundary>;
+      case 'lodgers':
+        return <ErrorBoundary view="lodgers"><Lodgers /></ErrorBoundary>;
+      case 'sales-pl':
+        return <ErrorBoundary view="sales-pl"><SalesPL /></ErrorBoundary>;
       default:
         return <ErrorBoundary view="admin"><AdminDashboard /></ErrorBoundary>;
     }

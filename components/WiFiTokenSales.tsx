@@ -47,12 +47,16 @@ export const WiFiTokenSales: React.FC = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, salesRes] = await Promise.all([
-        fetch(`${API}?resource=stats`),
-        fetch(`${API}?resource=sales`),
+      const results = await Promise.allSettled([
+        fetch(`${API}?resource=stats`).then(r => { if (!r.ok) throw new Error('Stats failed'); return r.json(); }),
+        fetch(`${API}?resource=sales`).then(r => { if (!r.ok) throw new Error('Sales failed'); return r.json(); }),
       ]);
-      setStats(await statsRes.json());
-      setSales(await salesRes.json());
+      setStats(results[0].status === 'fulfilled' ? results[0].value : null);
+      setSales(results[1].status === 'fulfilled' && Array.isArray(results[1].value) ? results[1].value : []);
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        showToast(`Failed to load ${failures.length} resource(s)`, 'error');
+      }
     } catch {
       showToast('Failed to load WiFi Token data', 'error');
     } finally {
@@ -63,7 +67,13 @@ export const WiFiTokenSales: React.FC = () => {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleDelete = async (id: string) => {
-    await fetch(`${API}?resource=sales&id=${id}`, { method: 'DELETE' });
+    try {
+      const res = await fetch(`${API}?resource=sales&id=${id}`, { method: 'DELETE' });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Delete failed'); }
+      showToast('Sale deleted', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete', 'error');
+    }
     fetchAll();
   };
 
@@ -115,7 +125,22 @@ export const WiFiTokenSales: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="py-12 text-center text-sm text-zinc-400">Loading...</div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="rounded-xl border border-stone-200 bg-white p-4">
+                <div className="h-8 w-8 app-shimmer rounded-lg mb-3" />
+                <div className="h-3 w-16 app-shimmer rounded mb-3" />
+                <div className="h-7 w-28 app-shimmer rounded" />
+              </div>
+            ))}
+          </div>
+          <div className="rounded-xl border border-stone-200 p-5">
+            <div className="h-3 w-32 app-shimmer rounded mb-3" />
+            <div className="h-3 w-full app-shimmer rounded mb-2" />
+            <div className="h-3 w-3/4 app-shimmer rounded" />
+          </div>
+        </div>
       ) : (
         <>
           {tab === 'analytics' && <AnalyticsTab stats={stats} sales={sales} />}
@@ -138,7 +163,7 @@ const BreakEvenCard: React.FC<{ stats: Stats | null }> = ({ stats }) => {
   return (
     <div className="rounded-xl border border-stone-200 bg-white p-5">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Break-even Progress</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Break-even Progress</p>
         <p className="text-xs text-zinc-500">{fmt(rev)} / {fmt(cost)}</p>
       </div>
       <div className="h-2.5 w-full rounded-full bg-stone-100 overflow-hidden">
@@ -173,15 +198,15 @@ const KpiCard: React.FC<{ label: string; value: string; Icon: React.ComponentTyp
 // ── Analytics Tab ─────────────────────────────────────────────────────────────
 
 const AnalyticsTab: React.FC<{ stats: Stats | null; sales: WiFiSale[] }> = ({ stats, sales }) => {
-  const totalTokens = sales.reduce((sum, s) => sum + Number(s.tokens_sold), 0);
+  const totalTokens = sales.reduce((sum, s) => sum + (Number(s.tokens_sold) || 0), 0);
   const avgSale = sales.length > 0
-    ? sales.reduce((sum, s) => sum + Number(s.total_sales), 0) / sales.length
+    ? sales.reduce((sum, s) => sum + (Number(s.total_sales) || 0), 0) / sales.length
     : 0;
 
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-stone-200 bg-white p-5">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">This Month Summary</h3>
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">This Month Summary</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatCell label="Total Revenue"  value={fmt(stats?.this_month ?? 0)} />
           <StatCell label="Monthly Cost"   value={fmt(stats?.monthly_cost ?? 110)} note="Internet Package ($110/mo)" />
@@ -189,7 +214,7 @@ const AnalyticsTab: React.FC<{ stats: Stats | null; sales: WiFiSale[] }> = ({ st
         </div>
       </div>
       <div className="rounded-xl border border-stone-200 bg-white p-5">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Sales Activity</h3>
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Sales Activity</h3>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <StatCell label="Total Sales"     value={String(sales.length)} />
           <StatCell label="Tokens Sold"     value={String(totalTokens)} />
@@ -205,13 +230,18 @@ const AnalyticsTab: React.FC<{ stats: Stats | null; sales: WiFiSale[] }> = ({ st
 const RecentSalesTab: React.FC<{ sales: WiFiSale[]; onDelete: (id: string) => void }> = ({ sales, onDelete }) => (
   <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
     {sales.length === 0 ? (
-      <p className="py-12 text-center text-sm text-zinc-400">No sales recorded yet.</p>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-stone-100">
+          <Wifi size={20} className="text-zinc-400" />
+        </div>
+        <p className="text-sm font-medium text-zinc-700">No sales recorded yet</p>
+      </div>
     ) : (
-      <table className="w-full text-sm">
+      <table className="w-full text-sm table-card-mobile">
         <thead className="border-b border-stone-200 bg-stone-50">
           <tr>
             {['Date', 'Package', 'Tokens', 'Price', 'Total', 'Method'].map(col => (
-              <th key={col} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{col}</th>
+              <th key={col} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-400">{col}</th>
             ))}
             <th className="px-4 py-3" />
           </tr>
@@ -219,13 +249,13 @@ const RecentSalesTab: React.FC<{ sales: WiFiSale[]; onDelete: (id: string) => vo
         <tbody className="divide-y divide-stone-100">
           {sales.map(sale => (
             <tr key={sale.id} className="hover:bg-stone-50">
-              <td className="px-4 py-3 text-zinc-700">{sale.sale_date}</td>
-              <td className="px-4 py-3 text-zinc-700">{sale.package_type}</td>
-              <td className="px-4 py-3 text-zinc-700">{sale.tokens_sold}</td>
-              <td className="px-4 py-3 text-zinc-700">{fmt(Number(sale.selling_price))}</td>
-              <td className="px-4 py-3 font-medium text-zinc-900">{fmt(Number(sale.total_sales))}</td>
-              <td className="px-4 py-3 text-zinc-500">{sale.payment_method}</td>
-              <td className="px-4 py-3 text-right">
+              <td className="px-4 py-3 text-zinc-700" data-label="Date">{sale.sale_date}</td>
+              <td className="px-4 py-3 text-zinc-700" data-label="Package">{sale.package_type}</td>
+              <td className="px-4 py-3 text-zinc-700" data-label="Tokens">{sale.tokens_sold}</td>
+              <td className="px-4 py-3 text-zinc-700" data-label="Price">{fmt(Number(sale.selling_price))}</td>
+              <td className="px-4 py-3 font-medium text-zinc-900" data-label="Total">{fmt(Number(sale.total_sales))}</td>
+              <td className="px-4 py-3 text-zinc-500" data-label="Method">{sale.payment_method}</td>
+              <td className="px-4 py-3 text-right actions-cell" data-label="">
                 <button onClick={() => onDelete(sale.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
               </td>
             </tr>
@@ -240,7 +270,7 @@ const RecentSalesTab: React.FC<{ sales: WiFiSale[]; onDelete: (id: string) => vo
 
 const StatCell: React.FC<{ label: string; value: string; accent?: 'green' | 'red'; note?: string }> = ({ label, value, accent, note }) => (
   <div>
-    <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{label}</p>
+    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-400">{label}</p>
     <p className={`mt-1 text-xl font-bold tabular-nums ${accent === 'green' ? 'text-emerald-600' : accent === 'red' ? 'text-red-600' : 'text-zinc-900'}`}>{value}</p>
     {note && <p className="mt-0.5 text-[10px] text-zinc-400">{note}</p>}
   </div>
@@ -273,34 +303,46 @@ const RecordWiFiSaleModal: React.FC<{ isOpen: boolean; onClose: () => void; onSa
       showToast('WiFi sale recorded', 'success');
       onSaved();
     } catch (err: any) {
-      addToast({ kind: 'error', title: err.message });
+      showToast(err.message || 'Failed to record sale', 'error');
     } finally { setLoading(false); }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Record WiFi Sale" label="WiFi Token Sales" size="sm"
-      footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" form="wifi-sale-form" isLoading={loading}>Record Sale</Button></div>}
+      footer={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" form="wifi-sale-form" isLoading={loading}>Record Sale</Button>
+        </div>
+      }
     >
-      <form id="wifi-sale-form" onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <Select id="ws-pkg" labelText="Package Type" value={packageType} onChange={e => setPackageType(e.target.value)}>
-            {PACKAGE_TYPES.map(p => <SelectItem key={p} value={p} text={p} />)}
-          </Select>
-          <TextInput id="ws-tokens" type="number" min="1" labelText="Tokens Sold *" value={tokens} onChange={e => setTokens(e.target.value)} required />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <TextInput id="ws-price" type="number" step="0.01" min="0.01" labelText="Price per Token *" value={price} onChange={e => setPrice(e.target.value)} required />
-          <Select id="ws-method" labelText="Payment Method" value={method} onChange={e => setMethod(e.target.value)}>
-            {PAYMENT_METHODS.map(m => <SelectItem key={m} value={m} text={m} />)}
-          </Select>
-        </div>
-        {total > 0 && (
-          <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
-            <p className="text-xs text-blue-700">Total: <span className="font-bold">{formatCurrency(total, 'USD')}</span></p>
+      <form id="wifi-sale-form" onSubmit={handleSubmit} className="space-y-4">
+        <section>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Sale Details</h3>
+            <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Select id="ws-pkg" labelText="Package Type" value={packageType} onChange={e => setPackageType(e.target.value)}>
+                {PACKAGE_TYPES.map(p => <SelectItem key={p} value={p} text={p} />)}
+              </Select>
+              <TextInput id="ws-tokens" type="number" min="1" labelText="Tokens Sold *" value={tokens} onChange={e => setTokens(e.target.value)} required />
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <TextInput id="ws-price" type="number" step="0.01" min="0.01" labelText="Price per Token *" value={price} onChange={e => setPrice(e.target.value)} required />
+              <Select id="ws-method" labelText="Payment Method" value={method} onChange={e => setMethod(e.target.value)}>
+                {PAYMENT_METHODS.map(m => <SelectItem key={m} value={m} text={m} />)}
+              </Select>
+            </div>
+            <TextInput id="ws-date" type="date" labelText="Sale Date" value={date} onChange={e => setDate(e.target.value)} />
+            <TextArea id="ws-notes" labelText="Notes" rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional notes" />
+            </div>
+            {total > 0 && (
+              <div className="mt-3 rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
+                <p className="text-sm text-blue-700">Total: <span className="font-bold">{formatCurrency(total, 'USD')}</span></p>
+              </div>
+            )}
           </div>
-        )}
-        <TextInput id="ws-date" type="date" labelText="Sale Date" value={date} onChange={e => setDate(e.target.value)} />
-        <TextArea id="ws-notes" labelText="Notes" rows={2} value={notes} onChange={e => setNotes(e.target.value)} />
+        </section>
       </form>
     </Modal>
   );

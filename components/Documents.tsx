@@ -72,7 +72,7 @@ export const Documents: React.FC = () => {
   const vehicleData = useMemo(() => {
     return vehicles.map(v => {
       const vehicleExpenses = expenses.filter(e => e.vehicle_id === v.id);
-      const totalExpenses = vehicleExpenses.reduce((sum, e) => sum + (e.amount * (e.exchange_rate_to_usd || 1)), 0);
+      const totalExpenses = vehicleExpenses.reduce((sum, e) => sum + (e.amount || 0) * (e.exchange_rate_to_usd || 1), 0);
       return {
         vehicle: v,
         expenses: vehicleExpenses,
@@ -318,49 +318,61 @@ export const Documents: React.FC = () => {
         }
       >
         {selectedReceipt && (
-          <div className="space-y-4">
-            <p className="text-sm text-zinc-500">Expense ID: {selectedReceipt.id}</p>
+          <div className="space-y-6">
+            <p className="text-xs text-zinc-400 font-mono">Expense ID: {selectedReceipt.id}</p>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Category</label>
-                <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.category}</p>
+            {/* Basic Info */}
+            <section>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Basic Info</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-[0.08em]">Category</label>
+                    <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.category}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-[0.08em]">Location</label>
+                    <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.location}</p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-[0.08em]">Description</label>
+                  <p className="text-base text-zinc-900 mt-1">{selectedReceipt.description}</p>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Location</label>
-                <p className="text-lg font-bold text-zinc-900 mt-1">{selectedReceipt.location}</p>
-              </div>
-            </div>
+            </section>
 
-            <div>
-              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Description</label>
-              <p className="text-base text-zinc-900 mt-1">{selectedReceipt.description}</p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Amount</label>
-                <p className="text-xl font-black text-zinc-900 mt-1">{selectedReceipt.currency} {selectedReceipt.amount.toLocaleString()}</p>
+            {/* Financial Details */}
+            <section>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Financial Details</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-[0.08em]">Amount</label>
+                    <p className="text-xl font-black text-zinc-900 mt-1">{selectedReceipt.currency} {selectedReceipt.amount.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-[0.08em]">USD Equivalent</label>
+                    <p className="text-xl font-black text-[#D97706] mt-1">${(selectedReceipt.amount * selectedReceipt.exchange_rate_to_usd).toLocaleString(undefined, {maximumFractionDigits: 2})}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-[0.08em]">Date</label>
+                    <p className="text-base font-bold text-zinc-900 mt-1">{new Date(selectedReceipt.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-[0.08em]">Exchange Rate</label>
+                  <p className="text-sm text-zinc-900 mt-1">1 {selectedReceipt.currency} = ${selectedReceipt.exchange_rate_to_usd} USD</p>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">USD Equivalent</label>
-                <p className="text-xl font-black text-[#D97706] mt-1">${(selectedReceipt.amount * selectedReceipt.exchange_rate_to_usd).toLocaleString(undefined, {maximumFractionDigits: 2})}</p>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Date</label>
-                <p className="text-base font-bold text-zinc-900 mt-1">{new Date(selectedReceipt.created_at).toLocaleDateString()}</p>
-              </div>
-            </div>
+            </section>
 
-            <div>
-              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Exchange Rate</label>
-              <p className="text-sm text-zinc-900 mt-1">1 {selectedReceipt.currency} = ${selectedReceipt.exchange_rate_to_usd} USD</p>
-            </div>
-
+            {/* Receipt Image */}
             {selectedReceipt.receipt_url && (
-              <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 block">Receipt Image</label>
-                <div className="bg-zinc-50 p-4">
+              <section>
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Receipt Image</h3>
+                  <div className="bg-zinc-50 p-4 rounded-xl border border-stone-100/70">
                   {modalImageError ? (
                     <div className="text-center text-zinc-400 py-8">
                       <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -372,19 +384,25 @@ export const Documents: React.FC = () => {
                     <img
                       src={selectedReceipt.receipt_url}
                       alt={`Receipt for ${selectedReceipt.description}`}
-                      className="w-full"
+                      className="w-full rounded-lg"
                       onError={handleModalImageError}
                     />
                   )}
                 </div>
               </div>
+              </section>
             )}
 
-            <div className="bg-amber-50 border border-amber-200 p-4 mt-6">
-              <p className="text-xs font-semibold text-amber-900 mb-2">✓ Audit Trail</p>
-              <p className="text-sm text-amber-800">Created: {new Date(selectedReceipt.created_at).toLocaleString()}</p>
-              <p className="text-sm text-amber-800">Vehicle ID: {selectedReceipt.vehicle_id}</p>
-            </div>
+            {/* Audit Trail */}
+            <section>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Audit Trail</h3>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <p className="text-sm text-amber-800">Created: {new Date(selectedReceipt.created_at).toLocaleString()}</p>
+                  <p className="text-sm text-amber-800 mt-1">Vehicle ID: {selectedReceipt.vehicle_id}</p>
+                </div>
+              </div>
+            </section>
           </div>
         )}
       </Modal>

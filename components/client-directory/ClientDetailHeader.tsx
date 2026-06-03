@@ -25,7 +25,7 @@ export const ClientDetailHeader: React.FC<ClientDetailHeaderProps> = ({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex min-h-[40px] items-center gap-2 border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+          className="inline-flex min-h-[40px] items-center gap-2 border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
         >
           <span aria-hidden="true">←</span>
           Back to clients
@@ -35,7 +35,7 @@ export const ClientDetailHeader: React.FC<ClientDetailHeaderProps> = ({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="text-2xl font-semibold text-gray-900">{client.name}</h2>
+            <h2 className="text-2xl font-semibold text-zinc-900">{client.name}</h2>
             {client.isRegistered ? (
               <Tag type="green" size="sm">Registered</Tag>
             ) : (
@@ -61,24 +61,24 @@ export const ClientDetailHeader: React.FC<ClientDetailHeaderProps> = ({
             )}
           </div>
           {client.company && (
-            <p className="text-gray-500 text-sm mt-0.5">{client.company}</p>
+            <p className="text-zinc-500 text-sm mt-0.5">{client.company}</p>
           )}
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-gray-600">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-zinc-600">
             {client.email && (
               <span className="inline-flex items-center gap-1.5">
-                <Mail size={14} className="text-gray-600" />
+                <Mail size={14} className="text-zinc-600" />
                 {client.email}
               </span>
             )}
             {client.phone && (
               <span className="inline-flex items-center gap-1.5">
-                <Phone size={14} className="text-gray-600" />
+                <Phone size={14} className="text-zinc-600" />
                 {client.phone}
               </span>
             )}
             {client.address && (
               <span className="inline-flex items-center gap-1.5">
-                <MapPin size={14} className="text-gray-600" />
+                <MapPin size={14} className="text-zinc-600" />
                 {client.address}
               </span>
             )}
@@ -87,7 +87,7 @@ export const ClientDetailHeader: React.FC<ClientDetailHeaderProps> = ({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mt-6 pt-4 border-t border-gray-200">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mt-6 pt-4 border-t border-zinc-200">
         <StatItem label="Opening Bal" value={formatMoney(stats.openingBalance)} />
         <StatItem label="Total Billed" value={formatMoney(stats.totalBilled)} />
         <StatItem
@@ -142,7 +142,7 @@ const OutstandingStats: React.FC<{ usd: number; gbp: number }> = ({ usd, gbp }) 
 };
 
 const toneColor: Record<string, string> = {
-  default: 'text-gray-900',
+  default: 'text-zinc-900',
   success: 'text-green-600',
   danger: 'text-red-600',
   info: 'text-amber-600',
@@ -154,7 +154,7 @@ const StatItem: React.FC<{
   tone?: 'default' | 'success' | 'danger' | 'info';
 }> = ({ label, value, tone = 'default' }) => (
   <div>
-    <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider">{label}</p>
+    <p className="text-xs text-zinc-500 uppercase font-semibold tracking-[0.08em]">{label}</p>
     <p className={`text-xl font-semibold mt-1 ${toneColor[tone]}`}>{value}</p>
   </div>
 );

@@ -32,16 +32,16 @@ const toneMap: Record<Tone, { bar: string; tagClasses: string }> = {
   amber:  { bar: '#f59e0b', tagClasses: 'bg-amber-100 text-amber-800' },
   purple: { bar: '#7c3aed', tagClasses: 'bg-purple-100 text-purple-800' },
   teal:   { bar: '#14b8a6', tagClasses: 'bg-teal-100 text-teal-800' },
-  gray:   { bar: '#d1d5db', tagClasses: 'bg-gray-100 text-gray-700' },
+  gray:   { bar: '#d1d5db', tagClasses: 'bg-zinc-100 text-zinc-700' },
 };
 
 export const InsightPanel: React.FC<InsightPanelProps> = ({ title, subtitle, action, children }) => (
-  <div className="bg-white border border-gray-200 p-5 min-h-full">
+  <div className="bg-white border border-zinc-200 p-5 min-h-full">
     <div className="flex justify-between items-start gap-4 mb-4">
       <div>
-        <h3 className="text-base font-semibold text-gray-900 m-0">{title}</h3>
+        <h3 className="text-base font-semibold text-zinc-900 m-0">{title}</h3>
         {subtitle && (
-          <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+          <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
         )}
       </div>
       {action}
@@ -55,7 +55,7 @@ export const MetricBarList: React.FC<{ items: MetricBarItem[]; emptyMessage?: st
   emptyMessage = 'No data available.',
 }) => {
   if (!items.length) {
-    return <p className="m-0 text-gray-500 text-sm">{emptyMessage}</p>;
+    return <p className="m-0 text-zinc-500 text-sm">{emptyMessage}</p>;
   }
 
   return (
@@ -68,16 +68,16 @@ export const MetricBarList: React.FC<{ items: MetricBarItem[]; emptyMessage?: st
           <div key={`${item.label}-${item.value}`} className="grid gap-1.5">
             <div className="flex justify-between items-center gap-4">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-semibold text-gray-900">{item.label}</span>
+                <span className="text-sm font-semibold text-zinc-900">{item.label}</span>
                 {item.tagLabel && <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${tone.tagClasses}`}>{item.tagLabel}</span>}
               </div>
-              <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+              <span className="text-sm font-semibold text-zinc-900">{item.value}</span>
             </div>
-            <div className="w-full h-2 bg-gray-100">
+            <div className="w-full h-2 bg-zinc-100">
               <div className="h-full transition-all" style={{ width: `${percent}%`, background: tone.bar }} />
             </div>
             {item.helper && (
-              <span className="text-xs text-gray-500">{item.helper}</span>
+              <span className="text-xs text-zinc-500">{item.helper}</span>
             )}
           </div>
         );
@@ -91,7 +91,7 @@ export const RankedMetricList: React.FC<{ items: RankedMetricItem[]; emptyMessag
   emptyMessage = 'No ranked data available.',
 }) => {
   if (!items.length) {
-    return <p className="m-0 text-gray-500 text-sm">{emptyMessage}</p>;
+    return <p className="m-0 text-zinc-500 text-sm">{emptyMessage}</p>;
   }
 
   return (
@@ -102,7 +102,7 @@ export const RankedMetricList: React.FC<{ items: RankedMetricItem[]; emptyMessag
         return (
           <div
             key={`${item.label}-${index}`}
-            className="grid items-center gap-3 p-3.5 bg-gray-50"
+            className="grid items-center gap-3 p-3.5 bg-zinc-50"
             style={{ gridTemplateColumns: '2rem 1fr auto' }}
           >
             <div
@@ -112,10 +112,10 @@ export const RankedMetricList: React.FC<{ items: RankedMetricItem[]; emptyMessag
               {index + 1}
             </div>
             <div>
-              <div className="text-sm font-semibold text-gray-900">{item.label}</div>
-              {item.helper && <div className="text-xs text-gray-500">{item.helper}</div>}
+              <div className="text-sm font-semibold text-zinc-900">{item.label}</div>
+              {item.helper && <div className="text-xs text-zinc-500">{item.helper}</div>}
             </div>
-            <div className="text-sm font-semibold text-gray-900 text-right">{item.value}</div>
+            <div className="text-sm font-semibold text-zinc-900 text-right">{item.value}</div>
           </div>
         );
       })}

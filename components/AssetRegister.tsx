@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Asset, AssetRequest, AssetStatus, AssetRequestStatus } from '../types';
-import { Button, Modal, StatCard, EmptyState, StatusBadge, SkeletonTable, defaultIcons, DashboardPageHeader, DashboardSection } from './ui';
+import { Button, Modal, StatCard, EmptyState, StatusBadge, SkeletonTable, defaultIcons, DashboardPageHeader, DashboardSection, TextInput, Select, SelectItem, TextArea } from './ui';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 import { api } from '../services/apiClient';
@@ -243,14 +243,14 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       case 'Available': return 'bg-green-100 text-green-800';
       case 'Borrowed': return 'bg-[#D97706]/10 text-[#D97706]';
       case 'Under Maintenance': return 'bg-yellow-100 text-yellow-800';
-      case 'Retired': return 'bg-gray-100 text-gray-800';
+      case 'Retired': return 'bg-zinc-100 text-zinc-800';
       case 'Pending': return 'bg-yellow-100 text-yellow-800';
       case 'Approved': return 'bg-[#D97706]/10 text-[#D97706]';
       case 'Rejected': return 'bg-red-100 text-red-800';
       case 'Taken': return 'bg-stone-200 text-stone-800';
       case 'Returned': return 'bg-green-100 text-green-800';
       case 'Overdue': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-zinc-100 text-zinc-800';
     }
   };
 
@@ -296,28 +296,28 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       </div>
 
       <div className="sm:hidden">
-        <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-gray-500">View</label>
+        <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">View</label>
         <select
           value={activeTab}
           onChange={(event) => setActiveTab(event.target.value as 'assets' | 'requests')}
-          className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#D97706]/20"
+          className="w-full border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-sm outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#D97706]/20"
           aria-label="Select asset register section"
         >
           <option value="assets">Assets</option>
           <option value="requests">Requests</option>
         </select>
-        <p className="mt-2 text-sm text-gray-500">Currently viewing {activeTabLabel.toLowerCase()}.</p>
+        <p className="mt-2 text-sm text-zinc-500">Currently viewing {activeTabLabel.toLowerCase()}.</p>
       </div>
 
       {/* Tabs - desktop */}
-      <div className="border-b border-gray-200 -mx-3 px-3 sm:mx-0 sm:px-0">
+      <div className="border-b border-zinc-200 -mx-3 px-3 sm:mx-0 sm:px-0">
         <nav className="-mb-px hidden sm:flex space-x-4 sm:space-x-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('assets')}
             className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === 'assets'
                 ? 'border-[#D97706] text-[#D97706]'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
             }`}
           >
             Assets
@@ -327,7 +327,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
             className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === 'requests'
                 ? 'border-[#D97706] text-[#D97706]'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
             }`}
           >
             Requests
@@ -357,21 +357,21 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
             <>
               <div className="space-y-3 md:hidden">
                 {assets.map((asset) => (
-                  <div key={asset.id} className=" border border-gray-200 bg-white p-4 shadow-sm">
+                  <div key={asset.id} className=" border border-zinc-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-base font-semibold text-gray-900">{asset.name}</p>
-                        <p className="mt-1 text-sm text-gray-500">{asset.category}</p>
-                        {asset.description && <p className="mt-2 text-sm text-gray-600">{asset.description}</p>}
+                        <p className="text-base font-semibold text-zinc-900">{asset.name}</p>
+                        <p className="mt-1 text-sm text-zinc-500">{asset.category}</p>
+                        {asset.description && <p className="mt-2 text-sm text-zinc-600">{asset.description}</p>}
                       </div>
                       <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusColor(asset.status)}`}>
                         {asset.status}
                       </span>
                     </div>
-                    <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-gray-600">
-                      <p><span className="font-semibold text-gray-900">Serial:</span> {asset.serial_number || '-'}</p>
-                      <p><span className="font-semibold text-gray-900">Location:</span> {asset.location || '-'}</p>
-                      <p><span className="font-semibold text-gray-900">Condition:</span> {asset.condition}</p>
+                    <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-zinc-600">
+                      <p><span className="font-semibold text-zinc-900">Serial:</span> {asset.serial_number || '-'}</p>
+                      <p><span className="font-semibold text-zinc-900">Location:</span> {asset.location || '-'}</p>
+                      <p><span className="font-semibold text-zinc-900">Condition:</span> {asset.condition}</p>
                     </div>
                     {canEdit && (
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -391,33 +391,33 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
               <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-zinc-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serial #</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Condition</th>
-                    {canEdit && <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Serial #</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Condition</th>
+                    {canEdit && <th className="px-6 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {assets.map((asset) => (
-                    <tr key={asset.id} className="hover:bg-gray-50">
+                    <tr key={asset.id} className="hover:bg-zinc-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{asset.name}</div>
-                        {asset.description && <div className="text-sm text-gray-500">{asset.description}</div>}
+                        <div className="font-medium text-zinc-900">{asset.name}</div>
+                        {asset.description && <div className="text-sm text-zinc-500">{asset.description}</div>}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">{asset.category}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">{asset.serial_number || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-zinc-500">{asset.category}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-zinc-500">{asset.serial_number || '-'}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(asset.status)}`}>
                           {asset.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">{asset.location || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">{asset.condition}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-zinc-500">{asset.location || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-zinc-500">{asset.condition}</td>
                       {canEdit && (
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <button
@@ -469,22 +469,22 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
             <>
               <div className="space-y-3 md:hidden">
                 {requests.map((request) => (
-                  <div key={request.id} className=" border border-gray-200 bg-white p-4 shadow-sm">
+                  <div key={request.id} className=" border border-zinc-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-base font-semibold text-gray-900">{request.asset_name || 'Unknown'}</p>
-                        <p className="mt-1 text-sm text-gray-500">{request.asset_category || 'Asset request'}</p>
+                        <p className="text-base font-semibold text-zinc-900">{request.asset_name || 'Unknown'}</p>
+                        <p className="mt-1 text-sm text-zinc-500">{request.asset_category || 'Asset request'}</p>
                       </div>
                       <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusColor(request.status)}`}>
                         {request.status}
                       </span>
                     </div>
-                    <div className="mt-4 space-y-2 text-sm text-gray-600">
-                      <p><span className="font-semibold text-gray-900">Requested by:</span> {request.requested_by}</p>
-                      <p><span className="font-semibold text-gray-900">Department:</span> {request.requester_department || '-'}</p>
-                      <p><span className="font-semibold text-gray-900">Request date:</span> {request.request_date ? new Date(request.request_date).toLocaleDateString() : '-'}</p>
-                      <p><span className="font-semibold text-gray-900">Take date:</span> {request.requested_take_date || '-'}</p>
-                      <p><span className="font-semibold text-gray-900">Return date:</span> {request.expected_return_date || '-'}</p>
+                    <div className="mt-4 space-y-2 text-sm text-zinc-600">
+                      <p><span className="font-semibold text-zinc-900">Requested by:</span> {request.requested_by}</p>
+                      <p><span className="font-semibold text-zinc-900">Department:</span> {request.requester_department || '-'}</p>
+                      <p><span className="font-semibold text-zinc-900">Request date:</span> {request.request_date ? new Date(request.request_date).toLocaleDateString() : '-'}</p>
+                      <p><span className="font-semibold text-zinc-900">Take date:</span> {request.requested_take_date || '-'}</p>
+                      <p><span className="font-semibold text-zinc-900">Return date:</span> {request.expected_return_date || '-'}</p>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {canEdit && request.status === 'Pending' && (
@@ -522,37 +522,37 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
               <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-zinc-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Asset</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requested By</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Request Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Take Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Return Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Asset</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Requested By</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Department</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Request Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Take Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Return Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {requests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50">
+                    <tr key={request.id} className="hover:bg-zinc-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{request.asset_name || 'Unknown'}</div>
-                        {request.asset_category && <div className="text-sm text-gray-500">{request.asset_category}</div>}
+                        <div className="font-medium text-zinc-900">{request.asset_name || 'Unknown'}</div>
+                        {request.asset_category && <div className="text-sm text-zinc-500">{request.asset_category}</div>}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-gray-900">{request.requested_by}</div>
-                        {request.requester_email && <div className="text-sm text-gray-500">{request.requester_email}</div>}
+                        <div className="text-zinc-900">{request.requested_by}</div>
+                        {request.requester_email && <div className="text-sm text-zinc-500">{request.requester_email}</div>}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">{request.requester_department || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-zinc-500">{request.requester_department || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-zinc-500">
                         {request.request_date ? new Date(request.request_date).toLocaleDateString() : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-zinc-500">
                         {request.requested_take_date || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-zinc-500">
                         {request.expected_return_date || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -595,7 +595,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
                         )}
                         <button
                           onClick={() => handleEditRequest(request)}
-                          className="text-gray-600 hover:text-gray-900"
+                          className="text-zinc-600 hover:text-zinc-900"
                         >
                           Edit
                         </button>
@@ -624,124 +624,135 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
         isOpen={showAssetModal}
         onClose={() => { setShowAssetModal(false); setEditingAsset(null); }}
         title={editingAsset ? 'Edit Asset' : 'Add Asset'}
-        size="sm"
+        label="Asset record"
+        size="md"
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="secondary" onClick={() => { setShowAssetModal(false); setEditingAsset(null); }}>
+            <Button type="button" variant="ghost" onClick={() => { setShowAssetModal(false); setEditingAsset(null); }}>
               Cancel
             </Button>
             <Button type="submit" form="asset-form">
-              {editingAsset ? 'Save' : 'Create'}
+              {editingAsset ? 'Save Changes' : 'Create Asset'}
             </Button>
           </div>
         }
       >
-        <form id="asset-form" onSubmit={handleAssetSubmit} className="space-y-3 sm:space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">Name *</label>
-            <input
-              type="text"
-              value={assetForm.name}
-              onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-              required
-            />
+        <form id="asset-form" onSubmit={handleAssetSubmit} className="space-y-4">
+          {/* Basic Details */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Basic Details</h3>
+              <div className="space-y-3">
+              <TextInput
+                id="asset-name"
+                labelText="Name *"
+                placeholder="e.g. Dell Latitude 5540"
+                value={assetForm.name}
+                onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
+                required
+              />
+              <TextArea
+                id="asset-description"
+                labelText="Description"
+                placeholder="Optional description"
+                rows={2}
+                value={assetForm.description}
+                onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">Category *</label>
-            <select
-              value={assetForm.category}
-              onChange={(e) => setAssetForm({ ...assetForm, category: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-              required
-            >
-              <option value="">Select…</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Equipment">Equipment</option>
-              <option value="Tools">Tools</option>
-              <option value="Office Equipment">Office Equipment</option>
-              <option value="Furniture">Furniture</option>
-              <option value="Vehicles">Vehicles</option>
-              <option value="Safety">Safety</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">Description</label>
-            <textarea
-              value={assetForm.description}
-              onChange={(e) => setAssetForm({ ...assetForm, description: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-              rows={2}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">Serial #</label>
-            <input
-              type="text"
-              value={assetForm.serial_number}
-              onChange={(e) => setAssetForm({ ...assetForm, serial_number: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700">Status</label>
-              <select
+        </section>
+
+          {/* Classification */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Classification</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Select
+                id="asset-category"
+                labelText="Category *"
+                value={assetForm.category}
+                onChange={(e) => setAssetForm({ ...assetForm, category: e.target.value })}
+                required
+              >
+                <SelectItem value="" text="Select…" />
+                <SelectItem value="Electronics" text="Electronics" />
+                <SelectItem value="Equipment" text="Equipment" />
+                <SelectItem value="Tools" text="Tools" />
+                <SelectItem value="Office Equipment" text="Office Equipment" />
+                <SelectItem value="Furniture" text="Furniture" />
+                <SelectItem value="Vehicles" text="Vehicles" />
+                <SelectItem value="Safety" text="Safety" />
+                <SelectItem value="Other" text="Other" />
+              </Select>
+              <TextInput
+                id="asset-serial"
+                labelText="Serial #"
+                placeholder="e.g. SN-12345"
+                value={assetForm.serial_number}
+                onChange={(e) => setAssetForm({ ...assetForm, serial_number: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <Select
+                id="asset-status"
+                labelText="Status"
                 value={assetForm.status}
                 onChange={(e) => setAssetForm({ ...assetForm, status: e.target.value as AssetStatus })}
-                className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
               >
-                <option value="Available">Available</option>
-                <option value="Borrowed">Borrowed</option>
-                <option value="Under Maintenance">Maintenance</option>
-                <option value="Retired">Retired</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700">Condition</label>
-              <select
+                <SelectItem value="Available" text="Available" />
+                <SelectItem value="Borrowed" text="Borrowed" />
+                <SelectItem value="Under Maintenance" text="Under Maintenance" />
+                <SelectItem value="Retired" text="Retired" />
+              </Select>
+              <Select
+                id="asset-condition"
+                labelText="Condition"
                 value={assetForm.condition}
                 onChange={(e) => setAssetForm({ ...assetForm, condition: e.target.value })}
-                className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
               >
-                <option value="Excellent">Excellent</option>
-                <option value="Good">Good</option>
-                <option value="Fair">Fair</option>
-                <option value="Poor">Poor</option>
-              </select>
+                <SelectItem value="Excellent" text="Excellent" />
+                <SelectItem value="Good" text="Good" />
+                <SelectItem value="Fair" text="Fair" />
+                <SelectItem value="Poor" text="Poor" />
+              </Select>
+            </div>
+            <div className="mt-3">
+              <TextInput
+                id="asset-location"
+                labelText="Location"
+                placeholder="e.g. Office A, Warehouse 3"
+                value={assetForm.location}
+                onChange={(e) => setAssetForm({ ...assetForm, location: e.target.value })}
+              />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">Location</label>
-            <input
-              type="text"
-              value={assetForm.location}
-              onChange={(e) => setAssetForm({ ...assetForm, location: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Purchase Date</label>
-              <input
+        </section>
+
+          {/* Valuation */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Valuation</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <TextInput
+                id="asset-purchase-date"
+                labelText="Purchase Date"
                 type="date"
                 value={assetForm.purchase_date}
                 onChange={(e) => setAssetForm({ ...assetForm, purchase_date: e.target.value })}
-                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Value (USD)</label>
-              <input
+              <TextInput
+                id="asset-value"
+                labelText="Value (USD)"
                 type="number"
                 step="0.01"
+                placeholder="0.00"
                 value={assetForm.purchase_value}
                 onChange={(e) => setAssetForm({ ...assetForm, purchase_value: e.target.value })}
-                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
               />
             </div>
           </div>
+        </section>
         </form>
       </Modal>
 
@@ -750,104 +761,122 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
         isOpen={showRequestModal}
         onClose={() => { setShowRequestModal(false); setEditingRequest(null); }}
         title={editingRequest ? 'Edit Request' : 'New Request'}
-        size="sm"
+        label="Asset request"
+        size="md"
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="secondary" onClick={() => { setShowRequestModal(false); setEditingRequest(null); }}>
+            <Button type="button" variant="ghost" onClick={() => { setShowRequestModal(false); setEditingRequest(null); }}>
               Cancel
             </Button>
             <Button type="submit" form="request-form">
-              {editingRequest ? 'Update' : 'Create'} Request
+              {editingRequest ? 'Update Request' : 'Create Request'}
             </Button>
           </div>
         }
       >
-        <form id="request-form" onSubmit={handleRequestSubmit} className="space-y-3 sm:space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">Asset *</label>
-            <select
+        <form id="request-form" onSubmit={handleRequestSubmit} className="space-y-4">
+          {/* Asset Selection */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Asset Selection</h3>
+              <div className="space-y-3">
+                <Select
+              id="request-asset"
+              labelText="Asset *"
               value={requestForm.asset_id}
               onChange={(e) => setRequestForm({ ...requestForm, asset_id: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
               required
               disabled={!!editingRequest}
             >
-              <option value="">Select asset</option>
-              {assets.map((asset) => (
-                <option key={asset.id} value={asset.id} disabled={asset.status !== 'Available'}>
-                  {asset.name} ({asset.status})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">Requested By *</label>
-            <input
-              type="text"
-              value={requestForm.requested_by}
-              onChange={(e) => setRequestForm({ ...requestForm, requested_by: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700">Email</label>
-              <input
-                type="email"
-                value={requestForm.requester_email}
-                onChange={(e) => setRequestForm({ ...requestForm, requester_email: e.target.value })}
-                className="mt-1 block w-full border border-gray-300 px-3 py-3 sm:py-2 text-sm sm:text-base focus:border-[#D97706] focus:ring-[#D97706]"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Department</label>
-              <input
-                type="text"
-                value={requestForm.requester_department}
-                onChange={(e) => setRequestForm({ ...requestForm, requester_department: e.target.value })}
-                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-              />
+              <SelectItem value="" text="Select asset" />
+              {assets.map((asset) => (              <SelectItem key={asset.id} value={asset.id} text={`${asset.name} (${asset.status})`} disabled={asset.status !== 'Available'} />
+            ))}
+              </Select>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Requested Take Date</label>
-              <input
+        </section>
+
+          {/* Requester Details */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Requester Details</h3>
+              <div className="space-y-3">
+              <TextInput
+                id="request-requested-by"
+                labelText="Requested By *"
+                placeholder="Full name"
+                value={requestForm.requested_by}
+                onChange={(e) => setRequestForm({ ...requestForm, requested_by: e.target.value })}
+                required
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <TextInput
+                  id="request-email"
+                  labelText="Email"
+                  type="email"
+                  placeholder="email@company.com"
+                  value={requestForm.requester_email}
+                  onChange={(e) => setRequestForm({ ...requestForm, requester_email: e.target.value })}
+                />
+                <TextInput
+                  id="request-department"
+                  labelText="Department"
+                  placeholder="e.g. Operations"
+                  value={requestForm.requester_department}
+                  onChange={(e) => setRequestForm({ ...requestForm, requester_department: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+          {/* Schedule */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Schedule</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <TextInput
+                id="request-take-date"
+                labelText="Requested Take Date"
                 type="date"
                 value={requestForm.requested_take_date}
                 onChange={(e) => setRequestForm({ ...requestForm, requested_take_date: e.target.value })}
-                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Expected Return Date</label>
-              <input
+              <TextInput
+                id="request-return-date"
+                labelText="Expected Return Date"
                 type="date"
                 value={requestForm.expected_return_date}
                 onChange={(e) => setRequestForm({ ...requestForm, expected_return_date: e.target.value })}
-                className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
               />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Purpose</label>
-            <textarea
-              value={requestForm.purpose}
-              onChange={(e) => setRequestForm({ ...requestForm, purpose: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-              rows={2}
-            />
+        </section>
+
+          {/* Notes */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Notes</h3>
+              <div className="space-y-3">
+              <TextArea
+                id="request-purpose"
+                labelText="Purpose"
+                placeholder="Why is this asset needed?"
+                rows={2}
+                value={requestForm.purpose}
+                onChange={(e) => setRequestForm({ ...requestForm, purpose: e.target.value })}
+              />
+              <TextArea
+                id="request-notes"
+                labelText="Notes"
+                placeholder="Additional notes"
+                rows={2}
+                value={requestForm.notes}
+                onChange={(e) => setRequestForm({ ...requestForm, notes: e.target.value })}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Notes</label>
-            <textarea
-              value={requestForm.notes}
-              onChange={(e) => setRequestForm({ ...requestForm, notes: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 px-3 py-2 focus:border-[#D97706] focus:ring-[#D97706]"
-              rows={2}
-            />
-          </div>
+        </section>
         </form>
       </Modal>
     </div>

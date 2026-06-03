@@ -151,8 +151,8 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
       <Tile>
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Client Vehicles</h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <h3 className="text-base font-semibold text-zinc-900">Client Vehicles</h3>
+            <p className="text-xs text-zinc-500 mt-0.5">
               Vehicles linked to this client, including reg-book uploads.
             </p>
           </div>
@@ -190,32 +190,32 @@ export const ClientVehiclesPanel: React.FC<ClientVehiclesPanelProps> = ({
         </div>
       </Tile>
 
-      <div className="bg-white border border-gray-200 overflow-x-auto">
+      <div className="bg-white border border-zinc-200 overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Make/Model</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Reg #</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">VIN</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Status</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Purpose</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Reg Book</th>
-              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Actions</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Make/Model</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Reg #</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">VIN</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Status</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Purpose</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Reg Book</th>
+              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Actions</th>
             </tr>
           </thead>
           <tbody>
             {linkedVehicles.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-3 py-8 text-center text-zinc-500">
                   No vehicles linked to this client yet
                 </td>
               </tr>
             ) : (
               linkedVehicles.map((v) => (
-                <tr key={v.id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="px-3 py-2 font-medium text-gray-900">{v.make_model}</td>
-                  <td className="px-3 py-2 font-mono text-xs text-gray-700">{v.reg_number || '–'}</td>
-                  <td className="px-3 py-2 font-mono text-xs text-gray-500">{v.vin_number}</td>
+                <tr key={v.id} className="border-t border-zinc-100 hover:bg-zinc-50">
+                  <td className="px-3 py-2 font-medium text-zinc-900">{v.make_model}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-zinc-700">{v.reg_number || '–'}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-zinc-500">{v.vin_number}</td>
                   <td className="px-3 py-2">
                     <Tag type="cool-gray" size="sm">{v.status}</Tag>
                   </td>

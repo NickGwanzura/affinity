@@ -44,7 +44,7 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
       render: row => (
         <div>
           <span className="font-mono font-semibold block">{row.invoice_number}</span>
-          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 mt-0.5">
+          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-600 mt-0.5">
             {row.invoice_kind || 'Standard'}
           </span>
         </div>
@@ -61,7 +61,7 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
             {row.batch}
           </span>
         ) : (
-          <span className="text-gray-500">—</span>
+          <span className="text-zinc-500">—</span>
         ),
     },
     {
@@ -106,8 +106,8 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
       <div
         className="px-4 py-3 border-b"
         style={{
-          backgroundColor: 'var(--cds-layer-02, #ffffff)',
-          borderColor: 'var(--cds-border-subtle, #d6d3d1)',
+          backgroundColor: '#ffffff',
+          borderColor: '#d6d3d1',
         }}
       >
         <div className="flex items-end gap-2">
@@ -115,7 +115,7 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
             <label
               htmlFor="invoice-batch-filter"
               className="block text-xs mb-1"
-              style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+              style={{ color: '#52525b' }}
             >
               Filter by batch
             </label>
@@ -125,7 +125,7 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
               value={batchFilter}
               onChange={e => onBatchFilterChange(e.target.value)}
               placeholder="Enter batch code..."
-              className="w-full h-8 px-3 text-sm border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
+              className="w-full h-8 px-3 text-sm border border-zinc-300 bg-white text-zinc-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
             />
           </div>
           {batchFilter && (
@@ -136,7 +136,7 @@ export const InvoicesSection: React.FC<InvoicesSectionProps> = ({
           {batchFilter && (
             <span
               className="text-xs pb-2"
-              style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+              style={{ color: '#52525b' }}
             >
               {filteredInvoices.length} result(s)
             </span>

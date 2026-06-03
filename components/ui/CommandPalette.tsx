@@ -179,7 +179,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   )}
                   <span className="flex-1 truncate">{item.label}</span>
                   {item.hint && (
-                    <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-medium">
+                    <span className="text-[10px] uppercase tracking-[0.08em] text-zinc-400 font-medium">
                       {item.hint}
                     </span>
                   )}

@@ -62,7 +62,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 // button gets silently bumped to 40px tall.
 const sizeClasses: Record<ButtonSize, string> = {
   sm: 'h-9 min-h-0 px-3.5 text-sm leading-none',
-  md: 'h-11 min-h-0 px-5 text-sm leading-none',
+  md: 'h-12 min-h-0 px-5 text-sm leading-none',
   lg: 'h-12 min-h-0 px-6 text-base leading-none',
 };
 
@@ -72,7 +72,7 @@ const baseButton = [
   'rounded-lg',
   'transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 ease-out',
   'focus:outline-none focus-visible:outline-none',
-  'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#D97706] focus-visible:ring-offset-white',
+  'focus-visible:ring-1 focus-visible:ring-[#D97706]',
   'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:pointer-events-none',
 ].join(' ');
 

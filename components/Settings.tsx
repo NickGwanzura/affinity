@@ -93,8 +93,8 @@ export const Settings: React.FC = () => {
       <div
         className="overflow-hidden"
         style={{
-          background: 'var(--cds-layer-01, #ffffff)',
-          border: '1px solid var(--cds-border-subtle, #d6d3d1)',
+          background: '#ffffff',
+          border: '1px solid #d6d3d1',
         }}
       >
         <SettingsTabBar

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { dataService } from '../services/dataService';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
-import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection, Modal } from './ui';
+import { Button, DashboardKpiCard, DashboardPageHeader, DashboardSection, Modal, TextInput, Select, SelectItem, TextArea } from './ui';
 import { Plus, Truck, CheckCircle, Clock, Package, XCircle } from 'lucide-react';
 
 interface Shipment {
@@ -185,27 +185,27 @@ export const Shipments: React.FC = () => {
       <DashboardSection title="All Shipments">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-zinc-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                 Client
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                 Description
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                 Origin
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                 Destination
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                 Status
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
                 Date
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">
                 Actions
               </th>
             </tr>
@@ -213,7 +213,7 @@ export const Shipments: React.FC = () => {
           <tbody className="divide-y">
             {shipments.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
                   No shipments yet. Create your first shipment.
                 </td>
               </tr>
@@ -221,11 +221,11 @@ export const Shipments: React.FC = () => {
               shipments.map(shipment => {
                 const StatusIcon = statusIcons[shipment.status] || Clock;
                 return (
-                  <tr key={shipment.id} className="hover:bg-gray-50">
+                  <tr key={shipment.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3 font-medium">{shipment.client_name || 'N/A'}</td>
-                    <td className="px-4 py-3 text-gray-600">{shipment.description}</td>
-                    <td className="px-4 py-3 text-gray-600">{shipment.origin}</td>
-                    <td className="px-4 py-3 text-gray-600">{shipment.destination}</td>
+                    <td className="px-4 py-3 text-zinc-600">{shipment.description}</td>
+                    <td className="px-4 py-3 text-zinc-600">{shipment.origin}</td>
+                    <td className="px-4 py-3 text-zinc-600">{shipment.destination}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusColors[shipment.status]}`}
@@ -234,7 +234,7 @@ export const Shipments: React.FC = () => {
                         {shipment.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-sm">
+                    <td className="px-4 py-3 text-zinc-600 text-sm">
                       {shipment.shipping_date
                         ? new Date(shipment.shipping_date).toLocaleDateString()
                         : '-'}
@@ -265,7 +265,8 @@ export const Shipments: React.FC = () => {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={editingShipment ? 'Edit Shipment' : 'New Shipment'}
-        size="lg"
+        label="Shipment"
+        size="md"
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
@@ -278,105 +279,114 @@ export const Shipments: React.FC = () => {
         }
       >
         <form id="shipment-form" onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Client</label>
-            <select
-              value={form.client_id}
-              onChange={e => setForm({ ...form, client_id: e.target.value })}
-              required
-              className="w-full px-3 py-2 border"
-            >
-              <option value="">Select client</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+          {/* Client & Vehicle */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Client & Vehicle</h3>
+              <div className="space-y-3">
+              <Select
+                id="shipment-client"
+                labelText="Client"
+                value={form.client_id}
+                onChange={e => setForm({ ...form, client_id: e.target.value })}
+                required
+              >
+                <SelectItem value="" text="Select client" />
+                {clients.map(c => (
+                  <SelectItem key={c.id} value={c.id} text={c.name} />
+                ))}
+              </Select>
+              <Select
+                id="shipment-vehicle"
+                labelText="Vehicle"
+                helperText="Optional — leave empty for general shipments"
+                value={form.vehicle_id}
+                onChange={e => setForm({ ...form, vehicle_id: e.target.value })}
+              >
+                <SelectItem value="" text="No vehicle" />
+                {vehicles.map(v => (
+                  <SelectItem key={v.id} value={v.id} text={`${v.make_model} (${v.vin_number})`} />
+                ))}
+              </Select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Vehicle (optional)</label>
-            <select
-              value={form.vehicle_id}
-              onChange={e => setForm({ ...form, vehicle_id: e.target.value })}
-              className="w-full px-3 py-2 border"
-            >
-              <option value="">No vehicle</option>
-              {vehicles.map(v => (
-                <option key={v.id} value={v.id}>
-                  {v.make_model} ({v.vin_number})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <input
-              type="text"
-              value={form.description}
-              onChange={e => setForm({ ...form, description: e.target.value })}
-              required
-              className="w-full px-3 py-2 border"
-              placeholder="e.g. Toyota Land Cruiser V8"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Origin</label>
-              <input
-                type="text"
+        </section>
+
+          {/* Route */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Route</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <TextInput
+                id="shipment-origin"
+                labelText="Origin"
+                placeholder="e.g. UK"
                 value={form.origin}
                 onChange={e => setForm({ ...form, origin: e.target.value })}
                 required
-                className="w-full px-3 py-2 border"
-                placeholder="e.g. UK"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Destination</label>
-              <input
-                type="text"
+              <TextInput
+                id="shipment-destination"
+                labelText="Destination"
+                placeholder="e.g. Namibia"
                 value={form.destination}
                 onChange={e => setForm({ ...form, destination: e.target.value })}
                 required
-                className="w-full px-3 py-2 border"
-                placeholder="e.g. Namibia"
               />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Status</label>
-            <select
-              value={form.status}
-              onChange={e => setForm({ ...form, status: e.target.value as any })}
-              className="w-full px-3 py-2 border"
-            >
-              <option value="Pending">Pending</option>
-              <option value="In Transit">In Transit</option>
-              <option value="Delivered">Delivered</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
+        </section>
+
+          {/* Description */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Description</h3>
+              <TextInput
+              id="shipment-description"
+              labelText="Shipment Description"
+              placeholder="e.g. Toyota Land Cruiser V8"
+              value={form.description}
+              onChange={e => setForm({ ...form, description: e.target.value })}
+              required
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Shipping Date</label>
-              <input
-                type="date"
-                value={form.shipping_date}
-                onChange={e => setForm({ ...form, shipping_date: e.target.value })}
-                className="w-full px-3 py-2 border"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Delivery Date</label>
-              <input
-                type="date"
-                value={form.delivery_date}
-                onChange={e => setForm({ ...form, delivery_date: e.target.value })}
-                className="w-full px-3 py-2 border"
-              />
+        </section>
+
+          {/* Status & Dates */}
+          <section>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Status & Dates</h3>
+              <div className="space-y-3">
+              <Select
+                id="shipment-status"
+                labelText="Status"
+                value={form.status}
+                onChange={e => setForm({ ...form, status: e.target.value as any })}
+              >
+                <SelectItem value="Pending" text="Pending" />
+                <SelectItem value="In Transit" text="In Transit" />
+                <SelectItem value="Delivered" text="Delivered" />
+                <SelectItem value="Cancelled" text="Cancelled" />
+              </Select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <TextInput
+                  id="shipment-shipping-date"
+                  labelText="Shipping Date"
+                  type="date"
+                  value={form.shipping_date}
+                  onChange={e => setForm({ ...form, shipping_date: e.target.value })}
+                />
+                <TextInput
+                  id="shipment-delivery-date"
+                  labelText="Delivery Date"
+                  type="date"
+                  value={form.delivery_date}
+                  onChange={e => setForm({ ...form, delivery_date: e.target.value })}
+                />
+              </div>
             </div>
           </div>
+        </section>
         </form>
       </Modal>
     </div>

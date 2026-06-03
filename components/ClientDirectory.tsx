@@ -88,7 +88,7 @@ export const ClientDirectory: React.FC = () => {
   const activeClientCount = enrichedClients.filter((c) => c.is_active !== false).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+    <div className="min-h-screen bg-zinc-50 p-4 sm:p-6">
       <ToastContainer />
       <ConfirmDialog />
 

@@ -24,7 +24,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       isOpen={isOpen}
       onClose={onCancel}
       title={title}
-      size="xs"
+      size="sm"
       preventCloseOnClickOutside
       footer={
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -47,7 +47,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             <Info size={22} />
           )}
         </div>
-        <p className="pt-1.5 text-sm leading-relaxed text-gray-700">{message}</p>
+        <p className="pt-1.5 text-sm leading-relaxed text-zinc-700">{message}</p>
       </div>
     </Modal>
   );

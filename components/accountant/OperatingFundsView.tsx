@@ -41,8 +41,8 @@ export const OperatingFundsView: React.FC<OperatingFundsViewProps> = ({
     }
   };
 
-  const totalReceived = operatingFunds.filter((fund) => fund.type === 'Received').reduce((sum, fund) => sum + fund.amount, 0);
-  const totalDisbursed = operatingFunds.filter((fund) => fund.type === 'Disbursed').reduce((sum, fund) => sum + fund.amount, 0);
+  const totalReceived = operatingFunds.filter((fund) => fund.type === 'Received').reduce((sum, fund) => sum + (fund.amount || 0), 0);
+  const totalDisbursed = operatingFunds.filter((fund) => fund.type === 'Disbursed').reduce((sum, fund) => sum + (fund.amount || 0), 0);
   const balance = totalReceived - totalDisbursed;
 
   return (
@@ -62,15 +62,15 @@ export const OperatingFundsView: React.FC<OperatingFundsViewProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className=" bg-emerald-50 border border-emerald-200 p-4">
-          <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Total Received</p>
+          <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.08em]">Total Received</p>
           <p className="text-2xl font-black text-emerald-700 mt-1">${totalReceived.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
         </div>
         <div className=" bg-red-50 border border-red-200 p-4">
-          <p className="text-xs font-bold text-red-600 uppercase tracking-wider">Total Disbursed</p>
+          <p className="text-xs font-bold text-red-600 uppercase tracking-[0.08em]">Total Disbursed</p>
           <p className="text-2xl font-black text-red-700 mt-1">${totalDisbursed.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
         </div>
         <div className={` border p-4 ${balance >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
-          <p className={`text-xs font-bold uppercase tracking-wider ${balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>Balance</p>
+          <p className={`text-xs font-bold uppercase tracking-[0.08em] ${balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>Balance</p>
           <p className={`text-2xl font-black mt-1 ${balance >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>${Math.abs(balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}{balance < 0 ? ' DR' : ''}</p>
         </div>
       </div>

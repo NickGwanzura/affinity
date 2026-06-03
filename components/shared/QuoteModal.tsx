@@ -6,10 +6,6 @@ import {
   Select,
   SelectItem,
   Button,
-  IconButton,
-  Stack,
-  Grid,
-  Column,
   NumberInput,
   Tag,
 } from '../ui';
@@ -241,7 +237,7 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
         </div>
       }
     >
-      <Stack gap={3}>
+      <div className="space-y-6">
         {/* Quote Number (when editing) */}
         {editingQuote && (
           <section>
@@ -258,29 +254,29 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
 
         {/* Client Section */}
         <section>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Client Information
-          </h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+              Client Information
+            </h3>
 
-          <Stack gap={3}>
-            <Select
-              id="quote-client"
-              labelText="Saved Client"
-              value={formData.client_id}
-              onChange={(e) => handleClientChange(e.target.value)}
-            >
-              <SelectItem value="" text="Select an existing client or leave blank for a one-off quote" />
-              {clients.map(c => (
-                <SelectItem
-                  key={c.id}
-                  value={c.id}
-                  text={c.company ? `${c.name} — ${c.company}` : c.name}
-                />
-              ))}
-            </Select>
+            <div className="space-y-3">
+              <Select
+                id="quote-client"
+                labelText="Saved Client"
+                value={formData.client_id}
+                onChange={(e) => handleClientChange(e.target.value)}
+              >
+                <SelectItem value="" text="Select an existing client or leave blank for a one-off quote" />
+                {clients.map(c => (
+                  <SelectItem
+                    key={c.id}
+                    value={c.id}
+                    text={c.company ? `${c.name} — ${c.company}` : c.name}
+                  />
+                ))}
+              </Select>
 
-            <Grid>
-              <Column sm={4} md={8} lg={8}>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <TextInput
                   id="quote-client-name"
                   labelText="Client Name *"
@@ -288,8 +284,6 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
                   onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
                   required
                 />
-              </Column>
-              <Column sm={4} md={8} lg={8}>
                 <TextInput
                   id="quote-client-email"
                   labelText="Email"
@@ -297,120 +291,115 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
                   value={formData.client_email}
                   onChange={(e) => setFormData(prev => ({ ...prev, client_email: e.target.value }))}
                 />
-              </Column>
-            </Grid>
+              </div>
 
-            <TextArea
-              id="quote-client-address"
-              labelText="Address"
-              value={formData.client_address}
-              onChange={(e) => setFormData(prev => ({ ...prev, client_address: e.target.value }))}
-              rows={2}
-            />
-          </Stack>
+              <TextArea
+                id="quote-client-address"
+                labelText="Address"
+                value={formData.client_address}
+                onChange={(e) => setFormData(prev => ({ ...prev, client_address: e.target.value }))}
+                rows={2}
+              />
+            </div>
+          </div>
         </section>
 
         {/* Quote Details */}
         <section>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Quote Details
-          </h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+              Quote Details
+            </h3>
 
-          <Grid>
-            <Column sm={4} md={4} lg={8}>
-              <Select
-                id="quote-vehicle"
-                labelText="Vehicle (Optional)"
-                value={formData.vehicle_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, vehicle_id: e.target.value }))}
-              >
-                <SelectItem value="" text="No Vehicle" />
-                {vehicles.map(v => (
-                  <SelectItem
-                    key={v.id}
-                    value={v.id}
-                    text={`${v.make_model} (${v.vin_number})`}
-                  />
-                ))}
-              </Select>
-            </Column>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Select
+              id="quote-vehicle"
+              labelText="Vehicle (Optional)"
+              value={formData.vehicle_id}
+              onChange={(e) => setFormData(prev => ({ ...prev, vehicle_id: e.target.value }))}
+            >
+              <SelectItem value="" text="No Vehicle" />
+              {vehicles.map(v => (
+                <SelectItem
+                  key={v.id}
+                  value={v.id}
+                  text={`${v.make_model} (${v.vin_number})`}
+                />
+              ))}
+            </Select>
 
-            <Column sm={4} md={4} lg={8}>
-              <Select
-                id="quote-currency"
-                labelText="Currency"
-                value={formData.currency}
-                onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value as any }))}
-              >
-                <SelectItem value="USD" text="USD ($)" />
-                <SelectItem value="GBP" text="GBP (£)" />
-              </Select>
-            </Column>
+            <Select
+              id="quote-currency"
+              labelText="Currency"
+              value={formData.currency}
+              onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value as any }))}
+            >
+              <SelectItem value="USD" text="USD ($)" />
+              <SelectItem value="GBP" text="GBP (£)" />
+            </Select>
 
-            <Column sm={4} md={4} lg={8}>
-              <TextInput
-                id="quote-valid-until"
-                labelText="Valid Until *"
-                type="date"
-                value={formData.valid_until}
-                onChange={(e) => setFormData(prev => ({ ...prev, valid_until: e.target.value }))}
-                helperText="Required — the date after which this quote expires"
-              />
-            </Column>
+            <TextInput
+              id="quote-valid-until"
+              labelText="Valid Until *"
+              type="date"
+              value={formData.valid_until}
+              onChange={(e) => setFormData(prev => ({ ...prev, valid_until: e.target.value }))}
+              helperText="Required — the date after which this quote expires"
+            />
 
             {editingQuote && (
-              <Column sm={4} md={4} lg={8}>
-                <Select
-                  id="quote-status"
-                  labelText="Status"
-                  value={formData.status}
-                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                >
-                  <SelectItem value="Draft" text="Draft" />
-                  <SelectItem value="Sent" text="Sent" />
-                  <SelectItem value="Accepted" text="Accepted" />
-                  <SelectItem value="Rejected" text="Rejected" />
-                </Select>
-              </Column>
+              <Select
+                id="quote-status"
+                labelText="Status"
+                value={formData.status}
+                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+              >
+                <SelectItem value="Draft" text="Draft" />
+                <SelectItem value="Sent" text="Sent" />
+                <SelectItem value="Accepted" text="Accepted" />
+                <SelectItem value="Rejected" text="Rejected" />
+              </Select>
             )}
-          </Grid>
+          </div>
 
           <div className="mt-4">
-            <TextArea
-              id="quote-description"
-              labelText="Description / Notes"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              rows={2}
-              placeholder="Brief description of the quote"
-            />
+              <TextArea
+                id="quote-description"
+                labelText="Description / Notes"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                rows={2}
+                placeholder="Brief description of the quote"
+              />
+            </div>
           </div>
         </section>
 
         {/* Line Items */}
         <section>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Line Items
-            </h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              renderIcon={Plus}
-              onClick={addLineItem}
-            >
-              Add Line Item
-            </Button>
-          </div>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+                Line Items
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                renderIcon={Plus}
+                onClick={addLineItem}
+              >
+                Add Line Item
+              </Button>
+            </div>
 
-          <Stack gap={3}>
+            <div className="space-y-3">
             {lineItems.map((item, index) => (
               <div
                 key={item.id || index}
-                className="p-3 rounded-lg bg-white border border-stone-200"
+                className="rounded-xl border border-stone-200 bg-white p-4"
               >
-                <Grid>
-                  <Column sm={4} md={6} lg={8}>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+                  <div className="sm:col-span-4">
                     <TextInput
                       id={`quote-line-desc-${index}`}
                       labelText="Description *"
@@ -418,8 +407,8 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
                       onChange={(e) => updateLineItem(index, 'description', e.target.value)}
                       placeholder="Item description"
                     />
-                  </Column>
-                  <Column sm={2} md={3} lg={3}>
+                  </div>
+                  <div className="sm:col-span-2">
                     <NumberInput
                       id={`quote-line-qty-${index}`}
                       labelText="Qty"
@@ -428,8 +417,8 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
                       min={1}
                       step={1}
                     />
-                  </Column>
-                  <Column sm={3} md={4} lg={4}>
+                  </div>
+                  <div className="sm:col-span-2">
                     <NumberInput
                       id={`quote-line-price-${index}`}
                       labelText="Unit Price"
@@ -438,8 +427,8 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
                       min={0}
                       step={0.01}
                     />
-                  </Column>
-                  <Column sm={3} md={4} lg={4}>
+                  </div>
+                  <div className="sm:col-span-2">
                     <NumberInput
                       id={`quote-line-discount-${index}`}
                       labelText="Discount %"
@@ -449,8 +438,8 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
                       max={100}
                       step={0.01}
                     />
-                  </Column>
-                  <Column sm={3} md={4} lg={4}>
+                  </div>
+                  <div className="sm:col-span-2">
                     <NumberInput
                       id={`quote-line-tax-${index}`}
                       labelText="Tax %"
@@ -459,37 +448,33 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
                       min={0}
                       step={0.01}
                     />
-                  </Column>
-                  <Column sm={3} md={4} lg={4}>
-                    <div className="bg-white px-3 py-3 text-right font-semibold">
-                      <div className="text-xs text-zinc-500">Amount</div>
-                      <div className="text-zinc-900">
-                        {formatMoney(calculateLineAmount(item), formData.currency)}
-                      </div>
-                    </div>
-                  </Column>
-                  <Column sm={1} md={1} lg={1} className="flex items-end">
-                    {lineItems.length > 1 && (
-                      <IconButton
-                        variant="ghost"
-                        size="sm"
-                        icon={<Trash2 size={14} />}
-                        label="Remove line item"
-                        onClick={() => removeLineItem(index)}
-                        className="text-red-600"
-                      />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="text-sm font-semibold text-zinc-900">
+                    Amount: {formatMoney(calculateLineAmount(item), formData.currency)}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {item.discount_percentage > 0 && (
+                      <span className="text-xs text-zinc-500">
+                        Discount: {formatMoney((item.quantity * item.unit_price * item.discount_percentage) / 100, formData.currency)}
+                      </span>
                     )}
-                  </Column>
-                </Grid>
-
-                {item.discount_percentage > 0 && (
-                  <p className="mt-1 text-xs text-zinc-500">
-                    Discount: {formatMoney((item.quantity * item.unit_price * item.discount_percentage) / 100, formData.currency)}
-                  </p>
-                )}
+                    {lineItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeLineItem(index)}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 transition-colors"
+                        aria-label="Remove line item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
-          </Stack>
+          </div>
 
           {/* Summary Strip */}
           <div className={`mt-5 grid gap-3 grid-cols-2 ${
@@ -518,8 +503,9 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
               {formatMoney(totals.total, formData.currency)}
             </span>
           </div>
+          </div>
         </section>
-      </Stack>
+      </div>
     </Modal>
   );
 };
@@ -539,10 +525,10 @@ const QuoteSummaryCell: React.FC<{
   accent?: 'error' | 'success' | 'warning';
 }> = ({ label, value, emphasis, accent }) => (
   <div className="rounded-lg border border-stone-200 bg-white px-3 py-3 text-center">
-    <div className="mb-1 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-zinc-600">
+    <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-600">
       {label}
     </div>
-    <div className={`font-bold ${emphasis ? 'text-lg' : 'text-[0.9375rem]'} ${accent ? quoteCellAccent[accent] : 'text-zinc-900'}`}>
+    <div className={`font-bold ${emphasis ? 'text-lg' : 'text-sm'} ${accent ? quoteCellAccent[accent] : 'text-zinc-900'}`}>
       {value}
     </div>
   </div>

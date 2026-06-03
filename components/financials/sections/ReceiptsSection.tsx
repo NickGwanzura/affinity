@@ -27,17 +27,17 @@ export const ReceiptsSection: React.FC<ReceiptsSectionProps> = ({
         <div
           className="text-center p-10"
           style={{
-            backgroundColor: 'var(--cds-layer-01, #ffffff)',
+            backgroundColor: '#ffffff',
             borderWidth: '1px',
             borderStyle: 'solid',
-            borderColor: 'var(--cds-border-subtle, #d6d3d1)',
+            borderColor: '#d6d3d1',
           }}
         >
           <ReceiptIcon size={48} className="mx-auto text-green-600 mb-3" />
-          <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+          <h3 className="text-base font-semibold mb-2 text-zinc-900">
             Receipts
           </h3>
-          <p className="text-sm mb-4" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+          <p className="text-sm mb-4 text-zinc-600">
             Record payments and generate receipts for clients.
           </p>
           <Button renderIcon={Plus} onClick={onRecordPayment}>
@@ -68,7 +68,7 @@ export const ReceiptsSection: React.FC<ReceiptsSectionProps> = ({
             {row.batch}
           </span>
         ) : (
-          <span className="text-gray-500">—</span>
+          <span className="text-zinc-500">—</span>
         ),
     },
     {
@@ -106,7 +106,7 @@ export const ReceiptsSection: React.FC<ReceiptsSectionProps> = ({
       <div className="flex justify-between items-center mb-4">
         <h3
           className="text-lg font-semibold"
-          style={{ color: 'var(--cds-text-primary, #18181b)' }}
+          style={{ color: '#18181b' }}
         >
           All Receipts
         </h3>

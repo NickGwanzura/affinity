@@ -87,13 +87,13 @@ export const PayslipsListView: React.FC<PayslipsListViewProps> = ({
         <table className="w-full">
           <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Payslip #</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Employee</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Period</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Gross Pay</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Net Pay</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-4 text-right text-xs font-bold text-zinc-600 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-[0.08em]">Payslip #</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-[0.08em]">Employee</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-[0.08em]">Period</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-[0.08em]">Gross Pay</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-[0.08em]">Net Pay</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-zinc-600 uppercase tracking-[0.08em]">Status</th>
+              <th className="px-6 py-4 text-right text-xs font-bold text-zinc-600 uppercase tracking-[0.08em]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200">

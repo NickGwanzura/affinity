@@ -140,12 +140,12 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
       <Tile>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-gray-100">
+            <div className="p-2 bg-zinc-100">
               <Package size={18} />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Client Shipments</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <h3 className="text-base font-semibold text-zinc-900">Client Shipments</h3>
+              <p className="text-xs text-zinc-500 mt-0.5">
                 Goods in transit for this client, optionally linked to a vehicle.
               </p>
             </div>
@@ -156,23 +156,23 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
         </div>
       </Tile>
 
-      <div className="bg-white border border-gray-200 overflow-x-auto">
+      <div className="bg-white border border-zinc-200 overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Description</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Vehicle</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Origin</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Destination</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Status</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Ship Date</th>
-              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Actions</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Description</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Vehicle</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Origin</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Destination</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Status</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Ship Date</th>
+              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-[0.08em] text-zinc-600">Actions</th>
             </tr>
           </thead>
           <tbody>
             {clientShipments.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-3 py-8 text-center text-zinc-500">
                   No shipments for this client
                 </td>
               </tr>
@@ -180,11 +180,11 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
               clientShipments.map((s) => {
                 const Icon = statusIcon[s.status] || Clock;
                 return (
-                  <tr key={s.id} className="border-t border-gray-100 hover:bg-gray-50">
-                    <td className="px-3 py-2 font-medium text-gray-900">{s.description}</td>
-                    <td className="px-3 py-2 text-gray-700">{s.vehicle_name || '–'}</td>
-                    <td className="px-3 py-2 text-gray-700">{s.origin}</td>
-                    <td className="px-3 py-2 text-gray-700">{s.destination}</td>
+                  <tr key={s.id} className="border-t border-zinc-100 hover:bg-zinc-50">
+                    <td className="px-3 py-2 font-medium text-zinc-900">{s.description}</td>
+                    <td className="px-3 py-2 text-zinc-700">{s.vehicle_name || '–'}</td>
+                    <td className="px-3 py-2 text-zinc-700">{s.origin}</td>
+                    <td className="px-3 py-2 text-zinc-700">{s.destination}</td>
                     <td className="px-3 py-2">
                       <Tag type={statusTagType[s.status] || 'gray'} size="sm">
                         <span className="inline-flex items-center gap-1">
@@ -192,7 +192,7 @@ export const ClientShipmentsPanel: React.FC<ClientShipmentsPanelProps> = ({
                         </span>
                       </Tag>
                     </td>
-                    <td className="px-3 py-2 text-xs text-gray-600">
+                    <td className="px-3 py-2 text-xs text-zinc-600">
                       {s.shipping_date ? new Date(s.shipping_date).toLocaleDateString() : '–'}
                     </td>
                     <td className="px-3 py-2 text-right">

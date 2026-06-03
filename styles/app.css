@@ -622,6 +622,155 @@ input[type='number'] {
 ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
 * { scrollbar-width: thin; scrollbar-color: #d6d3d1 #f5f5f4; }
 
+/* ─── Safe-area helper classes (iOS notches / home indicator) ─────────────── */
+@supports (padding: max(0px)) {
+  .safe-t { padding-top: env(safe-area-inset-top, 0px); }
+  .safe-b { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .safe-l { padding-left: env(safe-area-inset-left, 0px); }
+  .safe-r { padding-right: env(safe-area-inset-right, 0px); }
+  .safe-x { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+  .safe-y { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+
+/* ─── Card auto-grid: responsive min-width columns ──────────────────────────
+   Reusable pattern for stat-card grids. Instead of writing
+   grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 every time, use one of these. */
+.card-grid-sm {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+.card-grid-md {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+.card-grid-lg {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+/* ─── Mobile: table → stacked cards (≤ 640 px) ────────────────────────────
+   Add class "table-card-mobile" to a <table> element (not its wrapper).
+   Every <th> is visually hidden; each <td> becomes a labelled row using
+   the data-label attribute you set on each cell. */
+@media (max-width: 639px) {
+  .table-card-mobile thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+
+  .table-card-mobile tbody,
+  .table-card-mobile tr,
+  .table-card-mobile td {
+    display: block;
+  }
+
+  .table-card-mobile tr {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #ffffff;
+    border: 1px solid #e7e5e4;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .table-card-mobile td {
+    padding: 0.25rem 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+  }
+
+  .table-card-mobile td::before {
+    content: attr(data-label);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #71717a;
+    flex-shrink: 0;
+  }
+
+  .table-card-mobile td:last-child {
+    padding-bottom: 0.125rem;
+  }
+
+  .table-card-mobile td:has(> button),
+  .table-card-mobile td.actions-cell {
+    justify-content: flex-end;
+    border-top: 1px solid #e7e5e4;
+    margin-top: 0.375rem;
+    padding-top: 0.5rem;
+  }
+
+  .table-card-mobile td:has(> button)::before,
+  .table-card-mobile td.actions-cell::before {
+    display: none;
+  }
+}
+
+/* ─── Horizontal scroll hint ────────────────────────────────────────────────
+   Add class "scroll-hint" to a wrapper <div> around an overflowing table.
+   Shows a subtle gradient fade on the right edge. */
+.scroll-hint {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+.scroll-hint::after {
+  content: '';
+  position: sticky;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85));
+  pointer-events: none;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* ─── Print styles ────────────────────────────────────────────────────────── */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  nav, aside, .no-print { display: none !important; }
+  main { margin-left: 0 !important; padding: 0 !important; }
+  table { break-inside: auto; }
+  tr { break-inside: avoid; }
+  th { background: #f5f5f4 !important; color: black !important; }
+  .rounded-lg, .rounded-xl, .rounded-2xl { border-radius: 0 !important; }
+  .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl { box-shadow: none !important; }
+}
+
+/* ─── Prevent iOS rubber-band / body scroll when a modal is open ─────────── */
+.body-scroll-lock {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+@page {
+  margin: 0.75in;
+}
+
 /* ─── Motion primitives ──────────────────────────────────────────────────────
    World-class apps animate state changes — modals fade+scale in, toasts
    slide up, skeletons shimmer, backdrops dissolve. Kept small and respectful
@@ -701,6 +850,14 @@ input[type='number'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .app-fade-in,
   .app-modal-overlay-enter,
   .app-modal-content-enter,

@@ -41,7 +41,7 @@ const EfficiencyCard: React.FC<EfficiencyCardProps> = memo(({ efficiencyRate }) 
         style={{ background: statusColor }}
       />
       <div className="pl-2">
-        <p className="text-xs font-semibold text-[#52525b] tracking-wider uppercase mb-3">
+        <p className="text-xs font-semibold text-[#52525b] tracking-[0.08em] uppercase mb-3">
           Fleet Efficiency
         </p>
         <p className="text-3xl font-light text-[#18181b] tabular-nums leading-tight mb-4">

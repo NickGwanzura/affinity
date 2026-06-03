@@ -22,6 +22,9 @@ import {
   Snowflake,
   Wifi,
   ShieldCheck,
+  Car,
+  Building2,
+  TrendingUp,
 } from 'lucide-react';
 import { AppUser, UserRole } from '../types';
 import affinityLogo from '../assets/affinity-logo.svg';
@@ -49,7 +52,12 @@ export type AppView =
   | 'assets'
   | 'freezit'
   | 'wifi-tokens'
-  | 'director';
+  | 'car-hire'
+  | 'ice-sales'
+  | 'director'
+  | 'ceo'
+  | 'lodgers'
+  | 'sales-pl';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -67,8 +75,12 @@ const navItems: {
 }[] = [
   { id: 'admin',          label: 'Dashboard',        roles: ['Admin', 'Manager'],                    Icon: BarChart3  },
   { id: 'director',       label: 'Director',         roles: ['Admin', 'Director'],                   Icon: ShieldCheck },
-  { id: 'freezit',        label: 'Freezit Sales',    roles: ['Admin', 'Director', 'Sales'],          Icon: Snowflake  },
-  { id: 'wifi-tokens',    label: 'WiFi Token Sales', roles: ['Admin', 'Director', 'Sales'],          Icon: Wifi       },
+  { id: 'freezit',        label: 'Freezit Sales',    roles: ['Admin', 'Sales'],                      Icon: Snowflake  },
+  { id: 'wifi-tokens',    label: 'WiFi Token Sales', roles: ['Admin', 'Sales'],                      Icon: Wifi       },
+  { id: 'car-hire',       label: 'Car Hire',         roles: ['Admin', 'Car Hire'],                    Icon: Car        },
+  { id: 'ice-sales',      label: 'Ice Sales',        roles: ['Admin', 'Sales'],                      Icon: Snowflake   },
+  { id: 'lodgers',        label: 'Lodgers',          roles: ['Admin', 'Sales'],                      Icon: Building2   },
+  { id: 'sales-pl',       label: 'Sales P&L',        roles: ['Admin', 'Sales'],                      Icon: TrendingUp  },
   { id: 'accountant',     label: 'Accountant',       roles: ['Admin', 'Accountant'],                 Icon: Calculator },
   { id: 'financials',     label: 'Financials',       roles: ['Admin', 'Manager', 'Accountant'],      Icon: DollarSign },
   { id: 'reports',        label: 'Reports',          roles: ['Admin', 'Manager', 'Accountant'],      Icon: LineChart  },
@@ -82,6 +94,7 @@ const navItems: {
   { id: 'payslips',       label: 'Payslips',         roles: ['Admin', 'Manager'],                    Icon: Banknote   },
   { id: 'funds',          label: 'Operating Funds',  roles: ['Admin', 'Accountant'],                 Icon: Wallet     },
   { id: 'assets',         label: 'Asset Register',   roles: ['Admin', 'Manager'],                    Icon: Boxes      },
+  { id: 'ceo',            label: 'CEO Dashboard',    roles: ['Admin', 'CEO'],                        Icon: LineChart  },
   { id: 'updates',        label: 'Updates',          roles: ['Admin'],                               Icon: Mail       },
   { id: 'settings',       label: 'Settings',         roles: ['Admin'],                               Icon: Settings   },
 ];
@@ -230,7 +243,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="flex items-center gap-2.5 rounded-md bg-gradient-to-br from-[#2a2724] to-[#1f1c1a] p-2.5 ring-1 ring-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
             <Avatar name={user.name} size="md" tone="sidebar" />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-medium text-white">{user.name}</div>
+              <div className="truncate text-sm font-medium text-white">{user.name}</div>
               <div className="text-[11px] text-[#a1a1aa]">{user.role}</div>
             </div>
           </div>

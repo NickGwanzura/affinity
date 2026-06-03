@@ -423,7 +423,7 @@ export const ReportsTab: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#D97706]"></div>
-        <p className="font-bold animate-pulse uppercase tracking-widest text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Loading Report Data</p>
+        <p className="font-bold animate-pulse uppercase tracking-widest text-xs text-zinc-600">Loading Report Data</p>
       </div>
     );
   }
@@ -431,13 +431,13 @@ export const ReportsTab: React.FC = () => {
   if (loadError) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4 p-8">
-        <div className="rounded-full p-4" style={{ background: 'var(--cds-support-error-inverse, #fee2e2)' }}>
-          <svg className="w-8 h-8" style={{ color: 'var(--cds-support-error, #dc2626)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="rounded-full p-4" style={{ background: '#fee2e2' }}>
+          <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <h3 className="text-lg font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>Unable to Load Reports</h3>
-        <p className="text-center max-w-md" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{loadError}</p>
+        <h3 className="text-lg font-bold text-zinc-900">Unable to Load Reports</h3>
+        <p className="text-center max-w-md text-zinc-600">{loadError}</p>
         <Button onClick={() => window.location.reload()} className="mt-4">
           Retry
         </Button>
@@ -454,8 +454,8 @@ export const ReportsTab: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
-        <h4 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+      <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
+        <h4 className="text-lg font-bold mb-4 flex items-center gap-2 text-zinc-900">
           <svg className="w-5 h-5 text-[#D97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
@@ -464,22 +464,22 @@ export const ReportsTab: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-semibold text-zinc-700 mb-2">Date From</label>
-            <input type="date" value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-[#D97706] outline-none" style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)' }} />
+            <input type="date" value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-[#D97706] outline-none" style={{ border: '1px solid #e7e5e4' }} />
           </div>
           <div>
             <label className="block text-sm font-semibold text-zinc-700 mb-2">Date To</label>
-            <input type="date" value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-[#D97706] outline-none" style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)' }} />
+            <input type="date" value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-[#D97706] outline-none" style={{ border: '1px solid #e7e5e4' }} />
           </div>
           <div>
             <label className="block text-sm font-semibold text-zinc-700 mb-2">Filter by Vehicle</label>
-            <select value={reportVehicleFilter} onChange={(e) => setReportVehicleFilter(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-[#D97706] outline-none" style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+            <select value={reportVehicleFilter} onChange={(e) => setReportVehicleFilter(e.target.value)} className="w-full px-4 py-2 border focus:ring-2 focus:ring-[#D97706] outline-none" style={{ border: '1px solid #e7e5e4' }}>
               <option value="all">All Vehicles</option>
               {vehicles.map(v => <option key={v.id} value={v.id}>{v.make_model} ({v.vin_number})</option>)}
             </select>
           </div>
         </div>
         <div className="mt-4 flex gap-2">
-          <button onClick={() => { setReportDateFrom(''); setReportDateTo(''); setReportVehicleFilter('all'); }} className="px-4 py-2 font-semibold hover:bg-zinc-200 transition-colors" style={{ background: 'var(--cds-layer-01, #ffffff)', color: 'var(--cds-text-secondary, #52525b)' }}>
+          <button onClick={() => { setReportDateFrom(''); setReportDateTo(''); setReportVehicleFilter('all'); }} className="px-4 py-2 font-semibold hover:bg-zinc-200 transition-colors" style={{ background: '#ffffff', color: '#52525b' }}>
             Clear Filters
           </button>
           {(reportDateFrom || reportDateTo || reportVehicleFilter !== 'all') && (
@@ -493,53 +493,53 @@ export const ReportsTab: React.FC = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+        <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Total Fleet Value</p>
-            <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--cds-support-info-inverse, #dbeafe)' }}>
-              <svg className="w-5 h-5" style={{ color: 'var(--cds-interactive, #D97706)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <p className="text-sm font-semibold uppercase tracking-wide text-zinc-600">Total Fleet Value</p>
+            <div className="w-10 h-10 flex items-center justify-center" style={{ background: '#dbeafe' }}>
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
           </div>
-          <p className="text-3xl font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>${filteredSummaries.reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-          <p className="text-xs mt-2" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{filteredSummaries.length} vehicles</p>
+          <p className="text-3xl font-bold text-zinc-900">${filteredSummaries.reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+          <p className="text-xs mt-2 text-zinc-600">{filteredSummaries.length} vehicles</p>
         </div>
 
-        <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+        <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Total Expenses</p>
-            <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--cds-support-error-inverse, #fee2e2)' }}>
-              <svg className="w-5 h-5" style={{ color: 'var(--cds-support-error, #dc2626)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
+            <p className="text-sm font-semibold uppercase tracking-wide text-zinc-600">Total Expenses</p>
+            <div className="w-10 h-10 flex items-center justify-center" style={{ background: '#fee2e2' }}>
+              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
             </div>
           </div>
-          <p className="text-3xl font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>${filteredExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-          <p className="text-xs mt-2" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{filteredExpenses.length} transactions</p>
+          <p className="text-3xl font-bold text-zinc-900">${filteredExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+          <p className="text-xs mt-2 text-zinc-600">{filteredExpenses.length} transactions</p>
         </div>
 
-        <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+        <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Avg Cost Per Vehicle</p>
-            <div className="w-10 h-10 flex items-center justify-center" style={{ background: 'var(--cds-support-success-inverse, #d1fae5)' }}>
-              <svg className="w-5 h-5" style={{ color: 'var(--cds-support-success, #10b981)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+            <p className="text-sm font-semibold uppercase tracking-wide text-zinc-600">Avg Cost Per Vehicle</p>
+            <div className="w-10 h-10 flex items-center justify-center" style={{ background: '#d1fae5' }}>
+              <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
             </div>
           </div>
-          <p className="text-3xl font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>${filteredSummaries.length > 0 ? (filteredSummaries.reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0) / filteredSummaries.length).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}</p>
-          <p className="text-xs mt-2" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Per unit analysis</p>
+          <p className="text-3xl font-bold text-zinc-900">${filteredSummaries.length > 0 ? (filteredSummaries.reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0) / filteredSummaries.length).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}</p>
+          <p className="text-xs mt-2 text-zinc-600">Per unit analysis</p>
         </div>
 
-        <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+        <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Expense Ratio</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-zinc-600">Expense Ratio</p>
             <div className="w-10 h-10 bg-stone-100 flex items-center justify-center">
               <svg className="w-5 h-5 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
             </div>
           </div>
-          <p className="text-3xl font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+          <p className="text-3xl font-bold text-zinc-900">
             {filteredSummaries.length > 0
               ? ((filteredExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0) /
                   filteredSummaries.reduce((sum, s) => sum + (s.total_landed_cost_usd || 0), 0)) * 100).toFixed(1)
               : 0}%
           </p>
-          <p className="text-xs mt-2" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Expenses to value</p>
+          <p className="text-xs mt-2 text-zinc-600">Expenses to value</p>
         </div>
       </div>
 
@@ -563,14 +563,14 @@ export const ReportsTab: React.FC = () => {
       </div>
 
       {/* Driver Monthly Spend (Fuel & Categories) */}
-      <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+      <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
         <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
           <div>
-            <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+            <h3 className="text-lg font-bold flex items-center gap-2 text-zinc-900">
               <svg className="w-5 h-5 text-[#D97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 14l4-4 4 4 5-5" /></svg>
               Driver Monthly Spend
             </h3>
-            <p className="text-sm mt-1" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+            <p className="text-sm mt-1 text-zinc-600">
               Monthly fuel and operating spend per driver, with averages across active months.
             </p>
           </div>
@@ -581,30 +581,30 @@ export const ReportsTab: React.FC = () => {
 
         {/* Overall metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
-            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Total Spend</p>
-            <p className="text-xl font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(driverMonthlySpend.overall.totalUsd)}</p>
-            <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{driverMonthlySpend.overall.txCount} tx · {driverMonthlySpend.overall.monthsActive} months</p>
+          <div className="p-3" style={{ background: '#f9fafb' }}>
+            <p className="text-xs uppercase font-semibold text-zinc-600">Total Spend</p>
+            <p className="text-xl font-bold text-zinc-900">{fmtUsd(driverMonthlySpend.overall.totalUsd)}</p>
+            <p className="text-xs text-zinc-600">{driverMonthlySpend.overall.txCount} tx · {driverMonthlySpend.overall.monthsActive} months</p>
           </div>
-          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
-            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Avg / Month</p>
-            <p className="text-xl font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(driverMonthlySpend.overall.avgPerMonthUsd)}</p>
-            <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>across all drivers</p>
+          <div className="p-3" style={{ background: '#f9fafb' }}>
+            <p className="text-xs uppercase font-semibold text-zinc-600">Avg / Month</p>
+            <p className="text-xl font-bold text-zinc-900">{fmtUsd(driverMonthlySpend.overall.avgPerMonthUsd)}</p>
+            <p className="text-xs text-zinc-600">across all drivers</p>
           </div>
-          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
-            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Fuel Total</p>
+          <div className="p-3" style={{ background: '#f9fafb' }}>
+            <p className="text-xs uppercase font-semibold text-zinc-600">Fuel Total</p>
             <p className="text-xl font-bold text-[#D97706]">{fmtUsd(driverMonthlySpend.overall.fuel.totalUsd)}</p>
-            <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{driverMonthlySpend.overall.fuel.txCount} fills</p>
+            <p className="text-xs text-zinc-600">{driverMonthlySpend.overall.fuel.txCount} fills</p>
           </div>
-          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
-            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Avg Fuel / Month</p>
+          <div className="p-3" style={{ background: '#f9fafb' }}>
+            <p className="text-xs uppercase font-semibold text-zinc-600">Avg Fuel / Month</p>
             <p className="text-xl font-bold text-[#D97706]">{fmtUsd(driverMonthlySpend.overall.fuel.avgPerMonthUsd)}</p>
-            <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>over {driverMonthlySpend.overall.fuel.monthsActive} active months</p>
+            <p className="text-xs text-zinc-600">over {driverMonthlySpend.overall.fuel.monthsActive} active months</p>
           </div>
         </div>
 
         {driverMonthlySpend.drivers.length === 0 ? (
-          <p className="text-sm py-6 text-center" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+          <p className="text-sm py-6 text-center text-zinc-600">
             No driver-attributed expenses for the current filter.
           </p>
         ) : (
@@ -612,13 +612,13 @@ export const ReportsTab: React.FC = () => {
             <table className="w-full text-sm">
               <thead className="bg-zinc-50 border-b border-zinc-200">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Driver</th>
-                  <th className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Total</th>
-                  <th className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Avg / Mo</th>
+                  <th className="px-3 py-2 text-left font-semibold text-zinc-600">Driver</th>
+                  <th className="px-3 py-2 text-right font-semibold text-zinc-600">Total</th>
+                  <th className="px-3 py-2 text-right font-semibold text-zinc-600">Avg / Mo</th>
                   <th className="px-3 py-2 text-right font-semibold text-[#D97706]">Fuel Total</th>
                   <th className="px-3 py-2 text-right font-semibold text-[#D97706]">Avg Fuel / Mo</th>
-                  <th className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Months</th>
-                  <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Latest Month Breakdown</th>
+                  <th className="px-3 py-2 text-right font-semibold text-zinc-600">Months</th>
+                  <th className="px-3 py-2 text-left font-semibold text-zinc-600">Latest Month Breakdown</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -626,13 +626,13 @@ export const ReportsTab: React.FC = () => {
                   const latest = d.months[d.months.length - 1];
                   return (
                     <tr key={d.driverName} className="hover:bg-zinc-50">
-                      <td className="px-3 py-2 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{d.driverName}</td>
-                      <td className="px-3 py-2 text-right font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(d.totalUsd)}</td>
-                      <td className="px-3 py-2 text-right" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(d.avgPerMonthUsd)}</td>
+                      <td className="px-3 py-2 font-semibold text-zinc-900">{d.driverName}</td>
+                      <td className="px-3 py-2 text-right font-bold text-zinc-900">{fmtUsd(d.totalUsd)}</td>
+                      <td className="px-3 py-2 text-right text-zinc-900">{fmtUsd(d.avgPerMonthUsd)}</td>
                       <td className="px-3 py-2 text-right font-semibold text-[#D97706]">{fmtUsd(d.fuel.totalUsd)}</td>
                       <td className="px-3 py-2 text-right font-semibold text-[#D97706]">{fmtUsd(d.fuel.avgPerMonthUsd)}</td>
-                      <td className="px-3 py-2 text-right" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{d.monthsActive}</td>
-                      <td className="px-3 py-2 text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                      <td className="px-3 py-2 text-right text-zinc-600">{d.monthsActive}</td>
+                      <td className="px-3 py-2 text-xs text-zinc-600">
                         {latest
                           ? `${formatMonthLabel(latest.month)} · ${fmtUsd(latest.totalUsd)} (Fuel ${fmtUsd(latest.byCategory['Fuel'] || 0)})`
                           : '—'}
@@ -647,14 +647,14 @@ export const ReportsTab: React.FC = () => {
       </div>
 
       {/* Forensic Variance — Fuel & Food */}
-      <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
+      <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
         <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
           <div>
-            <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+            <h3 className="text-lg font-bold flex items-center gap-2 text-zinc-900">
               <svg className="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               Forensic — Monthly Variance (Fuel &amp; Food)
             </h3>
-            <p className="text-sm mt-1" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+            <p className="text-sm mt-1 text-zinc-600">
               Per-driver month-over-month deltas and deviation from each driver&apos;s own baseline.
               Months above 150% or below 50% of the driver&apos;s mean are flagged for review.
             </p>
@@ -665,26 +665,26 @@ export const ReportsTab: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
-            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Fuel Total</p>
+          <div className="p-3" style={{ background: '#f9fafb' }}>
+            <p className="text-xs uppercase font-semibold text-zinc-600">Fuel Total</p>
             <p className="text-xl font-bold text-[#D97706]">{fmtUsd(driverForensic.totals.fuelUsd)}</p>
           </div>
-          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
-            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Food Total</p>
-            <p className="text-xl font-bold" style={{ color: 'var(--cds-support-success, #10b981)' }}>{fmtUsd(driverForensic.totals.foodUsd)}</p>
+          <div className="p-3" style={{ background: '#f9fafb' }}>
+            <p className="text-xs uppercase font-semibold text-zinc-600">Food Total</p>
+            <p className="text-xl font-bold text-emerald-500">{fmtUsd(driverForensic.totals.foodUsd)}</p>
           </div>
-          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
-            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Flagged Drivers</p>
+          <div className="p-3" style={{ background: '#f9fafb' }}>
+            <p className="text-xs uppercase font-semibold text-zinc-600">Flagged Drivers</p>
             <p className="text-xl font-bold text-rose-600">{driverForensic.totals.flaggedDrivers}</p>
           </div>
-          <div className="p-3" style={{ background: 'var(--cds-layer-01, #f9fafb)' }}>
-            <p className="text-xs uppercase font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Anomalies</p>
+          <div className="p-3" style={{ background: '#f9fafb' }}>
+            <p className="text-xs uppercase font-semibold text-zinc-600">Anomalies</p>
             <p className="text-xl font-bold text-rose-600">{driverForensic.totals.totalAnomalies}</p>
           </div>
         </div>
 
         {driverForensic.drivers.length === 0 ? (
-          <p className="text-sm py-6 text-center" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+          <p className="text-sm py-6 text-center text-zinc-600">
             No fuel or food spend attributed to drivers in the current filter.
           </p>
         ) : (
@@ -697,7 +697,7 @@ export const ReportsTab: React.FC = () => {
                   <div key={series.category} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <h5 className="text-sm font-bold uppercase tracking-wide" style={{ color: accent }}>{series.category}</h5>
-                      <span className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                      <span className="text-xs text-zinc-600">
                         Mean {fmtUsd(series.meanMonthlyUsd)} · σ {fmtUsd(series.stdDevUsd)} · {series.monthsActive} active mo
                         {series.maxMonth ? ` · Peak ${formatMonthLabel(series.maxMonth.month)} ${fmtUsd(series.maxMonth.amountUsd)}` : ''}
                       </span>
@@ -706,13 +706,13 @@ export const ReportsTab: React.FC = () => {
                       <table className="w-full text-xs">
                         <thead className="bg-zinc-50 border-b border-zinc-200">
                           <tr>
-                            <th className="px-2 py-1.5 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Month</th>
-                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Amount</th>
-                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Prev</th>
-                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>MoM Δ</th>
-                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>MoM %</th>
-                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>vs Mean</th>
-                            <th className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Flag</th>
+                            <th className="px-2 py-1.5 text-left font-semibold text-zinc-600">Month</th>
+                            <th className="px-2 py-1.5 text-right font-semibold text-zinc-600">Amount</th>
+                            <th className="px-2 py-1.5 text-right font-semibold text-zinc-600">Prev</th>
+                            <th className="px-2 py-1.5 text-right font-semibold text-zinc-600">MoM Δ</th>
+                            <th className="px-2 py-1.5 text-right font-semibold text-zinc-600">MoM %</th>
+                            <th className="px-2 py-1.5 text-right font-semibold text-zinc-600">vs Mean</th>
+                            <th className="px-2 py-1.5 text-right font-semibold text-zinc-600">Flag</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-100">
@@ -729,12 +729,12 @@ export const ReportsTab: React.FC = () => {
                               m.momDeltaUsd < 0 ? 'text-emerald-600' : 'text-zinc-500';
                             return (
                               <tr key={`${series.category}-${m.month}`} className={flagBg}>
-                                <td className="px-2 py-1.5 font-mono" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{formatMonthLabel(m.month)}</td>
-                                <td className="px-2 py-1.5 text-right font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{fmtUsd(m.amountUsd)}</td>
-                                <td className="px-2 py-1.5 text-right" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{m.prevMonthUsd === null ? '—' : fmtUsd(m.prevMonthUsd)}</td>
+                                <td className="px-2 py-1.5 font-mono text-zinc-900">{formatMonthLabel(m.month)}</td>
+                                <td className="px-2 py-1.5 text-right font-semibold text-zinc-900">{fmtUsd(m.amountUsd)}</td>
+                                <td className="px-2 py-1.5 text-right text-zinc-600">{m.prevMonthUsd === null ? '—' : fmtUsd(m.prevMonthUsd)}</td>
                                 <td className={`px-2 py-1.5 text-right font-semibold ${momText}`}>{m.momDeltaUsd === null ? '—' : fmtUsd(m.momDeltaUsd)}</td>
                                 <td className={`px-2 py-1.5 text-right ${momText}`}>{m.momDeltaPct === null ? '—' : `${m.momDeltaPct.toFixed(0)}%`}</td>
-                                <td className="px-2 py-1.5 text-right" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{m.vsMeanDeltaPct === null ? '—' : `${m.vsMeanDeltaPct >= 0 ? '+' : ''}${m.vsMeanDeltaPct.toFixed(0)}%`}</td>
+                                <td className="px-2 py-1.5 text-right text-zinc-600">{m.vsMeanDeltaPct === null ? '—' : `${m.vsMeanDeltaPct >= 0 ? '+' : ''}${m.vsMeanDeltaPct.toFixed(0)}%`}</td>
                                 <td className={`px-2 py-1.5 text-right font-bold uppercase ${flagText}`}>{m.flag === 'normal' ? '·' : m.flag}</td>
                               </tr>
                             );
@@ -747,11 +747,11 @@ export const ReportsTab: React.FC = () => {
               };
 
               return (
-                <div key={profile.driverName} className="border" style={{ borderColor: 'var(--cds-border-subtle, #e7e5e4)' }}>
+                <div key={profile.driverName} className="border" style={{ borderColor: '#e7e5e4' }}>
                   <div className="flex items-center justify-between px-4 py-3 bg-zinc-50">
                     <div>
-                      <p className="font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{profile.driverName}</p>
-                      <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                      <p className="font-bold text-zinc-900">{profile.driverName}</p>
+                      <p className="text-xs text-zinc-600">
                         Fuel {fmtUsd(profile.fuel.totalUsd)} · Food {fmtUsd(profile.food.totalUsd)}
                       </p>
                     </div>
@@ -779,8 +779,8 @@ export const ReportsTab: React.FC = () => {
       {/* Detailed Reports */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Expense Breakdown by Category */}
-        <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+        <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-zinc-900">
             <svg className="w-5 h-5 text-[#D97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
             Expenses by Category
           </h3>
@@ -793,13 +793,13 @@ export const ReportsTab: React.FC = () => {
               return total > 0 ? (
                 <div key={category} className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{category}</span>
+                    <span className="text-sm font-semibold text-zinc-600">{category}</span>
                     <span className="text-sm font-bold text-[#D97706]">${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                   </div>
-                  <div className="w-full rounded-full h-2" style={{ background: 'var(--cds-layer-01, #ffffff)' }}>
+                  <div className="w-full rounded-full h-2" style={{ background: '#ffffff' }}>
                     <div className="bg-[#D97706] h-2 rounded-full" style={{ width: `${percentage}%` }}></div>
                   </div>
-                  <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{catExpenses.length} transactions &bull; {percentage.toFixed(1)}%</p>
+                  <p className="text-xs text-zinc-600">{catExpenses.length} transactions &bull; {percentage.toFixed(1)}%</p>
                 </div>
               ) : null;
             })}
@@ -807,9 +807,9 @@ export const ReportsTab: React.FC = () => {
         </div>
 
         {/* Location Analysis */}
-        <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
-            <svg className="w-5 h-5" style={{ color: 'var(--cds-interactive, #D97706)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-zinc-900">
+            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             Expenses by Location
           </h3>
           <div className="space-y-3">
@@ -819,12 +819,12 @@ export const ReportsTab: React.FC = () => {
               const totalAll = filteredExpenses.reduce((sum, e) => sum + ((e.amount || 0) * (e.exchange_rate_to_usd || 1)), 0);
               const percentage = totalAll > 0 ? (total / totalAll * 100) : 0;
               return total > 0 ? (
-                <div key={location} className="flex items-center justify-between p-3 transition-colors" style={{ background: 'var(--cds-layer-01, #ffffff)' }}>
+                <div key={location} className="flex items-center justify-between p-3 transition-colors" style={{ background: '#ffffff' }}>
                   <div>
-                    <p className="font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{location}</p>
-                    <p className="text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{locExpenses.length} transactions &bull; {percentage.toFixed(1)}% of total</p>
+                    <p className="font-semibold text-zinc-900">{location}</p>
+                    <p className="text-xs text-zinc-600">{locExpenses.length} transactions &bull; {percentage.toFixed(1)}% of total</p>
                   </div>
-                  <span className="text-lg font-bold" style={{ color: 'var(--cds-interactive, #D97706)' }}>${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  <span className="text-lg font-bold text-amber-600">${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                 </div>
               ) : null;
             })}
@@ -833,21 +833,21 @@ export const ReportsTab: React.FC = () => {
       </div>
 
       {/* Vehicle Cost Rankings */}
-      <div className="p-6" style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}>
-        <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
-          <svg className="w-5 h-5" style={{ color: 'var(--cds-support-success, #10b981)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+      <div className="p-6" style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}>
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-zinc-900">
+          <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
           Top Vehicles by Total Cost
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Rank</th>
-                <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Vehicle</th>
-                <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>VIN</th>
-                <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Status</th>
-                <th className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Purchase Price</th>
-                <th className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>Total Cost</th>
+                <th className="px-4 py-3 text-left font-semibold text-zinc-600">Rank</th>
+                <th className="px-4 py-3 text-left font-semibold text-zinc-600">Vehicle</th>
+                <th className="px-4 py-3 text-left font-semibold text-zinc-600">VIN</th>
+                <th className="px-4 py-3 text-left font-semibold text-zinc-600">Status</th>
+                <th className="px-4 py-3 text-right font-semibold text-zinc-600">Purchase Price</th>
+                <th className="px-4 py-3 text-right font-semibold text-zinc-600">Total Cost</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -859,13 +859,13 @@ export const ReportsTab: React.FC = () => {
                     <td className="px-4 py-3">
                       <div className="w-8 h-8 bg-[#D97706] text-white flex items-center justify-center font-bold text-xs">{index + 1}</div>
                     </td>
-                    <td className="px-4 py-3 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>{summary.make_model}</td>
-                    <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>{summary.vin_number ? `${truncateValue(summary.vin_number, 12)}...` : '-'}</td>
+                    <td className="px-4 py-3 font-semibold text-zinc-900">{summary.make_model}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-zinc-600">{summary.vin_number ? `${truncateValue(summary.vin_number, 12)}...` : '-'}</td>
                     <td className="px-4 py-3">
-                      <span className="inline-block px-2 py-1 text-xs font-semibold" style={{ background: 'var(--cds-support-info-inverse, #dbeafe)', color: 'var(--cds-interactive, #D97706)' }}>{summary.status}</span>
+                      <span className="inline-block px-2 py-1 text-xs font-semibold" style={{ background: '#dbeafe', color: '#D97706' }}>{summary.status}</span>
                     </td>
-                    <td className="px-4 py-3 text-right" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>£{(summary.purchase_price_gbp || 0).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right font-bold" style={{ color: 'var(--cds-support-success, #10b981)' }}>${(summary.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                    <td className="px-4 py-3 text-right text-zinc-600">£{(summary.purchase_price_gbp || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-bold text-emerald-500">${(summary.total_landed_cost_usd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                   </tr>
                 ))}
             </tbody>

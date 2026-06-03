@@ -8,6 +8,10 @@ export const USER_ROLES = {
   MANAGER: 'Manager',
   DRIVER: 'Driver',
   ACCOUNTANT: 'Accountant',
+  SALES: 'Sales',
+  DIRECTOR: 'Director',
+  CAR_HIRE: 'Car Hire',
+  CEO: 'CEO',
 } as const;
 
 export type UserRoleValue = typeof USER_ROLES[keyof typeof USER_ROLES];

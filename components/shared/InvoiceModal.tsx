@@ -6,10 +6,6 @@ import {
   Select,
   SelectItem,
   Button,
-  IconButton,
-  Stack,
-  Grid,
-  Column,
   NumberInput,
   Tag,
 } from '../ui';
@@ -244,12 +240,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         </div>
       }
     >
-      <Stack gap={3}>
+      <div className="space-y-6">
         {/* Invoice Number (when editing) */}
         {editingInvoice && (
           <section>
-            <div className="p-3 rounded-lg bg-emerald-50 border-l-4 border-[#10b981] flex items-center gap-3">
-              <span className="font-mono text-sm font-semibold text-[#10b981]">
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center gap-3">
+              <span className="font-mono text-sm font-semibold text-emerald-600">
                 {editingInvoice.invoice_number}
               </span>
               <Tag type="blue" size="sm">
@@ -261,29 +257,29 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Client Section */}
         <section>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Client Information
-          </h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+              Client Information
+            </h3>
 
-          <Stack gap={3}>
-            <Select
-              id="invoice-client"
-              labelText="Saved Client"
-              value={formData.client_id}
-              onChange={(e) => handleClientChange(e.target.value)}
-            >
-              <SelectItem value="" text="Select an existing client or leave blank for a one-off invoice" />
-              {clients.map(c => (
-                <SelectItem
-                  key={c.id}
-                  value={c.id}
-                  text={c.company ? `${c.name} — ${c.company}` : c.name}
-                />
-              ))}
-            </Select>
+            <div className="space-y-3">
+              <Select
+                id="invoice-client"
+                labelText="Saved Client"
+                value={formData.client_id}
+                onChange={(e) => handleClientChange(e.target.value)}
+              >
+                <SelectItem value="" text="Select an existing client or leave blank for a one-off invoice" />
+                {clients.map(c => (
+                  <SelectItem
+                    key={c.id}
+                    value={c.id}
+                    text={c.company ? `${c.name} — ${c.company}` : c.name}
+                  />
+                ))}
+              </Select>
 
-            <Grid>
-              <Column sm={4} md={8} lg={8}>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <TextInput
                   id="invoice-client-name"
                   labelText="Client Name *"
@@ -291,8 +287,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                   onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
                   required
                 />
-              </Column>
-              <Column sm={4} md={8} lg={8}>
                 <TextInput
                   id="invoice-client-email"
                   labelText="Email"
@@ -300,123 +294,114 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                   value={formData.client_email}
                   onChange={(e) => setFormData(prev => ({ ...prev, client_email: e.target.value }))}
                 />
-              </Column>
-            </Grid>
+              </div>
 
-            <TextArea
-              id="invoice-client-address"
-              labelText="Address"
-              value={formData.client_address}
-              onChange={(e) => setFormData(prev => ({ ...prev, client_address: e.target.value }))}
-              rows={2}
-            />
-          </Stack>
+              <TextArea
+                id="invoice-client-address"
+                labelText="Address"
+                value={formData.client_address}
+                onChange={(e) => setFormData(prev => ({ ...prev, client_address: e.target.value }))}
+                rows={2}
+              />
+            </div>
+          </div>
         </section>
 
         {/* Invoice Details */}
         <section>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Invoice Details
-          </h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+              Invoice Details
+            </h3>
 
-          <Grid>
-            <Column sm={4} md={4} lg={8}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Select
+              id="invoice-kind"
+              labelText="Invoice Type"
+              value={formData.invoice_kind}
+              onChange={(e) => setFormData(prev => ({ ...prev, invoice_kind: e.target.value as any }))}
+            >
+              <SelectItem value="Standard" text="Standard" />
+              <SelectItem value="Deposit" text="Deposit" />
+              <SelectItem value="Final" text="Final" />
+            </Select>
+
+            <Select
+              id="invoice-vehicle"
+              labelText="Vehicle (Optional)"
+              value={formData.vehicle_id}
+              onChange={(e) => setFormData(prev => ({ ...prev, vehicle_id: e.target.value }))}
+            >
+              <SelectItem value="" text="No Vehicle (Custom Invoice)" />
+              {vehicles.map(v => (
+                <SelectItem
+                  key={v.id}
+                  value={v.id}
+                  text={`${v.make_model} (${v.vin_number})`}
+                />
+              ))}
+            </Select>
+
+            <Select
+              id="invoice-currency"
+              labelText="Currency"
+              value={formData.currency}
+              onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value as any }))}
+            >
+              <SelectItem value="USD" text="USD ($)" />
+              <SelectItem value="GBP" text="GBP (£)" />
+            </Select>
+
+            <TextInput
+              id="invoice-due-date"
+              labelText="Due Date *"
+              type="date"
+              value={formData.due_date}
+              onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+              required
+            />
+
+            {editingInvoice ? (
               <Select
-                id="invoice-kind"
-                labelText="Invoice Type"
-                value={formData.invoice_kind}
-                onChange={(e) => setFormData(prev => ({ ...prev, invoice_kind: e.target.value as any }))}
+                id="invoice-status"
+                labelText="Status"
+                value={formData.status}
+                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
               >
-                <SelectItem value="Standard" text="Standard" />
-                <SelectItem value="Deposit" text="Deposit" />
-                <SelectItem value="Final" text="Final" />
+                <SelectItem value="Draft" text="Draft" />
+                <SelectItem value="Sent" text="Sent" />
+                <SelectItem value="Paid" text="Paid" />
+                <SelectItem value="Overdue" text="Overdue" />
+                <SelectItem value="Cancelled" text="Cancelled" />
               </Select>
-            </Column>
-
-            <Column sm={4} md={4} lg={8}>
+            ) : (
               <Select
-                id="invoice-vehicle"
-                labelText="Vehicle (Optional)"
-                value={formData.vehicle_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, vehicle_id: e.target.value }))}
+                id="invoice-status"
+                labelText="Status"
+                value={formData.status}
+                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
               >
-                <SelectItem value="" text="No Vehicle (Custom Invoice)" />
-                {vehicles.map(v => (
-                  <SelectItem
-                    key={v.id}
-                    value={v.id}
-                    text={`${v.make_model} (${v.vin_number})`}
-                  />
-                ))}
+                <SelectItem value="Draft" text="Draft" />
+                <SelectItem value="Sent" text="Sent" />
               </Select>
-            </Column>
+            )}
 
-            <Column sm={4} md={4} lg={8}>
-              <Select
-                id="invoice-currency"
-                labelText="Currency"
-                value={formData.currency}
-                onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value as any }))}
-              >
-                <SelectItem value="USD" text="USD ($)" />
-                <SelectItem value="GBP" text="GBP (£)" />
-              </Select>
-            </Column>
-
-            <Column sm={4} md={4} lg={8}>
-              <TextInput
-                id="invoice-due-date"
-                labelText="Due Date *"
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                required
-              />
-            </Column>
-
-            <Column sm={4} md={4} lg={8}>
-              {editingInvoice ? (
-                <Select
-                  id="invoice-status"
-                  labelText="Status"
-                  value={formData.status}
-                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                >
-                  <SelectItem value="Draft" text="Draft" />
-                  <SelectItem value="Sent" text="Sent" />
-                  <SelectItem value="Paid" text="Paid" />
-                  <SelectItem value="Overdue" text="Overdue" />
-                  <SelectItem value="Cancelled" text="Cancelled" />
-                </Select>
-              ) : (
-                <Select
-                  id="invoice-status"
-                  labelText="Status"
-                  value={formData.status}
-                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                >
-                  <SelectItem value="Draft" text="Draft" />
-                  <SelectItem value="Sent" text="Sent" />
-                </Select>
-              )}
-            </Column>
-
-            <Column sm={4} md={4} lg={8}>
-              <TextInput
-                id="invoice-batch"
-                labelText="Batch Code (Optional)"
-                value={formData.batch}
-                onChange={(e) => setFormData(prev => ({ ...prev, batch: e.target.value }))}
-                placeholder="e.g., BATCH-001"
-              />
-            </Column>
-          </Grid>
+            <TextInput
+              id="invoice-batch"
+              labelText="Batch Code (Optional)"
+              value={formData.batch}
+              onChange={(e) => setFormData(prev => ({ ...prev, batch: e.target.value }))}
+              placeholder="e.g., BATCH-001"
+            />
+          </div>
+          </div>
         </section>
 
         {/* Line Items */}
         <section>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
               Line Items
             </h3>
             <Button
@@ -429,14 +414,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
             </Button>
           </div>
 
-          <Stack gap={3}>
+          <div className="space-y-3">
             {lineItems.map((item, index) => (
               <div
                 key={item.id || index}
-                className="p-3 rounded-lg bg-white border border-stone-200"
+                className="rounded-xl border border-stone-200 bg-white p-4"
               >
-                <Grid>
-                  <Column sm={4} md={6} lg={8}>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+                  <div className="sm:col-span-4">
                     <TextInput
                       id={`line-desc-${index}`}
                       labelText="Description *"
@@ -444,8 +429,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                       onChange={(e) => updateLineItem(index, 'description', e.target.value)}
                       placeholder="Item description"
                     />
-                  </Column>
-                  <Column sm={2} md={3} lg={3}>
+                  </div>
+                  <div className="sm:col-span-2">
                     <NumberInput
                       id={`line-qty-${index}`}
                       labelText="Qty"
@@ -454,8 +439,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                       min={1}
                       step={1}
                     />
-                  </Column>
-                  <Column sm={3} md={4} lg={4}>
+                  </div>
+                  <div className="sm:col-span-2">
                     <NumberInput
                       id={`line-price-${index}`}
                       labelText="Unit Price"
@@ -464,8 +449,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                       min={0}
                       step={0.01}
                     />
-                  </Column>
-                  <Column sm={3} md={4} lg={4}>
+                  </div>
+                  <div className="sm:col-span-2">
                     <NumberInput
                       id={`line-discount-${index}`}
                       labelText="Discount %"
@@ -475,8 +460,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                       max={100}
                       step={0.01}
                     />
-                  </Column>
-                  <Column sm={3} md={4} lg={4}>
+                  </div>
+                  <div className="sm:col-span-2">
                     <NumberInput
                       id={`line-tax-${index}`}
                       labelText="Tax %"
@@ -485,58 +470,44 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                       min={0}
                       step={0.01}
                     />
-                  </Column>
-                  <Column sm={3} md={4} lg={4}>
-                    <div className="bg-white px-3 py-3 text-right font-semibold">
-                      <div className="text-xs text-zinc-500">Amount</div>
-                      <div className="text-zinc-900">
-                        {formatMoney(calculateLineAmount(item), formData.currency)}
-                      </div>
-                    </div>
-                  </Column>
-                  <Column sm={1} md={1} lg={1} className="flex items-end">
-                    {lineItems.length > 1 && (
-                      <IconButton
-                        variant="ghost"
-                        size="sm"
-                        icon={<Trash2 size={14} />}
-                        label="Remove line item"
-                        onClick={() => removeLineItem(index)}
-                        className="text-red-600"
-                      />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="text-sm font-semibold text-zinc-900">
+                    Amount: {formatMoney(calculateLineAmount(item), formData.currency)}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {item.discount_percentage > 0 && (
+                      <span className="text-xs text-zinc-500">
+                        Discount: {formatMoney((item.quantity * item.unit_price * item.discount_percentage) / 100, formData.currency)}
+                      </span>
                     )}
-                  </Column>
-                </Grid>
-
-                {item.discount_percentage > 0 && (
-                  <p className="mt-1 text-xs text-zinc-500">
-                    Discount: {formatMoney((item.quantity * item.unit_price * item.discount_percentage) / 100, formData.currency)}
-                  </p>
-                )}
+                    {lineItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeLineItem(index)}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 transition-colors"
+                        aria-label="Remove line item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
-          </Stack>
+          </div>
 
           {/* Summary Strip */}
-          <div className={`mt-5 grid gap-3 grid-cols-2 ${
-            totals.discount > 0 && totals.tax > 0
-              ? 'sm:grid-cols-4'
-              : totals.discount > 0 || totals.tax > 0
-                ? 'sm:grid-cols-3'
-                : ''
-          }`}>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <InvoiceSummaryCell label="Subtotal" value={formatMoney(totals.subtotal, formData.currency)} />
-            {totals.discount > 0 && (
-              <InvoiceSummaryCell label="Discounts" value={`-${formatMoney(totals.discount, formData.currency)}`} accent="success" />
-            )}
-            {totals.tax > 0 && (
-              <InvoiceSummaryCell label="Tax" value={formatMoney(totals.tax, formData.currency)} />
-            )}
+            <InvoiceSummaryCell label="Discounts" value={`-${formatMoney(totals.discount, formData.currency)}`} accent="success" />
+            <InvoiceSummaryCell label="Tax" value={formatMoney(totals.tax, formData.currency)} />
             <InvoiceSummaryCell label="Total" value={formatMoney(totals.total, formData.currency)} emphasis />
           </div>
 
           {/* Dark Total Bar */}
-          <div className="mt-3 rounded-lg py-3 px-4 bg-zinc-900 flex justify-between items-center">
+          <div className="mt-3 rounded-xl py-3 px-4 bg-zinc-900 flex justify-between items-center">
             <span className="font-semibold text-sm text-zinc-400">
               Invoice Total
             </span>
@@ -544,35 +515,38 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
               {formatMoney(totals.total, formData.currency)}
             </span>
           </div>
+          </div>
         </section>
 
         {/* Notes & Terms */}
         <section>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Notes & Terms
-          </h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+              Notes &amp; Terms
+            </h3>
 
-          <Stack gap={3}>
-            <TextArea
-              id="invoice-notes"
-              labelText="Internal Notes"
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              rows={3}
-              placeholder="Internal notes (not shown on invoice)"
-            />
+            <div className="space-y-3">
+              <TextArea
+                id="invoice-notes"
+                labelText="Internal Notes"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                rows={3}
+                placeholder="Internal notes (not shown on invoice)"
+              />
 
-            <TextArea
-              id="invoice-terms"
-              labelText="Terms & Conditions"
-              value={formData.terms_and_conditions}
-              onChange={(e) => setFormData(prev => ({ ...prev, terms_and_conditions: e.target.value }))}
-              rows={3}
-              placeholder="Payment terms and conditions"
-            />
-          </Stack>
+              <TextArea
+                id="invoice-terms"
+                labelText="Terms &amp; Conditions"
+                value={formData.terms_and_conditions}
+                onChange={(e) => setFormData(prev => ({ ...prev, terms_and_conditions: e.target.value }))}
+                rows={3}
+                placeholder="Payment terms and conditions"
+              />
+            </div>
+          </div>
         </section>
-      </Stack>
+      </div>
     </Modal>
   );
 };
@@ -592,10 +566,10 @@ const InvoiceSummaryCell: React.FC<{
   accent?: 'error' | 'success' | 'warning';
 }> = ({ label, value, emphasis, accent }) => (
   <div className="rounded-lg border border-stone-200 bg-white px-3 py-3 text-center">
-    <div className="mb-1 text-[0.6875rem] font-semibold uppercase tracking-[0.05em] text-zinc-600">
+    <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-600">
       {label}
     </div>
-    <div className={`font-bold ${emphasis ? 'text-lg' : 'text-[0.9375rem]'} ${accent ? invoiceCellAccent[accent] : 'text-zinc-900'}`}>
+    <div className={`font-bold ${emphasis ? 'text-lg' : 'text-sm'} ${accent ? invoiceCellAccent[accent] : 'text-zinc-900'}`}>
       {value}
     </div>
   </div>

@@ -26,14 +26,14 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
   onClear,
 }) => {
   const panelStyle: React.CSSProperties = {
-    backgroundColor: 'var(--cds-layer-01, #ffffff)',
+    backgroundColor: '#ffffff',
     borderWidth: '1px',
     borderStyle: 'solid',
-    borderColor: 'var(--cds-border-subtle, #d6d3d1)',
+    borderColor: '#d6d3d1',
   };
 
   const labelStyle: React.CSSProperties = {
-    color: 'var(--cds-text-secondary, #52525b)',
+    color: '#52525b',
   };
 
   return (
@@ -42,7 +42,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
         <BarChart3 size={48} className="mx-auto text-blue-600 mb-3" />
         <h3
           className="text-lg font-semibold mb-2"
-          style={{ color: 'var(--cds-text-primary, #18181b)' }}
+          style={{ color: '#18181b' }}
         >
           Client Statements
         </h3>
@@ -60,7 +60,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
               id="statement-client"
               value={selectedClient}
               onChange={e => onClientChange(e.target.value)}
-              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
+              className="w-full h-10 px-3 text-sm border border-zinc-300 bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
             >
               <option value="">Select a client</option>
               {clientOptions.map(c => (
@@ -80,7 +80,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
               type="date"
               value={statementDateFrom}
               onChange={e => onDateFromChange(e.target.value)}
-              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
+              className="w-full h-10 px-3 text-sm border border-zinc-300 bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
             />
           </div>
 
@@ -93,7 +93,7 @@ export const StatementsSection: React.FC<StatementsSectionProps> = ({
               type="date"
               value={statementDateTo}
               onChange={e => onDateToChange(e.target.value)}
-              className="w-full h-10 px-3 text-sm border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
+              className="w-full h-10 px-3 text-sm border border-zinc-300 bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#D97706]/30 focus:border-[#D97706]"
             />
           </div>
         </div>

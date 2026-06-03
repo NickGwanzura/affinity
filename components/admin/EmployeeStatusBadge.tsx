@@ -9,16 +9,16 @@ interface EmployeeStatusBadgeProps {
 
 const statusStyles: Record<EmployeeStatus, React.CSSProperties> = {
   Active: {
-    background: 'var(--cds-support-success-inverse, #d1fae5)',
-    color: 'var(--cds-support-success, #10b981)',
+    background: '#d1fae5',
+    color: '#10b981',
   },
   'On Leave': {
-    background: 'var(--cds-support-warning-inverse, #fdf6dd)',
-    color: 'var(--cds-support-warning, #92400e)',
+    background: '#fdf6dd',
+    color: '#92400e',
   },
   Terminated: {
-    background: 'var(--cds-support-error-inverse, #fee2e2)',
-    color: 'var(--cds-support-error, #dc2626)',
+    background: '#fee2e2',
+    color: '#dc2626',
   },
 };
 

@@ -91,7 +91,7 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
   };
 
   const thCls =
-    'px-6 py-4 text-left text-xs font-bold uppercase tracking-wider select-none cursor-pointer hover:text-zinc-900 transition-colors';
+    'px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.08em] select-none cursor-pointer hover:text-zinc-900 transition-colors';
 
   return (
     <div className="space-y-6">
@@ -162,7 +162,7 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
 
       <div
         className="overflow-hidden shadow-lg"
-        style={{ background: 'var(--cds-background, #ffffff)', border: '1px solid var(--cds-border-subtle, #e7e5e4)' }}
+        style={{ background: '#ffffff', border: '1px solid #e7e5e4' }}
       >
         {/* Mobile card list */}
         <div className="space-y-3 p-3 sm:hidden">
@@ -181,23 +181,23 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
               <div
                 key={employee.id}
                 className="p-4"
-                style={{ border: '1px solid var(--cds-border-subtle, #e7e5e4)', background: 'var(--cds-background, #ffffff)' }}
+                style={{ border: '1px solid #e7e5e4', background: '#ffffff' }}
               >
                 <div className="mb-2 flex items-start justify-between">
                   <div>
-                    <div className="font-bold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+                    <div className="font-bold text-zinc-900">
                       {employee.name}
                     </div>
-                    <div className="font-mono text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <div className="font-mono text-xs text-zinc-600">
                       {employee.employee_number}
                     </div>
                   </div>
                   <EmployeeStatusBadge status={employee.status} />
                 </div>
-                <div className="mb-1 text-xs" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                <div className="mb-1 text-xs text-zinc-600">
                   {employee.position} &middot; {employee.employment_type}
                 </div>
-                <div className="mb-3 font-semibold text-sm" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+                <div className="mb-3 font-semibold text-sm text-zinc-900">
                   {employee.base_pay_usd.toLocaleString()} {employee.currency}
                 </div>
                 <div className="flex flex-wrap gap-2 border-t border-zinc-100 pt-3">
@@ -231,49 +231,49 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
                 <th
-                  className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.08em]"
+                  style={{ color: '#52525b' }}
                 >
                   Employee #
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('name')}
                 >
                   Name <SortIcon field="name" />
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('position')}
                 >
                   Position <SortIcon field="position" />
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('base_pay_usd')}
                 >
                   Base Pay <SortIcon field="base_pay_usd" />
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('employment_type')}
                 >
                   Type <SortIcon field="employment_type" />
                 </th>
                 <th
                   className={thCls}
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  style={{ color: '#52525b' }}
                   onClick={() => handleSort('status')}
                 >
                   Status <SortIcon field="status" />
                 </th>
                 <th
-                  className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider"
-                  style={{ color: 'var(--cds-text-secondary, #52525b)' }}
+                  className="px-6 py-4 text-right text-xs font-bold uppercase tracking-[0.08em]"
+                  style={{ color: '#52525b' }}
                 >
                   Actions
                 </th>
@@ -297,19 +297,19 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
               ) : (
                 filteredAndSorted.map((employee) => (
                   <tr key={employee.id} className="hover:bg-zinc-50">
-                    <td className="px-6 py-4 font-mono text-sm" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <td className="px-6 py-4 font-mono text-sm text-zinc-600">
                       {employee.employee_number}
                     </td>
-                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+                    <td className="px-6 py-4 font-semibold text-zinc-900">
                       {employee.name}
                     </td>
-                    <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <td className="px-6 py-4 text-zinc-600">
                       {employee.position}
                     </td>
-                    <td className="px-6 py-4 font-semibold" style={{ color: 'var(--cds-text-primary, #18181b)' }}>
+                    <td className="px-6 py-4 font-semibold text-zinc-900">
                       {employee.base_pay_usd.toLocaleString()} {employee.currency}
                     </td>
-                    <td className="px-6 py-4" style={{ color: 'var(--cds-text-secondary, #52525b)' }}>
+                    <td className="px-6 py-4 text-zinc-600">
                       {employee.employment_type}
                     </td>
                     <td className="px-6 py-4">

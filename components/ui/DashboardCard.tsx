@@ -47,7 +47,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
       />
       <div className="relative flex items-start justify-between gap-3 p-6 pl-7">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-600 mb-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-600 mb-3">
             {title}
           </p>
           <p className="text-[32px] font-semibold leading-none tabular-nums tracking-tight text-zinc-900 mb-2">

@@ -111,7 +111,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
     >
       <form id="payslip-form" onSubmit={onSubmit} className="space-y-8">
         <section className="space-y-4">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <h4 className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
             Pay period
           </h4>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
@@ -167,7 +167,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
         </section>
 
         <section className="space-y-5 rounded-md border border-stone-200 bg-stone-50/60 p-5">
-          <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-800">
+          <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-800">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             Earnings
           </h4>
@@ -225,7 +225,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
         </section>
 
         <section className="space-y-5 rounded-md border border-stone-200 bg-stone-50/60 p-5">
-          <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-red-700">
+          <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-red-700">
             <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
             Deductions
           </h4>
@@ -268,7 +268,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
         <section className="rounded-lg border border-stone-200 bg-white p-5">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">
                 Gross Pay
               </p>
               <p className="mt-1 text-2xl font-semibold tabular-nums text-zinc-900">
@@ -276,7 +276,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
               </p>
             </div>
             <div className="border-t border-stone-200 pt-4 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">
                 Deductions
               </p>
               <p className="mt-1 text-2xl font-semibold tabular-nums text-red-700">
@@ -284,7 +284,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
               </p>
             </div>
             <div className="border-t border-stone-200 pt-4 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">
                 Net Pay
               </p>
               <p className="mt-1 text-3xl font-bold tabular-nums text-[#D97706]">
@@ -295,7 +295,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
         </section>
 
         <section className="space-y-4">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <h4 className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
             Payment
           </h4>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
