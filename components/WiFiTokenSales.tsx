@@ -1,3 +1,4 @@
+import { authFetch } from '../services/authFetch';
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Plus, Wifi, TrendingUp, DollarSign, Target } from 'lucide-react';
 import { Modal, Button, TextInput, Select, SelectItem, TextArea } from './ui';
@@ -48,8 +49,8 @@ export const WiFiTokenSales: React.FC = () => {
     setLoading(true);
     try {
       const results = await Promise.allSettled([
-        fetch(`${API}?resource=stats`).then(r => { if (!r.ok) throw new Error('Stats failed'); return r.json(); }),
-        fetch(`${API}?resource=sales`).then(r => { if (!r.ok) throw new Error('Sales failed'); return r.json(); }),
+        authFetch(`${API}?resource=stats`).then(r => { if (!r.ok) throw new Error('Stats failed'); return r.json(); }),
+        authFetch(`${API}?resource=sales`).then(r => { if (!r.ok) throw new Error('Sales failed'); return r.json(); }),
       ]);
       setStats(results[0].status === 'fulfilled' ? results[0].value : null);
       setSales(results[1].status === 'fulfilled' && Array.isArray(results[1].value) ? results[1].value : []);
@@ -68,7 +69,7 @@ export const WiFiTokenSales: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`${API}?resource=sales&id=${id}`, { method: 'DELETE' });
+      const res = await authFetch(`${API}?resource=sales&id=${id}`, { method: 'DELETE' });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Delete failed'); }
       showToast('Sale deleted', 'success');
     } catch (err: any) {
@@ -294,7 +295,7 @@ const RecordWiFiSaleModal: React.FC<{ isOpen: boolean; onClose: () => void; onSa
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`${API}?resource=sales`, {
+      const res = await authFetch(`${API}?resource=sales`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tokens_sold: Number(tokens), package_type: packageType, selling_price: Number(price), payment_method: method, sale_date: date, notes }),

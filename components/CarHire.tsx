@@ -1,3 +1,4 @@
+import { authFetch } from '../services/authFetch';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   RefreshCw, Plus, Car, TrendingUp, DollarSign, Calendar,
@@ -107,11 +108,11 @@ export const CarHire: React.FC = () => {
     setLoading(true);
     try {
       const results = await Promise.allSettled([
-        fetch(`${API}?resource=stats`).then(r => { if (!r.ok) throw new Error('Stats failed'); return r.json(); }),
-        fetch(`${API}?resource=vehicles`).then(r => { if (!r.ok) throw new Error('Vehicles failed'); return r.json(); }),
-        fetch(`${API}?resource=bookings`).then(r => { if (!r.ok) throw new Error('Bookings failed'); return r.json(); }),
-        fetch(`${API}?resource=expenses`).then(r => { if (!r.ok) throw new Error('Expenses failed'); return r.json(); }),
-        fetch(`${API}?resource=monthly`).then(r => { if (!r.ok) throw new Error('Monthly failed'); return r.json(); }),
+        authFetch(`${API}?resource=stats`).then(r => { if (!r.ok) throw new Error('Stats failed'); return r.json(); }),
+        authFetch(`${API}?resource=vehicles`).then(r => { if (!r.ok) throw new Error('Vehicles failed'); return r.json(); }),
+        authFetch(`${API}?resource=bookings`).then(r => { if (!r.ok) throw new Error('Bookings failed'); return r.json(); }),
+        authFetch(`${API}?resource=expenses`).then(r => { if (!r.ok) throw new Error('Expenses failed'); return r.json(); }),
+        authFetch(`${API}?resource=monthly`).then(r => { if (!r.ok) throw new Error('Monthly failed'); return r.json(); }),
       ]);
       setStats(results[0].status === 'fulfilled' ? results[0].value : null);
       setVehicles(results[1].status === 'fulfilled' && Array.isArray(results[1].value) ? results[1].value : []);
@@ -133,7 +134,7 @@ export const CarHire: React.FC = () => {
 
   const handleDeleteBooking = async (id: string) => {
     try {
-      const res = await fetch(`${API}?resource=bookings&id=${id}`, { method: 'DELETE' });
+      const res = await authFetch(`${API}?resource=bookings&id=${id}`, { method: 'DELETE' });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Delete failed'); }
       showToast('Booking deleted', 'success');
     } catch (err: any) {
@@ -144,7 +145,7 @@ export const CarHire: React.FC = () => {
 
   const handleDeleteExpense = async (id: string) => {
     try {
-      const res = await fetch(`${API}?resource=expenses&id=${id}`, { method: 'DELETE' });
+      const res = await authFetch(`${API}?resource=expenses&id=${id}`, { method: 'DELETE' });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Delete failed'); }
       showToast('Expense deleted', 'success');
     } catch (err: any) {
@@ -564,7 +565,7 @@ const RecordHireModal: React.FC<{
     if (!vehicleId || !endDate) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API}?resource=bookings`, {
+      const res = await authFetch(`${API}?resource=bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -725,7 +726,7 @@ const AddExpenseModal: React.FC<{
     if (!vehicleId) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API}?resource=expenses`, {
+      const res = await authFetch(`${API}?resource=expenses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ vehicle_id: vehicleId, category, amount: Number(amount), currency, expense_date: date, description: description || undefined }),
@@ -795,7 +796,7 @@ const ManageVehiclesModal: React.FC<{
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`${API}?resource=vehicles`, {
+      const res = await authFetch(`${API}?resource=vehicles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ make_model: name, registration: reg, year: year ? Number(year) : undefined, color: color || undefined, daily_rate: Number(rate), currency }),
@@ -811,7 +812,7 @@ const ManageVehiclesModal: React.FC<{
 
   const handleStatusChange = async (id: string, status: string) => {
     try {
-      const res = await fetch(`${API}?resource=vehicles&id=${id}`, {
+      const res = await authFetch(`${API}?resource=vehicles&id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -904,7 +905,7 @@ const EditBookingModal: React.FC<{
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`${API}?resource=bookings&id=${booking.id}`, {
+      const res = await authFetch(`${API}?resource=bookings&id=${booking.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, amount_paid: Number(amountPaid), end_date: endDate, notes: notes || undefined }),

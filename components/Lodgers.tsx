@@ -1,3 +1,4 @@
+import { authFetch } from '../services/authFetch';
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Plus, Home, Users, DollarSign, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
@@ -64,9 +65,9 @@ export const Lodgers: React.FC = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const results = await Promise.allSettled([
-      fetch(`${API}?resource=stats`).then(r => { if (!r.ok) throw new Error('Stats failed'); return r.json(); }),
-      fetch(`${API}?resource=lodgers`).then(r => { if (!r.ok) throw new Error('Lodgers failed'); return r.json(); }),
-      fetch(`${API}?resource=payments`).then(r => { if (!r.ok) throw new Error('Payments failed'); return r.json(); }),
+      authFetch(`${API}?resource=stats`).then(r => { if (!r.ok) throw new Error('Stats failed'); return r.json(); }),
+      authFetch(`${API}?resource=lodgers`).then(r => { if (!r.ok) throw new Error('Lodgers failed'); return r.json(); }),
+      authFetch(`${API}?resource=payments`).then(r => { if (!r.ok) throw new Error('Payments failed'); return r.json(); }),
     ]);
     setStats(results[0].status === 'fulfilled' ? results[0].value : null);
     setLodgers(results[1].status === 'fulfilled' && Array.isArray(results[1].value) ? results[1].value : []);
@@ -82,7 +83,7 @@ export const Lodgers: React.FC = () => {
 
   const handleDeleteLodger = async (id: string) => {
     try {
-      const res = await fetch(`${API}?resource=lodgers&id=${id}`, { method: 'DELETE' });
+      const res = await authFetch(`${API}?resource=lodgers&id=${id}`, { method: 'DELETE' });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Delete failed'); }
       showToast('Lodger checked out', 'success');
     } catch (err: any) {
@@ -93,7 +94,7 @@ export const Lodgers: React.FC = () => {
 
   const handleDeletePayment = async (id: string) => {
     try {
-      const res = await fetch(`${API}?resource=payments&id=${id}`, { method: 'DELETE' });
+      const res = await authFetch(`${API}?resource=payments&id=${id}`, { method: 'DELETE' });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Delete failed'); }
       showToast('Payment deleted', 'success');
     } catch (err: any) {
@@ -314,7 +315,7 @@ const LodgerFormModal: React.FC<{
         checkout_date: checkoutDate || null,
         notes: notes || undefined,
       };
-      const res = await fetch(`${API}?resource=lodgers${isEdit ? `&id=${editingLodger!.id}` : ''}`, {
+      const res = await authFetch(`${API}?resource=lodgers${isEdit ? `&id=${editingLodger!.id}` : ''}`, {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -416,7 +417,7 @@ const PaymentModal: React.FC<{
     if (!lodgerId) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API}?resource=payments`, {
+      const res = await authFetch(`${API}?resource=payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

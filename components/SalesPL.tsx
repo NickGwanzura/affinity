@@ -1,3 +1,4 @@
+import { authFetch } from '../services/authFetch';
 import React, { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, TrendingDown, RefreshCw, BarChart3 } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
@@ -51,7 +52,7 @@ export const SalesPL: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(API);
+      const res = await authFetch(API);
       if (!res.ok) throw new Error('Failed');
       setData(await res.json());
     } catch {
