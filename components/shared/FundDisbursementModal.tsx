@@ -44,7 +44,13 @@ export const FundDisbursementModal: React.FC<Props> = ({ isOpen, onClose, onSave
         method: 'POST',
         body: JSON.stringify({ to_user_id: toUserId, amount: parseFloat(amount), currency, note: note || undefined, disbursed_at: date }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Failed'); }
+      if (!res.ok) {
+        const e = await res.json();
+        const msg = e.error === 'password_change_required'
+          ? 'You must change your password before disbursing funds.'
+          : e.error || 'Failed to disburse';
+        throw new Error(msg);
+      }
       showToast('Funds disbursed', 'success');
       reset();
       onSaved();

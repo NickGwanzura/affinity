@@ -44,7 +44,13 @@ export const FundUsageModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) =>
         method: 'POST',
         body: JSON.stringify({ amount: parseFloat(amount), currency, description, category, source, usage_date: date }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Failed'); }
+      if (!res.ok) {
+        const e = await res.json();
+        const msg = e.error === 'password_change_required'
+          ? 'You must change your password before logging expenses. Ask your admin to reset it.'
+          : e.error || 'Failed to log expense';
+        throw new Error(msg);
+      }
       showToast('Expense logged', 'success');
       reset();
       onSaved();

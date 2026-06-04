@@ -76,7 +76,7 @@ async function handleSales(
   if (method === 'GET') {
     const rows = await sql`
       SELECT id, sale_date, quantity_sold, unit_price, total_sales,
-             payment_method, customer_name, notes, created_at, created_by
+             payment_method, customer_name, notes, created_at
       FROM ice_sales
       ORDER BY sale_date DESC, created_at DESC
     `;
