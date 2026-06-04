@@ -7,74 +7,62 @@
 @source "../services/**/*.{ts,tsx}";
 @source "../hooks/**/*.{ts,tsx}";
 
-/* ─── Design tokens (Tailwind v4 @theme) ─────────────────────────────────────
-   Modern semantic palette. Brand stays amber (#D97706); intents align with
-   Tailwind defaults so utility classes and custom hexes stay consistent.    */
+/* ─── Design tokens ───────────────────────────────────────────────────────── */
 @theme {
   /* Brand */
-  --color-primary: #D97706;        /* amber-600 */
-  --color-primary-hover: #B45309;
+  --color-primary:        #D97706;
+  --color-primary-hover:  #B45309;
   --color-primary-active: #92400E;
-  --color-primary-soft: #fef3c7;
+  --color-primary-soft:   #fef3c7;
 
-  /* Semantic intents (Tailwind-aligned) */
-  --color-success: #059669;        /* emerald-600 */
-  --color-success-soft: #d1fae5;
+  /* Semantic intents */
+  --color-success:        #059669;
+  --color-success-soft:   #d1fae5;
   --color-success-strong: #065f46;
-  --color-danger: #dc2626;         /* red-600 */
-  --color-danger-soft: #fee2e2;
-  --color-danger-strong: #991b1b;
-  --color-warning: #f59e0b;        /* amber-500 */
-  --color-warning-soft: #fef3c7;
+  --color-danger:         #dc2626;
+  --color-danger-soft:    #fee2e2;
+  --color-danger-strong:  #991b1b;
+  --color-warning:        #f59e0b;
+  --color-warning-soft:   #fef3c7;
   --color-warning-strong: #92400e;
-  --color-info: #2563eb;           /* blue-600 */
-  --color-info-soft: #dbeafe;
-  --color-info-strong: #1e40af;
+  --color-info:           #2563eb;
+  --color-info-soft:      #dbeafe;
+  --color-info-strong:    #1e40af;
 
   /* Text */
-  --color-text-primary: #18181b;   /* zinc-900 */
-  --color-text-secondary: #52525b; /* zinc-600 */
-  --color-text-muted: #71717a;     /* zinc-500 */
-  --color-text-subtle: #a1a1aa;    /* zinc-400 */
+  --color-text-primary:   #18181b;
+  --color-text-secondary: #52525b;
+  --color-text-muted:     #71717a;
+  --color-text-subtle:    #a1a1aa;
 
   /* Surfaces */
-  --color-surface: #ffffff;
-  --color-surface-muted: #fafaf9;  /* stone-50 */
-  --color-surface-subtle: #f5f5f4; /* stone-100 */
+  --color-surface:        #ffffff;
+  --color-surface-muted:  #fafaf9;
+  --color-surface-subtle: #f5f5f4;
 
   /* Borders */
-  --color-border-subtle: #e7e5e4;  /* stone-200 */
-  --color-border-default: #d6d3d1; /* stone-300 */
-  --color-border-strong: #a8a29e;  /* stone-400 */
+  --color-border-subtle:  #e7e5e4;
+  --color-border-default: #d6d3d1;
+  --color-border-strong:  #a8a29e;
 
-  /* Sidebar (dark stone) */
-  --color-sidebar-bg: #1C1917;
-  --color-sidebar-border: #292524;
-  --color-sidebar-surface: #292524;
-  --color-sidebar-surface-hover: #44403C;
-  --color-sidebar-text: #ffffff;
-  --color-sidebar-text-muted: #a1a1aa;
+  /* Sidebar */
+  --color-sidebar-bg:           #1C1917;
+  --color-sidebar-border:       #292524;
+  --color-sidebar-surface:      #292524;
+  --color-sidebar-surface-hover:#44403C;
+  --color-sidebar-text:         #ffffff;
+  --color-sidebar-text-muted:   #a1a1aa;
 
-  /* Radius scale */
+  /* Radius */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
 }
 
-:root {
-  --app-font-sans: 'General Sans', system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'Menlo', 'Consolas', monospace;
-}
-
+/* ─── Base layer: custom overrides on top of Tailwind preflight ───────────── */
 @layer base {
-  html,
-  body,
-  #root,
-  button,
-  input,
-  textarea,
-  select {
+  /* App font — General Sans throughout */
+  html, body, #root, button, input, textarea, select {
     font-family: 'General Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
@@ -83,38 +71,56 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-}
 
-/* ─── Form inputs: baseline defaults in @layer base so Tailwind utilities
-   from @layer utilities can override them (specificity-safe architecture).
-   Hover/focus/disabled states stay outside the layer — their pseudo-class
-   compound specificity is intentionally high and should not be overridden. ── */
-@layer base {
+  /* Form element defaults. Tailwind utilities in FormInputs.tsx override these.
+     Properties NOT set by Tailwind preflight are marked [+]; redundant ones removed. */
   input:not([type='checkbox']):not([type='radio']):not([type='file']),
   textarea,
   select {
-    font-family: inherit;
-    font-size: 1rem;         /* 16px — prevents iOS auto-zoom */
-    min-height: 2.25rem;     /* 36px — compact; padding brings touch target to ~40px */
-    background: #ffffff;
-    color: #18181b;
-    border: 1px solid #e7e5e4;  /* stone-200 — matches Tailwind border-stone-200 */
-    border-radius: 8px;          /* = rounded-lg */
+    font-size: 1rem;            /* [+] 16px — prevents iOS auto-zoom */
+    min-height: 2.25rem;        /* [+] 36px fallback; FormInputs sets min-h-[40px] */
+    background: #ffffff;        /* [+] white surface */
+    color: #18181b;             /* [+] zinc-900 text */
+    border: 1px solid #e7e5e4;  /* [+] stone-200 border */
+    border-radius: 8px;         /* [+] = rounded-lg */
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
-    transition:
-      border-color 150ms ease,
-      box-shadow 150ms ease,
-      background-color 150ms ease;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   }
 
   textarea {
     min-height: 3rem;
     resize: vertical;
   }
+
+  /* Button UA chrome reset. Tailwind utilities in Button.tsx override most of these.
+     These values serve as safe defaults for any raw <button> element. */
+  button {
+    letter-spacing: 0;
+    font-weight: 500;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      box-shadow 150ms ease,
+      opacity 150ms ease,
+      transform 150ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
-/* Hover/focus/disabled — kept outside @layer so their specificity is
-   preserved and they reliably override both base and utility layers.   */
+/* ─── Interactive states — outside @layer so pseudo-class specificity holds ── */
+
 input:not([type='checkbox']):not([type='radio']):not([type='file']):hover:not(:disabled):not(:focus),
 textarea:hover:not(:disabled):not(:focus),
 select:hover:not(:disabled):not(:focus) {
@@ -139,8 +145,8 @@ input:not([type='checkbox']):not([type='radio']):not([type='file']):disabled,
 textarea:disabled,
 select:disabled {
   color: #a1a1aa;
-  background: #fafaf9;     /* stone-50 — matches Tailwind disabled:bg-stone-50 */
-  border-color: #e7e5e4;   /* stone-200 */
+  background: #fafaf9;
+  border-color: #e7e5e4;
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -161,37 +167,6 @@ select:-webkit-autofill {
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* ─── Buttons: UA chrome reset in @layer base so Tailwind utilities win.
-   Pseudo-class states (focus-visible, disabled, active) stay outside the
-   layer — they compound specificity and must remain authoritative.       */
-@layer base {
-  button {
-    font-family: inherit;
-    letter-spacing: 0;
-    font-weight: 500;
-    min-height: 2.75rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: 6px;
-    background: transparent;
-    border: 0;
-    color: inherit;
-    appearance: none;
-    -webkit-appearance: none;
-    cursor: pointer;
-    transition:
-      background-color 150ms ease,
-      border-color 150ms ease,
-      color 150ms ease,
-      box-shadow 150ms ease,
-      opacity 150ms ease,
-      transform 150ms ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-}
-
 button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.35);
@@ -204,18 +179,15 @@ button:disabled {
   pointer-events: none;
 }
 
-/* Tactile press feedback — subtle scale on active for non-disabled buttons. */
 button:not(:disabled):active {
   transform: scale(0.98);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  button:not(:disabled):active {
-    transform: none;
-  }
+  button:not(:disabled):active { transform: none; }
 }
 
-/* Native checkbox / radio with brand accent */
+/* ─── Checkbox / radio ────────────────────────────────────────────────────── */
 input[type='checkbox'],
 input[type='radio'] {
   accent-color: #D97706;
@@ -234,7 +206,7 @@ input[type='radio']:disabled {
   opacity: 0.6;
 }
 
-/* Hide native number spinners for cleaner numeric fields */
+/* ─── Number spinners: hidden for cleaner numeric fields ─────────────────── */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -244,6 +216,7 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
+/* ─── Login shell ─────────────────────────────────────────────────────────── */
 .login-shell {
   display: flex;
   min-height: 100dvh;
@@ -286,24 +259,9 @@ input[type='number'] {
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 0%, transparent 75%);
 }
 
-.login-shell__brand-content {
-  position: relative;
-  z-index: 1;
-  max-width: 480px;
-}
-
-.login-shell__brand-lockup {
-  display: flex;
-  align-items: center;
-  margin-bottom: 3rem;
-}
-
-.login-shell__logo-image {
-  width: 200px;
-  height: auto;
-  display: block;
-  filter: brightness(0) invert(1);
-}
+.login-shell__brand-content { position: relative; z-index: 1; max-width: 480px; }
+.login-shell__brand-lockup  { display: flex; align-items: center; margin-bottom: 3rem; }
+.login-shell__logo-image    { width: 200px; height: auto; display: block; filter: brightness(0) invert(1); }
 
 .login-shell__headline {
   margin: 0 0 1.5rem;
@@ -371,62 +329,17 @@ input[type='number'] {
   text-transform: uppercase;
 }
 
-.login-shell__panel {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background: #fff;
-}
-
-.login-shell__panel-inner {
-  width: 100%;
-  max-width: 380px;
-}
-
-.login-shell__mobile-brand {
-  display: none;
-}
-
-.login-shell__mobile-brand-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.login-shell__mobile-copy {
-  min-width: 0;
-}
-
-.login-shell__mobile-eyebrow {
-  color: #666;
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.login-shell__mobile-title {
-  margin: 0.5rem 0 0;
-  color: #000;
-  font-size: 1.25rem;
-  line-height: 1.2;
-  font-weight: 600;
-}
-
-.login-shell__mobile-text {
-  margin: 0.5rem 0 0;
-  color: #666;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.login-shell__card {
-  padding: 0;
-  background: none;
-  box-shadow: none;
-}
+.login-shell__panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; background: #fff; }
+.login-shell__panel-inner { width: 100%; max-width: 380px; }
+.login-shell__mobile-brand { display: none; }
+.login-shell__mobile-brand-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.login-shell__mobile-copy { min-width: 0; }
+.login-shell__mobile-eyebrow { color: #666; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.login-shell__mobile-title  { margin: 0.5rem 0 0; color: #000; font-size: 1.25rem; line-height: 1.2; font-weight: 600; }
+.login-shell__mobile-text   { margin: 0.5rem 0 0; color: #666; font-size: 0.875rem; line-height: 1.5; }
+.login-shell__card  { padding: 0; background: none; box-shadow: none; }
+.login-shell__intro { margin-bottom: 2rem; }
+.login-shell__notice { margin-bottom: 1.25rem; }
 
 .login-shell__tabs {
   display: flex;
@@ -463,22 +376,9 @@ input[type='number'] {
   box-shadow: 0 0 12px rgba(217, 119, 6, 0.4);
 }
 
-.login-shell__tab:hover {
-  color: #1c1917;
-}
-
-.login-shell__tab.is-active {
-  color: #D97706;
-  font-weight: 600;
-}
-
-.login-shell__tab.is-active::after {
-  transform: scaleX(1);
-}
-
-.login-shell__intro {
-  margin-bottom: 2rem;
-}
+.login-shell__tab:hover        { color: #1c1917; }
+.login-shell__tab.is-active    { color: #D97706; font-weight: 600; }
+.login-shell__tab.is-active::after { transform: scaleX(1); }
 
 .login-shell__title {
   margin: 0 0 0.5rem;
@@ -497,10 +397,6 @@ input[type='number'] {
   line-height: 1.5;
 }
 
-.login-shell__notice {
-  margin-bottom: 1.25rem;
-}
-
 .login-shell__link {
   display: block;
   width: 100%;
@@ -514,39 +410,17 @@ input[type='number'] {
   transition: color 0.15s ease;
 }
 
-.login-shell__link:hover {
-  color: #D97706;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
+.login-shell__link:hover { color: #D97706; }
 
 @media (max-width: 1024px) {
-  .login-shell {
-    display: block;
-  }
-
-  .login-shell__brand {
-    display: none;
-  }
-
+  .login-shell { display: block; }
+  .login-shell__brand { display: none; }
   .login-shell__panel {
     min-height: 100dvh;
     align-items: flex-start;
     padding: max(1rem, env(safe-area-inset-top)) 1rem max(1.5rem, env(safe-area-inset-bottom));
   }
-
-  .login-shell__panel-inner {
-    max-width: none;
-  }
-
+  .login-shell__panel-inner { max-width: none; }
   .login-shell__mobile-brand {
     display: block;
     margin-bottom: 0.875rem;
@@ -554,39 +428,13 @@ input[type='number'] {
     background: #000;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   }
-
-  .login-shell__mobile-brand-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .login-shell__mobile-title {
-    color: #fff;
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  .login-shell__mobile-text {
-    display: none;
-  }
-
-  .login-shell__card {
-    padding: 0;
-  }
-
-  .login-shell__tabs {
-    margin-bottom: 1.25rem;
-  }
-
-  .login-shell__tab {
-    min-height: 3rem;
-    padding-inline: 0.5rem;
-  }
-
-  .login-shell__title {
-    font-size: 1.5rem;
-  }
+  .login-shell__mobile-brand-row { display: flex; align-items: center; gap: 0.75rem; }
+  .login-shell__mobile-title { color: #fff; font-size: 1.125rem; font-weight: 600; }
+  .login-shell__mobile-text { display: none; }
+  .login-shell__card { padding: 0; }
+  .login-shell__tabs { margin-bottom: 1.25rem; }
+  .login-shell__tab { min-height: 3rem; padding-inline: 0.5rem; }
+  .login-shell__title { font-size: 1.5rem; }
 }
 
 @media (max-width: 600px) {
@@ -595,26 +443,13 @@ input[type='number'] {
     align-items: flex-start;
     padding: max(0.875rem, env(safe-area-inset-top)) 1rem max(1.25rem, env(safe-area-inset-bottom));
   }
-
-  .login-shell__mobile-brand {
-    padding: 0.875rem;
-  }
-
-  .login-shell__mobile-brand-row {
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .login-shell__mobile-title {
-    font-size: 1rem;
-  }
-
-  .login-shell__headline {
-    font-size: 2rem;
-  }
+  .login-shell__mobile-brand { padding: 0.875rem; }
+  .login-shell__mobile-brand-row { align-items: center; gap: 0.75rem; }
+  .login-shell__mobile-title { font-size: 1rem; }
+  .login-shell__headline { font-size: 2rem; }
 }
 
-/* ─── Modal footer: full-width buttons when stacked (mobile) ──────────────── */
+/* ─── Modal footer: full-width stacked buttons on mobile ─────────────────── */
 @media (max-width: 639px) {
   .modal-footer button,
   .modal-footer a {
@@ -623,14 +458,14 @@ input[type='number'] {
   }
 }
 
-/* ─── Custom scrollbar (warm stone, matches surfaces) ─────────────────────── */
+/* ─── Custom scrollbar ────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: #f5f5f4; }
 ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
 * { scrollbar-width: thin; scrollbar-color: #d6d3d1 #f5f5f4; }
 
-/* ─── Safe-area helper classes (iOS notches / home indicator) ─────────────── */
+/* ─── Safe-area helpers ───────────────────────────────────────────────────── */
 @supports (padding: max(0px)) {
   .safe-t { padding-top: env(safe-area-inset-top, 0px); }
   .safe-b { padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -640,47 +475,20 @@ input[type='number'] {
   .safe-y { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
 
-/* ─── Card auto-grid: responsive min-width columns ──────────────────────────
-   Reusable pattern for stat-card grids. Instead of writing
-   grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 every time, use one of these. */
-.card-grid-sm {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.75rem;
-}
-.card-grid-md {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
-}
-.card-grid-lg {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.25rem;
-}
+/* ─── Responsive card grids ───────────────────────────────────────────────── */
+.card-grid-sm { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; }
+.card-grid-md { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.card-grid-lg { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
 
-/* ─── Mobile: table → stacked cards (≤ 640 px) ────────────────────────────
-   Add class "table-card-mobile" to a <table> element (not its wrapper).
-   Every <th> is visually hidden; each <td> becomes a labelled row using
-   the data-label attribute you set on each cell. */
+/* ─── Mobile table → stacked cards ───────────────────────────────────────── */
 @media (max-width: 639px) {
   .table-card-mobile thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;
   }
-
   .table-card-mobile tbody,
   .table-card-mobile tr,
-  .table-card-mobile td {
-    display: block;
-  }
-
+  .table-card-mobile td { display: block; }
   .table-card-mobile tr {
     padding: 0.75rem;
     margin-bottom: 0.5rem;
@@ -689,7 +497,6 @@ input[type='number'] {
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   }
-
   .table-card-mobile td {
     padding: 0.25rem 0;
     border: none;
@@ -699,7 +506,6 @@ input[type='number'] {
     gap: 0.5rem;
     font-size: 0.8125rem;
   }
-
   .table-card-mobile td::before {
     content: attr(data-label);
     font-size: 0.6875rem;
@@ -709,11 +515,7 @@ input[type='number'] {
     color: #71717a;
     flex-shrink: 0;
   }
-
-  .table-card-mobile td:last-child {
-    padding-bottom: 0.125rem;
-  }
-
+  .table-card-mobile td:last-child { padding-bottom: 0.125rem; }
   .table-card-mobile td:has(> button),
   .table-card-mobile td.actions-cell {
     justify-content: flex-end;
@@ -721,28 +523,16 @@ input[type='number'] {
     margin-top: 0.375rem;
     padding-top: 0.5rem;
   }
-
   .table-card-mobile td:has(> button)::before,
-  .table-card-mobile td.actions-cell::before {
-    display: none;
-  }
+  .table-card-mobile td.actions-cell::before { display: none; }
 }
 
-/* ─── Horizontal scroll hint ────────────────────────────────────────────────
-   Add class "scroll-hint" to a wrapper <div> around an overflowing table.
-   Shows a subtle gradient fade on the right edge. */
-.scroll-hint {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  position: relative;
-}
-
+/* ─── Horizontal scroll hint ─────────────────────────────────────────────── */
+.scroll-hint { overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; }
 .scroll-hint::after {
   content: '';
   position: sticky;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  right: 0; top: 0; bottom: 0;
   width: 32px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85));
   pointer-events: none;
@@ -750,12 +540,9 @@ input[type='number'] {
   display: block;
 }
 
-/* ─── Print styles ────────────────────────────────────────────────────────── */
+/* ─── Print ───────────────────────────────────────────────────────────────── */
 @media print {
-  body {
-    background: white !important;
-    color: black !important;
-  }
+  body { background: white !important; color: black !important; }
   nav, aside, .no-print { display: none !important; }
   main { margin-left: 0 !important; padding: 0 !important; }
   table { break-inside: auto; }
@@ -765,112 +552,73 @@ input[type='number'] {
   .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl { box-shadow: none !important; }
 }
 
-/* ─── Prevent iOS rubber-band / body scroll when a modal is open ─────────── */
+@page { margin: 0.75in; }
+
+/* ─── iOS modal scroll lock ───────────────────────────────────────────────── */
 .body-scroll-lock {
   overflow: hidden !important;
   position: fixed;
   width: 100%;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
 }
 
-@page {
-  margin: 0.75in;
-}
-
-/* ─── Motion primitives ──────────────────────────────────────────────────────
-   World-class apps animate state changes — modals fade+scale in, toasts
-   slide up, skeletons shimmer, backdrops dissolve. Kept small and respectful
-   of reduced-motion preferences. */
-
+/* ─── Motion: animations ──────────────────────────────────────────────────── */
 @keyframes app-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-
 @keyframes app-modal-in {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-
 @keyframes app-modal-in-mobile {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes app-toast-in {
   from { opacity: 0; transform: translateY(8px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-
 @keyframes app-toast-in-mobile {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes app-shimmer {
   0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
 }
 
-.app-fade-in {
-  animation: app-fade-in 200ms ease-out;
-}
-
-.app-modal-overlay-enter {
-  animation: app-fade-in 180ms ease-out;
-}
-
-.app-modal-content-enter {
-  animation: app-modal-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
+.app-fade-in           { animation: app-fade-in 200ms ease-out; }
+.app-modal-overlay-enter { animation: app-fade-in 180ms ease-out; }
+.app-modal-content-enter { animation: app-modal-in 240ms cubic-bezier(0.16, 1, 0.3, 1); }
 .app-toast-enter {
   animation: app-toast-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: bottom right;
 }
 
 @media (max-width: 640px) {
-  .app-modal-content-enter {
-    animation-name: app-modal-in-mobile;
-    animation-duration: 280ms;
-  }
-  .app-toast-enter {
-    animation-name: app-toast-in-mobile;
-    transform-origin: center bottom;
-  }
+  .app-modal-content-enter { animation-name: app-modal-in-mobile; animation-duration: 280ms; }
+  .app-toast-enter { animation-name: app-toast-in-mobile; transform-origin: center bottom; }
 }
 
-/* Shimmer skeleton — replaces flat opacity pulse with a moving gradient
-   for a more premium loading texture. */
 .app-shimmer {
   background-color: #f1f0ef;
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.7) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background-image: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%);
   background-size: 200% 100%;
   background-repeat: no-repeat;
   animation: app-shimmer 1.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-
-  .app-fade-in,
-  .app-modal-overlay-enter,
-  .app-modal-content-enter,
-  .app-toast-enter,
-  .app-shimmer {
-    animation: none;
-  }
+  .app-fade-in, .app-modal-overlay-enter, .app-modal-content-enter,
+  .app-toast-enter, .app-shimmer { animation: none; }
 }
