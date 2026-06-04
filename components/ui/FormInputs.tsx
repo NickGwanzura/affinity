@@ -12,7 +12,7 @@ const errorCls = 'mt-1 flex items-start gap-1 text-xs text-red-600 leading-snug'
 const baseInput =
   'block w-full bg-white text-zinc-900 text-base placeholder:text-zinc-400 ' +
   'border border-stone-200 rounded-lg ' +
-  'px-3.5 py-2.5 min-h-[44px] appearance-none ' +
+  'px-3.5 py-2 min-h-[40px] appearance-none ' +
   'transition-[border-color,box-shadow] duration-150 ease-out ' +
   'hover:border-stone-300 ' +
   'focus:outline-none focus-visible:outline-none focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500/30 ' +

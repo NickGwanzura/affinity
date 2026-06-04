@@ -400,8 +400,8 @@ export const UpdateCenter: React.FC = () => {
         <form id="template-form" onSubmit={handleSaveTemplate} className="space-y-4">
           {/* Template Info */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Template Info</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Template Info</h3>
               <div className="space-y-3">
               <TextInput
                 id="template-name"
@@ -427,8 +427,8 @@ export const UpdateCenter: React.FC = () => {
 
           {/* Content */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Content</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Content</h3>
               <div className="space-y-3">
               <TextInput
                 id="template-subject"
@@ -473,8 +473,8 @@ export const UpdateCenter: React.FC = () => {
         <form id="send-email-form" onSubmit={handleSendEmail} className="space-y-4">
           {/* Quick Select */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Quick Select</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Quick Select</h3>
               <div className="space-y-3">
               <Select
                 id="send-template"
@@ -508,8 +508,8 @@ export const UpdateCenter: React.FC = () => {
 
           {/* Recipient */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Recipient</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Recipient</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <TextInput
                 id="send-email"
@@ -533,8 +533,8 @@ export const UpdateCenter: React.FC = () => {
 
           {/* Message */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Message</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Message</h3>
               <div className="space-y-3">
               <TextInput
                 id="send-subject"

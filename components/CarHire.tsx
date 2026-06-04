@@ -596,7 +596,7 @@ const RecordHireModal: React.FC<{
     >
       <form id="hire-form" onSubmit={handleSubmit} className="space-y-3">
         {/* Customer Information */}
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Customer Information</p>
           <div className="space-y-3">
             <TextInput id="h-name" labelText="Full Name *" value={hirerName} onChange={e => setHirerName(e.target.value)} required placeholder="Full name" />
@@ -608,7 +608,7 @@ const RecordHireModal: React.FC<{
         </div>
 
         {/* Rental Information */}
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Rental Information</p>
           <div className="space-y-3">
             <Select id="h-vehicle" labelText="Vehicle *" value={vehicleId} onChange={e => setVehicleId(e.target.value)} required>
@@ -625,7 +625,7 @@ const RecordHireModal: React.FC<{
         </div>
 
         {/* Payment */}
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Payment</p>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -691,7 +691,7 @@ const RecordHireModal: React.FC<{
         )}
 
         {/* Status & Notes */}
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Status &amp; Notes</p>
           <div className="space-y-3">
             <Select id="h-status" labelText="Booking Status" value={status} onChange={e => setStatus(e.target.value)}>
@@ -748,7 +748,7 @@ const AddExpenseModal: React.FC<{
       }
     >
       <form id="expense-form-hire" onSubmit={handleSubmit} className="space-y-3">
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Expense Details</p>
           <div className="space-y-3">
             <Select id="exp-vehicle" labelText="Vehicle *" value={vehicleId} onChange={e => setVehicleId(e.target.value)} required>
@@ -832,7 +832,7 @@ const ManageVehiclesModal: React.FC<{
     >
       <div className="space-y-4">
         {addMode && (
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">New Vehicle</p>
             <form onSubmit={handleAdd} className="space-y-3">
               <TextInput id="mv-name" labelText="Make &amp; Model *" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Nissan Note" required />
@@ -856,7 +856,7 @@ const ManageVehiclesModal: React.FC<{
         )}
 
         {/* Vehicle List */}
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Vehicles ({vehicles.length})</p>
           {vehicles.length === 0 ? (
             <p className="py-6 text-center text-sm text-zinc-400">No vehicles yet. Add one above.</p>
@@ -927,7 +927,7 @@ const EditBookingModal: React.FC<{
       }
     >
       <form id="edit-booking-form" onSubmit={handleSubmit} className="space-y-3">
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Booking Details</p>
           <div className="space-y-3">
             <Select id="eb-status" labelText="Status" value={status} onChange={e => setStatus(e.target.value as any)}>

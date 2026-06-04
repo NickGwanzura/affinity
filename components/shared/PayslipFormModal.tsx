@@ -109,12 +109,12 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
         </div>
       }
     >
-      <form id="payslip-form" onSubmit={onSubmit} className="space-y-8">
-        <section className="space-y-4">
+      <form id="payslip-form" onSubmit={onSubmit} className="space-y-3">
+        <section className="space-y-3">
           <h4 className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
             Pay period
           </h4>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
             <div className="md:col-span-3">
               <Select
                 id="payslip-employee"
@@ -166,7 +166,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
           </div>
         </section>
 
-        <section className="space-y-5 rounded-md border border-stone-200 bg-stone-50/60 p-5">
+        <section className="space-y-3 rounded-md border border-stone-200 bg-stone-50/60 p-3">
           <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-800">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             Earnings
@@ -224,7 +224,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
           </div>
         </section>
 
-        <section className="space-y-5 rounded-md border border-stone-200 bg-stone-50/60 p-5">
+        <section className="space-y-3 rounded-md border border-stone-200 bg-stone-50/60 p-3">
           <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-red-700">
             <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
             Deductions
@@ -265,7 +265,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
           </div>
         </section>
 
-        <section className="rounded-lg border border-stone-200 bg-white p-5">
+        <section className="rounded-lg border border-stone-200 bg-white p-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">
@@ -294,7 +294,7 @@ export const PayslipFormModal: React.FC<PayslipFormModalProps> = ({
           </div>
         </section>
 
-        <section className="space-y-4">
+        <section className="space-y-3">
           <h4 className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
             Payment
           </h4>

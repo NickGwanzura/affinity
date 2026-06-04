@@ -339,8 +339,8 @@ const LodgerFormModal: React.FC<{
       <form id="lodger-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Personal Details */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Personal Details</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Personal Details</h3>
             <div className="space-y-3">
             <TextInput id="lodger-name" labelText="Full Name *" value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="Full name" />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -352,8 +352,8 @@ const LodgerFormModal: React.FC<{
 
         {/* Accommodation Details */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Accommodation Details</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Accommodation Details</h3>
             <div className="space-y-3">
             <TextInput id="lodger-room" labelText="Room Number *" value={room} onChange={e => setRoom(e.target.value)} required placeholder="e.g. 12A" />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -372,8 +372,8 @@ const LodgerFormModal: React.FC<{
 
         {/* Financial Details */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Financial Details</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Financial Details</h3>
             <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <TextInput id="lodger-deposit" type="number" step="0.01" min="0" labelText="Deposit Amount" value={deposit} onChange={e => setDeposit(e.target.value)} />
@@ -384,8 +384,8 @@ const LodgerFormModal: React.FC<{
 
         {/* Notes */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Notes</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Notes</h3>
             <TextArea id="lodger-notes" labelText="Notes" rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional notes" />
           </div>
         </section>
@@ -443,8 +443,8 @@ const PaymentModal: React.FC<{
     >
       <form id="payment-form" onSubmit={handleSubmit} className="space-y-4">
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Payment Details</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Payment Details</h3>
             <div className="space-y-3">
             <Select id="pay-lodger" labelText="Lodger *" value={lodgerId} onChange={e => setLodgerId(e.target.value)} required>
               <SelectItem value="" text="Select lodger" />

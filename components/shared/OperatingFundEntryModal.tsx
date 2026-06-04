@@ -100,7 +100,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           {typeSelectorVariant === 'cards' ? (
             <div>
               <label className="text-sm font-semibold text-zinc-700 mb-2 block">Transaction Type *</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   aria-pressed={form.type === 'Received'}
@@ -132,7 +132,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
                 id="opfund-type"
                 labelText="Type *"
@@ -156,7 +156,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'cards' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <NumberInput
                 id="opfund-amount-cards"
                 labelText="Amount *"
@@ -181,7 +181,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'select' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <NumberInput
                 id="opfund-amount"
                 labelText="Amount *"
@@ -229,7 +229,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'cards' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <TextInput
                 id="opfund-reference-cards"
                 labelText="Reference"
@@ -260,7 +260,7 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
           )}
 
           {typeSelectorVariant === 'select' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <TextInput
                 id="opfund-reference"
                 labelText="Reference"

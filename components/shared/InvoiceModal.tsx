@@ -257,8 +257,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Client Section */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
               Client Information
             </h3>
 
@@ -309,8 +309,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Invoice Details */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
               Invoice Details
             </h3>
 
@@ -399,8 +399,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Line Items */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <div className="flex justify-between items-center mb-4">
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <div className="flex justify-between items-center mb-2">
             <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
               Line Items
             </h3>
@@ -520,8 +520,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Notes & Terms */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
               Notes &amp; Terms
             </h3>
 

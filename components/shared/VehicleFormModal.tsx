@@ -107,8 +107,8 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
     >
       <form id="vehicle-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
         {/* Basic Details */}
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Basic Details</h3>
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Basic Details</h3>
           <div className="space-y-3">
             <TextInput
               id="vehicle-model"
@@ -151,8 +151,8 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         </div>
 
         {/* Pricing */}
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Pricing</h3>
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Pricing</h3>
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
               <TextInput
@@ -185,8 +185,8 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         </div>
 
         {/* Classification */}
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Classification</h3>
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Classification</h3>
           <div className="space-y-3">
             {!hidePurpose && (
               <Select
@@ -210,8 +210,8 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         </div>
 
         {/* Documentation */}
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Documentation</h3>
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Documentation</h3>
           <TextInput
             id="vehicle-reg-book"
             type="url"

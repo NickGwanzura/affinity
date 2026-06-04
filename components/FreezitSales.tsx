@@ -384,8 +384,8 @@ const RecordSaleModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; onClos
     >
       <form id="fz-sale-form" onSubmit={handleSubmit} className="space-y-4">
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Sale Details</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Sale Details</h3>
             <div className="space-y-3">
             <Select id="fzs-item" labelText="Stock Item *" value={stockId} onChange={e => setStockId(e.target.value)} required>
               <SelectItem value="" text="Select item" />
@@ -450,8 +450,8 @@ const AddStockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: (
     >
       <form id="fz-stock-form" onSubmit={handleSubmit} className="space-y-4">
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Stock Details</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Stock Details</h3>
             <div className="space-y-3">
             <TextInput id="fzst-name" labelText="Product Name *" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Freezit Mango" />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -510,8 +510,8 @@ const RestockModal: React.FC<{ isOpen: boolean; onClose: () => void; onSaved: ()
     >
       <form id="fz-restock-form" onSubmit={handleSubmit} className="space-y-4">
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Restock Details</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Restock Details</h3>
             <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <TextInput id="fzr-qty" type="number" min="1" labelText="Qty Received *" value={qty} onChange={e => setQty(e.target.value)} required />
@@ -573,8 +573,8 @@ const RecordBreakageModal: React.FC<{ isOpen: boolean; stock: FreezitStock[]; on
     >
       <form id="fz-breakage-form" onSubmit={handleSubmit} className="space-y-4">
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Breakage Details</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Breakage Details</h3>
             <div className="space-y-3">
             <Select id="fzb-item" labelText="Stock Item *" value={stockId} onChange={e => setStockId(e.target.value)} required>
               <SelectItem value="" text="Select item" />

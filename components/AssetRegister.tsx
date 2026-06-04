@@ -640,8 +640,8 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
         <form id="asset-form" onSubmit={handleAssetSubmit} className="space-y-4">
           {/* Basic Details */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Basic Details</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Basic Details</h3>
               <div className="space-y-3">
               <TextInput
                 id="asset-name"
@@ -665,8 +665,8 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
           {/* Classification */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Classification</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Classification</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
                 id="asset-category"
@@ -731,8 +731,8 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
           {/* Valuation */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Valuation</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Valuation</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <TextInput
                 id="asset-purchase-date"
@@ -777,8 +777,8 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
         <form id="request-form" onSubmit={handleRequestSubmit} className="space-y-4">
           {/* Asset Selection */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Asset Selection</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Asset Selection</h3>
               <div className="space-y-3">
                 <Select
               id="request-asset"
@@ -798,8 +798,8 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
           {/* Requester Details */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Requester Details</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Requester Details</h3>
               <div className="space-y-3">
               <TextInput
                 id="request-requested-by"
@@ -832,8 +832,8 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
           {/* Schedule */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Schedule</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Schedule</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <TextInput
                 id="request-take-date"
@@ -855,8 +855,8 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
 
           {/* Notes */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Notes</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Notes</h3>
               <div className="space-y-3">
               <TextArea
                 id="request-purpose"

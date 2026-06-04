@@ -254,8 +254,8 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
 
         {/* Client Section */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
               Client Information
             </h3>
 
@@ -306,8 +306,8 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
 
         {/* Quote Details */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
               Quote Details
             </h3>
 
@@ -377,8 +377,8 @@ export const QuoteModal: React.FC<QuoteModalProps> = ({
 
         {/* Line Items */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <div className="flex justify-between items-center mb-4">
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <div className="flex justify-between items-center mb-2">
               <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">
                 Line Items
               </h3>

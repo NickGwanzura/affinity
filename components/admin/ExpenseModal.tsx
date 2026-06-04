@@ -160,8 +160,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
       <form id="expense-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Expense Details */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Expense Details</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Expense Details</h3>
             <div className="space-y-3">
             <Select
               id="expense-vehicle"
@@ -177,7 +177,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               ))}
             </Select>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <NumberInput
                 id="expense-amount"
                 labelText="Amount *"
@@ -204,7 +204,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
               </Select>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
                 id="expense-category"
                 labelText="Category"
@@ -243,8 +243,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = memo(({
 
         {/* Driver Info */}
         <section>
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Description & Notes</h3>
+          <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Description & Notes</h3>
             <div className="space-y-3">
             {/* Driver Disbursement */}
             {isDriverDisbursement && (

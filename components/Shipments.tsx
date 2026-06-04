@@ -281,8 +281,8 @@ export const Shipments: React.FC = () => {
         <form id="shipment-form" onSubmit={handleSubmit} className="space-y-4">
           {/* Client & Vehicle */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Client & Vehicle</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Client & Vehicle</h3>
               <div className="space-y-3">
               <Select
                 id="shipment-client"
@@ -314,8 +314,8 @@ export const Shipments: React.FC = () => {
 
           {/* Route */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Route</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Route</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <TextInput
                 id="shipment-origin"
@@ -339,8 +339,8 @@ export const Shipments: React.FC = () => {
 
           {/* Description */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Description</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Description</h3>
               <TextInput
               id="shipment-description"
               labelText="Shipment Description"
@@ -354,8 +354,8 @@ export const Shipments: React.FC = () => {
 
           {/* Status & Dates */}
           <section>
-            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Status & Dates</h3>
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Status & Dates</h3>
               <div className="space-y-3">
               <Select
                 id="shipment-status"

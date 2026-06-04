@@ -323,8 +323,8 @@ export const Documents: React.FC = () => {
 
             {/* Basic Info */}
             <section>
-              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Basic Info</h3>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Basic Info</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-zinc-500 uppercase tracking-[0.08em]">Category</label>
@@ -344,8 +344,8 @@ export const Documents: React.FC = () => {
 
             {/* Financial Details */}
             <section>
-              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Financial Details</h3>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Financial Details</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-zinc-500 uppercase tracking-[0.08em]">Amount</label>
@@ -370,8 +370,8 @@ export const Documents: React.FC = () => {
             {/* Receipt Image */}
             {selectedReceipt.receipt_url && (
               <section>
-                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Receipt Image</h3>
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Receipt Image</h3>
                   <div className="bg-zinc-50 p-4 rounded-xl border border-stone-100/70">
                   {modalImageError ? (
                     <div className="text-center text-zinc-400 py-8">
@@ -395,8 +395,8 @@ export const Documents: React.FC = () => {
 
             {/* Audit Trail */}
             <section>
-              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Audit Trail</h3>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">Audit Trail</h3>
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                   <p className="text-sm text-amber-800">Created: {new Date(selectedReceipt.created_at).toLocaleString()}</p>
                   <p className="text-sm text-amber-800 mt-1">Vehicle ID: {selectedReceipt.vehicle_id}</p>
