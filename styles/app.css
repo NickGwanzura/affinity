@@ -84,24 +84,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Form inputs: white surface, rounded-lg, 44px touch targets ──────────── */
-input:not([type='checkbox']):not([type='radio']):not([type='file']),
-textarea,
-select {
-  font-family: inherit;
-  font-size: 1rem;       /* 16px — prevents iOS auto-zoom */
-  min-height: 2.25rem;   /* 36px — compact, still meets 44px touch target via padding */
-  background: #ffffff;
-  color: #18181b;
-  border: 1px solid #d6d3d1;
-  border-radius: 8px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
-  transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease,
-    background-color 150ms ease;
+/* ─── Form inputs: baseline defaults in @layer base so Tailwind utilities
+   from @layer utilities can override them (specificity-safe architecture).
+   Hover/focus/disabled states stay outside the layer — their pseudo-class
+   compound specificity is intentionally high and should not be overridden. ── */
+@layer base {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  textarea,
+  select {
+    font-family: inherit;
+    font-size: 1rem;         /* 16px — prevents iOS auto-zoom */
+    min-height: 2.25rem;     /* 36px — compact; padding brings touch target to ~40px */
+    background: #ffffff;
+    color: #18181b;
+    border: 1px solid #e7e5e4;  /* stone-200 — matches Tailwind border-stone-200 */
+    border-radius: 8px;          /* = rounded-lg */
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease;
+  }
+
+  textarea {
+    min-height: 3rem;
+    resize: vertical;
+  }
 }
 
+/* Hover/focus/disabled — kept outside @layer so their specificity is
+   preserved and they reliably override both base and utility layers.   */
 input:not([type='checkbox']):not([type='radio']):not([type='file']):hover:not(:disabled):not(:focus),
 textarea:hover:not(:disabled):not(:focus),
 select:hover:not(:disabled):not(:focus) {
@@ -126,8 +138,8 @@ input:not([type='checkbox']):not([type='radio']):not([type='file']):disabled,
 textarea:disabled,
 select:disabled {
   color: #a1a1aa;
-  background: #f5f5f4;
-  border-color: #e7e5e4;
+  background: #fafaf9;     /* stone-50 — matches Tailwind disabled:bg-stone-50 */
+  border-color: #e7e5e4;   /* stone-200 */
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -148,40 +160,35 @@ select:-webkit-autofill {
   transition: background-color 5000s ease-in-out 0s;
 }
 
-textarea {
-  min-height: 3rem;
-  resize: vertical;
-}
-
-/* ─── Buttons: rounded, brand-amber focus ring ────────────────────────────── */
-/* Tailwind's preflight isn't imported in this project, so we explicitly
-   neutralise the user-agent button chrome (gray fill, beveled border,
-   OS-native rendering) here. Without these resets, any <button> that
-   doesn't itself set background/border falls back to native styling. */
-button {
-  font-family: inherit;
-  letter-spacing: 0;
-  font-weight: 500;
-  min-height: 2.75rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 6px;
-  background: transparent;
-  border: 0;
-  color: inherit;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-  transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease,
-    box-shadow 150ms ease,
-    opacity 150ms ease,
-    transform 150ms ease;
-  -webkit-tap-highlight-color: transparent;
+/* ─── Buttons: UA chrome reset in @layer base so Tailwind utilities win.
+   Pseudo-class states (focus-visible, disabled, active) stay outside the
+   layer — they compound specificity and must remain authoritative.       */
+@layer base {
+  button {
+    font-family: inherit;
+    letter-spacing: 0;
+    font-weight: 500;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 6px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      box-shadow 150ms ease,
+      opacity 150ms ease,
+      transform 150ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 button:focus-visible {

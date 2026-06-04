@@ -57,13 +57,10 @@ const variantClasses: Record<ButtonVariant, string> = {
     'hover:bg-amber-600 active:bg-amber-700',
 };
 
-// `min-h-0` neutralises the global `button { min-height: 2.5rem }` rule
-// in app.css so `sm` actually renders at 32px. Without this, every sm
-// button gets silently bumped to 40px tall.
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-9 min-h-0 px-3.5 text-sm leading-none',
-  md: 'h-12 min-h-0 px-5 text-sm leading-none',
-  lg: 'h-12 min-h-0 px-6 text-base leading-none',
+  sm: 'h-9 px-3.5 text-sm leading-none',
+  md: 'h-12 px-5 text-sm leading-none',
+  lg: 'h-12 px-6 text-base leading-none',
 };
 
 const baseButton = [
@@ -149,9 +146,9 @@ export const IconButton: React.FC<IconButtonProps> = ({
   ...props
 }) => {
   const sizeMap: Record<'sm' | 'md' | 'lg', string> = {
-    sm: 'h-9 w-9 min-h-0',
-    md: 'h-11 w-11 min-h-0',
-    lg: 'h-12 w-12 min-h-0',
+    sm: 'h-9 w-9',
+    md: 'h-11 w-11',
+    lg: 'h-12 w-12',
   };
   const iconSize = size === 'sm' ? 14 : size === 'lg' ? 18 : 16;
 
