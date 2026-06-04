@@ -66,6 +66,9 @@ const Lodgers = lazy(() =>
 const SalesPL = lazy(() =>
   import('./components/SalesPL').then(module => ({ default: module.SalesPL }))
 );
+const MyExpensesView = lazy(() =>
+  import('./components/MyExpensesView').then(module => ({ default: module.MyExpensesView }))
+);
 
 /**
  * Layout-preserving skeleton used while lazy views load.
@@ -310,6 +313,8 @@ export default function App() {
         return <ErrorBoundary view="lodgers"><Lodgers /></ErrorBoundary>;
       case 'sales-pl':
         return <ErrorBoundary view="sales-pl"><SalesPL /></ErrorBoundary>;
+      case 'my-expenses':
+        return <ErrorBoundary view="my-expenses"><MyExpensesView /></ErrorBoundary>;
       default:
         return <ErrorBoundary view="admin"><AdminDashboard /></ErrorBoundary>;
     }
