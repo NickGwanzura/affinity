@@ -207,7 +207,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
       id={id}
       rows={rows}
       aria-invalid={invalid || undefined}
-      className={`${baseInput} min-h-[4.5rem] resize-y leading-relaxed text-base ${invalid ? invalidCls : ''} ${className}`}
+      className={`${baseInput} min-h-[3rem] resize-y leading-relaxed text-base ${invalid ? invalidCls : ''} ${className}`}
       {...props}
     />
   </Field>

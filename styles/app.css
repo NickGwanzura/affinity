@@ -90,7 +90,7 @@ textarea,
 select {
   font-family: inherit;
   font-size: 1rem;       /* 16px — prevents iOS auto-zoom */
-  min-height: 2.75rem;   /* 44px — WCAG 2.5.5 touch target */
+  min-height: 2.25rem;   /* 36px — compact, still meets 44px touch target via padding */
   background: #ffffff;
   color: #18181b;
   border: 1px solid #d6d3d1;
@@ -149,7 +149,7 @@ select:-webkit-autofill {
 }
 
 textarea {
-  min-height: 4.5rem;
+  min-height: 3rem;
   resize: vertical;
 }
 
