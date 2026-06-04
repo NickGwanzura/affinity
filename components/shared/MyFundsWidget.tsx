@@ -62,7 +62,10 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
         ...(canDisburse ? [authFetch(`${API}?resource=sent`).then(r => r.json())] : []),
       ];
       const results = await Promise.allSettled(reqs);
-      if (results[0].status === 'fulfilled') setBalance(results[0].value);
+      if (results[0].status === 'fulfilled') {
+        const b = results[0].value;
+        setBalance({ received: Number(b.received), used: Number(b.used), balance: Number(b.balance) });
+      }
       if (results[1].status === 'fulfilled') setReceived(results[1].value);
       if (results[2].status === 'fulfilled') setUsage(results[2].value);
       if (canDisburse && results[3]?.status === 'fulfilled') setSent((results[3] as PromiseFulfilledResult<any>).value);
@@ -91,7 +94,7 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
 
   const fmt = (n: number, c = 'USD') => formatCurrency(n, c as any);
 
-  const totalLogged = usage.reduce((s, u) => s + u.amount, 0);
+  const totalLogged = usage.reduce((s, u) => s + Number(u.amount), 0);
 
   return (
     <div className="space-y-4">
