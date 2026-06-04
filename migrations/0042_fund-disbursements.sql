@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS fund_usage_logs (
   currency     TEXT NOT NULL DEFAULT 'USD' CHECK (currency IN ('USD','GBP','NAD','ZAR','BWP')),
   description  TEXT NOT NULL,
   category     TEXT NOT NULL DEFAULT 'General',
+  source       TEXT NOT NULL DEFAULT 'General',
   usage_date   DATE NOT NULL DEFAULT CURRENT_DATE,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

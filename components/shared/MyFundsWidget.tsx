@@ -27,6 +27,7 @@ interface UsageLog {
   currency: string;
   description: string;
   category: string;
+  source: string;
   usage_date: string;
 }
 
@@ -42,32 +43,31 @@ interface Props {
 
 export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
   const { showToast } = useToast();
-  const [balance, setBalance]     = useState<Balance | null>(null);
-  const [received, setReceived]   = useState<Disbursement[]>([]);
-  const [usage, setUsage]         = useState<UsageLog[]>([]);
-  const [sent, setSent]           = useState<Disbursement[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [usageOpen, setUsageOpen] = useState(false);
+  const [balance, setBalance]           = useState<Balance | null>(null);
+  const [received, setReceived]         = useState<Disbursement[]>([]);
+  const [usage, setUsage]               = useState<UsageLog[]>([]);
+  const [sent, setSent]                 = useState<Disbursement[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [expenseOpen, setExpenseOpen]   = useState(false);
   const [disburseOpen, setDisburseOpen] = useState(false);
-  const [tab, setTab]             = useState<'received' | 'usage' | 'sent'>('received');
+  const [tab, setTab]                   = useState<'expenses' | 'received' | 'sent'>('expenses');
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const reqs: Promise<Response>[] = [
-        authFetch(`${API}?resource=balance`),
-        authFetch(`${API}?resource=received`),
-        authFetch(`${API}?resource=usage`),
+      const reqs = [
+        authFetch(`${API}?resource=balance`).then(r => r.json()),
+        authFetch(`${API}?resource=received`).then(r => r.json()),
+        authFetch(`${API}?resource=usage`).then(r => r.json()),
+        ...(canDisburse ? [authFetch(`${API}?resource=sent`).then(r => r.json())] : []),
       ];
-      if (canDisburse) reqs.push(authFetch(`${API}?resource=sent`));
-
-      const results = await Promise.allSettled(reqs.map(r => r.then(x => x.json())));
+      const results = await Promise.allSettled(reqs);
       if (results[0].status === 'fulfilled') setBalance(results[0].value);
       if (results[1].status === 'fulfilled') setReceived(results[1].value);
       if (results[2].status === 'fulfilled') setUsage(results[2].value);
       if (canDisburse && results[3]?.status === 'fulfilled') setSent((results[3] as PromiseFulfilledResult<any>).value);
     } catch {
-      showToast('Failed to load fund data', 'error');
+      showToast('Failed to load data', 'error');
     } finally {
       setLoading(false);
     }
@@ -75,45 +75,55 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const deleteUsage = async (id: string) => {
+  const deleteExpense = async (id: string) => {
     try {
       await authFetch(`${API}?resource=usage&id=${id}`, { method: 'DELETE' });
-      showToast('Usage entry deleted', 'success');
+      showToast('Expense deleted', 'success');
       fetchAll();
     } catch { showToast('Failed to delete', 'error'); }
   };
 
   const tabs = [
-    { id: 'received' as const, label: 'Received' },
-    { id: 'usage' as const, label: 'My Usage' },
-    ...(canDisburse ? [{ id: 'sent' as const, label: 'Sent' }] : []),
+    { id: 'expenses' as const, label: 'My Expenses' },
+    { id: 'received' as const, label: 'Received Funds' },
+    ...(canDisburse ? [{ id: 'sent' as const, label: 'Disbursed' }] : []),
   ];
 
   const fmt = (n: number, c = 'USD') => formatCurrency(n, c as any);
 
+  const totalLogged = usage.reduce((s, u) => s + u.amount, 0);
+
   return (
     <div className="space-y-4">
-      {/* Balance strip */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: 'Received', value: balance?.received ?? 0, color: 'text-emerald-600' },
-          { label: 'Used',     value: balance?.used ?? 0,     color: 'text-orange-600' },
-          { label: 'Balance',  value: balance?.balance ?? 0,  color: (balance?.balance ?? 0) >= 0 ? 'text-zinc-900' : 'text-red-600' },
-        ].map(kpi => (
-          <div key={kpi.label} className="rounded-xl border border-stone-200 bg-white p-3 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-400">{kpi.label}</p>
-            <p className={`mt-1 text-lg font-bold tabular-nums ${kpi.color}`}>
-              {loading ? '—' : `$${kpi.value.toFixed(2)}`}
+      {/* Summary strip — shows disbursed balance if any received, otherwise just total logged */}
+      <div className="grid gap-3" style={{ gridTemplateColumns: (balance?.received ?? 0) > 0 ? 'repeat(3,1fr)' : 'repeat(2,1fr)' }}>
+        <div className="rounded-xl border border-stone-200 bg-white p-3 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Total Logged</p>
+          <p className="mt-1 text-lg font-bold tabular-nums text-orange-600">
+            {loading ? '—' : `$${totalLogged.toFixed(2)}`}
+          </p>
+        </div>
+        <div className="rounded-xl border border-stone-200 bg-white p-3 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Entries</p>
+          <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900">
+            {loading ? '—' : usage.length}
+          </p>
+        </div>
+        {(balance?.received ?? 0) > 0 && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-600">Disbursed Balance</p>
+            <p className={`mt-1 text-lg font-bold tabular-nums ${(balance?.balance ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+              {loading ? '—' : `$${(balance?.balance ?? 0).toFixed(2)}`}
             </p>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Action buttons */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex gap-2">
-          <Button size="sm" variant="primary" leftIcon={<Plus size={14} />} onClick={() => setUsageOpen(true)}>
-            Log Usage
+          <Button size="sm" variant="primary" leftIcon={<Plus size={14} />} onClick={() => setExpenseOpen(true)}>
+            Log Expense
           </Button>
           {canDisburse && (
             <Button size="sm" variant="secondary" leftIcon={<Wallet size={14} />} onClick={() => setDisburseOpen(true)}>
@@ -121,10 +131,7 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
             </Button>
           )}
         </div>
-        <button
-          onClick={fetchAll}
-          className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-        >
+        <button onClick={fetchAll} className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors">
           <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
           Refresh
         </button>
@@ -149,12 +156,44 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
         </div>
 
         <div className="divide-y divide-stone-100">
-          {/* Received tab */}
+          {/* My Expenses tab — always first, no disbursement required */}
+          {tab === 'expenses' && (
+            loading
+              ? <p className="py-8 text-center text-sm text-zinc-400">Loading…</p>
+              : usage.length === 0
+              ? (
+                <div className="py-10 text-center">
+                  <p className="text-sm text-zinc-400">No expenses logged yet.</p>
+                  <p className="mt-1 text-xs text-zinc-300">Use "Log Expense" above to record any spend.</p>
+                </div>
+              )
+              : usage.map(u => (
+                  <div key={u.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-zinc-900">{fmt(u.amount, u.currency)}</p>
+                        <Tag type="warm-gray">{u.category}</Tag>
+                        <Tag type="blue">{u.source}</Tag>
+                      </div>
+                      <p className="mt-0.5 text-xs text-zinc-500 truncate">{u.description}</p>
+                      <p className="mt-0.5 text-[11px] text-zinc-400">{u.usage_date}</p>
+                    </div>
+                    <button
+                      onClick={() => deleteExpense(u.id)}
+                      className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))
+          )}
+
+          {/* Received Funds tab */}
           {tab === 'received' && (
             loading
               ? <p className="py-8 text-center text-sm text-zinc-400">Loading…</p>
               : received.length === 0
-              ? <p className="py-8 text-center text-sm text-zinc-400">No disbursements received yet.</p>
+              ? <p className="py-8 text-center text-sm text-zinc-400">No funds disbursed to you yet.</p>
               : received.map(d => (
                   <div key={d.id} className="flex items-start justify-between gap-3 px-4 py-3">
                     <div className="min-w-0">
@@ -172,35 +211,7 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
                 ))
           )}
 
-          {/* Usage tab */}
-          {tab === 'usage' && (
-            loading
-              ? <p className="py-8 text-center text-sm text-zinc-400">Loading…</p>
-              : usage.length === 0
-              ? <p className="py-8 text-center text-sm text-zinc-400">No usage logged yet.</p>
-              : usage.map(u => (
-                  <div key={u.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-zinc-900">{fmt(u.amount, u.currency)}</p>
-                      <p className="mt-0.5 text-xs text-zinc-500 truncate">{u.description}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="text-right">
-                        <Tag type="warm-gray">{u.category}</Tag>
-                        <p className="mt-0.5 text-[11px] text-zinc-400">{u.usage_date}</p>
-                      </div>
-                      <button
-                        onClick={() => deleteUsage(u.id)}
-                        className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                ))
-          )}
-
-          {/* Sent tab (disbursers only) */}
+          {/* Disbursed tab (disbursers only) */}
           {tab === 'sent' && canDisburse && (
             loading
               ? <p className="py-8 text-center text-sm text-zinc-400">Loading…</p>
@@ -226,11 +237,9 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
       </div>
 
       <FundUsageModal
-        isOpen={usageOpen}
-        onClose={() => setUsageOpen(false)}
+        isOpen={expenseOpen}
+        onClose={() => setExpenseOpen(false)}
         onSaved={fetchAll}
-        availableBalance={balance?.balance}
-        currency="USD"
       />
       {canDisburse && (
         <FundDisbursementModal

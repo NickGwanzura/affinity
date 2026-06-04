@@ -48,6 +48,7 @@ const UsageSchema = z.object({
   currency:    z.enum(['USD', 'GBP', 'NAD', 'ZAR', 'BWP']).default('USD'),
   description: z.string().min(1).max(500),
   category:    z.string().max(100).default('General'),
+  source:      z.string().max(100).default('General'),
   usage_date:  z.string().optional(),
 });
 
@@ -222,8 +223,8 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         const date = d.usage_date || new Date().toISOString().slice(0, 10);
 
         const [row] = await sql`
-          INSERT INTO fund_usage_logs (user_id, amount, currency, description, category, usage_date)
-          VALUES (${userId}::uuid, ${d.amount}, ${d.currency}, ${d.description}, ${d.category}, ${date})
+          INSERT INTO fund_usage_logs (user_id, amount, currency, description, category, source, usage_date)
+          VALUES (${userId}::uuid, ${d.amount}, ${d.currency}, ${d.description}, ${d.category}, ${d.source}, ${date})
           RETURNING *
         `;
 
