@@ -40,6 +40,8 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -70,7 +72,7 @@ export const Modal: React.FC<ModalProps> = ({
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab') return;
@@ -125,7 +127,7 @@ export const Modal: React.FC<ModalProps> = ({
       window.scrollTo(0, scrollY);
       previouslyFocused?.focus?.();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
