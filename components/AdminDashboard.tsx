@@ -72,6 +72,7 @@ import { buildDriverFundsReportData } from '../utils/driverFunds';
 import { toVehicleEditorRecord, type VehicleEditorRecord } from '../utils/dashboardViewModels';
 import { tripPlannerFormSchema, getFirstValidationMessage } from '../utils/clientValidation';
 import { ZodError } from 'zod';
+import { MyFundsWidget } from './shared/MyFundsWidget';
 
 export type AdminDashboardView =
   | 'dashboard'
@@ -1147,13 +1148,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
         )}
 
         {activeView === 'funds' && (
-          <AdminFundsView
-            fundsBalance={fundsBalance}
-            operatingFunds={operatingFunds}
-            driverFundsReport={driverFundsReport}
-            onDeleteOperatingFund={handleDeleteOperatingFund}
-            onExportDriverFundsReport={handleExportDriverFundsReport}
-          />
+          <>
+            <AdminFundsView
+              fundsBalance={fundsBalance}
+              operatingFunds={operatingFunds}
+              driverFundsReport={driverFundsReport}
+              onDeleteOperatingFund={handleDeleteOperatingFund}
+              onExportDriverFundsReport={handleExportDriverFundsReport}
+            />
+            {/* Manager / Admin: personal fund disbursement widget */}
+            <div className="mt-6">
+              <h3 className="mb-3 text-sm font-semibold text-zinc-900">My Disbursed Funds</h3>
+              <MyFundsWidget canDisburse={userRole === 'Admin' || userRole === 'Manager'} />
+            </div>
+          </>
         )}
 
         {activeView === 'trips' && (

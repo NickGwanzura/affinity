@@ -21,6 +21,7 @@ import { dataService } from '../services/dataService';
 import { useSession } from '../contexts/SessionContext';
 import { EXCHANGE_RATES } from '../constants';
 import { Plus, FileText, DollarSign, Wallet, LineChart, Clock, Receipt } from 'lucide-react';
+import { MyFundsWidget } from './shared/MyFundsWidget';
 import {
   Button,
   StatCard,
@@ -928,6 +929,10 @@ export const AccountantDashboard: React.FC = () => {
             <AssetRegister userRole={userRole} />
           )}
         </div>
+      </DashboardSection>
+
+      <DashboardSection title="My Funds" subtitle="Cash disbursed to you. Log usage here — visible in the audit trail.">
+        <MyFundsWidget canDisburse={false} />
       </DashboardSection>
 
       <OperatingFundEntryModal

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowDownLeft, ArrowUpRight, RefreshCw, TrendingUp, BarChart2, List } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, RefreshCw, TrendingUp, BarChart2, List, Wallet } from 'lucide-react';
 import { Modal, Button, TextInput, Select, SelectItem, TextArea } from './ui';
 import { formatCurrency } from '../utils/formatters';
 import { useToast } from './Toast';
 import { useSession } from '../contexts/SessionContext';
+import { MyFundsWidget } from './shared/MyFundsWidget';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -42,7 +43,7 @@ interface SaleFeedItem {
   notes?: string;
 }
 
-type Tab = 'overview' | 'history' | 'sales';
+type Tab = 'overview' | 'history' | 'sales' | 'funds';
 
 const API = '/api/director';
 const fmt = (n: number, currency = 'USD') => formatCurrency(n, currency as any);
@@ -102,6 +103,7 @@ export const DirectorsDashboard: React.FC = () => {
     { id: 'overview' as Tab, label: 'Overview',     Icon: TrendingUp },
     { id: 'history'  as Tab, label: 'History',      Icon: List       },
     { id: 'sales'    as Tab, label: 'Sales Report',  Icon: BarChart2  },
+    { id: 'funds'    as Tab, label: 'Disburse Funds', Icon: Wallet    },
   ];
 
   return (
@@ -194,6 +196,12 @@ export const DirectorsDashboard: React.FC = () => {
           {tab === 'overview' && <OverviewTab stats={stats} txs={txs} />}
           {tab === 'history'  && <HistoryTab txs={txs} onEdit={setEditingTx} onDelete={handleDelete} />}
           {tab === 'sales'    && <SalesTab sales={sales} stats={stats} />}
+          {tab === 'funds'    && (
+            <div>
+              <p className="mb-4 text-sm text-zinc-500">Disburse funds directly to staff. They will see the amount on their dashboard and log how it was spent.</p>
+              <MyFundsWidget canDisburse={true} />
+            </div>
+          )}
         </>
       )}
 

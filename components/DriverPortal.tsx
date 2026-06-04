@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Route, CheckCircle2, Wallet } from 'lucide-react';
+import { MyFundsWidget } from './shared/MyFundsWidget';
 import { Currency, Expense, ExpenseCategory, OperatingFund, Trip, Vehicle, VehicleStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
 import { dataService } from '../services/dataService';
@@ -917,6 +918,13 @@ export const DriverPortal: React.FC = () => {
                 </div>
               )}
             </div>
+          </DashboardSection>
+
+          <DashboardSection
+            title="My Funds"
+            subtitle="Cash disbursed to you by management. Log every expense here — it feeds the audit trail."
+          >
+            <MyFundsWidget canDisburse={false} />
           </DashboardSection>
 
           <DashboardSection
