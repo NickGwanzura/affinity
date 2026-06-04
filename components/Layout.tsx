@@ -92,7 +92,7 @@ const navItems: {
   { id: 'documents',      label: 'Documents',        roles: ['Admin', 'Manager', 'Driver'],          Icon: FileText   },
   { id: 'employees',      label: 'Employees',        roles: ['Admin', 'Manager'],                    Icon: Briefcase  },
   { id: 'payslips',       label: 'Payslips',         roles: ['Admin', 'Manager'],                    Icon: Banknote   },
-  { id: 'funds',          label: 'Operating Funds',  roles: ['Admin', 'Accountant'],                 Icon: Wallet     },
+  { id: 'funds',          label: 'Operating Funds',  roles: ['Admin', 'Accountant', 'Manager'],      Icon: Wallet     },
   { id: 'assets',         label: 'Asset Register',   roles: ['Admin', 'Manager'],                    Icon: Boxes      },
   { id: 'ceo',            label: 'CEO Dashboard',    roles: ['Admin', 'CEO'],                        Icon: LineChart  },
   { id: 'updates',        label: 'Updates',          roles: ['Admin'],                               Icon: Mail       },
