@@ -51,6 +51,9 @@ const CEODashboard = lazy(() =>
 const SalesHub = lazy(() =>
   import('./components/SalesHub').then(module => ({ default: module.SalesHub }))
 );
+const Rentals = lazy(() =>
+  import('./components/Rentals').then(module => ({ default: module.Rentals }))
+);
 const MyExpensesView = lazy(() =>
   import('./components/MyExpensesView').then(module => ({ default: module.MyExpensesView }))
 );
@@ -287,6 +290,8 @@ export default function App() {
         return <ErrorBoundary view="director"><DirectorsDashboard /></ErrorBoundary>;
       case 'sales':
         return <ErrorBoundary view="sales"><SalesHub /></ErrorBoundary>;
+      case 'rentals':
+        return <ErrorBoundary view="rentals"><Rentals /></ErrorBoundary>;
       case 'ceo':
         return <ErrorBoundary view="ceo"><CEODashboard /></ErrorBoundary>;
       case 'my-expenses':
