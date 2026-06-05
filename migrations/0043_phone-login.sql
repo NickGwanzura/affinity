@@ -15,7 +15,7 @@ VALUES (
   'Mazvita Soko',
   'mazvita.soko@affinity.internal',
   '078478447',
-  'Staff',
+  'Driver',
   'user',
   'Active',
   '$2b$12$anQ2ZCBqDzodIQvJZRPTZe5q8sJVUUD0lsSfLzdW70l4NpeahFRY6',
