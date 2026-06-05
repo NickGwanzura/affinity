@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, RefreshCw, BarChart3 } from 'lucide-react';
+import { RefreshCw, BarChart3 } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import { useToast } from './Toast';
+import { api } from '../services/apiClient';
 
-const API = '/api/ceo';
 const fmt = (n: number) => formatCurrency(n, 'USD');
 
 interface CeoData {
@@ -57,9 +57,8 @@ export const CEODashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}?resource=dashboard`);
-      if (!res.ok) throw new Error('Failed to load');
-      setData(await res.json());
+      const data = await api.request<CeoData>('/ceo?resource=dashboard');
+      setData(data);
     } catch {
       showToast('Failed to load CEO dashboard data', 'error');
     } finally {
