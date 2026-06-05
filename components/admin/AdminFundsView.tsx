@@ -3,6 +3,7 @@ import type { OperatingFund } from '../../types';
 import type { DriverFundsReportData } from '../../utils/driverFunds';
 import { Button, DriverFundsSnapshotPanel, DriverFundsSummaryPanel } from '../ui';
 import { formatDate } from '../../utils/formatters';
+import { CashHandoverPanel } from '../shared/CashHandoverPanel';
 
 interface AdminFundsViewProps {
   fundsBalance: { received: number; disbursed: number; balance: number };
@@ -192,6 +193,9 @@ export const AdminFundsView: React.FC<AdminFundsViewProps> = ({
           </tbody>
         </table>
       </div>
+    </div>
+    <div className="rounded-xl border border-stone-200 bg-white p-5">
+      <CashHandoverPanel mode="receive" />
     </div>
   </div>
 );

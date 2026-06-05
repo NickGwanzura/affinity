@@ -1,5 +1,6 @@
 import { authFetch } from '../services/authFetch';
 import React, { useState, useEffect, useCallback } from 'react';
+import { CashHandoverPanel } from './shared/CashHandoverPanel';
 import {
   RefreshCw, Plus, Car, TrendingUp, DollarSign, Calendar,
   AlertTriangle, CheckCircle, Clock, Wrench,
@@ -77,7 +78,7 @@ interface MonthlyRow {
   hires: number;
 }
 
-type Tab = 'overview' | 'bookings' | 'expenses' | 'vehicles';
+type Tab = 'overview' | 'bookings' | 'expenses' | 'vehicles' | 'handover';
 
 const API = '/api/car-hire';
 const fmt = (n: number, currency = 'USD') => formatCurrency(n, currency as any);
@@ -159,6 +160,7 @@ export const CarHire: React.FC = () => {
     { id: 'bookings',  label: 'Bookings'  },
     { id: 'expenses',  label: 'Expenses'  },
     { id: 'vehicles',  label: 'Vehicles'  },
+    { id: 'handover',  label: 'Cash Handover' },
   ];
 
   return (
@@ -238,6 +240,11 @@ export const CarHire: React.FC = () => {
           {tab === 'bookings'  && <BookingsTab bookings={bookings} onEdit={setEditingBooking} onDelete={handleDeleteBooking} />}
           {tab === 'expenses'  && <ExpensesTab expenses={expenses} onDelete={handleDeleteExpense} />}
           {tab === 'vehicles'  && <VehiclesTab vehicles={vehicles} />}
+          {tab === 'handover'  && (
+            <div className="rounded-xl border border-stone-200 bg-white p-4">
+              <CashHandoverPanel mode="collect" />
+            </div>
+          )}
         </>
       )}
 
