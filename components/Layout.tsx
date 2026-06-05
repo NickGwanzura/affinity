@@ -67,7 +67,7 @@ const navItems: {
 }[] = [
   { id: 'admin',          label: 'Dashboard',        roles: ['Admin', 'Manager'],                    Icon: BarChart3  },
   { id: 'director',       label: 'Director',         roles: ['Admin', 'Director'],                   Icon: ShieldCheck },
-  { id: 'sales',          label: 'Sales',            roles: ['Admin', 'Sales'],                       Icon: TrendingUp  },
+  { id: 'sales',          label: 'Sales',            roles: ['Admin', 'Sales', 'Car Hire'],           Icon: TrendingUp  },
   { id: 'accountant',     label: 'Accountant',       roles: ['Admin', 'Accountant'],                 Icon: Calculator },
   { id: 'financials',     label: 'Financials',       roles: ['Admin', 'Manager', 'Accountant'],      Icon: DollarSign },
   { id: 'reports',        label: 'Reports',          roles: ['Admin', 'Manager', 'Accountant'],      Icon: LineChart  },

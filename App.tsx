@@ -137,7 +137,7 @@ export default function App() {
     if (role === 'Driver') return 'driver' as const;
     if (role === 'Accountant') return 'accountant' as const;
     if (role === 'Sales') return 'sales' as const;
-    if (role === 'Car Hire') return 'trips' as const;
+    if (role === 'Car Hire') return 'sales' as const;
     if (role === 'Director') return 'director' as const;
     if (role === 'CEO') return 'ceo' as const;
     return 'admin' as const;
