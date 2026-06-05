@@ -3274,3 +3274,267 @@ export const generateDebtorsReportPDFAndDownload = async (
   const blob = await generateDebtorsReportPDF(debtors, company);
   downloadBlob(blob, `Debtors_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 };
+
+// ============================================================================
+// PERIOD INCOME & EXPENSE REPORT  (daily / weekly / monthly)
+// ============================================================================
+
+export interface PeriodReportData {
+  period: 'daily' | 'weekly' | 'monthly';
+  from: string;
+  to: string;
+  label: string;
+  summary: { total_income: number; total_expenses: number; net: number };
+  income_sources: { source: string; total: number; entries: number }[];
+  income_rows: {
+    freezit:  any[];
+    ice:      any[];
+    wifi:     any[];
+    car_hire: any[];
+    lodgers:  any[];
+  };
+  expense_rows: { usage_date: string; amount: number; currency: string; description: string; category: string; source: string; staff_name: string; staff_role: string }[];
+}
+
+export const generatePeriodReportPDF = async (
+  data: PeriodReportData,
+  companyName = 'Affinity Logistics'
+): Promise<Blob> => {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const MARGIN = 14;
+  const PAGE_W = 210;
+  const CONTENT_W = PAGE_W - MARGIN * 2;
+  let y = MARGIN;
+
+  const accent: [number, number, number] = [217, 119, 6];   // amber-600
+  const dark:   [number, number, number] = [24,  24,  27];
+  const mid:    [number, number, number] = [82,  82,  91];
+  const light:  [number, number, number] = [212, 212, 216];
+
+  const fmt = (n: number, currency = 'USD') =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 2 }).format(n);
+
+  const addPage = () => {
+    doc.addPage();
+    y = MARGIN;
+  };
+
+  const checkY = (needed: number) => {
+    if (y + needed > 277) addPage();
+  };
+
+  // ── Header bar ──────────────────────────────────────────────────────────
+  doc.setFillColor(...dark);
+  doc.rect(0, 0, PAGE_W, 28, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text(companyName, MARGIN, 11);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(161, 161, 170);
+  doc.text('Income & Expense Report', MARGIN, 18);
+
+  // Period label top-right
+  doc.setFontSize(8);
+  doc.setTextColor(255, 255, 255);
+  doc.text(data.label, PAGE_W - MARGIN, 14, { align: 'right' });
+  doc.text(`Generated ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`, PAGE_W - MARGIN, 21, { align: 'right' });
+
+  y = 36;
+
+  // ── Summary KPI row ──────────────────────────────────────────────────────
+  const kpiW = (CONTENT_W - 8) / 3;
+  const kpis = [
+    { label: 'Total Income',   value: fmt(data.summary.total_income),   color: [16, 185, 129] as [number,number,number] },
+    { label: 'Total Expenses', value: fmt(data.summary.total_expenses), color: [239, 68, 68]  as [number,number,number] },
+    { label: 'Net',            value: fmt(data.summary.net),            color: data.summary.net >= 0 ? [16, 185, 129] as [number,number,number] : [239, 68, 68] as [number,number,number] },
+  ];
+
+  kpis.forEach((kpi, i) => {
+    const x = MARGIN + i * (kpiW + 4);
+    doc.setFillColor(250, 250, 249);
+    doc.setDrawColor(...light);
+    doc.setLineWidth(0.3);
+    doc.rect(x, y, kpiW, 18, 'FD');
+    // accent left bar
+    doc.setFillColor(...kpi.color);
+    doc.rect(x, y, 2.5, 18, 'F');
+
+    doc.setTextColor(...mid);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text(kpi.label.toUpperCase(), x + 5, y + 6);
+
+    doc.setTextColor(...dark);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(kpi.value, x + 5, y + 14);
+  });
+
+  y += 24;
+
+  // ── Income sources table ─────────────────────────────────────────────────
+  checkY(20);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...dark);
+  doc.text('INCOME SUMMARY BY SOURCE', MARGIN, y);
+  doc.setDrawColor(...accent);
+  doc.setLineWidth(0.5);
+  doc.line(MARGIN, y + 1, MARGIN + 60, y + 1);
+  y += 5;
+
+  autoTable(doc, {
+    startY: y,
+    margin: { left: MARGIN, right: MARGIN },
+    head: [['Source', 'Entries', 'Amount (USD)']],
+    body: [
+      ...data.income_sources.map(s => [s.source, s.entries, fmt(s.total)]),
+      [{ content: 'Total Income', styles: { fontStyle: 'bold' } }, '', { content: fmt(data.summary.total_income), styles: { fontStyle: 'bold' } }],
+    ],
+    headStyles: { fillColor: dark, textColor: [255, 255, 255], fontSize: 8, cellPadding: 3 },
+    bodyStyles: { fontSize: 8, cellPadding: 3 },
+    alternateRowStyles: { fillColor: [250, 250, 249] },
+    columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 25, halign: 'center' }, 2: { cellWidth: 60, halign: 'right' } },
+    tableWidth: CONTENT_W,
+    didParseCell: (hookData) => {
+      if (hookData.row.index === data.income_sources.length) {
+        hookData.cell.styles.fillColor = [243, 232, 255];
+      }
+    },
+  });
+
+  y = (doc as any).lastAutoTable.finalY + 8;
+
+  // ── Expense log ──────────────────────────────────────────────────────────
+  checkY(20);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...dark);
+  doc.text('STAFF EXPENSES', MARGIN, y);
+  doc.setDrawColor(...[239, 68, 68] as [number,number,number]);
+  doc.setLineWidth(0.5);
+  doc.line(MARGIN, y + 1, MARGIN + 40, y + 1);
+  y += 5;
+
+  if (data.expense_rows.length === 0) {
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...mid);
+    doc.text('No expenses logged in this period.', MARGIN, y + 4);
+    y += 10;
+  } else {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: MARGIN, right: MARGIN },
+      head: [['Date', 'Staff', 'Description', 'Category', 'Source', 'Amount']],
+      body: data.expense_rows.map(e => [
+        e.usage_date,
+        `${e.staff_name}\n${e.staff_role}`,
+        e.description,
+        e.category,
+        e.source,
+        fmt(e.amount, e.currency),
+      ]),
+      foot: [[
+        { content: 'Total Expenses', colSpan: 5, styles: { fontStyle: 'bold', halign: 'right' } },
+        { content: fmt(data.summary.total_expenses), styles: { fontStyle: 'bold' } },
+      ]],
+      headStyles: { fillColor: [239, 68, 68], textColor: [255, 255, 255], fontSize: 7, cellPadding: 2.5 },
+      bodyStyles: { fontSize: 7, cellPadding: 2.5 },
+      footStyles: { fillColor: [254, 226, 226], textColor: dark, fontSize: 8, cellPadding: 3 },
+      alternateRowStyles: { fillColor: [250, 250, 249] },
+      columnStyles: {
+        0: { cellWidth: 18 },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 55 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 28 },
+        5: { cellWidth: 24, halign: 'right' },
+      },
+      tableWidth: CONTENT_W,
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+  }
+
+  // ── Per-source detail tables (compact) ───────────────────────────────────
+  const addSourceDetail = (
+    title: string,
+    rows: any[],
+    columns: string[],
+    mapper: (r: any) => (string | number)[]
+  ) => {
+    if (!rows.length) return;
+    checkY(24);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...mid);
+    doc.text(title, MARGIN, y);
+    y += 4;
+
+    autoTable(doc, {
+      startY: y,
+      margin: { left: MARGIN, right: MARGIN },
+      head: [columns],
+      body: rows.map(mapper),
+      headStyles: { fillColor: [63, 63, 70], textColor: [255, 255, 255], fontSize: 7, cellPadding: 2 },
+      bodyStyles: { fontSize: 7, cellPadding: 2 },
+      alternateRowStyles: { fillColor: [250, 250, 249] },
+      tableWidth: CONTENT_W,
+    });
+    y = (doc as any).lastAutoTable.finalY + 6;
+  };
+
+  addSourceDetail('Freezit Sales Detail', data.income_rows.freezit,
+    ['Date', 'Qty', 'Unit Price', 'Total', 'Payment', 'Notes'],
+    r => [r.sale_date, r.qty_sold, fmt(r.unit_selling_price), fmt(r.total_sales_value), r.payment_method || '—', r.notes || '—']
+  );
+
+  addSourceDetail('Ice Sales Detail', data.income_rows.ice,
+    ['Date', 'Qty', 'Unit Price', 'Total', 'Payment', 'Customer'],
+    r => [r.sale_date, r.quantity_sold, fmt(r.unit_price), fmt(r.total_sales), r.payment_method || '—', r.customer_name || '—']
+  );
+
+  addSourceDetail('WiFi Token Sales Detail', data.income_rows.wifi,
+    ['Date', 'Tokens', 'Package', 'Price', 'Total', 'Payment'],
+    r => [r.sale_date, r.tokens_sold, r.package_type || '—', fmt(r.selling_price), fmt(r.total_sales), r.payment_method || '—']
+  );
+
+  addSourceDetail('Car Hire Detail', data.income_rows.car_hire,
+    ['Start', 'End', 'Hirer', 'Rate/Day', 'Total', 'Paid', 'Status'],
+    r => [r.start_date, r.end_date || '—', r.hirer_name || '—', fmt(r.daily_rate, r.currency || 'USD'), fmt(r.total_amount, r.currency || 'USD'), fmt(r.amount_paid, r.currency || 'USD'), r.status || '—']
+  );
+
+  addSourceDetail('Lodger Payments Detail', data.income_rows.lodgers,
+    ['Date', 'Lodger', 'Room', 'Amount', 'Currency', 'Month', 'Payment'],
+    r => [r.payment_date, r.lodger_name || '—', r.room_number || '—', fmt(r.amount, r.currency || 'USD'), r.currency || 'USD', r.month_covered || '—', r.payment_method || '—']
+  );
+
+  // ── Footer on every page ─────────────────────────────────────────────────
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(...light);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, 285, PAGE_W - MARGIN, 285);
+    doc.setFontSize(7);
+    doc.setTextColor(...mid);
+    doc.text(`${companyName} · Confidential`, MARGIN, 290);
+    doc.text(`Page ${i} of ${pageCount}`, PAGE_W - MARGIN, 290, { align: 'right' });
+  }
+
+  return doc.output('blob');
+};
+
+export const generatePeriodReportPDFAndDownload = async (
+  data: PeriodReportData,
+  companyName?: string
+): Promise<void> => {
+  const blob = await generatePeriodReportPDF(data, companyName);
+  const cap = data.period.charAt(0).toUpperCase() + data.period.slice(1);
+  downloadBlob(blob, `${cap}_Report_${data.from}${data.to !== data.from ? `_to_${data.to}` : ''}.pdf`);
+};

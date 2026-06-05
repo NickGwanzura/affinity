@@ -6,6 +6,7 @@ import type { DebtorEntry } from '../../services/pdfService';
 import { useToast } from '../Toast';
 import { Button, DriverFundsSnapshotPanel, DriverFundsSummaryPanel, InsightPanel, MetricBarList, RankedMetricList } from '../ui';
 import { buildDriverFundsReportData, buildDriverMonthlySpendReport, buildDriverForensicReport } from '../../utils/driverFunds';
+import { PeriodReportPanel } from '../shared/PeriodReportPanel';
 
 export const ReportsTab: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
@@ -447,6 +448,9 @@ export const ReportsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Period download panel */}
+      <PeriodReportPanel />
+
       {/* Header */}
       <div className="bg-[#1C1917] p-8 text-white">
         <h3 className="text-2xl font-black mb-2">Fleet Analytics &amp; Reports</h3>

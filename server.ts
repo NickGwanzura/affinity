@@ -61,6 +61,7 @@ const { default: salesPlHandler } = await import('./api/sales-pl.js');
 const { default: ceoHandler } = await import('./api/ceo.js');
 const { default: fundDisbursementsHandler } = await import('./api/fund-disbursements.js');
 const { default: cashHandoversHandler }    = await import('./api/cash-handovers.js');
+const { default: periodReportHandler }     = await import('./api/period-report.js');
 
 // Admin routes
 const { default: adminApprovalsHandler } = await import('./api/admin/approvals.js');
@@ -100,6 +101,7 @@ app.all('/api/emails', mount(emailsHandler));
 app.all('/api/car-hire', mount(carHireHandler));
 app.all('/api/fund-disbursements', mount(fundDisbursementsHandler));
 app.all('/api/cash-handovers',    mount(cashHandoversHandler));
+app.all('/api/period-report',     mount(periodReportHandler));
 app.all('/api/ice-sales', mount(iceSalesHandler));
 app.all('/api/lodgers', mount(lodgersHandler));
 app.all('/api/sales-pl', mount(salesPlHandler));
