@@ -141,7 +141,6 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       switch (action) {
         case 'approve':
           updates.status = 'Approved';
-          updates.approved_by = userRole;
           updates.approval_date = now;
           break;
         case 'take':
@@ -202,6 +201,18 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
     } catch (err: any) {
       notifyError(err.message);
     }
+  };
+
+  const openNewAssetModal = () => {
+    setEditingAsset(null);
+    setAssetForm({ name: '', description: '', category: '', serial_number: '', status: 'Available', location: '', purchase_date: '', purchase_value: '', condition: 'Good' });
+    setShowAssetModal(true);
+  };
+
+  const openNewRequestModal = () => {
+    setEditingRequest(null);
+    setRequestForm({ asset_id: '', requested_by: '', requester_email: '', requester_department: '', requested_take_date: '', expected_return_date: '', purpose: '', notes: '' });
+    setShowRequestModal(true);
   };
 
   // Edit asset
@@ -280,7 +291,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
         subtitle="Fleet vehicles, equipment, and their valuations"
         actions={
           canEdit ? (
-            <Button onClick={() => { setEditingAsset(null); setShowAssetModal(true); }}>
+            <Button onClick={() => { openNewAssetModal(); }}>
               + Add Asset
             </Button>
           ) : undefined
@@ -341,7 +352,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
         <div className="space-y-4">
           {canEdit && (
             <div className="flex justify-end">
-              <Button onClick={() => { setEditingAsset(null); setShowAssetModal(true); }}>
+              <Button onClick={() => { openNewAssetModal(); }}>
                 + Add Asset
               </Button>
             </div>
@@ -453,7 +464,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
         <div className="space-y-4">
           {canEdit && (
             <div className="flex justify-end">
-              <Button onClick={() => { setEditingRequest(null); setShowRequestModal(true); }}>
+              <Button onClick={() => { openNewRequestModal(); }}>
                 + New Request
               </Button>
             </div>
@@ -622,13 +633,13 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       {/* Asset Modal */}
       <Modal
         isOpen={showAssetModal}
-        onClose={() => { setShowAssetModal(false); setEditingAsset(null); }}
+        onClose={() => { setShowAssetModal(false); setEditingAsset(null); setAssetForm({ name: '', description: '', category: '', serial_number: '', status: 'Available', location: '', purchase_date: '', purchase_value: '', condition: 'Good' }); }}
         title={editingAsset ? 'Edit Asset' : 'Add Asset'}
         label="Asset record"
         size="md"
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="ghost" onClick={() => { setShowAssetModal(false); setEditingAsset(null); }}>
+            <Button type="button" variant="ghost" onClick={() => { setShowAssetModal(false); setEditingAsset(null); setAssetForm({ name: '', description: '', category: '', serial_number: '', status: 'Available', location: '', purchase_date: '', purchase_value: '', condition: 'Good' }); }}>
               Cancel
             </Button>
             <Button type="submit" form="asset-form">
@@ -759,13 +770,13 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
       {/* Request Modal */}
       <Modal
         isOpen={showRequestModal}
-        onClose={() => { setShowRequestModal(false); setEditingRequest(null); }}
+        onClose={() => { setShowRequestModal(false); setEditingRequest(null); setRequestForm({ asset_id: '', requested_by: '', requester_email: '', requester_department: '', requested_take_date: '', expected_return_date: '', purpose: '', notes: '' }); }}
         title={editingRequest ? 'Edit Request' : 'New Request'}
         label="Asset request"
         size="md"
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="ghost" onClick={() => { setShowRequestModal(false); setEditingRequest(null); }}>
+            <Button type="button" variant="ghost" onClick={() => { setShowRequestModal(false); setEditingRequest(null); setRequestForm({ asset_id: '', requested_by: '', requester_email: '', requester_department: '', requested_take_date: '', expected_return_date: '', purpose: '', notes: '' }); }}>
               Cancel
             </Button>
             <Button type="submit" form="request-form">
