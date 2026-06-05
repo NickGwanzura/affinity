@@ -5,6 +5,7 @@ import { formatCurrency } from '../utils/formatters';
 import { useToast } from './Toast';
 import { useSession } from '../contexts/SessionContext';
 import { MyFundsWidget } from './shared/MyFundsWidget';
+import { api } from '../services/apiClient';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -69,9 +70,9 @@ export const DirectorsDashboard: React.FC = () => {
     setLoading(true);
     try {
       const results = await Promise.allSettled([
-        fetch(`${API}?resource=stats`).then(r => { if (!r.ok) throw new Error('Stats failed'); return r.json(); }),
-        fetch(`${API}?resource=transactions`).then(r => { if (!r.ok) throw new Error('Transactions failed'); return r.json(); }),
-        fetch(`${API}?resource=sales`).then(r => { if (!r.ok) throw new Error('Sales failed'); return r.json(); }),
+        api.request<Stats>('/director?resource=stats'),
+        api.request<DirectorTx[]>('/director?resource=transactions'),
+        api.request<SaleFeedItem[]>('/director?resource=sales'),
       ]);
       setStats(results[0].status === 'fulfilled' ? results[0].value : null);
       setTxs(results[1].status === 'fulfilled' && Array.isArray(results[1].value) ? results[1].value : []);
@@ -89,8 +90,7 @@ export const DirectorsDashboard: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`${API}?resource=transactions&id=${id}`, { method: 'DELETE' });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Delete failed'); }
+      await api.request(`/director?resource=transactions&id=${id}`, { method: 'DELETE' });
       showToast('Transaction deleted', 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to delete', 'error');
@@ -450,14 +450,13 @@ const TransactionModal: React.FC<{
     e.preventDefault();
     setLoading(true);
     try {
-      const url = isEdit
-        ? `${API}?resource=transactions&id=${editingTx!.id}`
-        : `${API}?resource=transactions`;
+      const endpoint = isEdit
+        ? `/director?resource=transactions&id=${editingTx!.id}`
+        : `/director?resource=transactions`;
       const method = isEdit ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      await api.request(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: editingTx?.type ?? type,
           amount: Number(amount),
@@ -469,7 +468,6 @@ const TransactionModal: React.FC<{
           reference: reference || undefined,
         }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Failed'); }
       showToast(isEdit ? 'Transaction updated' : `${type} recorded`, 'success');
       onSaved();
     } catch (err: any) {
