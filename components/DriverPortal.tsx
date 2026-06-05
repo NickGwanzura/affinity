@@ -588,7 +588,7 @@ export const DriverPortal: React.FC = () => {
         title="Allocations & Spend"
         subtitle="Your running totals across every currency"
       >
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
             title="Allocated"
             value={formatPreferredDisplay(allocatedUsd, allocationCurrencyTotals)}
@@ -638,7 +638,7 @@ export const DriverPortal: React.FC = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Select
                   id="vehicle-select"
                   labelText="Vehicle (Optional)"
@@ -667,7 +667,7 @@ export const DriverPortal: React.FC = () => {
                 </Select>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="md:col-span-2">
                   <TextInput
                     id="amount-input"
@@ -699,7 +699,7 @@ export const DriverPortal: React.FC = () => {
                 </Select>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Select
                   id="location-select"
                   labelText="Location"

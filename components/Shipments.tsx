@@ -184,30 +184,16 @@ export const Shipments: React.FC = () => {
 
       <DashboardSection title="All Shipments">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full table-card-mobile">
           <thead className="bg-zinc-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
-                Client
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
-                Description
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
-                Origin
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
-                Destination
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
-                Status
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">
-                Date
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">
-                Actions
-              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Client</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Description</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Origin</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Destination</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Date</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -222,35 +208,22 @@ export const Shipments: React.FC = () => {
                 const StatusIcon = statusIcons[shipment.status] || Clock;
                 return (
                   <tr key={shipment.id} className="hover:bg-zinc-50">
-                    <td className="px-4 py-3 font-medium">{shipment.client_name || 'N/A'}</td>
-                    <td className="px-4 py-3 text-zinc-600">{shipment.description}</td>
-                    <td className="px-4 py-3 text-zinc-600">{shipment.origin}</td>
-                    <td className="px-4 py-3 text-zinc-600">{shipment.destination}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusColors[shipment.status]}`}
-                      >
+                    <td className="px-4 py-3 font-medium" data-label="Client">{shipment.client_name || 'N/A'}</td>
+                    <td className="px-4 py-3 text-zinc-600" data-label="Description">{shipment.description}</td>
+                    <td className="px-4 py-3 text-zinc-600" data-label="Origin">{shipment.origin}</td>
+                    <td className="px-4 py-3 text-zinc-600" data-label="Destination">{shipment.destination}</td>
+                    <td className="px-4 py-3" data-label="Status">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusColors[shipment.status]}`}>
                         <StatusIcon size={12} />
                         {shipment.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 text-sm">
-                      {shipment.shipping_date
-                        ? new Date(shipment.shipping_date).toLocaleDateString()
-                        : '-'}
+                    <td className="px-4 py-3 text-zinc-600 text-sm" data-label="Date">
+                      {shipment.shipping_date ? new Date(shipment.shipping_date).toLocaleDateString() : '-'}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button variant="ghost" size="sm" onClick={() => openEditModal(shipment)}>
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(shipment.id)}
-                        className="text-red-600"
-                      >
-                        Delete
-                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => openEditModal(shipment)}>Edit</Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(shipment.id)} className="text-red-600">Delete</Button>
                     </td>
                   </tr>
                 );

@@ -350,7 +350,7 @@ const OverviewTab: React.FC<{ stats: Stats | null; monthly: MonthlyRow[]; vehicl
     {/* Monthly P&L table */}
     {monthly.length > 0 && (
       <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-card-mobile">
           <thead className="border-b border-stone-200 bg-stone-50">
             <tr>
               {['Month', 'Hires', 'Income', 'Expenses', 'Net P&L'].map(col => (
@@ -361,11 +361,11 @@ const OverviewTab: React.FC<{ stats: Stats | null; monthly: MonthlyRow[]; vehicl
           <tbody className="divide-y divide-stone-100">
             {monthly.map(row => (
               <tr key={row.month} className="hover:bg-stone-50">
-                <td className="px-4 py-3 font-medium text-zinc-900">{row.month}</td>
-                <td className="px-4 py-3 text-zinc-700">{row.hires}</td>
-                <td className="px-4 py-3 text-emerald-600 font-medium">{fmt(row.income)}</td>
-                <td className="px-4 py-3 text-orange-600 font-medium">{fmt(row.expenses)}</td>
-                <td className={`px-4 py-3 font-bold ${row.net >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                <td className="px-4 py-3 font-medium text-zinc-900" data-label="Month">{row.month}</td>
+                <td className="px-4 py-3 text-zinc-700" data-label="Hires">{row.hires}</td>
+                <td className="px-4 py-3 text-emerald-600 font-medium" data-label="Income">{fmt(row.income)}</td>
+                <td className="px-4 py-3 text-orange-600 font-medium" data-label="Expenses">{fmt(row.expenses)}</td>
+                <td className={`px-4 py-3 font-bold ${row.net >= 0 ? 'text-emerald-700' : 'text-red-600'}`} data-label="Net P&L">
                   {row.net >= 0 ? '+' : ''}{fmt(row.net)}
                 </td>
               </tr>
