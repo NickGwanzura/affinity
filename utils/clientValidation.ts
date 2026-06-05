@@ -4,7 +4,7 @@ import type { Currency, ExpenseCategory, UserRole, VehicleStatus } from '../type
 const OptionalUrlSchema = z.union([z.literal(''), z.string().trim().url('Enter a valid URL')]);
 
 export const loginFormSchema = z.object({
-  email: z.string().trim().email('Enter a valid work email'),
+  email: z.string().trim().min(1, 'Enter your email or phone number'),
   password: z.string().min(1, 'Enter your password'),
 });
 

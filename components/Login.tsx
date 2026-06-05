@@ -168,7 +168,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <p className="login-shell__description">
                 {mode === 'login'
                   ? 'Sign in with your approved company account to access the logistics workspace.'
-                  : 'We will send reset instructions to your email address if an account exists.'}
+                  : 'Enter your registered email address to receive reset instructions.'}
               </p>
             </div>
 
@@ -197,10 +197,10 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <div className="flex flex-col gap-4">
                 <TextInput
                   id="login-email"
-                  type="email"
-                  labelText="Work email"
-                  placeholder="email@company.com"
-                  autoComplete="email"
+                  type="text"
+                  labelText="Email or phone number"
+                  placeholder="email@company.com or 07XXXXXXXX"
+                  autoComplete="username"
                   autoFocus
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

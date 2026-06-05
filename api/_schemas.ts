@@ -230,7 +230,8 @@ export const TripUpdateSchema = withTripDateValidation(TripSchemaBase.partial())
 
 // Auth schemas
 export const LoginSchema = z.object({
-  email: z.string().email(),
+  // Accept email address or phone number
+  email: z.string().min(1),
   password: z.string().min(6),
 });
 

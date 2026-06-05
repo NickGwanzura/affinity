@@ -126,6 +126,7 @@ export function verifyToken(token: string): JWTPayload {
  * Authenticate user with email/password
  */
 export async function authenticateUser(email: string, password: string): Promise<AuthResult> {
+  const identifier = email.trim();
   const rows = await sql`
     SELECT
       u.id,
@@ -138,7 +139,8 @@ export async function authenticateUser(email: string, password: string): Promise
       u.password_salt,
       u.force_password_change
     FROM user_profiles u
-    WHERE u.email = ${email.toLowerCase()}
+    WHERE u.email = ${identifier.toLowerCase()}
+       OR u.phone = ${identifier}
     LIMIT 1
   `;
 
