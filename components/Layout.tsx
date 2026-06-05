@@ -87,7 +87,7 @@ const navItems: {
   { id: 'reports',        label: 'Reports',          roles: ['Admin', 'Manager', 'Accountant'],      Icon: LineChart  },
   { id: 'clients',        label: 'Clients',          roles: ['Admin', 'Accountant'],                 Icon: Users      },
   { id: 'shipments',      label: 'Shipments',        roles: ['Admin', 'Manager', 'Accountant'],      Icon: Package    },
-  { id: 'trips',          label: 'Trip Planner',     roles: ['Admin', 'Manager'],                    Icon: Map        },
+  { id: 'trips',          label: 'Trip Planner',     roles: ['Admin', 'Manager', 'Car Hire'],         Icon: Map        },
   { id: 'driver',         label: 'Driver Portal',    roles: ['Admin', 'Driver'],                     Icon: Truck      },
   { id: 'driver-entries', label: 'Driver Entries',   roles: ['Admin', 'Manager'],                    Icon: Receipt    },
   { id: 'documents',      label: 'Documents',        roles: ['Admin', 'Manager', 'Driver'],          Icon: FileText   },
