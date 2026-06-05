@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button, TextInput, Select, SelectItem, TextArea } from '../ui';
 import { authFetch } from '../../services/authFetch';
 import { useToast } from '../Toast';
+import { useSession } from '../../contexts/SessionContext';
 
 const API = '/api/fund-disbursements';
 const CURRENCIES = ['USD', 'GBP', 'NAD', 'ZAR', 'BWP'] as const;
@@ -14,6 +15,8 @@ const SOURCES = [
   'Personal (reimburse)',
   'Other',
 ];
+const TRAVEL_SOURCES = ['Travel Allowance', 'Disbursed Funds', 'Petty Cash', 'Personal (reimburse)', 'Other'];
+const DESTINATIONS = ['Zambia', 'Botswana', 'Namibia', 'South Africa', 'Mozambique', 'Malawi', 'Tanzania', 'Within Zimbabwe', 'Other'];
 
 interface Props {
   isOpen: boolean;
@@ -23,26 +26,34 @@ interface Props {
 
 export const FundUsageModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) => {
   const { showToast } = useToast();
+  const session = useSession();
+  const isCarHire = session?.user.role === 'Car Hire';
+
   const [amount, setAmount]           = useState('');
   const [currency, setCurrency]       = useState('USD');
   const [description, setDescription] = useState('');
   const [category, setCategory]       = useState('General');
-  const [source, setSource]           = useState('Sales Revenue');
+  const [source, setSource]           = useState(isCarHire ? 'Travel Allowance' : 'Sales Revenue');
+  const [destination, setDestination] = useState('');
   const [date, setDate]               = useState(new Date().toISOString().slice(0, 10));
   const [loading, setLoading]         = useState(false);
 
   const reset = () => {
-    setAmount(''); setDescription(''); setCategory('General');
-    setSource('Sales Revenue'); setDate(new Date().toISOString().slice(0, 10));
+    setAmount(''); setDescription(''); setCategory('General'); setDestination('');
+    setSource(isCarHire ? 'Travel Allowance' : 'Sales Revenue');
+    setDate(new Date().toISOString().slice(0, 10));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const fullDescription = isCarHire && destination
+        ? `[${destination}] ${description}`
+        : description;
       const res = await authFetch(`${API}?resource=usage`, {
         method: 'POST',
-        body: JSON.stringify({ amount: parseFloat(amount), currency, description, category, source, usage_date: date }),
+        body: JSON.stringify({ amount: parseFloat(amount), currency, description: fullDescription, category, source, usage_date: date }),
       });
       if (!res.ok) {
         const e = await res.json();
@@ -66,7 +77,7 @@ export const FundUsageModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) =>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Log Expense"
+      title={isCarHire ? 'Log Travel Expense' : 'Log Expense'}
       label="My Expenses"
       size="sm"
       footer={
@@ -77,6 +88,16 @@ export const FundUsageModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) =>
       }
     >
       <form id="expense-log-form" onSubmit={handleSubmit} className="space-y-3">
+        {isCarHire && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-600">Trip Destination</p>
+            <Select id="fu-destination" labelText="Destination *" value={destination} onChange={e => setDestination(e.target.value)} required>
+              <SelectItem value="" text="Select destination…" />
+              {DESTINATIONS.map(d => <SelectItem key={d} value={d} text={d} />)}
+            </Select>
+          </div>
+        )}
+
         <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Amount</p>
           <div className="space-y-3">
@@ -94,7 +115,7 @@ export const FundUsageModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) =>
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Classification</p>
           <div className="space-y-3">
             <Select id="fu-source" labelText="Paid from *" value={source} onChange={e => setSource(e.target.value)}>
-              {SOURCES.map(s => <SelectItem key={s} value={s} text={s} />)}
+              {(isCarHire ? TRAVEL_SOURCES : SOURCES).map(s => <SelectItem key={s} value={s} text={s} />)}
             </Select>
             <Select id="fu-category" labelText="Category" value={category} onChange={e => setCategory(e.target.value)}>
               {CATEGORIES.map(c => <SelectItem key={c} value={c} text={c} />)}
@@ -103,7 +124,7 @@ export const FundUsageModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) =>
         </div>
 
         <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
-          <TextArea id="fu-desc" labelText="Description *" rows={2} value={description} onChange={e => setDescription(e.target.value)} required placeholder="What was this expense for?" />
+          <TextArea id="fu-desc" labelText="Description *" rows={2} value={description} onChange={e => setDescription(e.target.value)} required placeholder={isCarHire ? 'e.g. Fuel for Zambia border run' : 'What was this expense for?'} />
         </div>
       </form>
     </Modal>
