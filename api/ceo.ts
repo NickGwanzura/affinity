@@ -72,13 +72,19 @@ async function handleDashboard(res: ApiResponse) {
 
   const [expensesToday] = await sql`
     SELECT COALESCE(SUM(amount * COALESCE(exchange_rate_to_usd, 1)), 0) AS value
-    FROM expenses WHERE created_at::date = ${today}
+    FROM expenses WHERE created_at::date = ${today} AND deleted_at IS NULL
   `;
   const [carHireExpensesToday] = await sql`
     SELECT COALESCE(SUM(amount), 0) AS value FROM car_hire_expenses WHERE expense_date = ${today}
   `;
   const [directorDisbursedToday] = await sql`
     SELECT COALESCE(SUM(amount), 0) AS value FROM director_transactions WHERE type = 'Disbursed' AND date = ${today}
+  `;
+  const [fundDisbursedToday] = await sql`
+    SELECT COALESCE(SUM(amount), 0) AS value FROM fund_disbursements WHERE disbursed_at = ${today}
+  `;
+  const [fundUsageToday] = await sql`
+    SELECT COALESCE(SUM(amount), 0) AS value FROM fund_usage_logs WHERE usage_date = ${today}
   `;
 
   // ── Monthly Income ────────────────────────────────────────────────────
@@ -106,7 +112,7 @@ async function handleDashboard(res: ApiResponse) {
 
   const [expensesMonth] = await sql`
     SELECT COALESCE(SUM(amount * COALESCE(exchange_rate_to_usd, 1)), 0) AS value
-    FROM expenses WHERE created_at::date >= ${monthStart}
+    FROM expenses WHERE created_at::date >= ${monthStart} AND deleted_at IS NULL
   `;
   const [carHireExpensesMonth] = await sql`
     SELECT COALESCE(SUM(amount), 0) AS value FROM car_hire_expenses WHERE expense_date >= ${monthStart}
@@ -114,20 +120,28 @@ async function handleDashboard(res: ApiResponse) {
   const [directorDisbursedMonth] = await sql`
     SELECT COALESCE(SUM(amount), 0) AS value FROM director_transactions WHERE type = 'Disbursed' AND date >= ${monthStart}
   `;
+  const [fundDisbursedMonth] = await sql`
+    SELECT COALESCE(SUM(amount), 0) AS value FROM fund_disbursements WHERE disbursed_at >= ${monthStart}
+  `;
+  const [fundUsageMonth] = await sql`
+    SELECT COALESCE(SUM(amount), 0) AS value FROM fund_usage_logs WHERE usage_date >= ${monthStart}
+  `;
 
   const todayIncome =
     Number(freezitToday.value) + Number(wifiToday.value) + Number(iceToday.value) +
     Number(lodgerToday.value) + Number(directorReceivedToday.value) + Number(carHireToday.value);
 
   const todayExpenses =
-    Number(expensesToday.value) + Number(carHireExpensesToday.value) + Number(directorDisbursedToday.value);
+    Number(expensesToday.value) + Number(carHireExpensesToday.value) + Number(directorDisbursedToday.value) +
+    Number(fundDisbursedToday.value) + Number(fundUsageToday.value);
 
   const monthIncome =
     Number(freezitMonth.value) + Number(wifiMonth.value) + Number(iceMonth.value) +
     Number(lodgerMonth.value) + Number(directorReceivedMonth.value) + Number(carHireMonth.value);
 
   const monthExpenses =
-    Number(expensesMonth.value) + Number(carHireExpensesMonth.value) + Number(directorDisbursedMonth.value);
+    Number(expensesMonth.value) + Number(carHireExpensesMonth.value) + Number(directorDisbursedMonth.value) +
+    Number(fundDisbursedMonth.value) + Number(fundUsageMonth.value);
 
   return res.status(200).json({
     today: {
@@ -144,9 +158,11 @@ async function handleDashboard(res: ApiResponse) {
         car_hire:     Number(carHireToday.value),
       },
       expense_breakdown: {
-        expenses:     Number(expensesToday.value),
-        car_hire:     Number(carHireExpensesToday.value),
-        director:     Number(directorDisbursedToday.value),
+        expenses:      Number(expensesToday.value),
+        car_hire:      Number(carHireExpensesToday.value),
+        director:      Number(directorDisbursedToday.value),
+        disbursements: Number(fundDisbursedToday.value),
+        fund_usage:    Number(fundUsageToday.value),
       },
     },
     this_month: {
@@ -162,9 +178,11 @@ async function handleDashboard(res: ApiResponse) {
         car_hire:     Number(carHireMonth.value),
       },
       expense_breakdown: {
-        expenses:     Number(expensesMonth.value),
-        car_hire:     Number(carHireExpensesMonth.value),
-        director:     Number(directorDisbursedMonth.value),
+        expenses:      Number(expensesMonth.value),
+        car_hire:      Number(carHireExpensesMonth.value),
+        director:      Number(directorDisbursedMonth.value),
+        disbursements: Number(fundDisbursedMonth.value),
+        fund_usage:    Number(fundUsageMonth.value),
       },
     },
   });
