@@ -1159,7 +1159,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
             {/* Manager / Admin: personal fund disbursement widget */}
             <div className="mt-6">
               <h3 className="mb-3 text-sm font-semibold text-zinc-900">My Disbursed Funds</h3>
-              <MyFundsWidget canDisburse={userRole === 'Admin' || userRole === 'Manager'} />
+              <MyFundsWidget canDisburse={true} />
             </div>
           </>
         )}

@@ -931,8 +931,8 @@ export const AccountantDashboard: React.FC = () => {
         </div>
       </DashboardSection>
 
-      <DashboardSection title="My Funds" subtitle="Cash disbursed to you. Log usage here — visible in the audit trail.">
-        <MyFundsWidget canDisburse={false} />
+      <DashboardSection title="My Funds" subtitle="Log expenses and disburse funds to others. Every entry is visible in the audit trail.">
+        <MyFundsWidget canDisburse={true} />
       </DashboardSection>
 
       <OperatingFundEntryModal

@@ -922,9 +922,9 @@ export const DriverPortal: React.FC = () => {
 
           <DashboardSection
             title="My Funds"
-            subtitle="Cash disbursed to you by management. Log every expense here — it feeds the audit trail."
+            subtitle="Log expenses and disburse funds to others. Every entry feeds the audit trail."
           >
-            <MyFundsWidget canDisburse={false} />
+            <MyFundsWidget canDisburse={true} />
           </DashboardSection>
 
           <DashboardSection

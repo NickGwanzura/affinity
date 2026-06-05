@@ -29,11 +29,6 @@ import { z } from 'zod';
 const json = (res: ApiResponse, status: number, body: unknown) =>
   res.status(status).json(body);
 
-const DISBURSE_ROLES = ['Director', 'Manager', 'Admin'];
-
-function canDisburse(role: string, accessRole: string): boolean {
-  return accessRole === 'super_admin' || accessRole === 'admin' || DISBURSE_ROLES.includes(role);
-}
 
 const DisburseSchema = z.object({
   to_user_id:   z.string().uuid(),
@@ -64,7 +59,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const resource = typeof query.resource === 'string' ? query.resource : '';
   const id       = typeof query.id === 'string' ? query.id : undefined;
   const userId   = authReq.user!.id;
-  const role     = authReq.user!.role;
   const access   = authReq.user!.accessRole;
 
   try {
@@ -98,7 +92,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       }
 
       if (resource === 'sent') {
-        if (!canDisburse(role, access)) return json(res, 403, { error: 'Access denied' });
         const rows = await sql`
           SELECT d.*, t.name AS to_name, t.role AS to_role
           FROM fund_disbursements d
@@ -119,7 +112,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       }
 
       if (resource === 'users') {
-        if (!canDisburse(role, access)) return json(res, 403, { error: 'Access denied' });
         const rows = await sql`
           SELECT id, name, role FROM user_profiles
           WHERE status IN ('Active','active','Approved','approved')
@@ -130,7 +122,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       }
 
       if (resource === 'overview') {
-        if (!canDisburse(role, access)) return json(res, 403, { error: 'Access denied' });
 
         const [myRecv] = await sql`
           SELECT COALESCE(SUM(amount),0) AS total FROM fund_disbursements
@@ -190,7 +181,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     // ── POST ────────────────────────────────────────────────────────────────
     if (method === 'POST') {
       if (resource === 'disburse') {
-        if (!canDisburse(role, access)) return json(res, 403, { error: 'Access denied' });
         const parsed = DisburseSchema.safeParse(req.body);
         if (!parsed.success) return json(res, 400, { error: 'Invalid data', details: parsed.error.issues });
         const d = parsed.data;
@@ -248,7 +238,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       if (!id) return json(res, 400, { error: 'id required' });
 
       if (resource === 'disburse') {
-        if (!canDisburse(role, access)) return json(res, 403, { error: 'Access denied' });
         const [existing] = await sql`
           SELECT * FROM fund_disbursements WHERE id = ${id}::uuid
         `;
