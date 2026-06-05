@@ -175,6 +175,34 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         });
       }
 
+      if (resource === 'today-spending') {
+        const today = new Date().toISOString().slice(0, 10);
+        const [totals] = await sql`
+          SELECT
+            COALESCE(SUM(amount), 0) AS total,
+            COUNT(*)::int                AS entries,
+            COUNT(DISTINCT user_id)::int AS users
+          FROM fund_usage_logs
+          WHERE usage_date = ${today}
+        `;
+        const topSpenders = await sql`
+          SELECT u.name, SUM(l.amount) AS total, COUNT(*)::int AS entries
+          FROM fund_usage_logs l
+          JOIN user_profiles u ON u.id = l.user_id
+          WHERE l.usage_date = ${today}
+          GROUP BY u.name
+          ORDER BY total DESC
+          LIMIT 5
+        `;
+        return json(res, 200, {
+          total:        Number(totals.total),
+          entries:      Number(totals.entries),
+          users:        Number(totals.users),
+          top_spenders: topSpenders.map(s => ({ name: s.name, total: Number(s.total), entries: Number(s.entries) })),
+          date:         today,
+        });
+      }
+
       return json(res, 400, { error: 'Unknown resource' });
     }
 

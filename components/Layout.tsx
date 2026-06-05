@@ -19,11 +19,7 @@ import {
   Wallet,
   Map,
   Boxes,
-  Snowflake,
-  Wifi,
   ShieldCheck,
-  Car,
-  Building2,
   TrendingUp,
 } from 'lucide-react';
 import { AppUser, UserRole } from '../types';
@@ -50,14 +46,9 @@ export type AppView =
   | 'funds'
   | 'trips'
   | 'assets'
-  | 'freezit'
-  | 'wifi-tokens'
-  | 'car-hire'
-  | 'ice-sales'
+  | 'sales'
   | 'director'
   | 'ceo'
-  | 'lodgers'
-  | 'sales-pl'
   | 'my-expenses';
 
 interface LayoutProps {
@@ -76,12 +67,7 @@ const navItems: {
 }[] = [
   { id: 'admin',          label: 'Dashboard',        roles: ['Admin', 'Manager'],                    Icon: BarChart3  },
   { id: 'director',       label: 'Director',         roles: ['Admin', 'Director'],                   Icon: ShieldCheck },
-  { id: 'freezit',        label: 'Freezit Sales',    roles: ['Admin', 'Sales'],                      Icon: Snowflake  },
-  { id: 'wifi-tokens',    label: 'WiFi Token Sales', roles: ['Admin', 'Sales'],                      Icon: Wifi       },
-  { id: 'car-hire',       label: 'Car Hire',         roles: ['Admin', 'Car Hire'],                    Icon: Car        },
-  { id: 'ice-sales',      label: 'Ice Sales',        roles: ['Admin', 'Sales'],                      Icon: Snowflake   },
-  { id: 'lodgers',        label: 'Lodgers',          roles: ['Admin', 'Sales'],                      Icon: Building2   },
-  { id: 'sales-pl',       label: 'Sales P&L',        roles: ['Admin', 'Sales'],                      Icon: TrendingUp  },
+  { id: 'sales',          label: 'Sales',            roles: ['Admin', 'Sales', 'Car Hire'],           Icon: TrendingUp  },
   { id: 'accountant',     label: 'Accountant',       roles: ['Admin', 'Accountant'],                 Icon: Calculator },
   { id: 'financials',     label: 'Financials',       roles: ['Admin', 'Manager', 'Accountant'],      Icon: DollarSign },
   { id: 'reports',        label: 'Reports',          roles: ['Admin', 'Manager', 'Accountant'],      Icon: LineChart  },

@@ -42,29 +42,14 @@ const Shipments = lazy(() =>
 const UpdateCenter = lazy(() =>
   import('./components/UpdateCenter').then(module => ({ default: module.UpdateCenter }))
 );
-const FreezitSales = lazy(() =>
-  import('./components/FreezitSales').then(module => ({ default: module.FreezitSales }))
-);
 const DirectorsDashboard = lazy(() =>
   import('./components/DirectorsDashboard').then(module => ({ default: module.DirectorsDashboard }))
-);
-const WiFiTokenSales = lazy(() =>
-  import('./components/WiFiTokenSales').then(module => ({ default: module.WiFiTokenSales }))
-);
-const CarHire = lazy(() =>
-  import('./components/CarHire').then(module => ({ default: module.CarHire }))
-);
-const IceSales = lazy(() =>
-  import('./components/IceSales').then(module => ({ default: module.IceSales }))
 );
 const CEODashboard = lazy(() =>
   import('./components/CEODashboard').then(module => ({ default: module.CEODashboard }))
 );
-const Lodgers = lazy(() =>
-  import('./components/Lodgers').then(module => ({ default: module.Lodgers }))
-);
-const SalesPL = lazy(() =>
-  import('./components/SalesPL').then(module => ({ default: module.SalesPL }))
+const SalesHub = lazy(() =>
+  import('./components/SalesHub').then(module => ({ default: module.SalesHub }))
 );
 const MyExpensesView = lazy(() =>
   import('./components/MyExpensesView').then(module => ({ default: module.MyExpensesView }))
@@ -151,7 +136,8 @@ export default function App() {
   const resolveDefaultView = (role: string) => {
     if (role === 'Driver') return 'driver' as const;
     if (role === 'Accountant') return 'accountant' as const;
-    if (role === 'Sales') return 'freezit' as const;
+    if (role === 'Sales') return 'sales' as const;
+    if (role === 'Car Hire') return 'sales' as const;
     if (role === 'Director') return 'director' as const;
     if (role === 'CEO') return 'ceo' as const;
     return 'admin' as const;
@@ -299,20 +285,10 @@ export default function App() {
         return <ErrorBoundary view="updates"><UpdateCenter /></ErrorBoundary>;
       case 'director':
         return <ErrorBoundary view="director"><DirectorsDashboard /></ErrorBoundary>;
-      case 'freezit':
-        return <ErrorBoundary view="freezit"><FreezitSales /></ErrorBoundary>;
-      case 'wifi-tokens':
-        return <ErrorBoundary view="wifi-tokens"><WiFiTokenSales /></ErrorBoundary>;
-      case 'car-hire':
-        return <ErrorBoundary view="car-hire"><CarHire /></ErrorBoundary>;
-      case 'ice-sales':
-        return <ErrorBoundary view="ice-sales"><IceSales /></ErrorBoundary>;
+      case 'sales':
+        return <ErrorBoundary view="sales"><SalesHub /></ErrorBoundary>;
       case 'ceo':
         return <ErrorBoundary view="ceo"><CEODashboard /></ErrorBoundary>;
-      case 'lodgers':
-        return <ErrorBoundary view="lodgers"><Lodgers /></ErrorBoundary>;
-      case 'sales-pl':
-        return <ErrorBoundary view="sales-pl"><SalesPL /></ErrorBoundary>;
       case 'my-expenses':
         return <ErrorBoundary view="my-expenses"><MyExpensesView /></ErrorBoundary>;
       default:

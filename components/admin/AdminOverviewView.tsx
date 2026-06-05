@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { LandedCostSummary } from '../../types';
 import { InsightPanel, MetricBarList, RankedMetricList, DataTableWrapper } from '../ui';
-import { ArrowUpRight, Truck, Package, Activity, Wallet } from 'lucide-react';
+import { ArrowUpRight, Truck, Package, Activity, Wallet, Receipt, Users, TrendingDown } from 'lucide-react';
+import { authFetch } from '../../services/authFetch';
 
 interface StatusDatum {
   name: string;
@@ -77,6 +78,14 @@ const Kpi: React.FC<KpiProps> = ({ eyebrow, value, caption, accent, icon, footer
   </div>
 );
 
+interface TodaySpending {
+  total: number;
+  entries: number;
+  users: number;
+  top_spenders: { name: string; total: number; entries: number }[];
+  date: string;
+}
+
 // ── Main view ──────────────────────────────────────────────────────────
 export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
   summaries,
@@ -84,6 +93,15 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
   onEditVehicle,
   onDeleteVehicle,
 }) => {
+  const [spending, setSpending] = useState<TodaySpending | null>(null);
+
+  useEffect(() => {
+    authFetch('/api/fund-disbursements?resource=today-spending')
+      .then(r => r.json())
+      .then(setSpending)
+      .catch(() => {});
+  }, []);
+
   const totalValuation = summaries.reduce((acc, s) => acc + s.total_landed_cost_usd, 0);
   const totalExpenses = summaries.reduce((acc, s) => acc + (s.total_expenses_usd || 0), 0);
   const inTransitCount = summaries.filter((s) => s.status !== 'Sold').length;
@@ -221,7 +239,55 @@ export const AdminOverviewView: React.FC<AdminOverviewViewProps> = ({
         </div>
       </section>
 
-      {/* KPI grid */}
+      {/* Today's spending KPI row */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Kpi
+          eyebrow="Today's staff spend"
+          value={spending ? `$${spending.total.toFixed(2)}` : '—'}
+          caption={spending ? `${spending.entries} ${spending.entries === 1 ? 'entry' : 'entries'} across ${spending.users} ${spending.users === 1 ? 'person' : 'people'}` : 'Loading…'}
+          accent="#ef4444"
+          icon={<TrendingDown size={18} strokeWidth={2} />}
+          footer={
+            spending && spending.top_spenders.length > 0 ? (
+              <span className="truncate">
+                Top: {spending.top_spenders[0].name} · ${spending.top_spenders[0].total.toFixed(2)}
+              </span>
+            ) : (
+              <span>No spend logged today</span>
+            )
+          }
+        />
+        <Kpi
+          eyebrow="Entries today"
+          value={spending ? spending.entries : '—'}
+          caption="Expense log entries submitted today"
+          accent="#6366f1"
+          icon={<Receipt size={18} strokeWidth={2} />}
+          footer={
+            spending ? (
+              <span>{spending.date}</span>
+            ) : null
+          }
+        />
+        <Kpi
+          eyebrow="Staff logging today"
+          value={spending ? spending.users : '—'}
+          caption="Unique team members who logged expenses"
+          accent="#0891b2"
+          icon={<Users size={18} strokeWidth={2} />}
+          footer={
+            spending && spending.top_spenders.length > 1 ? (
+              <span className="truncate">
+                Also: {spending.top_spenders.slice(1, 3).map(s => s.name).join(', ')}
+              </span>
+            ) : (
+              <span>—</span>
+            )
+          }
+        />
+      </section>
+
+      {/* Fleet KPI grid */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           eyebrow="Total asset valuation"
