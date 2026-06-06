@@ -20,6 +20,7 @@ import {
   AuthenticatedRequest,
   verifyToken,
   requireAccessRole,
+  requireBusinessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
   handleCors,
@@ -69,18 +70,18 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     }
 
     if (method === 'POST') {
-      if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
+      if (!requireBusinessRole(authReq, res, ['Admin', 'Manager'])) return;
       return await createAsset(authReq, res);
     }
 
     if (method === 'PUT') {
-      if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
+      if (!requireBusinessRole(authReq, res, ['Admin', 'Manager'])) return;
       if (!id) return json(res, 400, { error: 'id query parameter is required' });
       return await updateAsset(authReq, res, id);
     }
 
     if (method === 'DELETE') {
-      if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
+      if (!requireBusinessRole(authReq, res, ['Admin', 'Manager'])) return;
       if (!id) return json(res, 400, { error: 'id query parameter is required' });
       return await deleteAsset(authReq, res, id);
     }
@@ -230,7 +231,7 @@ async function handleAssetRequests(
   }
 
   if (method === 'POST') {
-    if (!requireAccessRole(req, res, ['super_admin', 'admin', 'user'])) return;
+    if (!requireBusinessRole(req, res, ['Admin', 'Manager'])) return;
     try {
       const data = AssetRequestSchema.parse(req.body);
       const [row] = (await sql`
@@ -286,7 +287,7 @@ async function handleAssetRequests(
   }
 
   if (method === 'PUT') {
-    if (!requireAccessRole(req, res, ['super_admin', 'admin', 'user'])) return;
+    if (!requireBusinessRole(req, res, ['Admin', 'Manager'])) return;
     if (!id) return json(res, 400, { error: 'id query parameter is required' });
 
     try {
@@ -361,7 +362,7 @@ async function handleAssetRequests(
   }
 
   if (method === 'DELETE') {
-    if (!requireAccessRole(req, res, ['super_admin', 'admin'])) return;
+    if (!requireBusinessRole(req, res, ['Admin', 'Manager'])) return;
     if (!id) return json(res, 400, { error: 'id query parameter is required' });
 
     const [request] = (await sql`
