@@ -98,13 +98,13 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     `;
 
     const [carHire] = await sql`
-      SELECT COALESCE(SUM(amount_paid),0) AS total, COUNT(*)::int AS entries
-      FROM car_hire_bookings WHERE start_date BETWEEN ${from} AND ${to}
+      SELECT COALESCE(SUM(total_amount),0) AS total, COUNT(*)::int AS entries
+      FROM car_hire_bookings WHERE created_at::date BETWEEN ${from} AND ${to}
     `;
     const carHireRows = await sql`
-      SELECT start_date, end_date, hirer_name, daily_rate, total_amount, amount_paid, currency, status
-      FROM car_hire_bookings WHERE start_date BETWEEN ${from} AND ${to}
-      ORDER BY start_date DESC
+      SELECT start_date, end_date, hirer_name, daily_rate, total_amount, amount_paid, currency, status, created_at
+      FROM car_hire_bookings WHERE created_at::date BETWEEN ${from} AND ${to}
+      ORDER BY created_at DESC
     `;
 
     const [lodgers] = await sql`
@@ -113,7 +113,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     `;
     const lodgerRows = await sql`
       SELECT lp.payment_date, lp.amount, lp.currency, lp.payment_method, lp.month_covered,
-             l.name AS lodger_name, l.room_number
+             l.full_name AS lodger_name, l.room_number
       FROM lodger_payments lp
       JOIN lodgers l ON l.id = lp.lodger_id
       WHERE lp.payment_date BETWEEN ${from} AND ${to}
@@ -140,7 +140,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       { source: 'Freezit Sales',    total: coerce(freezit.total),  entries: freezit.entries  },
       { source: 'Ice Sales',        total: coerce(ice.total),      entries: ice.entries      },
       { source: 'WiFi Tokens',      total: coerce(wifi.total),     entries: wifi.entries     },
-      { source: 'Car Hire',         total: coerce(carHire.total),  entries: carHire.entries  },
+      { source: 'Car Hire (booked)', total: coerce(carHire.total),  entries: carHire.entries  },
       { source: 'Lodger Payments',  total: coerce(lodgers.total),  entries: lodgers.entries  },
     ];
 
