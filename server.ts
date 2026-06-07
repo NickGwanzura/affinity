@@ -55,6 +55,8 @@ const { default: auditLogsHandler } = await import('./api/audit-logs.js');
 const { default: emailsHandler } = await import('./api/emails.js');
 
 const { default: carHireHandler } = await import('./api/car-hire.js');
+const { default: freezitHandler }   = await import('./api/freezit.js');
+const { default: wifiTokensHandler } = await import('./api/wifi-tokens.js');
 const { default: iceSalesHandler } = await import('./api/ice-sales.js');
 const { default: lodgersHandler } = await import('./api/lodgers.js');
 const { default: salesPlHandler } = await import('./api/sales-pl.js');
@@ -101,6 +103,8 @@ app.all('/api/ai', mount(aiHandler));
 app.all('/api/audit-logs', mount(auditLogsHandler));
 app.all('/api/emails', mount(emailsHandler));
 app.all('/api/car-hire', mount(carHireHandler));
+app.all('/api/freezit', mount(freezitHandler));
+app.all('/api/wifi-tokens', mount(wifiTokensHandler));
 app.all('/api/fund-disbursements', mount(fundDisbursementsHandler));
 app.all('/api/cash-handovers',    mount(cashHandoversHandler));
 app.all('/api/period-report',     mount(periodReportHandler));
