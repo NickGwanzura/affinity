@@ -83,6 +83,7 @@ export const AssetRegister: React.FC<AssetRegisterProps> = ({ userRole }) => {
     try {
       const body = {
         ...assetForm,
+        purchase_date: assetForm.purchase_date || null,
         purchase_value: assetForm.purchase_value ? parseFloat(assetForm.purchase_value) : null,
       };
       if (editingAsset) {
