@@ -28,6 +28,22 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const view = this.props.view;
+
+    // Stale chunk after a new deploy — auto-reload once to pick up the new bundle.
+    const isChunkError =
+      error.message.includes('Failed to fetch dynamically imported module') ||
+      error.message.includes('Importing a module script failed') ||
+      error.name === 'ChunkLoadError';
+    if (isChunkError) {
+      const reloadKey = 'chunkReloadAt';
+      const last = Number(sessionStorage.getItem(reloadKey) || 0);
+      if (Date.now() - last > 30_000) {
+        sessionStorage.setItem(reloadKey, String(Date.now()));
+        window.location.reload();
+        return;
+      }
+    }
+
     logger.error('View crashed', {
       view,
       err: error,
@@ -47,18 +63,26 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Per-view inline fallback so a crash in one tab doesn't kill the shell.
       if (this.props.view) {
+        const isChunkError =
+          this.state.error?.message.includes('Failed to fetch dynamically imported module') ||
+          this.state.error?.message.includes('Importing a module script failed') ||
+          this.state.error?.name === 'ChunkLoadError';
         return (
           <div className="p-8 max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold text-[#18181b] mb-2">Something went wrong</h2>
+            <h2 className="text-xl font-semibold text-[#18181b] mb-2">
+              {isChunkError ? 'App updated — please refresh' : 'Something went wrong'}
+            </h2>
             <p className="text-sm text-[#52525b] mb-4">
-              The {this.props.view} view crashed. Reload the page or switch to another view.
+              {isChunkError
+                ? 'A new version of the app was deployed while you were using it. Refresh the page to continue.'
+                : `The ${this.props.view} view crashed. Reload the page or switch to another view.`}
             </p>
-            <details className="text-xs text-[#71717a]">
-              <summary>Error details</summary>
-              <pre className="mt-2 p-3 bg-stone-50 border border-[#e7e5e4] overflow-auto">
-                {this.state.error?.message || 'Unknown error'}
-              </pre>
-            </details>
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#D97706] px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition-colors"
+            >
+              Refresh now
+            </button>
           </div>
         );
       }
