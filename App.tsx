@@ -54,6 +54,9 @@ const SalesHub = lazy(() =>
 const Rentals = lazy(() =>
   import('./components/Rentals').then(module => ({ default: module.Rentals }))
 );
+const DebtorsCreditors = lazy(() =>
+  import('./components/DebtorsCreditors').then(module => ({ default: module.DebtorsCreditors }))
+);
 const MyExpensesView = lazy(() =>
   import('./components/MyExpensesView').then(module => ({ default: module.MyExpensesView }))
 );
@@ -292,6 +295,8 @@ export default function App() {
         return <ErrorBoundary view="sales"><SalesHub /></ErrorBoundary>;
       case 'rentals':
         return <ErrorBoundary view="rentals"><Rentals /></ErrorBoundary>;
+      case 'debtors-creditors':
+        return <ErrorBoundary view="debtors-creditors"><DebtorsCreditors /></ErrorBoundary>;
       case 'ceo':
         return <ErrorBoundary view="ceo"><CEODashboard /></ErrorBoundary>;
       case 'my-expenses':

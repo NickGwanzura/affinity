@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   TrendingUp,
   Store,
+  Scale,
 } from 'lucide-react';
 import { AppUser, UserRole } from '../types';
 import affinityLogo from '../assets/affinity-logo.svg';
@@ -49,6 +50,7 @@ export type AppView =
   | 'assets'
   | 'sales'
   | 'rentals'
+  | 'debtors-creditors'
   | 'director'
   | 'ceo'
   | 'my-expenses';
@@ -83,7 +85,8 @@ const navItems: {
   { id: 'payslips',       label: 'Payslips',         roles: ['Admin', 'Manager'],                    Icon: Banknote   },
   { id: 'funds',          label: 'Operating Funds',  roles: ['Admin', 'Accountant', 'Manager'],      Icon: Wallet     },
   { id: 'assets',         label: 'Asset Register',   roles: ['Admin', 'Manager'],                    Icon: Boxes      },
-  { id: 'rentals',        label: 'Shop Rentals',     roles: ['Admin', 'Manager'],                    Icon: Store      },
+  { id: 'rentals',           label: 'Shop Rentals',      roles: ['Admin', 'Manager'],                         Icon: Store  },
+  { id: 'debtors-creditors', label: 'Debtors & Creditors', roles: ['Admin', 'Manager', 'Accountant'],          Icon: Scale  },
   { id: 'ceo',            label: 'CEO Dashboard',    roles: ['Admin', 'CEO'],                        Icon: LineChart  },
   { id: 'my-expenses',    label: 'My Expenses',      roles: ['Admin','Manager','Director','Accountant','Driver','Sales','Car Hire','CEO'], Icon: Receipt },
   { id: 'updates',        label: 'Updates',          roles: ['Admin'],                               Icon: Mail       },
