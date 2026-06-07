@@ -7,13 +7,18 @@ import { dataService } from '../../services/dataService';
 
 type Period = 'daily' | 'weekly' | 'monthly';
 
-const PERIODS: { id: Period; label: string; desc: string }[] = [
+const ALL_PERIODS: { id: Period; label: string; desc: string }[] = [
   { id: 'daily',   label: 'Today',       desc: 'All income & expenses logged today' },
   { id: 'weekly',  label: 'This Week',   desc: 'Monday through today' },
   { id: 'monthly', label: 'This Month',  desc: 'First of month through today' },
 ];
 
-export const PeriodReportPanel: React.FC = () => {
+interface PeriodReportPanelProps {
+  periods?: Period[];
+}
+
+export const PeriodReportPanel: React.FC<PeriodReportPanelProps> = ({ periods }) => {
+  const PERIODS = periods ? ALL_PERIODS.filter(p => periods.includes(p.id)) : ALL_PERIODS;
   const { showToast } = useToast();
   const [loading, setLoading] = useState<Period | null>(null);
 

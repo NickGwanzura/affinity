@@ -3,6 +3,7 @@ import { RefreshCw, BarChart3 } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import { useToast } from './Toast';
 import { api } from '../services/apiClient';
+import { PeriodReportPanel } from './shared/PeriodReportPanel';
 
 const fmt = (n: number) => formatCurrency(n, 'USD');
 
@@ -160,6 +161,12 @@ export const CEODashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <BreakdownTable title="Monthly Income" data={data.this_month.income_breakdown} />
         <BreakdownTable title="Monthly Expenses" data={data.this_month.expense_breakdown} />
+      </div>
+
+      {/* PDF Reports */}
+      <div className="pt-4 border-t border-stone-200">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400 mb-3">PDF Reports</p>
+        <PeriodReportPanel periods={['weekly', 'monthly']} />
       </div>
     </div>
   );
