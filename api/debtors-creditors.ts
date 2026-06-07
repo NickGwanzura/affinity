@@ -36,9 +36,19 @@ const json = (res: ApiResponse, s: number, b: unknown) => res.status(s).json(b);
 const coerce = (v: unknown) => Number(v) || 0;
 
 const CURRENCIES = ['USD', 'GBP', 'NAD', 'ZAR', 'BWP'] as const;
-const STATUSES = ['unpaid', 'partial', 'paid', 'written_off'] as const;
+const DEBTOR_TYPES = ['client', 'dealer', 'individual', 'supplier', 'other'] as const;
 
 const DebtorSchema = z.object({
+  name:         z.string().min(1).max(200),
+  type:         z.enum(DEBTOR_TYPES).default('other'),
+  contact_name: z.string().max(200).optional().nullable(),
+  phone:        z.string().max(50).optional().nullable(),
+  email:        z.string().max(200).optional().nullable(),
+  address:      z.string().max(500).optional().nullable(),
+  notes:        z.string().max(500).optional().nullable(),
+});
+
+const CreditorSchema = z.object({
   name:         z.string().min(1).max(200),
   contact_name: z.string().max(200).optional().nullable(),
   phone:        z.string().max(50).optional().nullable(),
@@ -47,15 +57,15 @@ const DebtorSchema = z.object({
   notes:        z.string().max(500).optional().nullable(),
 });
 
-const CreditorSchema = DebtorSchema; // same shape
-
 const EntrySchema = z.object({
-  description: z.string().min(1).max(300),
-  reference:   z.string().max(100).optional().nullable(),
-  amount:      z.number().positive(),
-  currency:    z.enum(CURRENCIES).default('USD'),
-  due_date:    z.string().min(1).optional().nullable(),
-  notes:       z.string().max(500).optional().nullable(),
+  description:          z.string().min(1).max(300),
+  reference:            z.string().max(100).optional().nullable(),
+  amount:               z.number().positive(),
+  currency:             z.enum(CURRENCIES).default('USD'),
+  due_date:             z.string().min(1).optional().nullable(),
+  storage_fee_per_day:  z.number().nonnegative().optional().nullable(),
+  storage_fee_start_date: z.string().min(1).optional().nullable(),
+  notes:                z.string().max(500).optional().nullable(),
 });
 
 const PaymentSchema = z.object({
@@ -68,6 +78,29 @@ function deriveStatus(amount: number, paid: number): string {
   return 'partial';
 }
 
+// Calculate accumulated storage fee as of today
+const storageFeeExpr = `
+  CASE
+    WHEN e.storage_fee_per_day IS NOT NULL AND e.storage_fee_per_day > 0
+         AND e.storage_fee_start_date IS NOT NULL
+         AND e.status != 'paid' AND e.status != 'written_off'
+    THEN GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - e.storage_fee_start_date::timestamptz)) / 86400))
+         * e.storage_fee_per_day
+    ELSE 0
+  END
+`;
+
+function coerceEntry(r: Record<string, unknown>) {
+  return {
+    ...r,
+    amount:           coerce(r.amount),
+    paid_amount:      coerce(r.paid_amount),
+    storage_fee_per_day: r.storage_fee_per_day != null ? coerce(r.storage_fee_per_day) : null,
+    accumulated_storage_fee: coerce(r.accumulated_storage_fee),
+    total_owed: coerce(r.amount) - coerce(r.paid_amount) + coerce(r.accumulated_storage_fee),
+  };
+}
+
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
@@ -78,24 +111,34 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (!requireBusinessRole(authReq, res, ['Admin', 'Manager', 'Accountant'])) return;
 
   const { method, query } = req;
-  const resource  = typeof query.resource  === 'string' ? query.resource  : '';
-  const id        = typeof query.id        === 'string' ? query.id        : undefined;
-  const debtorId  = typeof query.debtor_id === 'string' ? query.debtor_id : undefined;
+  const resource   = typeof query.resource    === 'string' ? query.resource    : '';
+  const id         = typeof query.id          === 'string' ? query.id          : undefined;
+  const debtorId   = typeof query.debtor_id   === 'string' ? query.debtor_id   : undefined;
   const creditorId = typeof query.creditor_id === 'string' ? query.creditor_id : undefined;
-  const userId    = authReq.user!.id;
+  const userId     = authReq.user!.id;
 
   try {
     // ── STATS ────────────────────────────────────────────────────────────────
     if (resource === 'stats') {
       const today = new Date().toISOString().slice(0, 10);
 
+      // debtor stats include storage fees in outstanding
       const [dStats] = await sql`
         SELECT
-          COALESCE(SUM(amount - paid_amount) FILTER (WHERE status != 'paid' AND status != 'written_off'), 0) AS total_outstanding,
-          COUNT(*) FILTER (WHERE status = 'unpaid' OR status = 'partial')::int AS open_entries,
-          COUNT(*) FILTER (WHERE status != 'paid' AND status != 'written_off' AND due_date IS NOT NULL AND due_date < ${today})::int AS overdue_count,
-          COALESCE(SUM(amount - paid_amount) FILTER (WHERE status != 'paid' AND status != 'written_off' AND due_date IS NOT NULL AND due_date < ${today}), 0) AS overdue_amount
-        FROM debtor_entries
+          COALESCE(SUM(
+            (e.amount - e.paid_amount) +
+            CASE
+              WHEN e.storage_fee_per_day > 0 AND e.storage_fee_start_date IS NOT NULL
+                   AND e.status != 'paid' AND e.status != 'written_off'
+              THEN GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - e.storage_fee_start_date::timestamptz)) / 86400)) * e.storage_fee_per_day
+              ELSE 0
+            END
+          ) FILTER (WHERE e.status != 'paid' AND e.status != 'written_off'), 0) AS total_outstanding,
+          COUNT(*) FILTER (WHERE e.status = 'unpaid' OR e.status = 'partial')::int AS open_entries,
+          COUNT(*) FILTER (WHERE e.status != 'paid' AND e.status != 'written_off' AND e.due_date IS NOT NULL AND e.due_date < ${today})::int AS overdue_count,
+          COALESCE(SUM(e.amount - e.paid_amount) FILTER (WHERE e.status != 'paid' AND e.status != 'written_off' AND e.due_date IS NOT NULL AND e.due_date < ${today}), 0) AS overdue_amount,
+          COUNT(*) FILTER (WHERE e.storage_fee_per_day > 0 AND e.status != 'paid' AND e.status != 'written_off')::int AS storage_fee_entries
+        FROM debtor_entries e
       `;
 
       const [cStats] = await sql`
@@ -109,10 +152,11 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
       return json(res, 200, {
         debtors: {
-          total_outstanding: coerce(dStats.total_outstanding),
-          open_entries:      Number(dStats.open_entries),
-          overdue_count:     Number(dStats.overdue_count),
-          overdue_amount:    coerce(dStats.overdue_amount),
+          total_outstanding:   coerce(dStats.total_outstanding),
+          open_entries:        Number(dStats.open_entries),
+          overdue_count:       Number(dStats.overdue_count),
+          overdue_amount:      coerce(dStats.overdue_amount),
+          storage_fee_entries: Number(dStats.storage_fee_entries),
         },
         creditors: {
           total_outstanding: coerce(cStats.total_outstanding),
@@ -128,7 +172,15 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       if (method === 'GET') {
         const rows = await sql`
           SELECT d.*,
-            COALESCE(SUM(e.amount - e.paid_amount) FILTER (WHERE e.status != 'paid' AND e.status != 'written_off'), 0) AS outstanding,
+            COALESCE(SUM(
+              (e.amount - e.paid_amount) +
+              CASE
+                WHEN e.storage_fee_per_day > 0 AND e.storage_fee_start_date IS NOT NULL
+                     AND e.status != 'paid' AND e.status != 'written_off'
+                THEN GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - e.storage_fee_start_date::timestamptz)) / 86400)) * e.storage_fee_per_day
+                ELSE 0
+              END
+            ) FILTER (WHERE e.status != 'paid' AND e.status != 'written_off'), 0) AS outstanding,
             COUNT(e.id) FILTER (WHERE e.status = 'unpaid' OR e.status = 'partial')::int AS open_entries
           FROM debtors d
           LEFT JOIN debtor_entries e ON e.debtor_id = d.id
@@ -141,8 +193,8 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         if (!p.success) return json(res, 400, { error: 'Invalid data', details: p.error.issues });
         const d = p.data;
         const [row] = await sql`
-          INSERT INTO debtors (name, contact_name, phone, email, address, notes)
-          VALUES (${d.name}, ${d.contact_name ?? null}, ${d.phone ?? null}, ${d.email ?? null}, ${d.address ?? null}, ${d.notes ?? null})
+          INSERT INTO debtors (name, type, contact_name, phone, email, address, notes)
+          VALUES (${d.name}, ${d.type}, ${d.contact_name ?? null}, ${d.phone ?? null}, ${d.email ?? null}, ${d.address ?? null}, ${d.notes ?? null})
           RETURNING *
         `;
         await logAuditEvent({ req, userId, action: 'debtor.created', tableName: 'debtors', recordId: row.id, newData: row });
@@ -153,8 +205,8 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         if (!p.success) return json(res, 400, { error: 'Invalid data', details: p.error.issues });
         const d = p.data;
         const [row] = await sql`
-          UPDATE debtors SET name=${d.name}, contact_name=${d.contact_name ?? null}, phone=${d.phone ?? null},
-            email=${d.email ?? null}, address=${d.address ?? null}, notes=${d.notes ?? null}
+          UPDATE debtors SET name=${d.name}, type=${d.type}, contact_name=${d.contact_name ?? null},
+            phone=${d.phone ?? null}, email=${d.email ?? null}, address=${d.address ?? null}, notes=${d.notes ?? null}
           WHERE id=${id}::uuid RETURNING *
         `;
         if (!row) return json(res, 404, { error: 'Not found' });
@@ -173,38 +225,54 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     if (resource === 'debtor-entries') {
       if (method === 'GET') {
         const rows = debtorId
-          ? await sql`SELECT * FROM debtor_entries WHERE debtor_id=${debtorId}::uuid ORDER BY created_at DESC`
+          ? await sql`
+              SELECT e.*,
+                (${sql.unsafe(storageFeeExpr)}) AS accumulated_storage_fee
+              FROM debtor_entries e
+              WHERE e.debtor_id=${debtorId}::uuid ORDER BY e.created_at DESC
+            `
           : await sql`
-              SELECT e.*, d.name AS debtor_name
+              SELECT e.*, d.name AS debtor_name, d.type AS debtor_type,
+                (${sql.unsafe(storageFeeExpr)}) AS accumulated_storage_fee
               FROM debtor_entries e JOIN debtors d ON d.id = e.debtor_id
               ORDER BY e.created_at DESC
             `;
-        return json(res, 200, rows.map(r => ({ ...r, amount: coerce(r.amount), paid_amount: coerce(r.paid_amount) })));
+        return json(res, 200, rows.map(coerceEntry));
       }
       if (method === 'POST' && debtorId) {
         const p = EntrySchema.safeParse(req.body);
         if (!p.success) return json(res, 400, { error: 'Invalid data', details: p.error.issues });
         const d = p.data;
         const [row] = await sql`
-          INSERT INTO debtor_entries (debtor_id, description, reference, amount, currency, due_date, notes)
-          VALUES (${debtorId}::uuid, ${d.description}, ${d.reference ?? null}, ${d.amount}, ${d.currency}, ${d.due_date ?? null}, ${d.notes ?? null})
+          INSERT INTO debtor_entries
+            (debtor_id, description, reference, amount, currency, due_date,
+             storage_fee_per_day, storage_fee_start_date, notes)
+          VALUES
+            (${debtorId}::uuid, ${d.description}, ${d.reference ?? null},
+             ${d.amount}, ${d.currency}, ${d.due_date ?? null},
+             ${d.storage_fee_per_day ?? null}, ${d.storage_fee_start_date ?? null},
+             ${d.notes ?? null})
           RETURNING *
         `;
         await logAuditEvent({ req, userId, action: 'debtor_entry.created', tableName: 'debtor_entries', recordId: row.id, newData: row });
-        return json(res, 201, { ...row, amount: coerce(row.amount), paid_amount: coerce(row.paid_amount) });
+        return json(res, 201, coerceEntry({ ...row, accumulated_storage_fee: 0 }));
       }
       if (method === 'PUT' && id) {
         const p = EntrySchema.safeParse(req.body);
         if (!p.success) return json(res, 400, { error: 'Invalid data', details: p.error.issues });
         const d = p.data;
         const [row] = await sql`
-          UPDATE debtor_entries SET description=${d.description}, reference=${d.reference ?? null},
-            amount=${d.amount}, currency=${d.currency}, due_date=${d.due_date ?? null}, notes=${d.notes ?? null}
+          UPDATE debtor_entries SET
+            description=${d.description}, reference=${d.reference ?? null},
+            amount=${d.amount}, currency=${d.currency}, due_date=${d.due_date ?? null},
+            storage_fee_per_day=${d.storage_fee_per_day ?? null},
+            storage_fee_start_date=${d.storage_fee_start_date ?? null},
+            notes=${d.notes ?? null}
           WHERE id=${id}::uuid RETURNING *
         `;
         if (!row) return json(res, 404, { error: 'Not found' });
         await logAuditEvent({ req, userId, action: 'debtor_entry.updated', tableName: 'debtor_entries', recordId: id, newData: row });
-        return json(res, 200, { ...row, amount: coerce(row.amount), paid_amount: coerce(row.paid_amount) });
+        return json(res, 200, coerceEntry({ ...row, accumulated_storage_fee: 0 }));
       }
       if (method === 'DELETE' && id) {
         const [row] = await sql`DELETE FROM debtor_entries WHERE id=${id}::uuid RETURNING *`;
@@ -220,13 +288,13 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       if (!p.success) return json(res, 400, { error: 'Invalid data', details: p.error.issues });
       const [entry] = await sql`SELECT * FROM debtor_entries WHERE id=${id}::uuid`;
       if (!entry) return json(res, 404, { error: 'Entry not found' });
-      const newPaid  = Math.min(coerce(entry.amount), coerce(entry.paid_amount) + p.data.amount);
+      const newPaid   = Math.min(coerce(entry.amount), coerce(entry.paid_amount) + p.data.amount);
       const newStatus = deriveStatus(coerce(entry.amount), newPaid);
       const [row] = await sql`
         UPDATE debtor_entries SET paid_amount=${newPaid}, status=${newStatus} WHERE id=${id}::uuid RETURNING *
       `;
       await logAuditEvent({ req, userId, action: 'debtor_entry.payment', tableName: 'debtor_entries', recordId: id, newData: row });
-      return json(res, 200, { ...row, amount: coerce(row.amount), paid_amount: coerce(row.paid_amount) });
+      return json(res, 200, coerceEntry({ ...row, accumulated_storage_fee: 0 }));
     }
 
     // ── CREDITORS ────────────────────────────────────────────────────────────
