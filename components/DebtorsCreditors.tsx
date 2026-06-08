@@ -299,6 +299,12 @@ const PartyModal: React.FC<{ isOpen: boolean; editing: Party | null; side: Side;
   const [email, setEmail]       = useState('');
   const [address, setAddress]   = useState('');
   const [notes, setNotes]       = useState('');
+  // initial entry fields (new parties only)
+  const [initAmount, setInitAmount]   = useState('');
+  const [initCurrency, setInitCurrency] = useState('USD');
+  const [initDesc, setInitDesc]       = useState('');
+  const [initDue, setInitDue]         = useState('');
+  const [initRef, setInitRef]         = useState('');
   const [loading, setLoading]   = useState(false);
   const label = side === 'debtors' ? 'Debtor' : 'Creditor';
 
@@ -306,6 +312,7 @@ const PartyModal: React.FC<{ isOpen: boolean; editing: Party | null; side: Side;
     if (isOpen) {
       setName(editing?.name ?? ''); setType(editing?.type ?? 'other'); setContact(editing?.contact_name ?? '');
       setPhone(editing?.phone ?? ''); setEmail(editing?.email ?? ''); setAddress(editing?.address ?? ''); setNotes(editing?.notes ?? '');
+      setInitAmount(''); setInitDesc(''); setInitDue(''); setInitRef(''); setInitCurrency('USD');
     }
   }, [isOpen, editing]);
 
@@ -317,6 +324,24 @@ const PartyModal: React.FC<{ isOpen: boolean; editing: Party | null; side: Side;
       const url = editing ? `${API}?resource=${side}&id=${editing.id}` : `${API}?resource=${side}`;
       const res = await authFetch(url, { method: editing ? 'PUT' : 'POST', body: JSON.stringify(body) });
       if (!res.ok) { const err = await res.json(); throw new Error(err.error); }
+      const party = await res.json();
+
+      // If a new party and amount provided, auto-create the first entry
+      if (!editing && initAmount && parseFloat(initAmount) > 0) {
+        const entryResource = side === 'debtors' ? 'debtor-entries' : 'creditor-entries';
+        const partyKey      = side === 'debtors' ? 'debtor_id'      : 'creditor_id';
+        const entryBody: Record<string, unknown> = {
+          description: initDesc || (side === 'debtors' ? 'Amount owed' : 'Amount we owe'),
+          amount: parseFloat(initAmount),
+          currency: initCurrency,
+          due_date: initDue || null,
+          reference: initRef || undefined,
+        };
+        await authFetch(`${API}?resource=${entryResource}&${partyKey}=${party.id}`, {
+          method: 'POST', body: JSON.stringify(entryBody),
+        });
+      }
+
       showToast(editing ? `${label} updated` : `${label} added`, 'success');
       onSaved();
     } catch (err: any) { showToast(err.message || 'Failed', 'error'); }
@@ -344,6 +369,24 @@ const PartyModal: React.FC<{ isOpen: boolean; editing: Party | null; side: Side;
           <TextInput id="p-address" labelText="Address" value={address} onChange={e => setAddress(e.target.value)} placeholder="Physical / postal address" />
         </div>
         <TextArea id="p-notes" labelText="Notes" rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any additional notes…" />
+
+        {/* Initial amount — new parties only */}
+        {!editing && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-700">Initial Amount (optional)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <TextInput id="p-init-amount" type="number" step="0.01" min="0.01" labelText="Amount" value={initAmount} onChange={e => setInitAmount(e.target.value)} placeholder="0.00" />
+              <Select id="p-init-cur" labelText="Currency" value={initCurrency} onChange={e => setInitCurrency(e.target.value)}>
+                {CURRENCIES.map(c => <SelectItem key={c} value={c} text={c} />)}
+              </Select>
+            </div>
+            <TextInput id="p-init-desc" labelText="Description" value={initDesc} onChange={e => setInitDesc(e.target.value)} placeholder={side === 'debtors' ? 'e.g. Invoice #001' : 'e.g. Supplier bill'} />
+            <div className="grid grid-cols-2 gap-3">
+              <TextInput id="p-init-ref"  labelText="Reference" value={initRef}  onChange={e => setInitRef(e.target.value)}  placeholder="Invoice / PO #" />
+              <TextInput id="p-init-due"  type="date" labelText="Due Date" value={initDue}  onChange={e => setInitDue(e.target.value)} />
+            </div>
+          </div>
+        )}
       </form>
     </Modal>
   );

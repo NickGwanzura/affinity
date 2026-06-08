@@ -78,17 +78,6 @@ function deriveStatus(amount: number, paid: number): string {
   return 'partial';
 }
 
-// Calculate accumulated storage fee as of today
-const storageFeeExpr = `
-  CASE
-    WHEN e.storage_fee_per_day IS NOT NULL AND e.storage_fee_per_day > 0
-         AND e.storage_fee_start_date IS NOT NULL
-         AND e.status != 'paid' AND e.status != 'written_off'
-    THEN GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - e.storage_fee_start_date::timestamptz)) / 86400))
-         * e.storage_fee_per_day
-    ELSE 0
-  END
-`;
 
 function coerceEntry(r: Record<string, unknown>) {
   return {
@@ -227,13 +216,27 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         const rows = debtorId
           ? await sql`
               SELECT e.*,
-                (${sql.unsafe(storageFeeExpr)}) AS accumulated_storage_fee
+                CASE
+                  WHEN e.storage_fee_per_day IS NOT NULL AND e.storage_fee_per_day > 0
+                       AND e.storage_fee_start_date IS NOT NULL
+                       AND e.status != 'paid' AND e.status != 'written_off'
+                  THEN GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - e.storage_fee_start_date::timestamptz)) / 86400))
+                       * e.storage_fee_per_day
+                  ELSE 0
+                END AS accumulated_storage_fee
               FROM debtor_entries e
               WHERE e.debtor_id=${debtorId}::uuid ORDER BY e.created_at DESC
             `
           : await sql`
               SELECT e.*, d.name AS debtor_name, d.type AS debtor_type,
-                (${sql.unsafe(storageFeeExpr)}) AS accumulated_storage_fee
+                CASE
+                  WHEN e.storage_fee_per_day IS NOT NULL AND e.storage_fee_per_day > 0
+                       AND e.storage_fee_start_date IS NOT NULL
+                       AND e.status != 'paid' AND e.status != 'written_off'
+                  THEN GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - e.storage_fee_start_date::timestamptz)) / 86400))
+                       * e.storage_fee_per_day
+                  ELSE 0
+                END AS accumulated_storage_fee
               FROM debtor_entries e JOIN debtors d ON d.id = e.debtor_id
               ORDER BY e.created_at DESC
             `;
