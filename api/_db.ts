@@ -5,7 +5,7 @@
  * Database credentials are never exposed to the browser.
  */
 
-import { neon, neonConfig, NeonQueryFunction, Pool } from '@neondatabase/serverless';
+import { neon, neonConfig, NeonQueryFunction, Pool, types } from '@neondatabase/serverless';
 import ws from 'ws';
 import { logger } from './_logger.js';
 import { captureException } from './_sentry.js';
@@ -14,6 +14,10 @@ import { captureException } from './_sentry.js';
 // Neon's serverless driver uses WebSockets for Pool connections;
 // in Node.js there is no built-in WebSocket so we supply the ws package.
 neonConfig.webSocketConstructor = ws;
+
+// By default pg/Neon returns numeric (OID 1700) columns as strings.
+// Parse them as floats so we get real numbers everywhere.
+types.setTypeParser(1700, (val: string) => parseFloat(val));
 
 let sqlInstance: NeonQueryFunction<false, false> | null = null;
 

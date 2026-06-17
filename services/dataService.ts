@@ -127,7 +127,7 @@ class DataService {
 
   async getQuotes(): Promise<Quote[]> {
     const response = await api.quotes.list({ limit: 1000 });
-    return response.data ?? [];
+    return (response.data ?? []).map(q => ({ ...q, amount_usd: Number(q.amount_usd) }));
   }
 
   async createQuote(data: Omit<Quote, 'id' | 'created_at' | 'quote_number'>): Promise<Quote> {
@@ -144,7 +144,7 @@ class DataService {
 
   async getInvoices(): Promise<Invoice[]> {
     const response = await api.invoices.list({ limit: 1000 });
-    return response.data ?? [];
+    return (response.data ?? []).map(i => ({ ...i, amount_usd: Number(i.amount_usd) }));
   }
 
   async createInvoice(
@@ -163,12 +163,12 @@ class DataService {
 
   async getPayments(): Promise<Payment[]> {
     const response = await api.payments.list();
-    return response ?? [];
+    return (response ?? []).map(p => ({ ...p, amount_usd: Number(p.amount_usd) }));
   }
 
   async getReceipts(): Promise<Receipt[]> {
     const response = await api.receipts.list();
-    return response ?? [];
+    return (response ?? []).map(r => ({ ...r, amount_received: Number(r.amount_received) }));
   }
 
   async addPayment(payment: PaymentInput): Promise<Payment> {
