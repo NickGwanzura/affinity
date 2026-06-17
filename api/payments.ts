@@ -222,7 +222,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const authReq = req as AuthenticatedRequest;
   if (!(await verifyToken(authReq, res))) return;
   if (!requirePasswordCurrent(authReq, res)) return;
-  if (!requireBusinessRole(authReq, res, ['Admin', 'Accountant'])) return;
+  if (!requireBusinessRole(authReq, res, ['Admin', 'Manager', 'Accountant'])) return;
 
   try {
     const action = typeof req.query.action === 'string' ? req.query.action : '';

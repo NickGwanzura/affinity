@@ -929,8 +929,8 @@ export const Financials: React.FC = () => {
     }
   };
 
-  const handleRecordPayment = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleRecordPayment = async (e?: React.FormEvent<HTMLFormElement>) => {
+    e?.preventDefault?.();
 
     // Step 1 — basic validation
     const amount = parseFloat(paymentForm.amount) || 0;
@@ -1063,7 +1063,9 @@ export const Financials: React.FC = () => {
       return;
     }
 
-    const normalizedClient = normalizeClientName(selectedClient);
+    const selectedOption = clientOptions.find(c => c.id === selectedClient);
+    const clientNameForMatch = selectedOption?.name || selectedClient;
+    const normalizedClient = normalizeClientName(clientNameForMatch);
     const isWithinStatementRange = (value?: string) => {
       if (!value) return false;
       const current = new Date(value).getTime();
@@ -1420,7 +1422,9 @@ export const Financials: React.FC = () => {
       .sort((a, b) => {
         if (a.outstandingAmount > 0 && b.outstandingAmount <= 0) return -1;
         if (a.outstandingAmount <= 0 && b.outstandingAmount > 0) return 1;
-        return new Date(a.invoice.due_date).getTime() - new Date(b.invoice.due_date).getTime();
+        const aTime = new Date(a.invoice.due_date || 0).getTime();
+        const bTime = new Date(b.invoice.due_date || 0).getTime();
+        return aTime - bTime;
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentForm.client_name, paymentForm.currency, paymentFormClient?.id, invoices, payments]);
@@ -1647,11 +1651,7 @@ export const Financials: React.FC = () => {
         }}
         onAllocationsChange={setPaymentAllocationForm}
         onClose={closePaymentModal}
-        onSubmit={() =>
-          handleRecordPayment({
-            preventDefault: () => {},
-          } as React.FormEvent<HTMLFormElement>)
-        }
+        onSubmit={() => handleRecordPayment()}
       />
 
       <ClientFormModal

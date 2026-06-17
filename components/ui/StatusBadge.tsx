@@ -69,7 +69,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   className = '',
   customColors,
 }) => {
-  const normalised = status.toLowerCase().trim();
+  const normalised = (status || '').toLowerCase().trim();
   const key        = statusAliases[normalised] ?? normalised;
   const config     = statusMap[key] ?? { palette: 'neutral' as const, label: status };
 

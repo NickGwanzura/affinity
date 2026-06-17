@@ -162,11 +162,13 @@ class DataService {
   }
 
   async getPayments(): Promise<Payment[]> {
-    return api.payments.list();
+    const response = await api.payments.list();
+    return response ?? [];
   }
 
   async getReceipts(): Promise<Receipt[]> {
-    return api.receipts.list();
+    const response = await api.receipts.list();
+    return response ?? [];
   }
 
   async addPayment(payment: PaymentInput): Promise<Payment> {
