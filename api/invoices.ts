@@ -217,7 +217,7 @@ async function listInvoices(req: AuthenticatedRequest, res: ApiResponse) {
       `,
     ]);
 
-    const total = parseInt(countResult[0].total);
+    const total = Number(countResult[0].total);
 
     res.status(200).json({
       data: rows,

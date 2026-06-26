@@ -171,7 +171,7 @@ async function doFetch<T>(url: string, config: globalThis.RequestInit, useCache:
 
   // Handle 204 No Content
   if (response.status === 204) {
-    return undefined as T;
+    return null as unknown as T;
   }
 
   // Get content type to determine how to parse response

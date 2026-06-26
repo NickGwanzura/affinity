@@ -99,7 +99,7 @@ async function listVehicles(req: AuthenticatedRequest, res: ApiResponse) {
       `,
     ]);
 
-    const total = parseInt(countResult[0].total);
+    const total = Number(countResult[0].total);
 
     res.status(200).json({
       data: rows,
@@ -259,7 +259,7 @@ async function listShipments(req: AuthenticatedRequest, res: ApiResponse) {
       `,
     ]);
 
-    const total = parseInt(countResult[0].total);
+    const total = Number(countResult[0].total);
 
     res.status(200).json({
       data: rows,

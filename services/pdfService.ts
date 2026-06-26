@@ -3,7 +3,6 @@ import autoTable from 'jspdf-autotable';
 import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense, Asset, LandedCostSummary, OperatingFund, AppUser } from '../types';
 import affinityLogoUrl from '../assets/affinity-logo.svg';
 import { buildDriverFundsReportData } from '../utils/driverFunds';
-import { registerGriftFont } from './pdfFonts';
 
 // ============================================================================
 // CONSTANTS
@@ -344,8 +343,6 @@ class PDFBuilder {
     this.doc = new jsPDF();
     this.company = company;
     this.filename = filename;
-
-    // Register Grift as the document font
     registerGriftFont(this.doc);
     this.doc.setFont('Grift', 'normal');
   }
@@ -3373,12 +3370,12 @@ export const generatePeriodReportPDF = async (
 
     doc.setTextColor(...mid);
     doc.setFontSize(7);
-    doc.setFont('Grift', 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text(kpi.label.toUpperCase(), x + 5, y + 6);
 
     doc.setTextColor(...dark);
     doc.setFontSize(11);
-    doc.setFont('Grift', 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text(kpi.value, x + 5, y + 14);
   });
 
@@ -3387,7 +3384,7 @@ export const generatePeriodReportPDF = async (
   // ── Income sources table ─────────────────────────────────────────────────
   checkY(20);
   doc.setFontSize(9);
-  doc.setFont('Grift', 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(...dark);
   doc.text('INCOME SUMMARY BY SOURCE', MARGIN, y);
   doc.setDrawColor(...accent);
@@ -3420,7 +3417,7 @@ export const generatePeriodReportPDF = async (
   // ── Expense log ──────────────────────────────────────────────────────────
   checkY(20);
   doc.setFontSize(9);
-  doc.setFont('Grift', 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(...dark);
   doc.text('STAFF EXPENSES', MARGIN, y);
   doc.setDrawColor(...[239, 68, 68] as [number,number,number]);
@@ -3430,7 +3427,7 @@ export const generatePeriodReportPDF = async (
 
   if (data.expense_rows.length === 0) {
     doc.setFontSize(8);
-    doc.setFont('Grift', 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(...mid);
     doc.text('No expenses logged in this period.', MARGIN, y + 4);
     y += 10;
@@ -3478,7 +3475,7 @@ export const generatePeriodReportPDF = async (
     if (!rows.length) return;
     checkY(24);
     doc.setFontSize(8);
-    doc.setFont('Grift', 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...mid);
     doc.text(title, MARGIN, y);
     y += 4;

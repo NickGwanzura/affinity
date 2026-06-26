@@ -91,7 +91,7 @@ async function listClients(req: AuthenticatedRequest, res: ApiResponse) {
             : sql`SELECT id, name, email, phone, address, company, notes, is_active, deleted_at, opening_balance, opening_balance_currency, created_at, updated_at FROM clients WHERE deleted_at IS NULL ORDER BY name DESC LIMIT ${limit} OFFSET ${offset}`)
     ]);
 
-    const total = parseInt(countResult[0].total);
+    const total = Number(countResult[0].total);
 
     res.status(200).json({
       data: rows,

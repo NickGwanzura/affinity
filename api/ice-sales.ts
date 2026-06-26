@@ -22,6 +22,7 @@ import {
   apiError,
   json,
 } from './_middleware.js';
+import { logAuditEvent } from './_audit.js';
 import { z } from 'zod';
 
 
@@ -105,8 +106,18 @@ async function handleSales(
 
   if (method === 'DELETE') {
     if (!id) return json(res, 400, { error: 'id required' });
+    const [existing] = await sql`SELECT id FROM ice_sales WHERE id = ${id}`;
+    if (!existing) return json(res, 404, { error: 'Sale not found' });
     await sql`DELETE FROM ice_sales WHERE id = ${id}`;
-    return json(res, 200, { success: true });
+    await logAuditEvent({
+      req,
+      userId: req.user?.id || null,
+      action: 'ice_sales.deleted',
+      tableName: 'ice_sales',
+      recordId: id,
+      oldData: existing,
+    });
+    return json(res, 204, null);
   }
 
   return json(res, 405, { error: 'Method not allowed' });

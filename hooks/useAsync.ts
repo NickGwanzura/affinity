@@ -36,18 +36,22 @@ export function useAsync<T>(
     async (...args: any[]): Promise<T | null> => {
       // Cancel any in-flight request
       abortControllerRef.current?.abort();
-      abortControllerRef.current = new AbortController();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
       setState({ data: null, loading: true, error: null });
 
       try {
-        const data = await asyncFunction(...args);
-        if (isMounted.current) {
+        const data = await asyncFunction(...args, controller.signal);
+        if (isMounted.current && !controller.signal.aborted) {
           setState({ data, loading: false, error: null });
         }
         return data;
       } catch (error) {
-        if (isMounted.current && !abortControllerRef.current.signal.aborted) {
+        // Suppress abort errors — they're intentional cancellations, not failures
+        const isAbort = controller.signal.aborted ||
+          (error instanceof Error && (error.name === 'AbortError' || error.message === 'canceled'));
+        if (isMounted.current && !isAbort) {
           setState({ data: null, loading: false, error: error as Error });
         }
         return null;

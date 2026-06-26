@@ -45,8 +45,10 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
 async function listPayslips(req: ApiRequest, res: ApiResponse) {
   const employeeId = typeof req.query.employeeId === 'string' ? req.query.employeeId : '';
-  const year = typeof req.query.year === 'string' ? parseInt(req.query.year, 10) : undefined;
-  const month = typeof req.query.month === 'string' ? parseInt(req.query.month, 10) : undefined;
+  const rawYear = typeof req.query.year === 'string' ? parseInt(req.query.year, 10) : NaN;
+  const rawMonth = typeof req.query.month === 'string' ? parseInt(req.query.month, 10) : NaN;
+  const year = Number.isFinite(rawYear) ? rawYear : undefined;
+  const month = Number.isFinite(rawMonth) && rawMonth >= 1 && rawMonth <= 12 ? rawMonth : undefined;
 
   const rows = employeeId
     ? await sql`
