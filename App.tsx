@@ -17,11 +17,6 @@ import { captureException } from './utils/sentry';
 const AdminDashboard = lazy(() =>
   import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard }))
 );
-const AccountantDashboard = lazy(() =>
-  import('./components/AccountantDashboard').then(module => ({
-    default: module.AccountantDashboard,
-  }))
-);
 const DriverPortal = lazy(() =>
   import('./components/DriverPortal').then(module => ({ default: module.DriverPortal }))
 );
@@ -143,7 +138,7 @@ export default function App() {
 
   const resolveDefaultView = (role: string) => {
     if (role === 'Driver') return 'driver' as const;
-    if (role === 'Accountant') return 'accountant' as const;
+    if (role === 'Accountant') return 'financials' as const;
     if (role === 'Sales') return 'sales' as const;
     if (role === 'Car Hire') return 'sales' as const;
     if (role === 'Director') return 'director' as const;
@@ -282,8 +277,6 @@ export default function App() {
         return <ErrorBoundary view="admin"><AdminDashboard initialView="trips" /></ErrorBoundary>;
       case 'assets':
         return <ErrorBoundary view="admin"><AdminDashboard initialView="assets" /></ErrorBoundary>;
-      case 'accountant':
-        return <ErrorBoundary view="accountant"><AccountantDashboard /></ErrorBoundary>;
       case 'driver':
         return <ErrorBoundary view="driver"><DriverPortal /></ErrorBoundary>;
       case 'settings':

@@ -34,7 +34,6 @@ import { Breadcrumbs, type BreadcrumbItem } from './ui/Breadcrumbs';
 export type AppView =
   | 'admin'
   | 'driver'
-  | 'accountant'
   | 'settings'
   | 'financials'
   | 'documents'
@@ -72,8 +71,7 @@ const navItems: {
   { id: 'admin',          label: 'Dashboard',        roles: ['Admin', 'Manager'],                    Icon: BarChart3  },
   { id: 'director',       label: 'Director',         roles: ['Admin', 'Director'],                   Icon: ShieldCheck },
   { id: 'sales',          label: 'Sales',            roles: ['Admin', 'Sales', 'Car Hire'],           Icon: TrendingUp  },
-  { id: 'accountant',     label: 'Accountant',       roles: ['Admin', 'Accountant'],                 Icon: Calculator },
-  { id: 'financials',     label: 'Financials',       roles: ['Admin', 'Manager', 'Accountant'],      Icon: DollarSign },
+  { id: 'financials',     label: 'Finance',          roles: ['Admin', 'Manager', 'Accountant'],      Icon: DollarSign },
   { id: 'reports',        label: 'Reports',          roles: ['Admin', 'Manager', 'Accountant'],      Icon: LineChart  },
   { id: 'clients',        label: 'Clients',          roles: ['Admin', 'Accountant'],                 Icon: Users      },
   { id: 'shipments',      label: 'Shipments',        roles: ['Admin', 'Manager', 'Accountant'],      Icon: Package    },

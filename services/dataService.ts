@@ -300,7 +300,8 @@ class DataService {
   }
 
   async getEmployees(): Promise<Employee[]> {
-    return api.employees.list();
+    const response = await api.employees.list({ limit: 1000 });
+    return response.data ?? [];
   }
 
   async createEmployee(

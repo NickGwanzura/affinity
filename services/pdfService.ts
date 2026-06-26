@@ -19,7 +19,7 @@ const COLORS = {
 };
 
 const FONTS = {
-  GRIFT: 'Grift',
+  GRIFT: 'helvetica',
   BOLD: 'bold',
   NORMAL: 'normal',
 };
@@ -343,8 +343,7 @@ class PDFBuilder {
     this.doc = new jsPDF();
     this.company = company;
     this.filename = filename;
-    registerGriftFont(this.doc);
-    this.doc.setFont('Grift', 'normal');
+    this.doc.setFont('helvetica', 'normal');
   }
 
   // -------------------------------------------------------------------------
@@ -3303,8 +3302,7 @@ export const generatePeriodReportPDF = async (
   companyName = 'Affinity Logistics'
 ): Promise<Blob> => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  registerGriftFont(doc);
-  doc.setFont('Grift', 'normal');
+  doc.setFont('helvetica', 'normal');
 
   const MARGIN = 14;
   const PAGE_W = 210;
@@ -3334,11 +3332,11 @@ export const generatePeriodReportPDF = async (
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
-  doc.setFont('Grift', 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text(companyName, MARGIN, 11);
 
   doc.setFontSize(9);
-  doc.setFont('Grift', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(161, 161, 170);
   doc.text('Income & Expense Report', MARGIN, 18);
 
