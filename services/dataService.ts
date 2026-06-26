@@ -172,13 +172,13 @@ class DataService {
   }
 
   async getPayments(): Promise<Payment[]> {
-    const response = await api.payments.list();
-    return (response ?? []).map(p => ({ ...p, amount_usd: Number(p.amount_usd) }));
+    const response = await api.payments.list({ limit: 1000 });
+    return (response.data ?? []).map(p => ({ ...p, amount_usd: Number(p.amount_usd) }));
   }
 
   async getReceipts(): Promise<Receipt[]> {
-    const response = await api.receipts.list();
-    return (response ?? []).map(r => ({ ...r, amount_received: Number(r.amount_received) }));
+    const response = await api.receipts.list({ limit: 1000 });
+    return (response.data ?? []).map(r => ({ ...r, amount_received: Number(r.amount_received) }));
   }
 
   async addPayment(payment: PaymentInput): Promise<Payment> {
