@@ -1,3 +1,12 @@
+/**
+ * /api/client-financials
+ *
+ * GET  /api/client-financials?resource=balance&clientId=xxx        — single client balance
+ * GET  /api/client-financials?resource=ledger&clientId=xxx         — client ledger
+ * GET  /api/client-financials?resource=all-balances                — all client balances
+ * POST /api/client-financials?resource=recalculate&clientId=xxx    — force recalculate
+ */
+
 import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
@@ -46,27 +55,27 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (!requireBusinessRole(authReq, res, ['Accountant'])) return;
 
   try {
-    const { action } = req.query;
+    const { resource } = req.query;
 
     switch (req.method) {
       case 'GET':
-        if (action === 'balance') {
+        if (resource === 'balance') {
           return await getClientBalance(authReq, res);
         }
-        if (action === 'ledger') {
+        if (resource === 'ledger') {
           return await getClientLedger(authReq, res);
         }
-        if (action === 'all-balances') {
+        if (resource === 'all-balances') {
           return await getAllClientBalances(authReq, res);
         }
-        return apiError(res, 400, 'Invalid action. Use: balance, ledger, or all-balances');
+        return apiError(res, 400, 'Invalid resource. Use: balance, ledger, or all-balances');
 
       case 'POST':
-        if (action === 'recalculate') {
+        if (resource === 'recalculate') {
           if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
           return await recalculateClientBalance(authReq, res);
         }
-        return apiError(res, 400, 'Invalid action. Use: recalculate');
+        return apiError(res, 400, 'Invalid resource. Use: recalculate');
 
       default:
         return apiError(res, 405, 'Method not allowed');

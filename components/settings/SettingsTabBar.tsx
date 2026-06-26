@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tag } from '../ui';
 
-export type SettingsTabKey = 'company' | 'users' | 'forensics' | 'requests' | 'invites';
+export type SettingsTabKey = 'company' | 'exchange-rates' | 'users' | 'forensics' | 'requests' | 'invites';
 
 interface TabDef {
   key: SettingsTabKey;
@@ -10,6 +10,7 @@ interface TabDef {
 
 const TABS: TabDef[] = [
   { key: 'company', label: 'Company Profile' },
+  { key: 'exchange-rates', label: 'Exchange Rates' },
   { key: 'users', label: 'User Management' },
   { key: 'forensics', label: 'Forensic Log' },
   { key: 'requests', label: 'Requests' },

@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Trash2, Pencil, Plus, Search, X, ChevronUp, ChevronDown, Inbox, ChevronsUpDown } from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Trash2, Pencil, Plus, Search, X, ChevronUp, ChevronDown, Inbox, ChevronsUpDown, Download } from 'lucide-react';
 import { Button, IconButton } from './Button';
 
 export interface DataTableColumn<T = any> {
@@ -16,6 +16,8 @@ export interface DataTableWrapperProps<T extends { id: string } = any> {
   columns: DataTableColumn<T>[];
   batchActions?: boolean;
   search?: boolean;
+  csvExport?: boolean;
+  csvFilename?: string;
   onAdd?: () => void;
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
@@ -32,6 +34,8 @@ export function DataTableWrapper<T extends { id: string }>({
   columns,
   batchActions = false,
   search = true,
+  csvExport = false,
+  csvFilename = 'export.csv',
   onAdd,
   onEdit,
   onDelete,
@@ -118,6 +122,34 @@ export function DataTableWrapper<T extends { id: string }>({
   const colCount = columns.length + (batchActions ? 1 : 0) + (onEdit || onDelete ? 1 : 0);
   const isSearching = searchQuery.trim().length > 0;
 
+  const handleCsvExport = useCallback(() => {
+    // Build CSV from the currently displayed (filtered+sorted) rows
+    const headers = columns.map((c) => c.header);
+    const body = filteredRows.map((row) =>
+      columns.map((col) => {
+        const val = col.render ? stripHtml(col.render(row) as string) : row[col.key];
+        const str = val == null ? '' : String(val);
+        // Escape quotes and wrap in quotes to handle commas
+        return `"${str.replace(/"/g, '""')}"`;
+      }).join(',')
+    );
+    const csv = [headers.join(','), ...body].join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = csvFilename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [filteredRows, columns, csvFilename]);
+
+  function stripHtml(html: string): string {
+    if (!html || typeof html !== 'string') return html;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
   return (
     <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
       {/* Toolbar */}
@@ -183,6 +215,15 @@ export function DataTableWrapper<T extends { id: string }>({
               <Button size="sm" leftIcon={<Plus size={14} />} onClick={onAdd}>
                 Add
               </Button>
+            )}
+            {csvExport && filteredRows.length > 0 && (
+              <IconButton
+                icon={<Download size={14} />}
+                size="sm"
+                variant="ghost"
+                label="Download CSV"
+                onClick={handleCsvExport}
+              />
             )}
           </div>
         </div>

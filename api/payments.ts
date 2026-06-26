@@ -11,10 +11,12 @@ import {
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
+import { json } from './_middleware.js';
 import { sql, withTransaction } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { PaymentAllocationSchema, PaymentSchema, PaymentUpdateSchema } from './_schemas.js';
 import { withIdempotency } from './_idempotency.js';
+import { getPagination, paginatedResponse } from './_pagination.js';
 
 type PaymentRow = {
   id: string;
@@ -233,7 +235,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
     switch (req.method) {
       case 'GET':
-        return await listPayments(res);
+        return await listPayments(req, res);
       case 'POST':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await withIdempotency(authReq, res, 'POST /payments', () =>
@@ -253,15 +255,24 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 }
 
-async function listPayments(res: ApiResponse) {
+async function listPayments(req: ApiRequest, res: ApiResponse) {
   try {
+    const pagination = getPagination(req);
+
+    const [{ count }] = await sql`
+      SELECT COUNT(*)::int AS count
+      FROM public.payments
+      WHERE deleted_at IS NULL
+    `;
+
     const rows = await sql`
       SELECT id, reference_id, client_name, client_id, type, amount_usd, currency, method, date, status
       FROM public.payments
       WHERE deleted_at IS NULL
       ORDER BY date DESC
+      LIMIT ${pagination.limit} OFFSET ${pagination.offset}
     `;
-    return res.status(200).json(await attachAllocations(rows as PaymentRow[]));
+    return json(res, 200, paginatedResponse(await attachAllocations(rows as PaymentRow[]), count, pagination));
   } catch (error) {
     return apiError(res, 500, 'Failed to load payments', error);
   }

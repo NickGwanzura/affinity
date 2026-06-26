@@ -1,52 +1,40 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, BarChart3 } from 'lucide-react';
-import { formatCurrency } from '../utils/formatters';
+import { formatUSD } from '../utils/formatters';
 import { useToast } from './Toast';
 import { api } from '../services/apiClient';
 import { PeriodReportPanel } from './shared/PeriodReportPanel';
 
-const fmt = (n: number) => formatCurrency(n, 'USD');
+const fmt = (n: number) => formatUSD(n);
 
 interface CeoData {
-  today: {
-    date: string;
-    income: number;
-    expenses: number;
-    net: number;
-    income_breakdown: Record<string, number>;
-    expense_breakdown: Record<string, number>;
-  };
-  this_month: {
-    income: number;
-    expenses: number;
-    net: number;
-    income_breakdown: Record<string, number>;
-    expense_breakdown: Record<string, number>;
-  };
+  month: string;
+  from: string;
+  to: string;
+  wifi_tokens: number;
+  lodgers: number;
+  freezits: number;
+  expenses: number;
+  disbursements: number;
+  total_income: number;
+  total_outgoings: number;
+  net: number;
 }
 
-const KpiCard: React.FC<{ label: string; value: string; positive?: boolean; negative?: boolean }> = ({ label, value, positive, negative }) => (
-  <div className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5">
-    <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">{label}</p>
-    <p className={`mt-2 text-2xl font-bold tabular-nums ${
-      positive ? 'text-emerald-600' : negative ? 'text-red-600' : 'text-zinc-900'
-    }`}>{value}</p>
+const SectionHeader: React.FC<{ label: string }> = ({ label }) => (
+  <div className="px-4 py-2.5 bg-stone-50 border-y border-stone-200">
+    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-400">{label}</p>
   </div>
 );
 
-const BreakdownTable: React.FC<{ title: string; data: Record<string, number> }> = ({ title, data }) => (
-  <div className="rounded-xl border border-stone-200 bg-white overflow-hidden">
-    <div className="px-4 py-3 border-b border-stone-100">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400">{title}</p>
-    </div>
-    <div className="divide-y divide-stone-100">
-      {Object.entries(data).map(([key, val]) => (
-        <div key={key} className="flex items-center justify-between px-4 py-2.5">
-          <span className="text-sm capitalize text-zinc-700">{key.replace(/_/g, ' ')}</span>
-          <span className="text-sm font-semibold text-zinc-900">{fmt(Number(val))}</span>
-        </div>
-      ))}
-    </div>
+const Row: React.FC<{ label: string; value: string; bold?: boolean; positive?: boolean; negative?: boolean; total?: boolean }> = ({ label, value, bold, positive, negative, total }) => (
+  <div className={`flex items-center justify-between px-4 py-3 ${total ? 'border-t-2 border-stone-300' : ''}`}>
+    <span className={`text-sm capitalize ${bold ? 'font-semibold text-zinc-900' : 'text-zinc-700'}`}>{label}</span>
+    <span className={`text-sm tabular-nums ${
+      bold ? 'font-bold' : 'font-semibold'
+    } ${
+      positive ? 'text-emerald-600' : negative ? 'text-red-600' : 'text-zinc-900'
+    }`}>{value}</span>
   </div>
 );
 
@@ -74,25 +62,14 @@ export const CEODashboard: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
-            <div className="h-8 w-48 app-shimmer rounded" />
-            <div className="h-4 w-36 app-shimmer rounded" />
+            <div className="h-8 w-56 app-shimmer rounded" />
+            <div className="h-4 w-40 app-shimmer rounded" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="rounded-xl border border-stone-200 bg-white p-4">
-              <div className="h-3 w-16 app-shimmer rounded mb-3" />
-              <div className="h-7 w-28 app-shimmer rounded" />
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {[1,2].map(i => (
-            <div key={i} className="rounded-xl border border-stone-200 bg-white p-4">
-              <div className="h-4 w-24 app-shimmer rounded mb-4" />
-              {[1,2,3].map(j => (
-                <div key={j} className="h-4 w-full app-shimmer rounded mb-3" />
-              ))}
+        <div className="rounded-xl border border-stone-200 bg-white overflow-hidden">
+          {[1,2,3,4,5,6,7].map(i => (
+            <div key={i} className="px-4 py-3.5 border-b border-stone-100 last:border-b-0">
+              <div className="h-4 w-full app-shimmer rounded" />
             </div>
           ))}
         </div>
@@ -114,58 +91,58 @@ export const CEODashboard: React.FC = () => {
     );
   }
 
+  const hasPositiveNet = data.net >= 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">CEO Dashboard</h1>
-          <p className="mt-0.5 text-sm text-zinc-500">Daily summary of income and expenses</p>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            Monthly sales overview — {data.month}
+          </p>
         </div>
-        <button onClick={fetchData} className="flex items-center gap-1.5 text-sm font-medium text-[#D97706] hover:text-amber-700">
-          <RefreshCw size={14} />Refresh
-        </button>
-      </div>
-
-      {/* Today's KPIs */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400 mb-3">
-          Today &mdash; {data.today.date}
-        </p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <KpiCard label="Income" value={fmt(data.today.income)} positive />
-          <KpiCard label="Expenses" value={fmt(data.today.expenses)} negative />
-          <KpiCard label="Net" value={fmt(data.today.net)} positive={data.today.net >= 0} negative={data.today.net < 0} />
-          <KpiCard label="Margin" value={data.today.income > 0 ? `${Math.round((data.today.net / data.today.income) * 100)}%` : '-'} positive={data.today.net >= 0} negative={data.today.net < 0} />
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-zinc-400">{data.from} – {data.to}</span>
+          <button onClick={fetchData} className="flex items-center gap-1.5 text-sm font-medium text-[#D97706] hover:text-amber-700">
+            <RefreshCw size={14} />Refresh
+          </button>
         </div>
       </div>
 
-      {/* Today's Breakdown */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <BreakdownTable title="Today's Income" data={data.today.income_breakdown} />
-        <BreakdownTable title="Today's Expenses" data={data.today.expense_breakdown} />
-      </div>
+      {/* Monthly Sales Table */}
+      <div className="rounded-xl border border-stone-200 bg-white overflow-hidden">
+        {/* Income Section */}
+        <SectionHeader label="Income" />
 
-      {/* This Month KPIs */}
-      <div className="pt-4 border-t border-stone-200">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400 mb-3">This Month</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <KpiCard label="Income" value={fmt(data.this_month.income)} positive />
-          <KpiCard label="Expenses" value={fmt(data.this_month.expenses)} negative />
-          <KpiCard label="Net" value={fmt(data.this_month.net)} positive={data.this_month.net >= 0} negative={data.this_month.net < 0} />
-          <KpiCard label="Margin" value={data.this_month.income > 0 ? `${Math.round((data.this_month.net / data.this_month.income) * 100)}%` : '-'} positive={data.this_month.net >= 0} negative={data.this_month.net < 0} />
+        <Row label="Freezits"    value={fmt(data.freezits)}    positive />
+        <Row label="Wifi Tokens" value={fmt(data.wifi_tokens)} positive />
+        <Row label="Lodgers"     value={fmt(data.lodgers)}     positive />
+
+        <Row label="Total Income" value={fmt(data.total_income)} bold positive total />
+
+        {/* Outgoings Section */}
+        <SectionHeader label="Expenses & Disbursements" />
+
+        <Row label="Expenses"      value={fmt(data.expenses)}      negative />
+        <Row label="Disbursements" value={fmt(data.disbursements)} negative />
+
+        <Row label="Total Outgoings" value={fmt(data.total_outgoings)} bold negative total />
+
+        {/* Net */}
+        <div className="border-t-2 border-amber-500 bg-amber-50/50">
+          <div className="flex items-center justify-between px-4 py-3.5">
+            <span className="text-sm font-bold text-zinc-900">Net</span>
+            <span className={`text-base font-bold tabular-nums ${
+              hasPositiveNet ? 'text-emerald-600' : 'text-red-600'
+            }`}>{fmt(data.net)}</span>
+          </div>
         </div>
-      </div>
-
-      {/* Month Breakdown */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <BreakdownTable title="Monthly Income" data={data.this_month.income_breakdown} />
-        <BreakdownTable title="Monthly Expenses" data={data.this_month.expense_breakdown} />
       </div>
 
       {/* PDF Reports */}
-      <div className="pt-4 border-t border-stone-200">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-400 mb-3">PDF Reports</p>
+      <div className="pt-2">
         <PeriodReportPanel periods={['weekly', 'monthly']} />
       </div>
     </div>

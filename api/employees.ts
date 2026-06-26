@@ -3,6 +3,7 @@ import {
   AuthenticatedRequest,
   apiError,
   handleCors,
+  json,
   requireAccessRole,
   requirePasswordCurrent,
   setSecurityHeaders,
@@ -11,6 +12,7 @@ import {
 import { sql, withTransaction } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { EmployeeSchema, EmployeeUpdateSchema } from './_schemas.js';
+import { getPagination, paginatedResponse } from './_pagination.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
@@ -23,7 +25,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   try {
     switch (req.method) {
       case 'GET':
-        return await listEmployees(res);
+        return await listEmployees(req, res);
       case 'POST':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin'])) return;
         return await createEmployee(authReq, res);
@@ -41,14 +43,23 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 }
 
-async function listEmployees(res: ApiResponse) {
+async function listEmployees(req: ApiRequest, res: ApiResponse) {
+  const pagination = getPagination(req);
+
+  const [{ count }] = await sql`
+    SELECT COUNT(*)::int AS count
+    FROM employees
+    WHERE deleted_at IS NULL
+  `;
+
   const rows = await sql`
     SELECT *
     FROM employees
     WHERE deleted_at IS NULL
     ORDER BY created_at DESC
+    LIMIT ${pagination.limit} OFFSET ${pagination.offset}
   `;
-  return res.status(200).json(rows);
+  return json(res, 200, paginatedResponse(rows, count, pagination));
 }
 
 async function createEmployee(req: AuthenticatedRequest, res: ApiResponse) {

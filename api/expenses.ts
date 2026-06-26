@@ -12,15 +12,9 @@ import {
 import { logAuditEvent } from './_audit.js';
 import { sql, validateOrderColumn } from './_db.js';
 import { ExpenseSchema, ExpenseUpdateSchema, PaginationSchema } from './_schemas.js';
+import { getExchangeRate } from './exchange-rates.js';
 
 const EXPENSE_COLUMNS = ['id', 'vehicle_id', 'description', 'amount', 'currency', 'category', 'location', 'created_at'];
-const EXCHANGE_RATES: Record<string, number> = {
-  USD: 1,
-  GBP: 1.25,
-  NAD: 0.055,
-  BWP: 0.073,
-  ZAR: 0.055,
-};
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
@@ -116,7 +110,7 @@ async function createExpense(req: ApiRequest, res: ApiResponse) {
   try {
     const authReq = req as AuthenticatedRequest;
     const data = ExpenseSchema.parse(req.body);
-    const exchangeRate = data.category === 'Driver Disbursement' ? 1 : (EXCHANGE_RATES[data.currency] || 1);
+    const exchangeRate = data.category === 'Driver Disbursement' ? 1 : (await getExchangeRate(data.currency) || 1);
 
     try {
       const rows = await sql`
@@ -184,7 +178,7 @@ async function updateExpense(req: ApiRequest, res: ApiResponse) {
     const data = ExpenseUpdateSchema.parse(req.body);
     const exchangeRate =
       data.currency
-        ? (data.category === 'Driver Disbursement' ? 1 : (EXCHANGE_RATES[data.currency] || 1))
+        ? (data.category === 'Driver Disbursement' ? 1 : (await getExchangeRate(data.currency) || 1))
         : undefined;
 
     const existing = await sql`SELECT * FROM expenses WHERE id = ${id}::uuid`;

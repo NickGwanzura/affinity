@@ -12,6 +12,7 @@ export const USER_ROLES = {
   DIRECTOR: 'Director',
   CAR_HIRE: 'Car Hire',
   CEO: 'CEO',
+  GOODS_PICKUP: 'Goods Pickup',
 } as const;
 
 export type UserRoleValue = typeof USER_ROLES[keyof typeof USER_ROLES];
@@ -126,12 +127,15 @@ export const PAYMENT_TYPES = {
   OUTBOUND: 'Outbound',
 } as const;
 
-// Exchange Rates
+// Exchange Rates — default fallbacks; the app fetches live rates from the
+// API at runtime. Components should use `getExchangeRate(currency)` from
+// `services/exchangeRates.ts` instead of importing this constant directly.
+// These defaults match the initial seed in migration 0045.
 export const EXCHANGE_RATES = {
-  GBP: 1.27, // 1 GBP = 1.27 USD
+  GBP: 1.25, // 1 GBP = 1.25 USD  (fallback)
   NAD: 0.055, // 1 NAD = 0.055 USD (approx)
   USD: 1.0,
-  BWP: 0.074, // 1 BWP = 0.074 USD (Botswana Pula)
+  BWP: 0.073, // 1 BWP = 0.073 USD (Botswana Pula)
   ZAR: 0.055, // 1 ZAR = 0.055 USD (approx)
 } as const;
 

@@ -1,3 +1,12 @@
+/**
+ * @deprecated Use `api` from `./apiClient` directly instead.
+ *
+ * This service is a legacy facade. All new code should call
+ * `api.vehicles.list()`, `api.clients.get(id)`, etc. directly.
+ * The client-side balance calculation methods are fallbacks
+ * — prefer server-side `api.clientFinancials.getBalance(clientId)`.
+ */
+
 import { api, setToken } from './apiClient';
 import { authService } from './authService';
 import type {
@@ -13,6 +22,7 @@ import type {
   OperatingFund,
   Payslip,
   Payment,
+  PaymentAllocation,
   Quote,
   Receipt,
   RegistrationRequest,

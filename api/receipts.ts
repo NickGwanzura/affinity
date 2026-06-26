@@ -2,6 +2,7 @@ import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
   apiError,
+  json,
   handleCors,
   requireAccessRole,
   requirePasswordCurrent,
@@ -13,6 +14,7 @@ import { logAuditEvent } from './_audit.js';
 import { z } from 'zod';
 import { ReceiptSchema, ReceiptUpdateSchema } from './_schemas.js';
 import { withIdempotency } from './_idempotency.js';
+import { getPagination, paginatedResponse } from './_pagination.js';
 
 const isMissingTableError = (error: unknown, tableName: string): boolean =>
   error instanceof Error && error.message.includes(`relation "public.${tableName}" does not exist`);
@@ -67,7 +69,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   try {
     switch (req.method) {
       case 'GET':
-        return await listReceipts(res);
+        return await listReceipts(req, res);
       case 'POST':
         if (!requireAccessRole(authReq, res, ['super_admin', 'admin', 'user'])) return;
         return await withIdempotency(authReq, res, 'POST /receipts', () =>
@@ -87,17 +89,25 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 }
 
-async function listReceipts(res: ApiResponse) {
+async function listReceipts(req: ApiRequest, res: ApiResponse) {
   try {
+    const pagination = getPagination(req);
+
+    const [{ count }] = await sql`
+      SELECT COUNT(*)::int AS count
+      FROM public.receipts
+    `;
+
     const rows = await sql`
       SELECT *
       FROM public.receipts
       ORDER BY payment_date DESC, created_at DESC
+      LIMIT ${pagination.limit} OFFSET ${pagination.offset}
     `;
-    return res.status(200).json(rows);
+    return json(res, 200, paginatedResponse(rows, count, pagination));
   } catch (error) {
     if (isMissingTableError(error, 'receipts')) {
-      return res.status(200).json([]);
+      return json(res, 200, paginatedResponse([], 0, getPagination(req)));
     }
     return apiError(res, 500, 'Failed to load receipts', error);
   }

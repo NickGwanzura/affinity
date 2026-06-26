@@ -28,11 +28,10 @@ import {
   setSecurityHeaders,
   handleCors,
   apiError,
+  json,
 } from './_middleware.js';
-import { logAuditEvent } from './_audit.js';
 import { z } from 'zod';
 
-const json = (res: ApiResponse, s: number, b: unknown) => res.status(s).json(b);
 const coerce = (v: unknown) => Number(v) || 0;
 
 const CURRENCIES = ['USD', 'GBP', 'NAD', 'ZAR', 'BWP'] as const;

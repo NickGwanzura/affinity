@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { Login } from './components/Login';
 import { AcceptInvite } from './components/AcceptInvite';
 import { ResetPassword } from './components/ResetPassword';
+import { PublicGoodsPickup } from './components/PublicGoodsPickup';
 import { ForcePasswordChange } from './components/ForcePasswordChange';
 import { Layout, AppView } from './components/Layout';
 import { ToastViewport } from './components/Toast';
@@ -123,6 +124,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [isResetPassword, setIsResetPassword] = useState(false);
+  const [goodsPickupToken, setGoodsPickupToken] = useState<string | null>(null);
   const [forcePasswordChange, setForcePasswordChange] = useState(false);
 
   const navigate = (path: string, replace = false) => {
@@ -154,6 +156,13 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
     if (token) setInviteToken(token);
+
+    // Check for goods-pickup share link
+    const type = params.get('type');
+    if (type === 'goods-pickup') {
+      const pickupToken = params.get('token');
+      if (pickupToken) setGoodsPickupToken(pickupToken);
+    }
 
     // Check for password reset hash (multiple formats)
     const hash = window.location.hash;
@@ -352,6 +361,8 @@ export default function App() {
           }}
         />
       );
+    } else if (goodsPickupToken) {
+      content = <PublicGoodsPickup token={goodsPickupToken} />;
     } else {
       content = <Login onLogin={handleLogin} />;
     }

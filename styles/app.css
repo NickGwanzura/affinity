@@ -7,6 +7,64 @@
 @source "../services/**/*.{ts,tsx}";
 @source "../hooks/**/*.{ts,tsx}";
 
+/* ─── Grift font-face declarations ─────────────────────────────────────────── */
+@font-face {
+  font-family: 'Grift';
+  src: url('../assets/fonts/Grift-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Grift';
+  src: url('../assets/fonts/Grift-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Grift';
+  src: url('../assets/fonts/Grift-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Grift';
+  src: url('../assets/fonts/Grift-MediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Grift';
+  src: url('../assets/fonts/Grift-SemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Grift';
+  src: url('../assets/fonts/Grift-SemiBoldItalic.otf') format('opentype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Grift';
+  src: url('../assets/fonts/Grift-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Grift';
+  src: url('../assets/fonts/Grift-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 @theme {
   /* Brand */
@@ -61,10 +119,10 @@
 
 /* ─── Base layer: custom overrides on top of Tailwind preflight ───────────── */
 @layer base {
-  /* App font — General Sans throughout */
-  html, body, #root, button, input, textarea, select {
-    font-family: 'General Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
+	/* App font — Grift throughout */
+	  html, body, #root, button, input, textarea, select {
+	    font-family: 'Grift', 'General Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	  }
 
   body {
     text-rendering: optimizeLegibility;
@@ -223,8 +281,8 @@ input[type='number'] {
   width: 100%;
   overflow-x: hidden;
   background: #000;
-  font-family: 'General Sans', system-ui, -apple-system, sans-serif;
-}
+font-family: 'Grift', 'General Sans', system-ui, -apple-system, sans-serif;
+	}
 
 .login-shell__brand {
   position: relative;

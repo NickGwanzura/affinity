@@ -14,38 +14,9 @@ import {
   setSecurityHeaders,
   handleCors,
   apiError,
+  json,
 } from './_middleware.js';
-
-const json = (res: ApiResponse, status: number, body: unknown) =>
-  res.status(status).json(body);
-
-function dateRange(period: string, anchor: string): { from: string; to: string; label: string } {
-  const base = anchor ? new Date(anchor) : new Date();
-  base.setHours(12, 0, 0, 0); // avoid TZ edge cases
-
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-
-  if (period === 'daily') {
-    const d = fmt(base);
-    return { from: d, to: d, label: `Daily · ${d}` };
-  }
-
-  if (period === 'weekly') {
-    const day = base.getDay(); // 0=Sun
-    const diff = (day === 0 ? -6 : 1 - day); // back to Monday
-    const mon = new Date(base);
-    mon.setDate(base.getDate() + diff);
-    return { from: fmt(mon), to: fmt(base), label: `Weekly · ${fmt(mon)} – ${fmt(base)}` };
-  }
-
-  // monthly
-  const from = new Date(base.getFullYear(), base.getMonth(), 1);
-  return {
-    from: fmt(from),
-    to:   fmt(base),
-    label: `Monthly · ${from.toLocaleString('default', { month: 'long', year: 'numeric' })}`,
-  };
-}
+import { dateRange } from './_date-utils.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);

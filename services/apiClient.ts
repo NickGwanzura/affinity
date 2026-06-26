@@ -3,6 +3,10 @@
  *
  * Replaces direct database access with API calls
  * All requests include JWT token for authentication
+ *
+ * GET requests are transparently cached (default 5 min TTL).
+ * POST/PUT/DELETE requests automatically invalidate related cache entries.
+ * Pass `cache: false` in options to skip caching for a specific request.
  */
 
 import type {
@@ -27,6 +31,7 @@ import type {
   UserInvite,
   Vehicle,
 } from '../types';
+import { cacheGet, cacheSet, cacheInvalidate, cacheTrackPending } from './cacheStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -78,10 +83,34 @@ function toQueryString(
   return query ? `?${query}` : '';
 }
 
-// Base request function
-async function apiRequest<T>(endpoint: string, options: globalThis.RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+// Extra options beyond standard RequestInit
+interface ApiRequestOptions extends globalThis.RequestInit {
+  cache?: boolean | number; // false to skip, or TTL in ms
+}
 
+// Base request function
+async function apiRequest<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const method = (options.method || 'GET').toUpperCase();
+
+  // ── Cache hit (GET only, unless explicitly opted out) ──────────────────
+  const isGet = method === 'GET';
+  const cacheOpt = options.cache;
+  const useCache = isGet && cacheOpt !== false;
+
+  if (useCache) {
+    const ttl = typeof cacheOpt === 'number' ? cacheOpt : undefined;
+    const cached = cacheGet<T>(url);
+    if (cached !== null) return cached;
+
+    // Deduplicate concurrent in-flight requests for the same URL
+    const pending = cacheGet<Promise<T>>(`__pending__${url}`);
+    if (pending) return pending;
+
+    // We'll store the promise for dedup
+  }
+
+  // ── Build headers ──────────────────────────────────────────────────────
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -93,50 +122,81 @@ async function apiRequest<T>(endpoint: string, options: globalThis.RequestInit =
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // Strip custom cache option from the config passed to fetch
+  const { cache: _cache, ...fetchOptions } = options;
   const config: globalThis.RequestInit = {
-    ...options,
+    ...fetchOptions,
     headers,
   };
 
   try {
-    const response = await fetch(url, config);
+    // ── Dedup: store the pending promise ─────────────────────────────────
+    let promise: Promise<T>;
 
-    // Handle 204 No Content
-    if (response.status === 204) {
-      return undefined as T;
-    }
+    if (isGet) {
+      const existingPending = cacheGet<Promise<T>>(`__pending__${url}`);
+      if (existingPending) return existingPending;
 
-    // Get content type to determine how to parse response
-    const contentType = response.headers.get('content-type') || '';
-    const isJson = contentType.includes('application/json');
-
-    // Parse response based on content type
-    let data: unknown;
-    if (isJson) {
-      data = await response.json();
+      promise = doFetch<T>(url, config, useCache);
+      cacheSet(`__pending__${url}`, promise);
+      // Clean up pending marker when done
+      promise.finally(() => cacheRemove(`__pending__${url}`));
     } else {
-      const text = await response.text();
-      data = { error: text || 'Unknown error' };
+      promise = doFetch<T>(url, config, useCache);
     }
 
-    if (!response.ok) {
-      const errorPayload = (data ?? {}) as { error?: string };
-      throw new APIError(
-        errorPayload.error || `HTTP ${response.status}: ${response.statusText}`,
-        response.status,
-        data
-      );
+    const result = await promise;
+
+    // ── Cache the result (GET only) ──────────────────────────────────────
+    if (isGet && useCache) {
+      const ttl = typeof cacheOpt === 'number' ? cacheOpt : undefined;
+      cacheSet(url, result, ttl);
     }
 
-    return data as T;
+    // ── Invalidate related caches on mutations ──────────────────────────
+    if (!isGet) {
+      const basePath = new URL(url).pathname.replace('/api', '');
+      cacheInvalidate(basePath);
+    }
+
+    return result;
   } catch (error) {
-    if (error instanceof APIError) {
-      throw error;
-    }
-
-    // Network or other errors
+    if (error instanceof APIError) throw error;
     throw new APIError(error instanceof Error ? error.message : 'Network error', 0);
   }
+}
+
+async function doFetch<T>(url: string, config: globalThis.RequestInit, useCache: boolean): Promise<T> {
+  const response = await fetch(url, config);
+
+  // Handle 204 No Content
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  // Get content type to determine how to parse response
+  const contentType = response.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
+
+  // Parse response based on content type
+  let data: unknown;
+  if (isJson) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    data = { error: text || 'Unknown error' };
+  }
+
+  if (!response.ok) {
+    const errorPayload = (data ?? {}) as { error?: string };
+    throw new APIError(
+      errorPayload.error || `HTTP ${response.status}: ${response.statusText}`,
+      response.status,
+      data
+    );
+  }
+
+  return data as T;
 }
 
 type ListParams = { page?: number; limit?: number; sortBy?: string; sortOrder?: string };
@@ -321,7 +381,8 @@ export const api = {
   },
 
   payments: {
-    list: () => apiRequest<Payment[]>('/payments'),
+    list: (params?: ListParams): Promise<PaginatedResponse<Payment>> =>
+      apiRequest<PaginatedResponse<Payment>>(`/payments${buildQuery(params)}`),
     create: (
       data: Omit<Partial<Payment>, 'allocations'> & {
         allocations?: Array<{
@@ -371,7 +432,8 @@ export const api = {
   },
 
   receipts: {
-    list: () => apiRequest<Receipt[]>('/receipts'),
+    list: (params?: ListParams): Promise<PaginatedResponse<Receipt>> =>
+      apiRequest<PaginatedResponse<Receipt>>(`/receipts${buildQuery(params)}`),
     create: (data: Partial<Receipt>) =>
       apiRequest<Receipt>('/receipts', {
         method: 'POST',
@@ -557,7 +619,8 @@ export const api = {
   },
 
   employees: {
-    list: () => apiRequest<Employee[]>('/employees'),
+    list: (params?: ListParams): Promise<PaginatedResponse<Employee>> =>
+      apiRequest<PaginatedResponse<Employee>>(`/employees${buildQuery(params)}`),
     create: (data: Partial<Employee>) =>
       apiRequest<Employee>('/employees', {
         method: 'POST',
@@ -626,7 +689,7 @@ export const api = {
           credit_balance: number;
         };
         formula_applied: string;
-      }>(`/client-financials?action=balance&clientId=${clientId}`),
+      }>(`/client-financials?resource=balance&clientId=${clientId}`),
 
     getLedger: (clientId: string, params?: { from?: string; to?: string }) =>
       apiRequest<{
@@ -649,7 +712,7 @@ export const api = {
           closing_balance: number;
         };
       }>(
-        `/client-financials?action=ledger&clientId=${clientId}${
+        `/client-financials?resource=ledger&clientId=${clientId}${
           params ? `&${new URLSearchParams(params as Record<string, string>).toString()}` : ''
         }`
       ),
@@ -675,7 +738,7 @@ export const api = {
           is_active: boolean;
           created_at: string;
         }>;
-      }>(`/client-financials?action=all-balances${params ? `&${new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v != null && v !== '').map(([k,v]) => [k, String(v)]))).toString()}` : ''}`),
+      }>(`/client-financials?resource=all-balances${params ? `&${new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v != null && v !== '').map(([k,v]) => [k, String(v)]))).toString()}` : ''}`),
 
     recalculateBalance: (clientId: string) =>
       apiRequest<{
@@ -691,7 +754,7 @@ export const api = {
         };
         formula_applied: string;
         timestamp: string;
-      }>(`/client-financials?action=recalculate&clientId=${clientId}`, {
+      }>(`/client-financials?resource=recalculate&clientId=${clientId}`, {
         method: 'POST',
       }),
   },
@@ -735,6 +798,113 @@ export const api = {
 
   // Generic request for future endpoints
   request: apiRequest,
+
+  // ── Secondary business modules (resource-based) ────────────────────────
+
+  carHire: {
+    stats:       () => apiRequest<Record<string, unknown>>('/car-hire?resource=stats'),
+    vehicles:    () => apiRequest<unknown[]>('/car-hire?resource=vehicles'),
+    bookings:    () => apiRequest<unknown[]>('/car-hire?resource=bookings'),
+    expenses:    () => apiRequest<unknown[]>('/car-hire?resource=expenses'),
+    monthly:     () => apiRequest<unknown[]>('/car-hire?resource=monthly'),
+    createBooking:  (data: unknown) => apiRequest<unknown>('/car-hire?resource=bookings', { method: 'POST', body: JSON.stringify(data) }),
+    createVehicle:  (data: unknown) => apiRequest<unknown>('/car-hire?resource=vehicles', { method: 'POST', body: JSON.stringify(data) }),
+    updateBooking:  (id: string, data: unknown) => apiRequest<unknown>(`/car-hire?resource=bookings&id=${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteBooking:  (id: string) => apiRequest<void>(`/car-hire?resource=bookings&id=${id}`, { method: 'DELETE' }),
+    deleteVehicle:  (id: string) => apiRequest<void>(`/car-hire?resource=vehicles&id=${id}`, { method: 'DELETE' }),
+  },
+
+  freezit: {
+    stock:     () => apiRequest<unknown[]>('/freezit?resource=stock'),
+    sales:     () => apiRequest<unknown[]>('/freezit?resource=sales'),
+    stats:     () => apiRequest<Record<string, unknown>>('/freezit?resource=stats'),
+    createSale:   (data: unknown) => apiRequest<unknown>('/freezit?resource=sales', { method: 'POST', body: JSON.stringify(data) }),
+    createStock:  (data: unknown) => apiRequest<unknown>('/freezit?resource=stock', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  wifiTokens: {
+    sales:  () => apiRequest<unknown[]>('/wifi-tokens?resource=sales'),
+    costs:  () => apiRequest<unknown[]>('/wifi-tokens?resource=costs'),
+    stats:  () => apiRequest<Record<string, unknown>>('/wifi-tokens?resource=stats'),
+    createSale: (data: unknown) => apiRequest<unknown>('/wifi-tokens?resource=sales', { method: 'POST', body: JSON.stringify(data) }),
+    createCost: (data: unknown) => apiRequest<unknown>('/wifi-tokens?resource=costs', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  iceSales: {
+    sales: () => apiRequest<unknown[]>('/ice-sales?resource=sales'),
+    stats: () => apiRequest<Record<string, unknown>>('/ice-sales?resource=stats'),
+    createSale: (data: unknown) => apiRequest<unknown>('/ice-sales?resource=sales', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  lodgers: {
+    list:     () => apiRequest<unknown[]>('/lodgers?resource=lodgers'),
+    payments: () => apiRequest<unknown[]>('/lodgers?resource=payments'),
+    stats:    () => apiRequest<Record<string, unknown>>('/lodgers?resource=stats'),
+    createLodger: (data: unknown) => apiRequest<unknown>('/lodgers?resource=lodgers', { method: 'POST', body: JSON.stringify(data) }),
+    createPayment: (data: unknown) => apiRequest<unknown>('/lodgers?resource=payments', { method: 'POST', body: JSON.stringify(data) }),
+    update:     (id: string, data: unknown) => apiRequest<unknown>(`/lodgers?resource=lodgers&id=${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deletePayment: (id: string) => apiRequest<void>(`/lodgers?resource=payments&id=${id}`, { method: 'DELETE' }),
+  },
+
+  rentals: {
+    units:    () => apiRequest<unknown[]>('/rentals?resource=units'),
+    tenants:  () => apiRequest<unknown[]>('/rentals?resource=tenants'),
+    payments: () => apiRequest<unknown[]>('/rentals?resource=payments'),
+    stats:    () => apiRequest<Record<string, unknown>>('/rentals?resource=stats'),
+    createUnit:    (data: unknown) => apiRequest<unknown>('/rentals?resource=units', { method: 'POST', body: JSON.stringify(data) }),
+    createTenant:  (data: unknown) => apiRequest<unknown>('/rentals?resource=tenants', { method: 'POST', body: JSON.stringify(data) }),
+    createPayment: (data: unknown) => apiRequest<unknown>('/rentals?resource=payments', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  debtorsCreditors: {
+    stats:      () => apiRequest<Record<string, unknown>>('/debtors-creditors?resource=stats'),
+    debtors:    () => apiRequest<unknown[]>('/debtors-creditors?resource=debtors'),
+    creditors:  () => apiRequest<unknown[]>('/debtors-creditors?resource=creditors'),
+    createDebtor:  (data: unknown) => apiRequest<unknown>('/debtors-creditors?resource=debtors', { method: 'POST', body: JSON.stringify(data) }),
+    createCreditor:(data: unknown) => apiRequest<unknown>('/debtors-creditors?resource=creditors', { method: 'POST', body: JSON.stringify(data) }),
+    createDebtorPayment: (data: unknown) => apiRequest<unknown>('/debtors-creditors?resource=debtor-payment', { method: 'POST', body: JSON.stringify(data) }),
+    createCreditorPayment: (data: unknown) => apiRequest<unknown>('/debtors-creditors?resource=creditor-payment', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  director: {
+    transactions: () => apiRequest<unknown[]>('/director?resource=transactions'),
+    sales:        () => apiRequest<unknown[]>('/director?resource=sales'),
+    stats:        () => apiRequest<Record<string, unknown>>('/director?resource=stats'),
+    createTransaction: (data: unknown) => apiRequest<unknown>('/director?resource=transactions', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  cashHandovers: {
+    my:      () => apiRequest<unknown[]>('/cash-handovers?resource=my'),
+    pending: () => apiRequest<unknown[]>('/cash-handovers?resource=pending'),
+    all:     () => apiRequest<unknown[]>('/cash-handovers?resource=all'),
+    create:  (data: unknown) => apiRequest<unknown>('/cash-handovers?resource=my', { method: 'POST', body: JSON.stringify(data) }),
+    confirm: (id: string) => apiRequest<unknown>(`/cash-handovers?resource=pending&id=${id}`, { method: 'POST' }),
+  },
+
+  fundDisbursements: {
+    overview: () => apiRequest<Record<string, unknown>>('/fund-disbursements?resource=overview'),
+    users:    () => apiRequest<unknown[]>('/fund-disbursements?resource=users'),
+    disburse: (data: unknown) => apiRequest<unknown>('/fund-disbursements?resource=disburse', { method: 'POST', body: JSON.stringify(data) }),
+    usageLog: (data: unknown) => apiRequest<unknown>('/fund-disbursements?resource=usage-log', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
+  goodsPickup: {
+    requests: (params?: { status?: string; dateFrom?: string; dateTo?: string }) =>
+      apiRequest<unknown[]>(`/goods-pickup?resource=requests${params ? '&' + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v != null).map(([k,v]) => [k, String(v)]))).toString() : ''}`),
+    stats: () => apiRequest<unknown>('/goods-pickup?resource=stats'),
+    createRequest: (data: unknown) =>
+      apiRequest<unknown>('/goods-pickup?resource=requests', { method: 'POST', body: JSON.stringify(data) }),
+    updateRequest: (id: string, data: unknown) =>
+      apiRequest<unknown>(`/goods-pickup?resource=requests&id=${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteRequest: (id: string) =>
+      apiRequest<void>(`/goods-pickup?resource=requests&id=${id}`, { method: 'DELETE' }),
+    items: (requestId: string) =>
+      apiRequest<unknown[]>(`/goods-pickup?resource=items&requestId=${requestId}`),
+    createItem: (requestId: string, data: unknown) =>
+      apiRequest<unknown>(`/goods-pickup?resource=items&requestId=${requestId}`, { method: 'POST', body: JSON.stringify(data) }),
+    deleteItem: (id: string) =>
+      apiRequest<void>(`/goods-pickup?resource=items&id=${id}`, { method: 'DELETE' }),
+  },
 };
 
 export default api;

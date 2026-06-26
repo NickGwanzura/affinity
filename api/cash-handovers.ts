@@ -18,12 +18,10 @@ import {
   setSecurityHeaders,
   handleCors,
   apiError,
+  json,
 } from './_middleware.js';
-import { logAuditEvent } from './_audit.js';
 import { z } from 'zod';
 
-const json = (res: ApiResponse, status: number, body: unknown) =>
-  res.status(status).json(body);
 
 const CreateSchema = z.object({
   amount:          z.number().positive(),

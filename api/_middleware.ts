@@ -292,6 +292,13 @@ export function handleCors(req: ApiRequest, res: ApiResponse): boolean {
 }
 
 /**
+ * Shortcut: respond with JSON status.
+ */
+export function json(res: ApiResponse, status: number, body: unknown) {
+  return res.status(status).json(body);
+}
+
+/**
  * API Error wrapper
  */
 export function apiError(res: ApiResponse, status: number, message: string, details?: any): void {

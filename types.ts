@@ -11,7 +11,7 @@ export type ExpenseCategory =
   | 'Repairs'
   | 'Driver Disbursement'
   | 'Other';
-export type UserRole = 'Admin' | 'Driver' | 'Manager' | 'Accountant' | 'Sales' | 'Director' | 'Car Hire' | 'CEO';
+export type UserRole = 'Admin' | 'Driver' | 'Manager' | 'Accountant' | 'Sales' | 'Director' | 'Car Hire' | 'CEO' | 'Goods Pickup';
 export type AccessRole = 'super_admin' | 'admin' | 'user';
 export type QuoteStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected';
 export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';

@@ -6,6 +6,7 @@ import { useSession } from '../contexts/SessionContext';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmModal';
 import { CompanyTab } from './settings/CompanyTab';
+import { ExchangeRatesTab } from './settings/ExchangeRatesTab';
 import { UsersTab } from './settings/UsersTab';
 import { ForensicsTab } from './settings/ForensicsTab';
 import { RequestsTab } from './settings/RequestsTab';
@@ -63,6 +64,8 @@ export const Settings: React.FC = () => {
     switch (activeTab) {
       case 'company':
         return <CompanyTab company={company} setCompany={setCompany} />;
+      case 'exchange-rates':
+        return <ExchangeRatesTab />;
       case 'users':
         return <UsersTab onSwitchToInvites={() => setActiveTab('invites')} />;
       case 'forensics':

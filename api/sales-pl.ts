@@ -18,10 +18,8 @@ import {
   setSecurityHeaders,
   handleCors,
   apiError,
+  json,
 } from './_middleware.js';
-
-const json = (res: ApiResponse, status: number, body: unknown) =>
-  res.status(status).json(body);
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);

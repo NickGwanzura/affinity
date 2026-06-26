@@ -10,6 +10,9 @@ export const formatCurrency = (
     currency,
   }).format(amount);
 
+/** Shorthand for formatCurrency(n, 'USD'). */
+export const formatUSD = (n: number): string => formatCurrency(n, 'USD');
+
 export const formatDate = (
   value: string | number | Date,
   locale = 'en-US',

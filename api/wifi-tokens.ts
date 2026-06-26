@@ -24,14 +24,12 @@ import {
   setSecurityHeaders,
   handleCors,
   apiError,
+  json,
 } from './_middleware.js';
-import { logAuditEvent } from './_audit.js';
 import { z } from 'zod';
 
 const INTERNET_PACKAGE_FEE = 110;
 
-const json = (res: ApiResponse, status: number, body: unknown) =>
-  res.status(status).json(body);
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
