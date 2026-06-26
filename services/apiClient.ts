@@ -31,7 +31,7 @@ import type {
   UserInvite,
   Vehicle,
 } from '../types';
-import { cacheGet, cacheSet, cacheInvalidate, cacheTrackPending } from './cacheStore';
+import { cacheGet, cacheSet, cacheRemove, cacheInvalidate, cacheTrackPending } from './cacheStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -155,8 +155,8 @@ async function apiRequest<T>(endpoint: string, options: ApiRequestOptions = {}):
 
     // ── Invalidate related caches on mutations ──────────────────────────
     if (!isGet) {
-      const basePath = new URL(url).pathname.replace('/api', '');
-      cacheInvalidate(basePath);
+      const resourceSegment = endpoint.split('/').filter(Boolean)[0];
+      cacheInvalidate(`${API_BASE_URL}/${resourceSegment}`);
     }
 
     return result;
