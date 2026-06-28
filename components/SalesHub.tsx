@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Snowflake, Wifi, Car, Building2, TrendingUp, Package } from 'lucide-react';
+import { Snowflake, Wifi, Car, Building2, TrendingUp } from 'lucide-react';
 import FreezitSales from './FreezitSales';
 import WiFiTokenSales from './WiFiTokenSales';
 import CarHire from './CarHire';
 import IceSales from './IceSales';
 import Lodgers from './Lodgers';
 import SalesPL from './SalesPL';
-import GoodsPickup from './GoodsPickup';
 import { useSession } from '../contexts/SessionContext';
 
 const ALL_TABS = [
@@ -15,7 +14,6 @@ const ALL_TABS = [
   { id: 'wifi',          label: 'WiFi Tokens',          Icon: Wifi,       Component: WiFiTokenSales,roles: ['Admin', 'Sales'] },
   { id: 'car-hire',      label: 'Car Hire',              Icon: Car,        Component: CarHire,       roles: ['Admin', 'Sales', 'Car Hire'] },
   { id: 'lodgers',       label: 'Lodgers',               Icon: Building2,  Component: Lodgers,       roles: ['Admin', 'Sales'] },
-  { id: 'goods-pickup',  label: 'Goods Pickup',          Icon: Package,    Component: GoodsPickup,   roles: ['Admin', 'Sales', 'Goods Pickup'] },
   { id: 'sales-pl',      label: 'Sales P&L',             Icon: TrendingUp, Component: SalesPL,       roles: ['Admin', 'Sales'] },
 ] as const;
 

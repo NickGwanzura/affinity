@@ -56,6 +56,9 @@ const DebtorsCreditors = lazy(() =>
 const MyExpensesView = lazy(() =>
   import('./components/MyExpensesView').then(module => ({ default: module.MyExpensesView }))
 );
+const GoodsPickup = lazy(() =>
+  import('./components/GoodsPickup').then(module => ({ default: module.GoodsPickup }))
+);
 
 /**
  * Layout-preserving skeleton used while lazy views load.
@@ -143,6 +146,8 @@ export default function App() {
     if (role === 'Car Hire') return 'sales' as const;
     if (role === 'Director') return 'director' as const;
     if (role === 'CEO') return 'ceo' as const;
+    if (role === 'Goods Pickup') return 'goods-pickup' as const;
+    if (role === 'Car Hire') return 'sales' as const;
     return 'admin' as const;
   };
 
@@ -283,6 +288,8 @@ export default function App() {
         return <ErrorBoundary view="settings"><Settings /></ErrorBoundary>;
       case 'financials':
         return <ErrorBoundary view="financials"><Financials /></ErrorBoundary>;
+      case 'goods-pickup':
+        return <ErrorBoundary view="goods-pickup"><GoodsPickup /></ErrorBoundary>;
       case 'documents':
         return <ErrorBoundary view="documents"><Documents /></ErrorBoundary>;
       case 'clients':

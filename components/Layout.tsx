@@ -52,7 +52,8 @@ export type AppView =
   | 'debtors-creditors'
   | 'director'
   | 'ceo'
-  | 'my-expenses';
+  | 'my-expenses'
+  | 'goods-pickup';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -72,6 +73,7 @@ const navItems: {
   { id: 'director',       label: 'Director',         roles: ['Admin', 'Director'],                   Icon: ShieldCheck },
   { id: 'sales',          label: 'Sales',            roles: ['Admin', 'Sales', 'Car Hire'],           Icon: TrendingUp  },
   { id: 'financials',     label: 'Finance',          roles: ['Admin', 'Manager', 'Accountant'],      Icon: DollarSign },
+  { id: 'goods-pickup',   label: 'Goods Pickup',     roles: ['Admin', 'Sales', 'Goods Pickup'],       Icon: Package    },
   { id: 'reports',        label: 'Reports',          roles: ['Admin', 'Manager', 'Accountant'],      Icon: LineChart  },
   { id: 'clients',        label: 'Clients',          roles: ['Admin', 'Accountant'],                 Icon: Users      },
   { id: 'shipments',      label: 'Shipments',        roles: ['Admin', 'Manager', 'Accountant'],      Icon: Package    },
