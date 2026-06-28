@@ -19,7 +19,7 @@ const COLORS = {
 };
 
 const FONTS = {
-  GRIFT: 'helvetica',
+  HELVETICA: 'helvetica',
   BOLD: 'bold',
   NORMAL: 'normal',
 };
@@ -440,7 +440,7 @@ class PDFBuilder {
 
     // Company Name — restrained size so the document title commands attention
     doc.setFontSize(FONT_SIZES.XLARGE);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.setCharSpace(0.4);
     const companyNameLines = doc.splitTextToSize(company.name.toUpperCase(), contentWidth);
@@ -448,7 +448,7 @@ class PDFBuilder {
     doc.setCharSpace(0);
 
     doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     const logoBottomY = hasLogo ? 12 + logoHeight : 0;
     const nameBottomY = LAYOUT.HEADER_Y + companyNameLines.length * nameLineHeight;
@@ -503,7 +503,7 @@ class PDFBuilder {
     doc.line(LAYOUT.MARGIN_LEFT, disclaimerStartY - 4, LAYOUT.MARGIN_RIGHT, disclaimerStartY - 4);
 
     doc.setFontSize(FONT_SIZES.XXSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.text(disclaimerLines, centerX, disclaimerStartY, {
       align: 'center',
@@ -513,19 +513,19 @@ class PDFBuilder {
     let yPos = disclaimerStartY + disclaimerLines.length * disclaimerLineHeight + 3;
 
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text(taglineLines, centerX, yPos, { align: 'center' });
     yPos += taglineLines.length * 4.5;
 
     const fontSize = options?.fontSize || FONT_SIZES.XSMALL;
     doc.setFontSize(fontSize);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(companyNameLines, centerX, yPos, { align: 'center' });
     yPos += companyNameLines.length * 4.5;
 
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.text(contactLines, centerX, yPos, { align: 'center' });
     yPos += contactLines.length * 3.8;
@@ -571,7 +571,7 @@ class PDFBuilder {
     const titleX = align === 'center' ? LAYOUT.PAGE_WIDTH / 2 : LAYOUT.MARGIN_RIGHT;
 
     doc.setFontSize(titleFontSize);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.setCharSpace(titleCharSpace);
     doc.text(titleLines, titleX, titleTopY, { align, maxWidth });
@@ -601,7 +601,7 @@ class PDFBuilder {
     doc.roundedRect(125, 33, 70, 16, 3, 3, 'F');
 
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.setCharSpace(0.8);
     doc.text('STATUS', 132, 39);
@@ -613,7 +613,7 @@ class PDFBuilder {
     doc.text(invoice.status.toUpperCase(), 192, 39, { align: 'right' });
 
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(formatCurrencyAmount(invoice.amount_usd, invoice.currency || 'USD'), 192, 46, { align: 'right' });
 
@@ -639,13 +639,13 @@ class PDFBuilder {
 
       // Label: small, light, recedes — value is the star
       doc.setFontSize(FONT_SIZES.XSMALL);
-      doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+      doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
       doc.setTextColor(...COLORS.LIGHT_GRAY);
       doc.text(label, x, currentY);
 
       // Value: slightly larger, bold, dark — commands attention
       doc.setFontSize(FONT_SIZES.SMALL);
-      doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+      doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
       doc.setTextColor(...COLORS.PRIMARY_DARK);
       doc.text(valueLines, LAYOUT.MARGIN_RIGHT, currentY, { align: 'right' });
 
@@ -669,17 +669,17 @@ class PDFBuilder {
     const safeStartY = Math.max(startY, this.sectionTopY);
 
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.text(title, LAYOUT.MARGIN_LEFT, safeStartY);
 
     doc.setFontSize(FONT_SIZES.REGULAR);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     const nameLines = doc.splitTextToSize(name, 78);
     doc.text(nameLines, LAYOUT.MARGIN_LEFT, safeStartY + 8);
 
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
 
@@ -861,7 +861,7 @@ class PDFBuilder {
     doc.line(130, finalY + 8, LAYOUT.MARGIN_RIGHT, finalY + 8);
 
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.setFontSize(FONT_SIZES.LARGE);
     const amountWidth = doc.getTextWidth(amountText);
@@ -900,7 +900,7 @@ class PDFBuilder {
     doc.line(130, finalY + 8, LAYOUT.MARGIN_RIGHT, finalY + 8);
 
     doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text('Subtotal:', 133, finalY + 15);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
@@ -912,7 +912,7 @@ class PDFBuilder {
     doc.line(130, finalY + 19, LAYOUT.MARGIN_RIGHT, finalY + 19);
 
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('TOTAL DUE:', 133, finalY + 28);
 
@@ -937,25 +937,25 @@ class PDFBuilder {
 
     // Gross Pay
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.setCharSpace(0.6);
     doc.text('GROSS PAY', 35, summaryY + 12);
     doc.setCharSpace(0);
     doc.setFontSize(FONT_SIZES.LARGE);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(`$${payslip.gross_pay.toLocaleString()}`, 35, summaryY + 25);
 
     // Deductions
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.setCharSpace(0.6);
     doc.text('DEDUCTIONS', 100, summaryY + 12);
     doc.setCharSpace(0);
     doc.setFontSize(FONT_SIZES.LARGE);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(`-$${payslip.total_deductions.toLocaleString()}`, 100, summaryY + 25);
 
@@ -963,13 +963,13 @@ class PDFBuilder {
     doc.setFillColor(...COLORS.FILL_LIGHT);
     doc.rect(145, summaryY, 50, 35, 'F');
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.setCharSpace(0.6);
     doc.text('NET PAY', 170, summaryY + 12, { align: 'center' });
     doc.setCharSpace(0);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(`$${payslip.net_pay.toLocaleString()}`, 170, summaryY + 26, { align: 'center' });
 
@@ -992,11 +992,11 @@ class PDFBuilder {
     doc.roundedRect(LAYOUT.MARGIN_LEFT, safeY - 5, 180, boxHeight, 3, 3, 'F');
 
     doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('Notes:', LAYOUT.MARGIN_LEFT, safeY);
 
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text(noteLines, LAYOUT.MARGIN_LEFT, safeY + 6);
 
@@ -1030,12 +1030,12 @@ class PDFBuilder {
     const safeTitleY = this.ensureContentSpace(requiredHeight, baseY);
 
     doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(type === 'quote' ? 'Terms & Conditions' : 'Payment Terms', LAYOUT.MARGIN_LEFT, safeTitleY);
 
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
 
     if (termBlocks.length > 0) {
@@ -1053,11 +1053,11 @@ class PDFBuilder {
     const { doc } = this;
 
     doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text('PAYMENT METHOD', 125, 95);
 
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setFontSize(FONT_SIZES.SMALL);
     doc.text(payslip.payment_method, 125, 102);
 
@@ -1569,7 +1569,7 @@ export const generateVehicleStatementPDF = async (
   } else {
     const emptyStateY = builder.ensureContentSpace(16, tableStartY);
     doc.setFontSize(FONT_SIZES.REGULAR);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text('No expenses recorded for this vehicle yet.', LAYOUT.MARGIN_LEFT, emptyStateY);
   }
@@ -1579,14 +1579,14 @@ export const generateVehicleStatementPDF = async (
   doc.setFillColor(248, 250, 252);
   doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 28, 3, 3, 'F');
   doc.setFontSize(FONT_SIZES.SMALL);
-  doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
   doc.setTextColor(...COLORS.SECONDARY_GRAY);
   doc.text('PURCHASE PRICE (USD)', LAYOUT.MARGIN_LEFT + 5, currentY + 9);
   doc.text('TOTAL EXPENSES (USD)', LAYOUT.MARGIN_LEFT + 65, currentY + 9);
   doc.text('LANDED COST (USD)', LAYOUT.MARGIN_LEFT + 132, currentY + 9);
 
   doc.setFontSize(FONT_SIZES.MEDIUM);
-  doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
   doc.setTextColor(...COLORS.PRIMARY_DARK);
   doc.text(formatCurrencyAmount(purchasePriceUsd, 'USD'), LAYOUT.MARGIN_LEFT + 5, currentY + 20);
   doc.text(formatCurrencyAmount(totalExpensesUsd, 'USD'), LAYOUT.MARGIN_LEFT + 65, currentY + 20);
@@ -1605,7 +1605,7 @@ export const generateVehicleStatementPDF = async (
   if (categoryRows.length > 0) {
     currentY = builder.ensureContentSpace(18, currentY + 40);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('EXPENSE BREAKDOWN', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -1853,7 +1853,7 @@ export const generateStatementPDF = async (
   if (sanitizedInvoices.length > 0) {
     currentY = builder.ensureContentSpace(18, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('INVOICES', LAYOUT.MARGIN_LEFT, currentY);
     currentY += 6;
@@ -1901,7 +1901,7 @@ export const generateStatementPDF = async (
   if (statement.payments.length > 0) {
     currentY = builder.ensureContentSpace(18, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('PAYMENTS', LAYOUT.MARGIN_LEFT, currentY);
     currentY += 6;
@@ -1982,21 +1982,21 @@ export const generateStatementPDF = async (
   doc.setFillColor(248, 250, 252);
   doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, summaryHeight, 3, 3, 'F');
   doc.setFontSize(FONT_SIZES.MEDIUM);
-  doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
   doc.setTextColor(...COLORS.PRIMARY_DARK);
   doc.text('ACCOUNT SUMMARY', LAYOUT.MARGIN_LEFT + 5, currentY + 8);
 
   let summaryY = currentY + 16;
   summaryRows.forEach(row => {
     doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.text(row.currency, LAYOUT.MARGIN_LEFT + 5, summaryY);
 
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.text(`Invoiced ${formatCurrencyAmount(row.totalInvoiced, row.currency)}`, LAYOUT.MARGIN_LEFT + 25, summaryY);
     doc.text(`Paid ${formatCurrencyAmount(row.totalPaid, row.currency)}`, 128, summaryY);
 
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     const balanceColor: [number, number, number] = row.balanceDue > 0 ? [220, 38, 38] : [16, 185, 129];
     doc.setTextColor(...balanceColor);
     doc.text(`Owing ${formatCurrencyAmount(row.balanceDue, row.currency)}`, LAYOUT.MARGIN_RIGHT - 5, summaryY, {
@@ -2127,7 +2127,7 @@ export const generateExpensesReportPDF = async (
   } else {
     const emptyY = builder.ensureContentSpace(16, tableStartY);
     doc.setFontSize(FONT_SIZES.REGULAR);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text('No expenses recorded for the selected period.', LAYOUT.MARGIN_LEFT, emptyY);
   }
@@ -2160,7 +2160,7 @@ export const generateExpensesReportPDF = async (
 
     if (categoryTotals.length > 0) {
       doc.setFontSize(FONT_SIZES.MEDIUM);
-      doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+      doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
       doc.setTextColor(...COLORS.PRIMARY_DARK);
       doc.text('BREAKDOWN BY CATEGORY', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2205,7 +2205,7 @@ export const generateExpensesReportPDF = async (
     if (locationTotals.length > 0) {
       currentY = builder.ensureContentSpace(20 + locationTotals.length * 7, currentY);
       doc.setFontSize(FONT_SIZES.MEDIUM);
-      doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+      doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
       doc.setTextColor(...COLORS.PRIMARY_DARK);
       doc.text('BREAKDOWN BY LOCATION', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2252,7 +2252,7 @@ export const generateExpensesReportPDF = async (
     doc.setFillColor(248, 250, 252);
     doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 22, 3, 3, 'F');
     doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text('TOTAL EXPENSES (USD)', LAYOUT.MARGIN_LEFT + 5, currentY + 9);
     doc.setFontSize(FONT_SIZES.LARGE);
@@ -2372,7 +2372,7 @@ export const generateAssetRegisterReportPDF = async (
   } else {
     const emptyY = builder.ensureContentSpace(16, tableStartY);
     doc.setFontSize(FONT_SIZES.REGULAR);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text('No assets recorded in the register.', LAYOUT.MARGIN_LEFT, emptyY);
   }
@@ -2386,7 +2386,7 @@ export const generateAssetRegisterReportPDF = async (
   doc.setFillColor(248, 250, 252);
   doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, boxWidth, 28, 3, 3, 'F');
   doc.setFontSize(FONT_SIZES.XSMALL);
-  doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
   doc.setTextColor(...COLORS.SECONDARY_GRAY);
 
   statusCounts.forEach((s, i) => {
@@ -2405,7 +2405,7 @@ export const generateAssetRegisterReportPDF = async (
     doc.setFillColor(248, 250, 252);
     doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 22, 3, 3, 'F');
     doc.setFontSize(FONT_SIZES.SMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text('TOTAL ASSET VALUE (USD)', LAYOUT.MARGIN_LEFT + 5, currentY + 9);
     doc.setFontSize(FONT_SIZES.LARGE);
@@ -2487,11 +2487,11 @@ export const generateFleetReportPDF = async (
   summaryItems.forEach((item, i) => {
     const x = LAYOUT.MARGIN_LEFT + 5 + i * colW;
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.text(item.label, x, currentY + 10);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(item.value, x, currentY + 22);
   });
@@ -2505,7 +2505,7 @@ export const generateFleetReportPDF = async (
   if (top10.length > 0) {
     currentY = builder.ensureContentSpace(20 + top10.length * 7, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('TOP VEHICLES BY TOTAL COST', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2545,7 +2545,7 @@ export const generateFleetReportPDF = async (
   if (statusGroups.length > 0) {
     currentY = builder.ensureContentSpace(20 + statusGroups.length * 7, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('VEHICLE STATUS DISTRIBUTION', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2584,7 +2584,7 @@ export const generateFleetReportPDF = async (
   if (categoryTotals.length > 0) {
     currentY = builder.ensureContentSpace(20 + categoryTotals.length * 7, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('EXPENSES BY CATEGORY', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2624,7 +2624,7 @@ export const generateFleetReportPDF = async (
   if (locationTotals.length > 0) {
     currentY = builder.ensureContentSpace(20 + locationTotals.length * 7, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('EXPENSES BY LOCATION', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2733,16 +2733,16 @@ export const generateDriverFundsReportPDF = async (
   summaryItems.forEach((item, index) => {
     const x = LAYOUT.MARGIN_LEFT + 5 + index * 45;
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.text(item.label, x, currentY + 10);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(item.value, x, currentY + 22);
     if (item.subLabel) {
       doc.setFontSize(FONT_SIZES.XSMALL);
-      doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+      doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
       doc.setTextColor(...COLORS.LIGHT_GRAY);
       doc.text(item.subLabel, x, currentY + 28);
     }
@@ -2758,7 +2758,7 @@ export const generateDriverFundsReportPDF = async (
   if (report.summaries.length > 0) {
     currentY = builder.ensureContentSpace(30, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('DRIVER ALLOCATION SUMMARY', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2793,7 +2793,7 @@ export const generateDriverFundsReportPDF = async (
   if (report.allocationRows.length > 0) {
     currentY = builder.ensureContentSpace(30, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('ALLOCATION LEDGER', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2830,7 +2830,7 @@ export const generateDriverFundsReportPDF = async (
   if (report.spendRows.length > 0) {
     currentY = builder.ensureContentSpace(30, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('SPEND LEDGER', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2938,11 +2938,11 @@ export const generateAuditReportPDF = async (
   kpiItems.forEach((item, i) => {
     const x = LAYOUT.MARGIN_LEFT + 5 + i * colW;
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.LIGHT_GRAY);
     doc.text(item.label, x, currentY + 10);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(item.value, x, currentY + 22);
   });
@@ -2952,7 +2952,7 @@ export const generateAuditReportPDF = async (
   if (summaries.length > 0) {
     currentY = builder.ensureContentSpace(20, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('DETAILED VEHICLE BREAKDOWN', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -2999,7 +2999,7 @@ export const generateAuditReportPDF = async (
   if (categoryTotals.length > 0) {
     currentY = builder.ensureContentSpace(20 + categoryTotals.length * 7, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('EXPENSES BY CATEGORY', LAYOUT.MARGIN_LEFT, currentY);
 
@@ -3031,7 +3031,7 @@ export const generateAuditReportPDF = async (
     if (highestCat) {
       currentY = builder.ensureContentSpace(14, currentY);
       doc.setFontSize(FONT_SIZES.SMALL);
-      doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+      doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
       doc.setTextColor(...COLORS.SECONDARY_GRAY);
       doc.text(`Highest expense category: ${highestCat.category} (${totalExpenses > 0 ? ((highestCat.total / totalExpenses) * 100).toFixed(1) : 0}% of total)`, LAYOUT.MARGIN_LEFT, currentY);
       currentY += 10;
@@ -3043,7 +3043,7 @@ export const generateAuditReportPDF = async (
   doc.setFillColor(248, 250, 252);
   doc.roundedRect(LAYOUT.MARGIN_LEFT, currentY, 180, 22, 3, 3, 'F');
   doc.setFontSize(FONT_SIZES.SMALL);
-  doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
   doc.setTextColor(...COLORS.SECONDARY_GRAY);
   doc.text('TOTAL EXPENSES (USD)', LAYOUT.MARGIN_LEFT + 5, currentY + 9);
   doc.setFontSize(FONT_SIZES.LARGE);
@@ -3129,7 +3129,7 @@ export const generateDebtorsReportPDF = async (
   doc.setFillColor(235, 237, 242);
   doc.rect(LAYOUT.MARGIN_LEFT, currentY, LAYOUT.MARGIN_RIGHT - LAYOUT.MARGIN_LEFT, 28, 'F');
   doc.setFontSize(FONT_SIZES.XSMALL);
-  doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
   doc.setTextColor(...COLORS.SECONDARY_GRAY);
 
   const summaryItems = [
@@ -3142,11 +3142,11 @@ export const generateDebtorsReportPDF = async (
     const x = LAYOUT.MARGIN_LEFT + i * colW + colW / 2;
     doc.text(item.label, x, currentY + 9, { align: 'center' });
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text(item.value, x, currentY + 20, { align: 'center' });
     doc.setFontSize(FONT_SIZES.XSMALL);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
   });
   currentY += 36;
@@ -3154,7 +3154,7 @@ export const generateDebtorsReportPDF = async (
   // ── Aging summary bar ────────────────────────────────────────────────────
   currentY = builder.ensureContentSpace(16, currentY);
   doc.setFontSize(FONT_SIZES.MEDIUM);
-  doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+  doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
   doc.setTextColor(...COLORS.PRIMARY_DARK);
   doc.text('AGING SUMMARY', LAYOUT.MARGIN_LEFT, currentY);
   currentY += 5;
@@ -3198,13 +3198,13 @@ export const generateDebtorsReportPDF = async (
   if (debtors.length === 0) {
     currentY = builder.ensureContentSpace(12, currentY);
     doc.setFontSize(FONT_SIZES.REGULAR);
-    doc.setFont(FONTS.GRIFT, FONTS.NORMAL);
+    doc.setFont(FONTS.HELVETICA, FONTS.NORMAL);
     doc.setTextColor(...COLORS.SECONDARY_GRAY);
     doc.text('No outstanding debtors at this time.', LAYOUT.MARGIN_LEFT, currentY);
   } else {
     currentY = builder.ensureContentSpace(16, currentY);
     doc.setFontSize(FONT_SIZES.MEDIUM);
-    doc.setFont(FONTS.GRIFT, FONTS.BOLD);
+    doc.setFont(FONTS.HELVETICA, FONTS.BOLD);
     doc.setTextColor(...COLORS.PRIMARY_DARK);
     doc.text('DEBTOR DETAILS', LAYOUT.MARGIN_LEFT, currentY);
     currentY += 5;
