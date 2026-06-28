@@ -161,7 +161,7 @@ export default function App() {
     const type = params.get('type');
     if (type === 'goods-pickup') {
       const pickupToken = params.get('token');
-      if (pickupToken) setGoodsPickupToken(pickupToken);
+      setGoodsPickupToken(pickupToken || ''); // '' = new request, token = view existing
     }
 
     // Check for password reset hash (multiple formats)

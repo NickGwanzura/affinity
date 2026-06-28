@@ -14,6 +14,7 @@ export const PublicGoodsPickup: React.FC<PublicGoodsPickupProps> = ({ token }) =
   const [viewData, setViewData] = useState<any>(null);
   const [viewLoading, setViewLoading] = useState(!!token);
   const [viewError, setViewError] = useState('');
+  const isViewMode = !!token; // non-empty string = viewing existing request
 
   // Create mode
   const [mode, setMode] = useState<'form' | 'success'>('form');
@@ -102,7 +103,7 @@ export const PublicGoodsPickup: React.FC<PublicGoodsPickupProps> = ({ token }) =
 
   // ── Token view mode ──────────────────────────────────────────────
 
-  if (token) {
+  if (isViewMode) {
     return (
       <div className="login-shell">
         <div className="login-shell__brand">
@@ -214,7 +215,7 @@ export const PublicGoodsPickup: React.FC<PublicGoodsPickupProps> = ({ token }) =
                   Your goods pickup request <strong className="text-zinc-800">{successNumber}</strong> has been received.
                 </p>
                 <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-800 text-left">
-                  <p className="font-medium mb-1">Save this link to check your status:</p>
+                  <p className="font-medium mb-1">Track your request:</p>
                   <p className="break-all text-amber-700 select-all">
                     {window.location.origin}/?type=goods-pickup&token={successToken}
                   </p>
