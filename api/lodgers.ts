@@ -30,6 +30,7 @@ import {
   json,
 } from './_middleware.js';
 import { z } from 'zod';
+import { logAuditEvent } from './_audit.js';
 
 
 // ── Schemas (matching existing DB schema) ────────────────────────────────────

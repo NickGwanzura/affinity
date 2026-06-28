@@ -29,6 +29,7 @@ import {
   json,
 } from './_middleware.js';
 import { z } from 'zod';
+import { logAuditEvent } from './_audit.js';
 
 
 const CURRENCIES = ['USD', 'GBP', 'NAD', 'ZAR', 'BWP'] as const;

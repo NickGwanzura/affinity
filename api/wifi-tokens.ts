@@ -27,6 +27,7 @@ import {
   json,
 } from './_middleware.js';
 import { z } from 'zod';
+import { logAuditEvent } from './_audit.js';
 
 const INTERNET_PACKAGE_FEE = 110;
 

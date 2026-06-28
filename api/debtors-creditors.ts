@@ -31,6 +31,7 @@ import {
   json,
 } from './_middleware.js';
 import { z } from 'zod';
+import { logAuditEvent } from './_audit.js';
 
 const coerce = (v: unknown) => Number(v) || 0;
 
