@@ -84,7 +84,7 @@ function toQueryString(
 }
 
 // Extra options beyond standard RequestInit
-interface ApiRequestOptions extends globalThis.RequestInit {
+interface ApiRequestOptions extends Omit<globalThis.RequestInit, 'cache'> {
   cache?: boolean | number; // false to skip, or TTL in ms
 }
 

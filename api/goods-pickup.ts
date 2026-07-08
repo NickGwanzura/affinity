@@ -47,7 +47,9 @@ const RequestSchema = z.object({
   })).optional().default([]),
 });
 
-const RequestUpdateSchema = RequestSchema.partial().omit({ items: true });
+const RequestUpdateSchema = RequestSchema.partial().omit({ items: true }).extend({
+  status: z.enum(['Pending', 'Confirmed', 'Completed', 'Cancelled']).optional(),
+});
 
 const ItemSchema = z.object({
   description: z.string().min(1).max(500),

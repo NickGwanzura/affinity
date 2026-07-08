@@ -49,9 +49,11 @@ export default [
       'react/no-unescaped-entities': 'off',
       'react/react-in-jsx-scope': 'off', // React 17+ JSX transform
       'react/prop-types': 'off',
+      'react-hooks/immutability': 'off',
       'react-hooks/refs': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/static-components': 'off',
+      'react-hooks/use-memo': 'off',
       'no-undef': 'off',
       'no-redeclare': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
