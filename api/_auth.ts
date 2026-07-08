@@ -1,5 +1,3 @@
-/* global process */
-
 /**
  * Server-Side Authentication Service
  *

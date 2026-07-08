@@ -1,5 +1,3 @@
-/* global process */
-
 /**
  * Rate Limiter — pluggable backend.
  *

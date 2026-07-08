@@ -167,7 +167,7 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
               ? (
                 <div className="py-10 text-center">
                   <p className="text-sm text-zinc-400">No expenses logged yet.</p>
-                  <p className="mt-1 text-xs text-zinc-300">Use "Log Expense" above to record any spend.</p>
+                  <p className="mt-1 text-xs text-zinc-300">Use &quot;Log Expense&quot; above to record any spend.</p>
                 </div>
               )
               : usage.map(u => (

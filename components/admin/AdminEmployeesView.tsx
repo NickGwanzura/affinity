@@ -56,8 +56,8 @@ export const AdminEmployeesView: React.FC<AdminEmployeesViewProps> = ({
     }
 
     list = [...list].sort((a, b) => {
-      let av: string | number = '';
-      let bv: string | number = '';
+      let av: string | number;
+      let bv: string | number;
       if (sortField === 'base_pay_usd') {
         av = a.base_pay_usd;
         bv = b.base_pay_usd;

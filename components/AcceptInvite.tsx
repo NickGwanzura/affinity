@@ -145,7 +145,7 @@ export const AcceptInvite: React.FC<AcceptInviteProps> = ({ token, onSuccess, on
                         <strong>Logistics Team.</strong>
                     </h2>
                     <p className="login-shell__headline-copy">
-                        You've been invited by <strong>{invite?.invitedBy}</strong> to join Affinity Logistics as a <strong>{invite?.role}</strong>.
+                        You&apos;ve been invited by <strong>{invite?.invitedBy}</strong> to join Affinity Logistics as a <strong>{invite?.role}</strong>.
                     </p>
                 </div>
             </div>

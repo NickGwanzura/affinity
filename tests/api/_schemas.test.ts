@@ -81,8 +81,9 @@ describe('PaymentSchema', () => {
 // ---------------------------------------------------------------------------
 
 describe('LoginSchema', () => {
-  it('requires a real email and password >= 6 chars', () => {
+  it('accepts an email or phone identifier and requires password >= 6 chars', () => {
     expect(LoginSchema.safeParse({ email: 'a@b.com', password: 'abcdef' }).success).toBe(true);
+    expect(LoginSchema.safeParse({ email: '0712345678', password: 'abcdef' }).success).toBe(true);
     expect(LoginSchema.safeParse({ email: '', password: 'abcdef' }).success).toBe(false);
     expect(LoginSchema.safeParse({ email: 'a@b.com', password: 'short' }).success).toBe(false);
   });

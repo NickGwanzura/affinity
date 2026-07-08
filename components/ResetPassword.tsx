@@ -29,7 +29,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onComplete }) => {
       if (newPassword.length < 8) errors.push('At least 8 characters');
       if (!/[A-Z]/.test(newPassword)) errors.push('One uppercase letter');
       if (!/[0-9]/.test(newPassword)) errors.push('One number');
-      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword)) errors.push('One special character');
+      if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword)) errors.push('One special character');
     }
     setValidationErrors(errors);
   }, [newPassword]);

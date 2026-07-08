@@ -1,5 +1,3 @@
-/* global process */
-
 /**
  * API Middleware - Authentication & Security
  *

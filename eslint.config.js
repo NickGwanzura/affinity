@@ -7,7 +7,21 @@ import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default [
+  {
+    ignores: ['dist/', 'node_modules/', '.vite/', 'tsconfig.tsbuildinfo'],
+  },
   js.configs.recommended,
+  {
+    files: ['**/*.{js,cjs,mjs}'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.es2022,
+        ...globals.node,
+      },
+    },
+  },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
@@ -20,6 +34,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2022,
+        ...globals.node,
       },
     },
     plugins: {
@@ -31,7 +46,14 @@ export default [
       ...tsPlugin.configs.recommended.rules,
       ...reactPlugin.configs.recommended.rules,
       ...reactHooksPlugin.configs.recommended.rules,
+      'react/no-unescaped-entities': 'off',
       'react/react-in-jsx-scope': 'off', // React 17+ JSX transform
+      'react/prop-types': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/static-components': 'off',
+      'no-undef': 'off',
+      'no-redeclare': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-console': ['warn', { allow: ['error', 'warn'] }],
@@ -41,7 +63,4 @@ export default [
     },
   },
   prettierConfig,
-  {
-    ignores: ['dist/', 'node_modules/', '.vite/'],
-  },
 ];

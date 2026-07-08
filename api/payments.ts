@@ -68,7 +68,7 @@ const parseAllocationsFromBody = (body: unknown) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const issues = error.issues.map(i => `allocations.${i.path.join('.')}: ${i.message}`).join(', ');
-      throw new Error(`Allocation validation error: ${issues}`);
+      throw new Error(`Allocation validation error: ${issues}`, { cause: error });
     }
     throw error;
   }

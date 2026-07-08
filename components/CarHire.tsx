@@ -825,7 +825,9 @@ const ManageVehiclesModal: React.FC<{
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error('Failed to update status');
-    } catch {} 
+    } catch {
+      // Keep the vehicle manager responsive even if a status update races/fails.
+    }
     onSaved();
   };
 

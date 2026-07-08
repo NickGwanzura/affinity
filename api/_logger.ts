@@ -1,5 +1,3 @@
-/* global process */
-
 /**
  * Backend structured logger.
  *

@@ -118,7 +118,8 @@ function sanitizeText(input: unknown): string {
   const str = String(input);
   // Remove control characters and normalize whitespace
   return str
-    .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F]/g, '')
     .trim()
     .slice(0, MAX_TEXT_LENGTH);
 }
@@ -131,7 +132,7 @@ function sanitizeNumber(input: unknown): number {
 function sanitizeEmail(input: unknown): string {
   const email = sanitizeText(input);
   // Basic email sanitization
-  return email.replace(/[<>\"']/g, '').slice(0, 254);
+  return email.replace(/[<>"']/g, '').slice(0, 254);
 }
 
 function sanitizeUrl(input: unknown): string {

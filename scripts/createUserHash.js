@@ -15,7 +15,6 @@ function generateSalt() {
 }
 
 async function hashPassword(password, salt) {
-  const encoder = new TextEncoder();
   const data = Buffer.from(password + salt, 'utf8');
   
   let hash = crypto.createHash(HASH_ALGORITHM).update(data).digest();

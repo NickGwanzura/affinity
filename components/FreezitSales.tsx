@@ -185,10 +185,10 @@ export const FreezitSales: React.FC = () => {
       ) : (
         <>
           {tab === 'overview'  && <OverviewTab stats={stats} breakages={breakages} />}
-          {tab === 'sales'     && <SalesTab sales={sales} onDelete={async id => { try { const r = await authFetch(`${API}?resource=sales&id=${id}`, { method: 'DELETE' }); if (!r.ok) throw new Error(); } catch {} fetchAll(); }} />}
-          {tab === 'stock'     && <StockTab stock={stock} onDelete={async id => { try { const r = await authFetch(`${API}?resource=stock&id=${id}`, { method: 'DELETE' }); if (!r.ok) throw new Error(); } catch {} fetchAll(); }} />}
-          {tab === 'restock'   && <RestockTab restocks={restocks} onDelete={async id => { try { const r = await authFetch(`${API}?resource=restocks&id=${id}`, { method: 'DELETE' }); if (!r.ok) throw new Error(); } catch {} fetchAll(); }} />}
-          {tab === 'breakages' && <BreakagesTab breakages={breakages} onDelete={async id => { try { const r = await authFetch(`${API}?resource=breakages&id=${id}`, { method: 'DELETE' }); if (!r.ok) throw new Error(); } catch {} fetchAll(); }} />}
+          {tab === 'sales'     && <SalesTab sales={sales} onDelete={async id => { try { const r = await authFetch(`${API}?resource=sales&id=${id}`, { method: 'DELETE' }); if (!r.ok) throw new Error(); } catch { /* ignore delete failure and refresh below */ } fetchAll(); }} />}
+          {tab === 'stock'     && <StockTab stock={stock} onDelete={async id => { try { const r = await authFetch(`${API}?resource=stock&id=${id}`, { method: 'DELETE' }); if (!r.ok) throw new Error(); } catch { /* ignore delete failure and refresh below */ } fetchAll(); }} />}
+          {tab === 'restock'   && <RestockTab restocks={restocks} onDelete={async id => { try { const r = await authFetch(`${API}?resource=restocks&id=${id}`, { method: 'DELETE' }); if (!r.ok) throw new Error(); } catch { /* ignore delete failure and refresh below */ } fetchAll(); }} />}
+          {tab === 'breakages' && <BreakagesTab breakages={breakages} onDelete={async id => { try { const r = await authFetch(`${API}?resource=breakages&id=${id}`, { method: 'DELETE' }); if (!r.ok) throw new Error(); } catch { /* ignore delete failure and refresh below */ } fetchAll(); }} />}
         </>
       )}
 

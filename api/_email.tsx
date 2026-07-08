@@ -1,5 +1,3 @@
-/* global process */
-
 import React from 'react';
 import nodemailer from 'nodemailer';
 import { render } from '@react-email/render';

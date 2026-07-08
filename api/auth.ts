@@ -1,5 +1,3 @@
-/* global process */
-
 import type { ApiRequest, ApiResponse } from './_types.js';
 import {
   AuthenticatedRequest,
