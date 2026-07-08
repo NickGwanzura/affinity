@@ -321,6 +321,7 @@ export const OperatingFundSchema = z.object({
   description: z.string().min(1),
   reference: z.string().optional(),
   recipient: z.string().optional(),
+  recipient_user_id: z.string().uuid().optional(),
   approved_by: z.string().optional(),
   date: DateLikeSchema,
 });

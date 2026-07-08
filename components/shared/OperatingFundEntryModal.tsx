@@ -18,6 +18,7 @@ export interface OperatingFundFormValue {
   description: string;
   reference: string;
   recipient: string;
+  recipient_user_id?: string;
   approved_by?: string;
   date: string;
 }
@@ -62,6 +63,14 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
   if (!isOpen) {
     return null;
   }
+
+  const updateDriverRecipient = (driverId: string) => {
+    const selectedDriver = drivers.find((driver) => driver.id === driverId);
+    onChange({
+      recipient_user_id: driverId,
+      recipient: selectedDriver?.name || '',
+    });
+  };
 
   const baseBorder = 'border-zinc-200';
   const receivedActiveClasses =
@@ -217,13 +226,13 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
             <Select
               id="opfund-recipient-cards"
               labelText="Recipient (Driver) *"
-              value={form.recipient}
-              onChange={(event) => onChange({ recipient: event.target.value })}
+              value={form.recipient_user_id || ''}
+              onChange={(event) => updateDriverRecipient(event.target.value)}
               required
             >
               <SelectItem value="" text="-- Select Driver --" />
               {drivers.map((driver) => (
-                <SelectItem key={driver.id} value={driver.name} text={driver.name} />
+                <SelectItem key={driver.id} value={driver.id} text={driver.name} />
               ))}
             </Select>
           )}
@@ -272,13 +281,13 @@ export const OperatingFundEntryModal: React.FC<OperatingFundEntryModalProps> = (
                 <Select
                   id="opfund-recipient"
                   labelText="Recipient"
-                  value={form.recipient}
-                  onChange={(event) => onChange({ recipient: event.target.value })}
+                  value={form.recipient_user_id || ''}
+                  onChange={(event) => updateDriverRecipient(event.target.value)}
                   required
                 >
                   <SelectItem value="" text="-- Select Driver --" />
                   {drivers.map((driver) => (
-                    <SelectItem key={driver.id} value={driver.name} text={driver.name} />
+                    <SelectItem key={driver.id} value={driver.id} text={driver.name} />
                   ))}
                 </Select>
               ) : showRecipientForReceived ? (

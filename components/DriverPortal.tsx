@@ -77,6 +77,15 @@ const formatCurrencyBreakdown = (totals: CurrencyTotals): string =>
     .map((currency) => formatMoney(totals[currency] || 0, currency))
     .join(' • ');
 
+const getDateKey = (value?: string) => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value.slice(0, 10) : parsed.toISOString().slice(0, 10);
+};
+
+const getAllocationFingerprint = (amount: number, currency: Currency, date?: string) =>
+  `${currency}:${Number(amount || 0).toFixed(2)}:${getDateKey(date)}`;
+
 export const DriverPortal: React.FC = () => {
   const { showToast } = useToast();
   const session = useSession();
@@ -144,17 +153,25 @@ export const DriverPortal: React.FC = () => {
 
       const expenseData = uniqueById(expenseDataGroups.flat());
       const fundData = uniqueById(fundDataGroups.flat());
+      const receivedDisbursements = (Array.isArray(receivedDisbursementsResponse) ? receivedDisbursementsResponse : [])
+        .map((entry) => ({
+          ...entry,
+          amount: Number(entry.amount) || 0,
+        })) as ReceivedFundDisbursement[];
+      const receivedDisbursementKeys = new Set(
+        receivedDisbursements.map((entry) =>
+          getAllocationFingerprint(entry.amount, entry.currency, entry.disbursed_at),
+        ),
+      );
+      const legacyDriverFunds = (fundData || []).filter((fund) => {
+        if (fund.type !== 'Disbursed') return false;
+        return !receivedDisbursementKeys.has(getAllocationFingerprint(fund.amount, fund.currency, fund.date));
+      });
 
       setVehicles(vehicleData);
       setDriverExpenses(expenseData);
-      setDriverFunds((fundData || []).filter((fund) => fund.type === 'Disbursed'));
-      setReceivedFundDisbursements(
-        (Array.isArray(receivedDisbursementsResponse) ? receivedDisbursementsResponse : [])
-          .map((entry) => ({
-            ...entry,
-            amount: Number(entry.amount) || 0,
-          }))
-      );
+      setDriverFunds(legacyDriverFunds);
+      setReceivedFundDisbursements(receivedDisbursements);
       setAssignedTrips(tripData);
     } catch (error: any) {
       const message = error?.message || 'Failed to load your driver funds. Please refresh the page.';

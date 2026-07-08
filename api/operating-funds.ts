@@ -8,7 +8,7 @@ import {
   setSecurityHeaders,
   verifyToken,
 } from './_middleware.js';
-import { sql } from './_db.js';
+import { sql, withTransaction } from './_db.js';
 import { logAuditEvent } from './_audit.js';
 import { OperatingFundSchema, OperatingFundUpdateSchema } from './_schemas.js';
 
@@ -62,31 +62,71 @@ async function listFunds(req: ApiRequest, res: ApiResponse) {
 async function createFund(req: AuthenticatedRequest, res: ApiResponse) {
   try {
     const data = OperatingFundSchema.parse(req.body);
-    const rows = await sql`
-      INSERT INTO operating_funds (type, amount, currency, description, reference, recipient, approved_by, date)
-      VALUES (
-        ${data.type},
-        ${data.amount},
-        ${data.currency},
-        ${data.description},
-        ${data.reference || null},
-        ${data.recipient || null},
-        ${data.approved_by || null},
-        ${data.date}
-      )
-      RETURNING id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
-    `;
+    const result = await withTransaction(async (client) => {
+      const operatingFundResult = await client.query(
+        `
+          INSERT INTO operating_funds (type, amount, currency, description, reference, recipient, approved_by, date)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING id, type, amount, currency, description, reference, recipient, approved_by, date, created_at
+        `,
+        [
+          data.type,
+          data.amount,
+          data.currency,
+          data.description,
+          data.reference || null,
+          data.recipient || null,
+          data.approved_by || null,
+          data.date,
+        ],
+      );
+      const operatingFund = operatingFundResult.rows[0];
+
+      let disbursement: Record<string, unknown> | null = null;
+      if (data.type === 'Disbursed' && data.recipient_user_id) {
+        const note = [data.description, data.reference].filter(Boolean).join(' - ');
+        const disbursementResult = await client.query(
+          `
+            INSERT INTO fund_disbursements (from_user_id, to_user_id, amount, currency, note, disbursed_at)
+            VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6)
+            RETURNING *
+          `,
+          [
+            req.user!.id,
+            data.recipient_user_id,
+            data.amount,
+            data.currency,
+            note || null,
+            data.date,
+          ],
+        );
+        disbursement = disbursementResult.rows[0];
+      }
+
+      return { operatingFund, disbursement };
+    });
 
     await logAuditEvent({
       req,
       userId: req.user?.id,
       action: 'operating_fund.create',
       tableName: 'operating_funds',
-      recordId: String(rows[0].id),
-      newData: rows[0],
+      recordId: String(result.operatingFund.id),
+      newData: result.operatingFund,
     });
 
-    return res.status(201).json(rows[0]);
+    if (result.disbursement) {
+      await logAuditEvent({
+        req,
+        userId: req.user?.id,
+        action: 'fund.disbursed_from_operating_fund',
+        tableName: 'fund_disbursements',
+        recordId: String(result.disbursement.id),
+        newData: { ...result.disbursement, operating_fund_id: result.operatingFund.id },
+      });
+    }
+
+    return res.status(201).json(result.operatingFund);
   } catch (error) {
     return apiError(res, 400, 'Invalid operating fund data', error);
   }

@@ -342,6 +342,7 @@ export interface OperatingFund {
   description: string;
   reference?: string; // e.g., "Office Transfer #123" or "David - Harare Trip"
   recipient?: string; // For disbursements - driver name or purpose
+  recipient_user_id?: string; // For linked fund disbursements - driver user id
   approved_by?: string;
   date: string;
   created_at: string;

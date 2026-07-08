@@ -151,6 +151,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
     description: '',
     reference: '',
     recipient: '',
+    recipient_user_id: '',
     date: new Date().toISOString().split('T')[0],
   });
 
@@ -695,7 +696,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
   // Operating Funds handlers
   const handleAddOperatingFund = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (fundsForm.type === 'Disbursed' && !fundsForm.recipient) {
+    if (fundsForm.type === 'Disbursed' && !fundsForm.recipient_user_id) {
       notifyWarning('Please select the driver receiving this disbursement');
       return;
     }
@@ -707,6 +708,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
         description: fundsForm.description,
         reference: fundsForm.reference || undefined,
         recipient: fundsForm.type === 'Disbursed' ? fundsForm.recipient : undefined,
+        recipient_user_id: fundsForm.type === 'Disbursed' ? fundsForm.recipient_user_id || undefined : undefined,
         date: fundsForm.date,
       };
 
@@ -720,6 +722,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
         description: '',
         reference: '',
         recipient: '',
+        recipient_user_id: '',
         date: new Date().toISOString().split('T')[0],
       });
 
@@ -1028,6 +1031,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
                 description: '',
                 reference: '',
                 recipient: '',
+                recipient_user_id: '',
                 date: new Date().toISOString().split('T')[0],
               });
               setShowFundsModal(true);

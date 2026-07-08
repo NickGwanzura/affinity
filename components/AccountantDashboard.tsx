@@ -58,8 +58,8 @@ export const AccountantDashboard: React.FC = () => {
   const userName: string = session?.user?.name ?? '';
   const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
   const [showFundModal, setShowFundModal] = useState(false);
-  const [fundForm, setFundForm] = useState<{ type: OperatingFundType; amount: string; currency: Currency; description: string; reference: string; recipient: string; approved_by: string; date: string }>({
-    type: 'Received', amount: '', currency: 'USD', description: '', reference: '', recipient: '', approved_by: '', date: new Date().toISOString().split('T')[0],
+  const [fundForm, setFundForm] = useState<{ type: OperatingFundType; amount: string; currency: Currency; description: string; reference: string; recipient: string; recipient_user_id: string; approved_by: string; date: string }>({
+    type: 'Received', amount: '', currency: 'USD', description: '', reference: '', recipient: '', recipient_user_id: '', approved_by: '', date: new Date().toISOString().split('T')[0],
   });
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
@@ -151,7 +151,7 @@ export const AccountantDashboard: React.FC = () => {
   const handleAddFund = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fundForm.amount || parseFloat(fundForm.amount) <= 0) { notifyWarning('Enter a valid amount'); return; }
-    if (fundForm.type === 'Disbursed' && !fundForm.recipient) { notifyWarning('Please select the driver receiving this disbursement'); return; }
+    if (fundForm.type === 'Disbursed' && !fundForm.recipient_user_id) { notifyWarning('Please select the driver receiving this disbursement'); return; }
     try {
       await dataService.addOperatingFund({
         type: fundForm.type,
@@ -160,11 +160,12 @@ export const AccountantDashboard: React.FC = () => {
         description: fundForm.description,
         reference: fundForm.reference || undefined,
         recipient: fundForm.recipient || undefined,
+        recipient_user_id: fundForm.type === 'Disbursed' ? fundForm.recipient_user_id || undefined : undefined,
         approved_by: fundForm.approved_by || undefined,
         date: fundForm.date,
       });
       setShowFundModal(false);
-      setFundForm({ type: 'Received', amount: '', currency: 'USD', description: '', reference: '', recipient: '', approved_by: '', date: new Date().toISOString().split('T')[0] });
+      setFundForm({ type: 'Received', amount: '', currency: 'USD', description: '', reference: '', recipient: '', recipient_user_id: '', approved_by: '', date: new Date().toISOString().split('T')[0] });
       await loadData();
       notifySuccess('Operating fund recorded successfully.');
     } catch (err: any) { notifyError(err?.message || 'Failed to record operating fund. Please try again.'); }
