@@ -4,6 +4,7 @@ import { MyFundsWidget } from './shared/MyFundsWidget';
 import { Currency, Expense, ExpenseCategory, OperatingFund, Trip, Vehicle, VehicleStatus } from '../types';
 import { EXCHANGE_RATES } from '../constants';
 import { dataService } from '../services/dataService';
+import { authFetch } from '../services/authFetch';
 import { useSession } from '../contexts/SessionContext';
 import {
   Button,
@@ -35,6 +36,16 @@ type DriverLedgerEntry = {
 };
 
 type CurrencyTotals = Partial<Record<Currency, number>>;
+
+type ReceivedFundDisbursement = {
+  id: string;
+  amount: number;
+  currency: Currency;
+  note?: string | null;
+  disbursed_at: string;
+  created_at?: string;
+  from_name?: string;
+};
 
 const formatUsd = (value: number) =>
   new Intl.NumberFormat('en-US', {
@@ -73,6 +84,7 @@ export const DriverPortal: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [driverExpenses, setDriverExpenses] = useState<Expense[]>([]);
   const [driverFunds, setDriverFunds] = useState<OperatingFund[]>([]);
+  const [receivedFundDisbursements, setReceivedFundDisbursements] = useState<ReceivedFundDisbursement[]>([]);
   const [assignedTrips, setAssignedTrips] = useState<Trip[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [description, setDescription] = useState('');
@@ -113,7 +125,7 @@ export const DriverPortal: React.FC = () => {
 
       setCurrentDriver(driverName);
 
-      const [vehicleData, expenseDataGroups, fundDataGroups, tripData] = await Promise.all([
+      const [vehicleData, expenseDataGroups, fundDataGroups, receivedDisbursementsResponse, tripData] = await Promise.all([
         dataService.getVehicles(),
         Promise.all(
           driverAliases.map((alias) =>
@@ -125,6 +137,8 @@ export const DriverPortal: React.FC = () => {
             dataService.getOperatingFundsByRecipient(alias).catch(() => [] as OperatingFund[]),
           ),
         ),
+        authFetch('/api/fund-disbursements?resource=received')
+          .then((response) => response.ok ? response.json() : []),
         dataService.getTrips({ upcomingOnly: true }).catch(() => [] as Trip[]),
       ]);
 
@@ -134,6 +148,13 @@ export const DriverPortal: React.FC = () => {
       setVehicles(vehicleData);
       setDriverExpenses(expenseData);
       setDriverFunds((fundData || []).filter((fund) => fund.type === 'Disbursed'));
+      setReceivedFundDisbursements(
+        (Array.isArray(receivedDisbursementsResponse) ? receivedDisbursementsResponse : [])
+          .map((entry) => ({
+            ...entry,
+            amount: Number(entry.amount) || 0,
+          }))
+      );
       setAssignedTrips(tripData);
     } catch (error: any) {
       const message = error?.message || 'Failed to load your driver funds. Please refresh the page.';
@@ -180,20 +201,29 @@ export const DriverPortal: React.FC = () => {
     [driverFunds],
   );
 
+  const allocatedFromFundDisbursementsUsd = useMemo(
+    () => receivedFundDisbursements.reduce(
+      (sum, disbursement) => sum + (disbursement.amount || 0) * (EXCHANGE_RATES[disbursement.currency] || 1),
+      0,
+    ),
+    [receivedFundDisbursements],
+  );
+
   const spentUsd = useMemo(
     () => drawdowns.reduce((sum, expense) => sum + (expense.amount || 0) * (expense.exchange_rate_to_usd || 1), 0),
     [drawdowns],
   );
 
-  const allocatedUsd = allocatedFromExpenseUsd + allocatedFromFundsUsd;
+  const allocatedUsd = allocatedFromExpenseUsd + allocatedFromFundsUsd + allocatedFromFundDisbursementsUsd;
   const availableUsd = allocatedUsd - spentUsd;
 
   const allocationCurrencyTotals = useMemo(
     () => summarizeCurrencyTotals([
       ...expenseDisbursements.map((expense) => ({ amount: expense.amount, currency: expense.currency })),
       ...driverFunds.map((fund) => ({ amount: fund.amount, currency: fund.currency })),
+      ...receivedFundDisbursements.map((disbursement) => ({ amount: disbursement.amount, currency: disbursement.currency })),
     ]),
-    [driverFunds, expenseDisbursements],
+    [driverFunds, expenseDisbursements, receivedFundDisbursements],
   );
 
   const spentCurrencyTotals = useMemo(
@@ -209,6 +239,13 @@ export const DriverPortal: React.FC = () => {
   const fundAllocationCurrencyTotals = useMemo(
     () => summarizeCurrencyTotals(driverFunds.map((fund) => ({ amount: fund.amount, currency: fund.currency }))),
     [driverFunds],
+  );
+
+  const fundDisbursementCurrencyTotals = useMemo(
+    () => summarizeCurrencyTotals(
+      receivedFundDisbursements.map((disbursement) => ({ amount: disbursement.amount, currency: disbursement.currency }))
+    ),
+    [receivedFundDisbursements],
   );
 
   const allocationBreakdown = useMemo(
@@ -273,6 +310,18 @@ export const DriverPortal: React.FC = () => {
       amountUsd: fund.amount * (EXCHANGE_RATES[fund.currency] || 1),
     }));
 
+    const fundDisbursementEntries: DriverLedgerEntry[] = receivedFundDisbursements.map((disbursement) => ({
+      id: `fund-disbursement-${disbursement.id}`,
+      date: disbursement.created_at || disbursement.disbursed_at,
+      isCredit: true,
+      title: 'Fund Disbursement',
+      subtitle: disbursement.note || (disbursement.from_name ? `Funds from ${disbursement.from_name}` : 'Funds allocated to you'),
+      vehicleLabel: 'General allocation',
+      amount: disbursement.amount,
+      currency: disbursement.currency,
+      amountUsd: disbursement.amount * (EXCHANGE_RATES[disbursement.currency] || 1),
+    }));
+
     const drawdownEntries: DriverLedgerEntry[] = drawdowns.map((expense) => ({
       id: `expense-${expense.id}`,
       date: expense.created_at,
@@ -286,10 +335,10 @@ export const DriverPortal: React.FC = () => {
       receiptUrl: expense.receipt_url,
     }));
 
-    return [...allocationEntries, ...operatingFundEntries, ...drawdownEntries].sort(
+    return [...allocationEntries, ...operatingFundEntries, ...fundDisbursementEntries, ...drawdownEntries].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
-  }, [drawdowns, driverFunds, expenseDisbursements, vehicleNames]);
+  }, [drawdowns, driverFunds, expenseDisbursements, receivedFundDisbursements, vehicleNames]);
 
   const upcomingTrips = useMemo(
     () => assignedTrips
@@ -592,7 +641,7 @@ export const DriverPortal: React.FC = () => {
           <StatCard
             title="Allocated"
             value={formatPreferredDisplay(allocatedUsd, allocationCurrencyTotals)}
-            subtitle={`${expenseDisbursements.length + driverFunds.length} allocation${expenseDisbursements.length + driverFunds.length === 1 ? '' : 's'} recorded`}
+            subtitle={`${expenseDisbursements.length + driverFunds.length + receivedFundDisbursements.length} allocation${expenseDisbursements.length + driverFunds.length + receivedFundDisbursements.length === 1 ? '' : 's'} recorded`}
             intent="primary"
           />
           <StatCard
@@ -604,7 +653,7 @@ export const DriverPortal: React.FC = () => {
           <StatCard
             title="Allocation Mix"
             value={formatPreferredDisplay(allocatedFromExpenseUsd, expenseAllocationCurrencyTotals)}
-            subtitle={`Operating fund top-ups: ${formatPreferredDisplay(allocatedFromFundsUsd, fundAllocationCurrencyTotals)}`}
+            subtitle={`Fund disbursements: ${formatPreferredDisplay(allocatedFromFundDisbursementsUsd, fundDisbursementCurrencyTotals)} • Operating top-ups: ${formatPreferredDisplay(allocatedFromFundsUsd, fundAllocationCurrencyTotals)}`}
             intent="success"
           />
         </section>
