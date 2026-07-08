@@ -47,6 +47,8 @@ type ReceivedFundDisbursement = {
   from_name?: string;
 };
 
+const MAX_INLINE_RECEIPT_URL_LENGTH = 450;
+
 const formatUsd = (value: number) =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -451,6 +453,10 @@ export const DriverPortal: React.FC = () => {
         const reader = new FileReader();
         reader.onloadend = () => {
           if (typeof reader.result === 'string' && reader.result.length > 0) {
+            if (reader.result.length > MAX_INLINE_RECEIPT_URL_LENGTH) {
+              reject(new Error('Receipt photos are too large to attach here right now. The expense will be saved without the receipt.'));
+              return;
+            }
             resolve(reader.result);
             return;
           }
@@ -461,7 +467,7 @@ export const DriverPortal: React.FC = () => {
       });
     } catch (error: any) {
       setUploadError(error.message || 'Failed to upload receipt. Please try again.');
-      showToast(error.message || 'Failed to upload receipt. Please try again.', 'error');
+      showToast(error.message || 'Failed to upload receipt. Please try again.', 'warning');
       return null;
     } finally {
       setUploading(false);
@@ -549,7 +555,12 @@ export const DriverPortal: React.FC = () => {
       setTripReference('');
       clearReceipt();
     } catch (error: any) {
-      const message = error.message || 'Failed to submit expense. Please try again.';
+      const details = typeof error?.data === 'object' && error.data && 'details' in error.data
+        ? String((error.data as { details?: unknown }).details || '')
+        : '';
+      const message = details
+        ? `${error.message || 'Failed to submit expense'}: ${details}`
+        : error.message || 'Failed to submit expense. Please try again.';
       setUploadError(message);
       showToast(message, 'error');
     } finally {
