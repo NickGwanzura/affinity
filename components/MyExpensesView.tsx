@@ -11,11 +11,11 @@ export const MyExpensesView: React.FC = () => {
         </div>
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-zinc-900">My Expenses</h1>
-          <p className="text-sm text-zinc-500">Log expenses and disburse funds to team members. Every entry is recorded in the audit trail.</p>
+          <p className="text-sm text-zinc-500">Log expenses against funds disbursed to you. Every entry is recorded in the audit trail.</p>
         </div>
       </div>
 
-      <MyFundsWidget canDisburse={true} />
+      <MyFundsWidget />
     </div>
   );
 };

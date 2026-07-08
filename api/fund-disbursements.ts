@@ -15,6 +15,7 @@
 
 import type { ApiRequest, ApiResponse } from './_types.js';
 import { sql } from './_db.js';
+import { getExchangeRate } from './exchange-rates.js';
 import {
   AuthenticatedRequest,
   verifyToken,
@@ -47,6 +48,16 @@ const UsageSchema = z.object({
   usage_date:  z.string().optional(),
 });
 
+const DISBURSER_ROLES = ['Admin', 'Accountant', 'Director', 'CEO', 'Manager'];
+
+async function sumUsd(rows: Array<Record<string, any>>): Promise<number> {
+  let total = 0;
+  for (const row of rows) {
+    total += Number(row.amount || 0) * (await getExchangeRate(String(row.currency || 'USD')) || 1);
+  }
+  return Math.round(total * 100) / 100;
+}
+
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   setSecurityHeaders(res);
   if (handleCors(req, res)) return;
@@ -65,18 +76,21 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     // ── GET ─────────────────────────────────────────────────────────────────
     if (method === 'GET') {
       if (resource === 'balance') {
-        const [recv] = await sql`
-          SELECT COALESCE(SUM(amount),0) AS total
+        const receivedRows = await sql`
+          SELECT amount, currency
           FROM fund_disbursements WHERE to_user_id = ${userId}::uuid
         `;
-        const [used] = await sql`
-          SELECT COALESCE(SUM(amount),0) AS total
+        const usedRows = await sql`
+          SELECT amount, currency
           FROM fund_usage_logs WHERE user_id = ${userId}::uuid
         `;
+        const received = await sumUsd(receivedRows);
+        const used = await sumUsd(usedRows);
         return json(res, 200, {
-          received: Number(recv.total),
-          used:     Number(used.total),
-          balance:  Number(recv.total) - Number(used.total),
+          received,
+          used,
+          balance:  Math.round((received - used) * 100) / 100,
+          currency: 'USD',
         });
       }
 
@@ -103,7 +117,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       }
 
       if (resource === 'all') {
-        if (!requireBusinessRole(authReq, res, ['Admin', 'Accountant', 'Director', 'CEO', 'Manager'])) return;
+        if (!requireBusinessRole(authReq, res, DISBURSER_ROLES)) return;
         const rows = await sql`
           SELECT d.*, f.name AS from_name, f.role AS from_role, t.name AS to_name, t.role AS to_role
           FROM fund_disbursements d
@@ -124,6 +138,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       }
 
       if (resource === 'users') {
+        if (!requireBusinessRole(authReq, res, DISBURSER_ROLES)) return;
         const rows = await sql`
           SELECT id, name, role FROM user_profiles
           WHERE status IN ('Active','active','Approved','approved')
@@ -221,6 +236,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     // ── POST ────────────────────────────────────────────────────────────────
     if (method === 'POST') {
       if (resource === 'disburse') {
+        if (!requireBusinessRole(authReq, res, DISBURSER_ROLES)) return;
         const parsed = DisburseSchema.safeParse(req.body);
         if (!parsed.success) return json(res, 400, { error: 'Invalid data', details: parsed.error.issues });
         const d = parsed.data;
@@ -278,6 +294,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       if (!id) return json(res, 400, { error: 'id required' });
 
       if (resource === 'disburse') {
+        if (!requireBusinessRole(authReq, res, DISBURSER_ROLES)) return;
         const [existing] = await sql`
           SELECT * FROM fund_disbursements WHERE id = ${id}::uuid
         `;

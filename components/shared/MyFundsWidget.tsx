@@ -6,6 +6,7 @@ import { useToast } from '../Toast';
 import { formatCurrency } from '../../utils/formatters';
 import { FundUsageModal } from './FundUsageModal';
 import { FundDisbursementModal } from './FundDisbursementModal';
+import { EXCHANGE_RATES } from '../../constants';
 
 const API = '/api/fund-disbursements';
 
@@ -94,7 +95,11 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
 
   const fmt = (n: number, c = 'USD') => formatCurrency(n, c as any);
 
-  const totalLogged = usage.reduce((s, u) => s + Number(u.amount), 0);
+  const totalLoggedUsd = usage.reduce(
+    (sum, entry) => sum + Number(entry.amount || 0) * (EXCHANGE_RATES[entry.currency as keyof typeof EXCHANGE_RATES] || 1),
+    0,
+  );
+  const displayedLoggedUsd = balance?.used ?? totalLoggedUsd;
 
   return (
     <div className="space-y-4">
@@ -103,7 +108,7 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
         <div className="rounded-xl border border-stone-200 bg-white p-3 text-center">
           <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Total Logged</p>
           <p className="mt-1 text-lg font-bold tabular-nums text-orange-600">
-            {loading ? '—' : `$${totalLogged.toFixed(2)}`}
+            {loading ? '—' : fmt(displayedLoggedUsd, 'USD')}
           </p>
         </div>
         <div className="rounded-xl border border-stone-200 bg-white p-3 text-center">
@@ -114,9 +119,9 @@ export const MyFundsWidget: React.FC<Props> = ({ canDisburse = false }) => {
         </div>
         {(balance?.received ?? 0) > 0 && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-600">Disbursed Balance</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-600">Disbursed Balance (USD)</p>
             <p className={`mt-1 text-lg font-bold tabular-nums ${(balance?.balance ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-              {loading ? '—' : `$${(balance?.balance ?? 0).toFixed(2)}`}
+              {loading ? '—' : fmt(balance?.balance ?? 0, 'USD')}
             </p>
           </div>
         )}
