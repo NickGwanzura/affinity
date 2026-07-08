@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Asset, CompanyDetails, LandedCostSummary, OperatingFund, AppUser } from '../../types';
+import { Asset, CompanyDetails, FundDisbursement, LandedCostSummary, OperatingFund, AppUser } from '../../types';
 import { dataService } from '../../services/dataService';
 import { api } from '../../services/apiClient';
 import type { DebtorEntry } from '../../services/pdfService';
@@ -15,6 +15,7 @@ export const ReportsTab: React.FC = () => {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
+  const [fundDisbursements, setFundDisbursements] = useState<FundDisbursement[]>([]);
   const [drivers, setDrivers] = useState<AppUser[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [company, setCompany] = useState<CompanyDetails | null>(null);
@@ -34,12 +35,13 @@ export const ReportsTab: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [summaryData, vehicleData, expenseData, companyData, fundData, userData] = await Promise.all([
+        const [summaryData, vehicleData, expenseData, companyData, fundData, disbursementData, userData] = await Promise.all([
           dataService.getLandedCostSummaries(),
           dataService.getVehicles(),
           dataService.getExpenses(),
           dataService.getCompanyDetails(),
           dataService.getOperatingFunds().catch(() => [] as OperatingFund[]),
+          dataService.getFundDisbursements().catch(() => [] as FundDisbursement[]),
           dataService.getUsers(),
         ]);
         setSummaries(summaryData);
@@ -47,6 +49,7 @@ export const ReportsTab: React.FC = () => {
         setExpenses(expenseData);
         setCompany(companyData);
         setOperatingFunds(fundData);
+        setFundDisbursements(disbursementData);
         setDrivers(userData.filter((user) => user.role === 'Driver' && user.status === 'Active'));
 
         try {
@@ -136,9 +139,16 @@ export const ReportsTab: React.FC = () => {
     return filtered;
   }, [operatingFunds, reportDateFrom, reportDateTo]);
 
+  const filteredFundDisbursements = useMemo(() => {
+    let filtered = [...fundDisbursements];
+    if (reportDateFrom) filtered = filtered.filter(d => new Date(d.disbursed_at) >= new Date(reportDateFrom));
+    if (reportDateTo) filtered = filtered.filter(d => new Date(d.disbursed_at) <= new Date(reportDateTo));
+    return filtered;
+  }, [fundDisbursements, reportDateFrom, reportDateTo]);
+
   const driverFundsReport = useMemo(
-    () => buildDriverFundsReportData(filteredExpenses, filteredOperatingFunds, drivers, vehicles),
-    [filteredExpenses, filteredOperatingFunds, drivers, vehicles],
+    () => buildDriverFundsReportData(filteredExpenses, filteredOperatingFunds, drivers, vehicles, filteredFundDisbursements),
+    [filteredExpenses, filteredFundDisbursements, filteredOperatingFunds, drivers, vehicles],
   );
 
   const driverMonthlySpend = useMemo(
@@ -402,6 +412,7 @@ export const ReportsTab: React.FC = () => {
       await generateDriverFundsReportPDFAndDownload(
         filteredExpenses,
         filteredOperatingFunds,
+        filteredFundDisbursements,
         drivers,
         vehicles,
         company,

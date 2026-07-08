@@ -348,6 +348,21 @@ export interface OperatingFund {
   created_at: string;
 }
 
+export interface FundDisbursement {
+  id: string;
+  from_user_id?: string;
+  to_user_id: string;
+  amount: number;
+  currency: Currency;
+  note?: string | null;
+  disbursed_at: string;
+  created_at?: string;
+  from_name?: string;
+  from_role?: string;
+  to_name?: string;
+  to_role?: string;
+}
+
 export interface Trip {
   id: string;
   trip_number: string;

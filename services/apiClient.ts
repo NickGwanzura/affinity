@@ -19,6 +19,7 @@ import type {
   Employee,
   Expense,
   Invoice,
+  FundDisbursement,
   OperatingFund,
   Payment,
   PaymentAllocation,
@@ -883,6 +884,7 @@ export const api = {
 
   fundDisbursements: {
     overview: () => apiRequest<Record<string, unknown>>('/fund-disbursements?resource=overview'),
+    all:      () => apiRequest<FundDisbursement[]>('/fund-disbursements?resource=all'),
     users:    () => apiRequest<unknown[]>('/fund-disbursements?resource=users'),
     disburse: (data: unknown) => apiRequest<unknown>('/fund-disbursements?resource=disburse', { method: 'POST', body: JSON.stringify(data) }),
     usageLog: (data: unknown) => apiRequest<unknown>('/fund-disbursements?resource=usage-log', { method: 'POST', body: JSON.stringify(data) }),

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense, Asset, LandedCostSummary, OperatingFund, AppUser } from '../types';
+import { Quote, Invoice, CompanyDetails, Payslip, Employee, Receipt, Payment, Vehicle, Expense, Asset, LandedCostSummary, FundDisbursement, OperatingFund, AppUser } from '../types';
 import affinityLogoUrl from '../assets/affinity-logo.svg';
 import { buildDriverFundsReportData } from '../utils/driverFunds';
 
@@ -2674,6 +2674,7 @@ export const generateFleetReportPDFAndDownload = async (
 export const generateDriverFundsReportPDF = async (
   expenses: Expense[],
   operatingFunds: OperatingFund[],
+  fundDisbursements: FundDisbursement[],
   drivers: AppUser[],
   vehicles: Vehicle[],
   company: CompanyDetails,
@@ -2683,7 +2684,7 @@ export const generateDriverFundsReportPDF = async (
   const dateStr = new Date().toISOString().split('T')[0];
   const builder = new PDFBuilder(sanitizedCompany, `Driver_Funds_Report_${dateStr}.pdf`);
   const doc = builder.getDocument();
-  const report = buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles);
+  const report = buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles, fundDisbursements);
 
   const periodLabel = options?.dateFrom || options?.dateTo
     ? `${options.dateFrom || 'Beginning'} – ${options.dateTo || 'Present'}`
@@ -2869,12 +2870,13 @@ export const generateDriverFundsReportPDF = async (
 export const generateDriverFundsReportPDFAndDownload = async (
   expenses: Expense[],
   operatingFunds: OperatingFund[],
+  fundDisbursements: FundDisbursement[],
   drivers: AppUser[],
   vehicles: Vehicle[],
   company: CompanyDetails,
   options?: { dateFrom?: string; dateTo?: string; vehicleFilter?: string }
 ): Promise<void> => {
-  const blob = await generateDriverFundsReportPDF(expenses, operatingFunds, drivers, vehicles, company, options);
+  const blob = await generateDriverFundsReportPDF(expenses, operatingFunds, fundDisbursements, drivers, vehicles, company, options);
   downloadBlob(blob, `Driver_Funds_Report_${new Date().toISOString().split('T')[0]}.pdf`);
 };
 

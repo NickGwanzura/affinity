@@ -19,6 +19,7 @@ import {
   AuthenticatedRequest,
   verifyToken,
   requirePasswordCurrent,
+  requireBusinessRole,
   setSecurityHeaders,
   handleCors,
   apiError,
@@ -96,6 +97,18 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
           FROM fund_disbursements d
           JOIN user_profiles t ON t.id = d.to_user_id
           WHERE d.from_user_id = ${userId}::uuid
+          ORDER BY d.disbursed_at DESC, d.created_at DESC
+        `;
+        return json(res, 200, rows);
+      }
+
+      if (resource === 'all') {
+        if (!requireBusinessRole(authReq, res, ['Admin', 'Accountant', 'Director', 'CEO', 'Manager'])) return;
+        const rows = await sql`
+          SELECT d.*, f.name AS from_name, f.role AS from_role, t.name AS to_name, t.role AS to_role
+          FROM fund_disbursements d
+          JOIN user_profiles f ON f.id = d.from_user_id
+          JOIN user_profiles t ON t.id = d.to_user_id
           ORDER BY d.disbursed_at DESC, d.created_at DESC
         `;
         return json(res, 200, rows);

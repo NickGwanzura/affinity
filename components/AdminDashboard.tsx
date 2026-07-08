@@ -21,6 +21,7 @@ import {
   Employee,
   Payslip,
   CompanyDetails,
+  FundDisbursement,
   OperatingFund,
   UserRole,
   AppUser,
@@ -138,6 +139,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
 
   // Operating Funds state - Track money received from office and disbursements
   const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
+  const [fundDisbursements, setFundDisbursements] = useState<FundDisbursement[]>([]);
   const [fundsBalance, setFundsBalance] = useState<{
     received: number;
     disbursed: number;
@@ -245,6 +247,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
         payslipData,
         companyData,
         fundsData,
+        disbursementData,
         balanceData,
         userData,
         tripData,
@@ -259,6 +262,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
         dataService.getPayslips(),
         dataService.getCompanyDetails(),
         dataService.getOperatingFunds(),
+        dataService.getFundDisbursements().catch(() => [] as FundDisbursement[]),
         dataService.getOperatingFundsBalance(),
         dataService.getUsers(),
         dataService.getTrips(),
@@ -275,6 +279,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
       setPayslips(payslipData);
       setCompany(companyData);
       setOperatingFunds(fundsData);
+      setFundDisbursements(disbursementData);
       setFundsBalance(balanceData);
       setDrivers(userData.filter(user => user.role === 'Driver' && user.status === 'Active'));
       setTrips(tripData);
@@ -800,6 +805,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
       await generateDriverFundsReportPDFAndDownload(
         expenses,
         operatingFunds,
+        fundDisbursements,
         drivers,
         vehicles,
         company
@@ -872,8 +878,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ initialView = 'd
   }, [invoices, shipments, summaries]);
 
   const driverFundsReport = useMemo(
-    () => buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles),
-    [drivers, expenses, operatingFunds, vehicles]
+    () => buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles, fundDisbursements),
+    [drivers, expenses, fundDisbursements, operatingFunds, vehicles]
   );
 
   if (loading) {

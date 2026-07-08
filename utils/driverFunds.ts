@@ -1,4 +1,4 @@
-import type { AppUser, Currency, Expense, ExpenseCategory, OperatingFund, Vehicle } from '../types';
+import type { AppUser, Currency, Expense, ExpenseCategory, FundDisbursement, OperatingFund, Vehicle } from '../types';
 import { EXCHANGE_RATES } from '../constants';
 import { createDriverIdentityNameMap, normalizeDriverIdentity } from './driverIdentity';
 
@@ -6,7 +6,7 @@ export interface DriverFundRow {
   id: string;
   date: string;
   driverName: string;
-  source: 'Expense Disbursement' | 'Operating Fund' | 'Driver Spend';
+  source: 'Expense Disbursement' | 'Operating Fund' | 'Fund Disbursement' | 'Driver Spend';
   description: string;
   amount: number;
   currency: Currency;
@@ -44,8 +44,10 @@ export function buildDriverFundsReportData(
   operatingFunds: OperatingFund[],
   drivers: AppUser[] = [],
   vehicles: Vehicle[] = [],
+  fundDisbursements: FundDisbursement[] = [],
 ): DriverFundsReportData {
   const driverNameMap = createDriverIdentityNameMap(drivers);
+  const driverById = new Map(drivers.map((driver) => [driver.id, driver.name]));
 
   const vehicleLabelMap = new Map(
     vehicles.map((vehicle) => [vehicle.id, `${vehicle.make_model} (${vehicle.vin_number})`]),
@@ -59,6 +61,40 @@ export function buildDriverFundsReportData(
 
   const allocationRows: DriverFundRow[] = [];
   const spendRows: DriverFundRow[] = [];
+
+  const dateKey = (value?: string) => {
+    if (!value) return '';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? value.slice(0, 10) : parsed.toISOString().slice(0, 10);
+  };
+
+  const allocationFingerprint = (driverName: string, amount: number, currency: Currency, date?: string) =>
+    `${normalizeDriverIdentity(driverName)}:${currency}:${Number(amount || 0).toFixed(2)}:${dateKey(date)}`;
+
+  const fundDisbursementFingerprints = new Set<string>();
+
+  fundDisbursements.forEach((disbursement) => {
+    const driverName = canonicalDriverName(
+      disbursement.to_name || driverById.get(disbursement.to_user_id),
+    );
+    if (!driverName) return;
+
+    fundDisbursementFingerprints.add(
+      allocationFingerprint(driverName, disbursement.amount, disbursement.currency, disbursement.disbursed_at),
+    );
+
+    allocationRows.push({
+      id: disbursement.id,
+      date: disbursement.disbursed_at || disbursement.created_at || '',
+      driverName,
+      source: 'Fund Disbursement',
+      description: disbursement.note || (disbursement.from_name ? `Funds from ${disbursement.from_name}` : 'Fund disbursement'),
+      amount: disbursement.amount || 0,
+      currency: disbursement.currency,
+      amountUsd: (disbursement.amount || 0) * (EXCHANGE_RATES[disbursement.currency] || 1),
+      vehicleLabel: 'General',
+    });
+  });
 
   expenses.forEach((expense) => {
     const driverName = canonicalDriverName(expense.driver_name);
@@ -89,6 +125,9 @@ export function buildDriverFundsReportData(
     .forEach((fund) => {
       const driverName = canonicalDriverName(fund.recipient);
       if (!driverName) return;
+      if (fundDisbursementFingerprints.has(allocationFingerprint(driverName, fund.amount, fund.currency, fund.date || fund.created_at))) {
+        return;
+      }
 
       allocationRows.push({
         id: fund.id,

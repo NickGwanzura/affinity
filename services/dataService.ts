@@ -18,6 +18,7 @@ import type {
   Currency,
   Employee,
   Expense,
+  FundDisbursement,
   Invoice,
   OperatingFund,
   Payslip,
@@ -406,6 +407,10 @@ class DataService {
     return api.operatingFunds.list();
   }
 
+  async getFundDisbursements(): Promise<FundDisbursement[]> {
+    return api.fundDisbursements.all();
+  }
+
   async getAuditLogs(limit: number = 150): Promise<AuditLog[]> {
     return api.auditLogs.list({ limit });
   }
@@ -419,17 +424,39 @@ class DataService {
     disbursed: number;
     balance: number;
   }> {
-    const funds = await this.getOperatingFunds();
+    const [funds, disbursements] = await Promise.all([
+      this.getOperatingFunds(),
+      this.getFundDisbursements().catch(() => [] as FundDisbursement[]),
+    ]);
+    const dateKey = (value?: string) => {
+      if (!value) return '';
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? value.slice(0, 10) : parsed.toISOString().slice(0, 10);
+    };
+    const nameKey = (value?: string | null) => (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const fingerprint = (name: string | undefined | null, amount: number, currency: Currency, date?: string) =>
+      `${nameKey(name)}:${currency}:${Number(amount || 0).toFixed(2)}:${dateKey(date)}`;
+    const disbursementKeys = new Set(
+      disbursements.map((entry) => fingerprint(entry.to_name, safeNumeric(entry.amount), entry.currency, entry.disbursed_at)),
+    );
     const totals = funds.reduce(
       (accumulator, fund) => {
         const rate = this.getCurrencyRate(fund.currency);
         const value = safeNumeric(fund.amount) * rate;
         if (fund.type === 'Received') accumulator.received += value;
-        if (fund.type === 'Disbursed') accumulator.disbursed += value;
+        if (
+          fund.type === 'Disbursed'
+          && !disbursementKeys.has(fingerprint(fund.recipient, safeNumeric(fund.amount), fund.currency, fund.date || fund.created_at))
+        ) {
+          accumulator.disbursed += value;
+        }
         return accumulator;
       },
       { received: 0, disbursed: 0, balance: 0 }
     );
+    for (const disbursement of disbursements) {
+      totals.disbursed += safeNumeric(disbursement.amount) * this.getCurrencyRate(disbursement.currency);
+    }
 
     totals.received = Math.round(totals.received * 100) / 100;
     totals.disbursed = Math.round(totals.disbursed * 100) / 100;

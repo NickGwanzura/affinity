@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails, OperatingFund, OperatingFundType, UserRole, AppUser, Employee, Vehicle, Currency, ExpenseCategory, VehicleStatus } from '../types';
+import { Invoice, Payment, Expense, Quote, LandedCostSummary, Client, Payslip, CompanyDetails, FundDisbursement, OperatingFund, OperatingFundType, UserRole, AppUser, Employee, Vehicle, Currency, ExpenseCategory, VehicleStatus } from '../types';
 import { AssetRegister } from './AssetRegister';
 import AccountantClientsView from './accountant/AccountantClientsView';
 import {
@@ -57,6 +57,7 @@ export const AccountantDashboard: React.FC = () => {
   const userRole: UserRole = session?.user?.role ?? 'Accountant';
   const userName: string = session?.user?.name ?? '';
   const [operatingFunds, setOperatingFunds] = useState<OperatingFund[]>([]);
+  const [fundDisbursements, setFundDisbursements] = useState<FundDisbursement[]>([]);
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundForm, setFundForm] = useState<{ type: OperatingFundType; amount: string; currency: Currency; description: string; reference: string; recipient: string; recipient_user_id: string; approved_by: string; date: string }>({
     type: 'Received', amount: '', currency: 'USD', description: '', reference: '', recipient: '', recipient_user_id: '', approved_by: '', date: new Date().toISOString().split('T')[0],
@@ -184,7 +185,7 @@ export const AccountantDashboard: React.FC = () => {
   // FIX: Centralized data loading function with error handling
   const loadData = async (throwOnError = false) => {
     try {
-      const [inv, pay, exp, quo, sum, veh, cli, psl, emp, comp, funds, users] = await Promise.all([
+      const [inv, pay, exp, quo, sum, veh, cli, psl, emp, comp, funds, disbursements, users] = await Promise.all([
         dataService.getInvoices(),
         dataService.getPayments(),
         dataService.getExpenses(),
@@ -196,6 +197,7 @@ export const AccountantDashboard: React.FC = () => {
         dataService.getEmployees(),
         dataService.getCompanyDetails(),
         dataService.getOperatingFunds().catch(() => [] as import('../types').OperatingFund[]),
+        dataService.getFundDisbursements().catch(() => [] as FundDisbursement[]),
         dataService.getUsers(),
       ]);
       setInvoices(Array.isArray(inv) ? inv : []);
@@ -209,6 +211,7 @@ export const AccountantDashboard: React.FC = () => {
       setEmployees(Array.isArray(emp) ? emp : []);
       setCompany(comp);
       setOperatingFunds(Array.isArray(funds) ? funds : []);
+      setFundDisbursements(Array.isArray(disbursements) ? disbursements : []);
       setDrivers(Array.isArray(users) ? users.filter((user) => user.role === 'Driver' && user.status === 'Active') : []);
       setLoading(false);
     } catch (error: any) {
@@ -320,8 +323,8 @@ export const AccountantDashboard: React.FC = () => {
   }, [invoices]);
 
   const driverFundsReport = useMemo(
-    () => buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles),
-    [drivers, expenses, operatingFunds, vehicles],
+    () => buildDriverFundsReportData(expenses, operatingFunds, drivers, vehicles, fundDisbursements),
+    [drivers, expenses, fundDisbursements, operatingFunds, vehicles],
   );
 
   // ── Top-line KPIs for the dashboard shell ───────────────────────────
@@ -697,7 +700,7 @@ export const AccountantDashboard: React.FC = () => {
 
     try {
       const { generateDriverFundsReportPDFAndDownload } = await import('../services/pdfService');
-      await generateDriverFundsReportPDFAndDownload(expenses, operatingFunds, drivers, vehicles, company);
+      await generateDriverFundsReportPDFAndDownload(expenses, operatingFunds, fundDisbursements, drivers, vehicles, company);
       notifySuccess('Driver funds report downloaded.');
     } catch (err) {
       console.error('[AccountantDashboard] handleExportDriverFundsReport error:', err);
